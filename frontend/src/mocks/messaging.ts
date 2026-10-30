@@ -1,0 +1,3 @@
+import type { MessagingState } from '../types/messaging';
+export const userReportReasons=['스팸 또는 광고','부적절한 협업 제안','욕설 또는 괴롭힘','사칭','기타'];
+export const initialMessagingState:MessagingState={version:1,conversations:[{id:'dm:demo-premium:demo-user',participants:['demo-premium','demo-user'],messages:[{id:'dm-welcome-1',senderId:'demo-user',body:'안녕하세요! Pocket 프로젝트에 관심이 있어 연락드렸어요.',kind:'text',createdAt:'2026-10-29T19:00:00+09:00',readBy:['demo-user','demo-premium']},{id:'dm-welcome-2',senderId:'demo-premium',body:'반갑습니다. 프로젝트 목표나 역할에 대해 편하게 질문해 주세요.',kind:'text',createdAt:'2026-10-29T19:05:00+09:00',readBy:['demo-premium']}]}],rooms:{},notificationReads:{},userReports:[]};

@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-30T08:46:05.412Z",
+  "base": "http://localhost:4173",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "checks": [
+    {
+      "name": "메인 입력을 첫 메시지로 전달·추가 질문·사용량 미차감",
+      "status": "passed"
+    },
+    {
+      "name": "복수 분야·기타 분야 태그 추가/삭제·관심/기술 복수 선택",
+      "status": "passed"
+    },
+    {
+      "name": "여러 모집 직군/인원과 기타 직군·필수 조건 검증",
+      "status": "passed"
+    },
+    {
+      "name": "추천 결과·프로필/제안·무료 이유 잠금·정확히 1회 차감",
+      "status": "passed"
+    },
+    {
+      "name": "일반 대화·기록 복원·새로고침은 추가 차감 없음",
+      "status": "passed"
+    },
+    {
+      "name": "추천 카드에서 프로필 이동 및 협업 제안 메시지 전송",
+      "status": "passed"
+    },
+    {
+      "name": "새 대화·이전 대화 열기·제목/날짜·계정별 기록 분리",
+      "status": "passed"
+    },
+    {
+      "name": "분야/직군 변경이 순위·추천 이유에 반영",
+      "status": "passed"
+    },
+    {
+      "name": "대화 삭제 확인·횟수 복원 없음·다른 대화 유지",
+      "status": "passed"
+    },
+    {
+      "name": "무료 15회 제한·추가 질문 유지·프리미엄 활성화 후 100회/이유",
+      "status": "passed"
+    },
+    {
+      "name": "한국 시각 월 경계에서 새 사용량 표시",
+      "status": "passed"
+    },
+    {
+      "name": "프리미엄 100회 도달 시 결과 생성 제한·일반 메시지는 무료",
+      "status": "passed"
+    },
+    {
+      "name": "비로그인 조건 수집·추천 전 로그인·저장소 손상 복구",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": []
+}

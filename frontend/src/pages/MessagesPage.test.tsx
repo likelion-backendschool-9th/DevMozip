@@ -1,0 +1,37 @@
+import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Route,Routes } from 'react-router-dom';
+import { PrototypeProvider } from '../app/providers/PrototypeProvider';
+import { AuthProvider } from '../app/providers/AuthProvider';
+import { ProfileProvider } from '../app/providers/ProfileProvider';
+import { ProjectProvider } from '../app/providers/ProjectProvider';
+import { MessagingProvider } from '../app/providers/MessagingProvider';
+import { HomeProvider } from '../app/providers/HomeProvider';
+import { AppLayout } from '../components/layout/AppLayout';
+import { MessagesPage } from './MessagesPage';
+import { ProjectChatPage } from './ProjectChatPage';
+import { ProjectNotificationsPage } from './ProjectNotificationsPage';
+import { SESSION_KEY } from '../services/authService';
+import { PROFILE_KEY,applyProfileAction,freshProfileState } from '../services/profileService';
+import { PROJECT_KEY,applyRecruitmentAction,freshRecruitmentState } from '../services/projectService';
+import { MESSAGING_KEY,applyMessagingAction,directId,freshMessagingState,reconcileMessaging } from '../services/messagingService';
+import { demoAccounts } from '../mocks/auth';
+import type { RecruitmentState } from '../types/project';
+import type { ProfileState } from '../types/profile';
+import type { MessagingState } from '../types/messaging';
+const now=new Date('2026-10-30T12:00:00+09:00');const member=demoAccounts[0],host=demoAccounts[1];
+function approved(){let p=applyRecruitmentAction(freshRecruitmentState(),{type:'apply',projectId:'pocket',portfolioId:'pf-haneul',role:'백엔드',message:'함께 성장하는 프로젝트에 지원합니다.'},member,freshProfileState(),now).state;return applyRecruitmentAction(p,{type:'decide',projectId:'pocket',applicationId:p.applications[0].id,decision:'지원 승인'},host,freshProfileState(),now).state;}
+function page(url:string,userId?:string,projects:RecruitmentState=freshRecruitmentState(),profiles:ProfileState=freshProfileState(),messaging:MessagingState=freshMessagingState()){const data=new Map<string,string>();data.set(PROJECT_KEY,JSON.stringify(projects));data.set(PROFILE_KEY,JSON.stringify(profiles));data.set(MESSAGING_KEY,JSON.stringify(messaging));if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return renderToStaticMarkup(<PrototypeProvider><AuthProvider><ProfileProvider><ProjectProvider><MessagingProvider><HomeProvider><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route path="/messages" element={<MessagesPage/>}/><Route path="/chats/:projectId" element={<ProjectChatPage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/></Route></Routes></MemoryRouter></HomeProvider></MessagingProvider></ProjectProvider></ProfileProvider></AuthProvider></PrototypeProvider>);}
+beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
+describe('메신저·채팅·알림 렌더링',()=>{
+ it('대화 목록·개인 대화·작성·읽음·사용자 신고를 표시한다',()=>{const html=page('/messages',member.id);for(const text of ['1:1 메신저','이서준','메시지 보내기','사용자 신고','협업 제안','읽음'])expect(html).toContain(text);expect(html).toContain('메시지 대화');});
+ it('새 메시지와 협업 제안이 대화창에 표시된다',()=>{const p=freshRecruitmentState();const s=applyMessagingAction(freshMessagingState(),{type:'send-direct',targetId:host.id,body:'동료에게 보내는 새 협업 제안입니다.',kind:'proposal',proposalTitle:'새 협업 프로젝트'},member,freshProfileState(),p,now).state;const html=page(`/messages?conversation=${encodeURIComponent(directId(member.id,host.id))}`,member.id,p,undefined,s);expect(html).toContain('동료에게 보내는 새 협업 제안입니다.');expect(html).toContain('새 협업 프로젝트');expect(html).toContain('안 읽음');});
+ it('상대 계정의 읽음 처리 후 전송자에게 읽음이 표시된다',()=>{const p=freshRecruitmentState();let s=applyMessagingAction(freshMessagingState(),{type:'send-direct',targetId:host.id,body:'읽음 표시 시연',kind:'text'},member,freshProfileState(),p,now).state;s=applyMessagingAction(s,{type:'read-direct',conversationId:directId(member.id,host.id)},host,freshProfileState(),p,now).state;expect(page('/messages',member.id,p,undefined,s)).toContain('읽음 표시 시연');expect(page('/messages',host.id,p,undefined,s)).not.toContain('aria-label="안 읽은 쪽지 1개"');});
+ it('비로그인과 본인/없는 대상에 안내한다',()=>{expect(page('/messages')).toContain('로그인하고 대화를 시작하세요.');expect(page('/messages?userId=missing',member.id)).toContain('대화를 열 수 없습니다.');expect(page('/messages?userId=demo-user',member.id)).toContain('대화를 열 수 없습니다.');});
+ it('승인 팀원은 방/멤버/메시지 작성창을 볼 수 있다',()=>{const p=approved();const s=applyMessagingAction(reconcileMessaging(freshMessagingState(),p,freshProfileState(),now),{type:'send-group',projectId:'pocket',body:'합류한 팀의 대화입니다.'},member,freshProfileState(),p,now).state;const html=page('/chats/pocket',member.id,p,undefined,s);expect(html).toContain('합류한 팀의 대화입니다.');expect(html).toContain('채팅방 멤버');expect(html).toContain('김하늘');expect(html).toContain('메시지 보내기');});
+ it('지원 취소 후에는 기존 방의 메시지를 표시하지 않는다',()=>{let p=approved();const s=applyMessagingAction(reconcileMessaging(freshMessagingState(),p,freshProfileState(),now),{type:'send-group',projectId:'pocket',body:'프로젝트 내부 전용 대화'},member,freshProfileState(),p,now).state;p=applyRecruitmentAction(p,{type:'cancel',projectId:'pocket',acknowledgePenalty:true},member,freshProfileState(),now).state;const html=page('/chats/pocket',member.id,p,undefined,s);expect(html).toContain('채팅방에 입장할 수 없어요.');expect(html).not.toContain('프로젝트 내부 전용 대화');});
+ it('종료 시 보관은 읽기 전용, 삭제는 입장 제한을 표시한다',()=>{const before=approved();const retained=applyRecruitmentAction(before,{type:'status',projectId:'pocket',status:'프로젝트 종료'},host,freshProfileState(),now).state;const html=page('/chats/pocket',member.id,retained);expect(html).toContain('읽기 전용으로 보관');expect(html).toContain('disabled=""');const deleted=applyRecruitmentAction(before,{type:'status',projectId:'pocket',status:'프로젝트 종료',deleteChatOnEnd:true},host,freshProfileState(),now).state;expect(page('/chats/pocket',member.id,deleted)).toContain('종료 시 삭제된 채팅방');});
+ it('알림 읽음 처리로 헤더 개수가 줄고 안 읽음으로 되돌릴 수 있다',()=>{const p=approved();const profiles=freshProfileState();let s=freshMessagingState();const initial=page('/notifications',member.id,p,profiles,s);expect(initial).toContain('안 읽은 알림 1개');expect(initial).toContain('지원 승인');s=applyMessagingAction(s,{type:'notices-read-all'},member,profiles,p,now).state;const read=page('/notifications',member.id,p,profiles,s);expect(read).not.toContain('aria-label="안 읽은 알림 1개"');expect(read).toContain('안 읽음으로 변경');});
+ it('팔로우·SNS 반응 알림을 현재 계정에만 표시한다',()=>{let profiles=freshProfileState();profiles=applyProfileAction(profiles,member.id,{type:'follow',targetId:host.id},now);profiles=applyProfileAction(profiles,member.id,{type:'social-like',id:'seojun-design'},now);const html=page('/notifications',host.id,undefined,profiles);expect(html).toContain('새 팔로워');expect(html).toContain('게시글 좋아요');expect(page('/notifications',member.id,undefined,profiles)).not.toContain('새 팔로워');});
+ it('메신저 목록에서 승인된 프로젝트 채팅으로 이동할 수 있다',()=>{expect(page('/messages',member.id,approved())).toContain('/chats/pocket');expect(page('/messages',member.id)).not.toContain('href="/chats/pocket"');});
+});

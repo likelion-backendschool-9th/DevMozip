@@ -1,0 +1,4 @@
+export interface Subscription { active:boolean; updatedAt:string }
+export interface PaymentExample {id:string;userId:string;date:string;amount:number;status:string}
+export interface AdministrationState {version:1;subscriptions:Record<string,Subscription>;members:Record<string,{status:'active'|'warned'|'suspended';reason:string;updatedAt:string}>;resolutions:Record<string,{status:'resolved'|'dismissed';note:string;updatedAt:string}>;keywords:string[];audit:{id:string;actorId:string;action:string;createdAt:string}[];payments:PaymentExample[]}
+export type AdministrationAction = {type:'subscribe'|'unsubscribe'}|{type:'member';targetId:string;status:'active'|'warned'|'suspended';reason:string}|{type:'resolve';reportId:string;status:'resolved'|'dismissed';note:string}|{type:'keyword-add'|'keyword-remove';keyword:string};

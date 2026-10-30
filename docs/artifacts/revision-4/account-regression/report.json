@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-30T08:43:31.045Z",
+  "base": "http://localhost:4173",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "checks": [
+    {
+      "name": "본인 Aside·공개 프로필 제외·5개 탭 유지",
+      "status": "passed"
+    },
+    {
+      "name": "좋아요 날짜·목록·피드 취소·계정 분리",
+      "status": "passed"
+    },
+    {
+      "name": "게시글/프로젝트 북마크·해제·새로고침",
+      "status": "passed"
+    },
+    {
+      "name": "비밀번호 확인·입력 초기화·원문 미저장",
+      "status": "passed"
+    },
+    {
+      "name": "카카오 연동/해제 확인·계정별 유지",
+      "status": "passed"
+    },
+    {
+      "name": "비공개 계정·본인 활동 유지·타인/비로그인 접근 차단·공개 복원",
+      "status": "passed"
+    },
+    {
+      "name": "기존 데모 3종 온보딩 완료 상태",
+      "status": "passed"
+    },
+    {
+      "name": "회원가입 → 자동 로그인 → 온보딩",
+      "status": "passed"
+    },
+    {
+      "name": "온보딩 기본 정보 검증·사진·복수 선택·삭제·초안 복원",
+      "status": "passed"
+    },
+    {
+      "name": "온보딩 협업 검증·이전/다음·최종 미리보기",
+      "status": "passed"
+    },
+    {
+      "name": "온보딩 완료 → 프로필 데이터·Aside·헤더·새로고침",
+      "status": "passed"
+    },
+    {
+      "name": "비로그인 개인 페이지·온보딩 접근 안내",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": []
+}
