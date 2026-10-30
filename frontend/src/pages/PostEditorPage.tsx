@@ -1,0 +1,5 @@
+import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../app/providers/AuthProvider';
+import { useProfiles } from '../app/providers/ProfileProvider';
+import { PostForm } from '../features/post/PostForm';
+export function PostEditorPage(){const {postId}=useParams();const {user}=useAuth();const {state}=useProfiles();const post=state.posts.find(p=>p.id===postId);if(!user)return <div className="container planned"><section className="planned-card"><h1>로그인하고 이야기를 나눠보세요.</h1><Link className="button" to="/login">로그인</Link></section></div>;if(postId&&(!post||post.authorId!==user.id))return <div className="container planned"><section className="planned-card"><h1>본인 게시글만 수정할 수 있습니다.</h1><Link className="button" to="/feed">피드로</Link></section></div>;return <div className="container sns-editor-page"><Link className="text-link" to="/feed">← 전체 피드</Link><section><div className="eyebrow">SHARE YOUR STORY</div><h1>{post?'이야기 수정하기':'새로운 이야기 나누기'}</h1><p>작은 경험이 누군가의 다음 시도에 도움이 될 수 있어요.</p><PostForm key={postId||'new'} post={post}/></section></div>;}

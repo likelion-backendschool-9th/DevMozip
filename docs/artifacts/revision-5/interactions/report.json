@@ -1,0 +1,219 @@
+{
+  "date": "2026-10-30T09:01:34.019Z",
+  "base": "http://localhost:4173",
+  "checks": [
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 1920,
+      "status": "passed"
+    },
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 1440,
+      "status": "passed"
+    },
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 1280,
+      "status": "passed"
+    },
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 1024,
+      "status": "passed"
+    },
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 768,
+      "status": "passed"
+    },
+    {
+      "name": "헤더 검색 아이콘 → 대상 전환/검색 → 상세",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "Aside 접기/메뉴 이동·좋아요/북마크/설정·5개 프로필 탭",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "알림/쪽지/프로필 메뉴 정렬·프로필 드롭다운 화면 안 표시",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "AI 추천·접이식 기록·과거 대화 복원·삭제 모달",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "무료 작성 제한·프리미엄 안내 모달·기존 지원/승인/단체 채팅",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "기간 종료 알림→연장→프로젝트 종료→리뷰 제출/온도·버블",
+      "width": 390,
+      "status": "passed"
+    },
+    {
+      "name": "긴 프로필/URL·카드 문구 줄바꿈·가로 넘침 없음",
+      "width": 390,
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": []
+}

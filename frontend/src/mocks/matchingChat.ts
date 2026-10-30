@@ -1,0 +1,12 @@
+import type { ChatRequirements,MatchingChatState } from '../types/matchingChat';
+export const chatFieldOptions=['웹','모바일','AI / 머신러닝','데이터','게임','보안','클라우드 / 인프라','기타'];
+export const chatRoleOptions=['프론트엔드','백엔드','풀스택','UI/UX','DevOps','데이터 엔지니어','AI 엔지니어','모바일','게임','기타'];
+export const chatCareerOptions=['경력 무관','1년 이상','2년 이상','3년 이상','5년 이상'];
+export const chatDurationOptions=['1개월','2개월','3개월','6개월','12개월'];
+export const emptyChatRequirements:ChatRequirements={description:'',fields:[],interests:[],stacks:[],roles:[],career:'',duration:''};
+export const initialMatchingChat:MatchingChatState={conversations:{},active:{}};
+export const chatWelcome='만들고 싶은 프로젝트를 설명해 주세요. 프로젝트 분야, 관심 분야, 기술, 모집 직군과 인원, 요구 경력, 예상 기간을 확인한 뒤 동료를 추천해 드릴게요.';
+export const chatRequirementLabels:Record<keyof ChatRequirements,string>={description:'프로젝트 설명 (10자 이상)',fields:'프로젝트 분야',interests:'관심 분야',stacks:'기술 스택',roles:'모집 직군과 직군별 인원',career:'요구 경력',duration:'예상 프로젝트 기간'};
+export const chatRoleAliases:Record<string,string[]>={'프론트엔드':['프론트엔드','프론트','frontend'],'백엔드':['백엔드','backend'],'풀스택':['풀스택','fullstack'],'UI/UX':['ui/ux','디자이너','디자인'],'DevOps':['devops'],'데이터 엔지니어':['데이터 엔지니어'],'AI 엔지니어':['ai 엔지니어'],'모바일':['모바일 개발자','모바일 개발'],'게임':['게임 개발자','게임 개발']};
+export const chatDomainAliases:Record<string,string[]>={'웹':['웹','web'],'모바일':['모바일','앱'],'AI / 머신러닝':['머신러닝','인공지능','ai'],'데이터':['데이터'],'게임':['게임'],'보안':['보안'],'클라우드 / 인프라':['클라우드','인프라']};
+export const chatDomainStacks:Record<string,string[]>={'웹':['React','TypeScript','Java','Spring Boot','Node.js','Figma'],'모바일':['React','TypeScript'],'AI / 머신러닝':['Python'],'데이터':['Python','Java'],'게임':[],'보안':[],'클라우드 / 인프라':['Node.js','Java','Spring Boot']};

@@ -1,0 +1,11 @@
+import { posts } from './home';
+import type { PostInput, SocialState } from '../types/social';
+export const imagePolicy={maxCount:3,maxBytes:512*1024,types:['image/png','image/jpeg','image/webp','image/gif']};
+export const socialReportReasons=['스팸 또는 광고','욕설 또는 혐오 표현','허위 정보','저작권 침해','기타'];
+export const feedSortOptions=[{value:'recommended',label:'추천순'},{value:'popular',label:'인기순'},{value:'views',label:'조회순'},{value:'latest',label:'최신순'}] as const;
+export const emptyPost:PostInput={title:'',body:'',category:'정보',tags:[],images:[],github:'',external:''};
+export const postMetadata:Record<string,{createdAt:string;views:number}>=Object.fromEntries([...posts.map(p=>p.id),'haneul-retro','seojun-design'].map((id,i)=>[id,{createdAt:`2026-10-${String(29-i).padStart(2,'0')}T10:00:00+09:00`,views:180+i*37}]));
+const commentTexts=['경험을 나눠주셔서 감사합니다. 다음 프로젝트에서 참고해볼게요.','저도 비슷한 고민이 있었어요. 팀과 함께 이야기해 보겠습니다.','구체적인 사례가 있어 이해하기 좋네요!','작은 기준을 함께 맞추는 과정이 중요한 것 같아요.'];
+const authors=['yuna','minjun','seoyeon','jiho','demo-user','demo-premium'];
+const commentSources=[...posts.map(p=>({id:p.id,count:p.comments})),{id:'haneul-retro',count:3},{id:'seojun-design',count:4}];
+export const initialSocialState:SocialState={likes:{},bookmarks:{},reports:[],views:{},comments:commentSources.flatMap((p,index)=>Array.from({length:p.count},(_,i)=>({id:`comment-${p.id}-${i}`,postId:p.id,authorId:authors[(index+i)%authors.length],body:commentTexts[i%commentTexts.length],createdAt:`2026-10-29T${String(10+i).padStart(2,'0')}:00:00+09:00`})))};
