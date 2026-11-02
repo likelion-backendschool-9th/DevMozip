@@ -1,4 +1,4 @@
-# Run in Windows PowerShell as Administrator. Exposes only Vite's TCP port to the local subnet.
+# Run in Windows PowerShell as Administrator. Exposes only the frontend TCP port to the local subnet.
 $ErrorActionPreference = 'Stop'
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $admin) { throw 'Run this script as Administrator.' }

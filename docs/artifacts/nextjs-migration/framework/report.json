@@ -1,0 +1,181 @@
+{
+  "date": "2026-11-01T13:06:18.705Z",
+  "checks": [
+    {
+      "name": "http://localhost:5173 server/client boundary",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 persisted login / direct dynamic path / reload",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 Next query tabs / browser back and forward",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 colocated CSS module / shared palette / route styles",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 home handoff / Next navigation / saved recommendation",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 390px / collapsed account menu / no overflow",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:5173 real HTTP 404 with recovery UI",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 server/client boundary",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 persisted login / direct dynamic path / reload",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 Next query tabs / browser back and forward",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 colocated CSS module / shared palette / route styles",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 home handoff / Next navigation / saved recommendation",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 390px / collapsed account menu / no overflow",
+      "status": "passed"
+    },
+    {
+      "name": "http://localhost:4173 real HTTP 404 with recovery UI",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /my-projects",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /my-projects/pocket/manage",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /projects/pocket/reviews/write",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /onboarding",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /profile/me/likes",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /profile/me/bookmarks",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /settings/account",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /login",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /forgot-password",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /signup",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /search",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /users/demo-user",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /projects",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /projects/pocket",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /matching",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /projects/new",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /projects/pocket/manage",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /feed",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /posts/new",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /posts/type-tips/edit",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /posts/type-tips",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /following",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /messages",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /chats/pocket",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /notifications",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /premium",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP /admin",
+      "status": "passed"
+    },
+    {
+      "name": "HTTP unknown route",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": [],
+  "frameworkRequests": 120
+}
