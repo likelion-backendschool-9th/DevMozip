@@ -1,0 +1,42 @@
+{
+  "checks": [
+    {
+      "width": 1920,
+      "selectWidth": 120,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "selectWidth": 120,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "selectWidth": 120,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "selectWidth": 120,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "selectWidth": 120,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "selectWidth": 120,
+      "overflow": false
+    }
+  ],
+  "flows": [
+    "개발자 분야·기술 자동완성 복수 선택",
+    "프로젝트 분야·기술 자동완성 복수 선택",
+    "URL 및 새로고침 복원",
+    "개별 필터 해제",
+    "키보드 Enter·Escape·빈 결과 안내"
+  ],
+  "pageErrors": []
+}
