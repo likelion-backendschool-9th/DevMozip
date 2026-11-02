@@ -1,5 +1,8 @@
 import type { RouteDefinition } from '@/types';
 export const routes: RouteDefinition[] = [
+ {path:'/portfolios/new',title:'포트폴리오 작성',description:'자유 구성 포트폴리오 작성',stage:2,group:'계정'},
+ {path:'/portfolios/:portfolioId/edit',title:'포트폴리오 수정',description:'섹션과 본문 자유 편집',stage:2,group:'계정'},
+ {path:'/portfolios/:portfolioId',title:'포트폴리오 상세',description:'프리미엄 상세 열람 및 본인 전용 AI 피드백',stage:2,group:'계정'},
  {path:'/my-projects',title:'내 프로젝트 관리',description:'모집·참여·지원·종료 프로젝트',stage:3,group:'프로젝트'},
  {path:'/my-projects/:projectId/manage',title:'내 프로젝트 워크스페이스',description:'주최자/참여자별 관리',stage:3,group:'프로젝트'},
  {path:'/projects/:projectId/reviews/write',title:'프로젝트 팀원 리뷰',description:'참여자별 임시 요청 링크',stage:3,group:'프로젝트'},

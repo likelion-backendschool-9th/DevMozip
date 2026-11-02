@@ -34,7 +34,3 @@
 - 기존 UserReportDialog를 components/messaging으로 이동하여 1:1과 프로젝트 채팅에서 함께 사용한다. Mock 신고 저장과 계정당 대상 사용자별 중복 신고 제한은 기존 로직을 유지한다.
 - 변경 파일: MessagesScreen.tsx, ProjectChatScreen.tsx, 공통 UserReportDialog.tsx, scripts/verify-chat-member-report.mjs.
 - 검증: 376개 테스트 통과. 실제 Chromium에서 main 영역의 검색/프로젝트 상세 링크 제거, 멤버별 신고, 대상 표시, 본인 신고 버튼 제외, 새로고침 후 중복 신고 차단 확인. pageerror 0건. 최종 npm run build(TypeScript 검사 포함) 성공.
-
-## PR 브랜치 검증
-
-프로필 HTML 편집 PR #5를 제외한 브랜치에서 npm test 26개 파일·363개 테스트와 npm run build가 통과했다. 위의 376개 결과는 프로필 HTML 편집 테스트 13개도 포함된 작업 디렉터리의 결과다. 브라우저 검증도 해당 작업 디렉터리에서 수행했다.

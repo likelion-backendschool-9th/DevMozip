@@ -9,7 +9,7 @@ import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import {ProfileImageEditor} from './ProfileImageEditor';
-import {ProfileTagEditor} from './ProfileTagEditor';
+import {ProfileTagEditor} from '@/components/profile/ProfileTagEditor';
 import {IntroductionEditor} from './IntroductionEditor';
 import type { Profile, ProfileEdit } from '@/types/profile';
 export type ProfileEditSection = 'basic'|'about'|'stacks'|'interests'|'links';

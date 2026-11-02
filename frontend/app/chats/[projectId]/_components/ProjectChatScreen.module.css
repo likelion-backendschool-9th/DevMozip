@@ -52,6 +52,6 @@
 .reportIcon:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
 
 .memberList:global(.chat-member-panel){border:0;padding:0;border-radius:0}
-.memberSummary{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.6}
-.memberRow strong{font-size:14px!important;color:var(--text)!important}
-.memberRow small{font-size:12px!important;color:var(--muted)!important}
+.memberSummary{margin:0 0 16px;font-size:15px;color:var(--muted);line-height:1.6}
+.memberRow strong{font-size:15px!important;color:var(--text)!important}
+.memberRow small{font-size:14px!important;color:var(--muted)!important}
