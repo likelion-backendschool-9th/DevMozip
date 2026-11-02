@@ -1,0 +1,17 @@
+.plain,.rich{min-width:0;font-size:clamp(.9375rem,1.1vw,1rem);line-height:1.9;color:var(--text);overflow-wrap:anywhere}
+.plain{white-space:pre-wrap}
+.rich :global(*){max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+.rich :global(p){font-size:inherit;line-height:inherit;color:inherit;margin:0 0 1em}
+.rich :global(h1),.rich :global(h2),.rich :global(h3),.rich :global(h4){color:inherit;line-height:1.5;letter-spacing:-.025em;margin:1.1em 0 .6em}
+.rich :global(h1){font-size:2em}.rich :global(h2){font-size:1.65em}.rich :global(h3){font-size:1.35em}.rich :global(h4){font-size:1.1em}
+.rich :global(h5),.rich :global(h6){font-size:1em;line-height:1.6;margin:1em 0 .5em}
+.rich :global(ul),.rich :global(ol){padding-left:1.5em;margin:.75em 0 1.25em}.rich :global(li){margin:.35em 0}
+.rich :global(blockquote){margin:1.25em 0;padding:.75em 1.2em;border-left:3px solid var(--purple);background:#f7f4ff;border-radius:0 .5rem .5rem 0}
+.rich :global(pre){overflow:auto;padding:1rem;background:#f4f5f9;border-radius:.625rem;white-space:pre;line-height:1.65;font-size:.875em}
+.rich :global(code){font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f4f2fa;border-radius:.25rem;padding:.1em .3em}.rich :global(pre code){background:none;padding:0}
+.rich :global(a){color:var(--purple);text-decoration:underline;text-underline-offset:.2em}
+.rich :global(hr){border:0;border-top:1px solid var(--border);margin:1.5em 0}
+.rich :global(table){width:100%;table-layout:fixed;border-collapse:collapse;margin:1.25em 0;font-size:.875em}.rich :global(th),.rich :global(td){padding:.6em;border:1px solid var(--border);vertical-align:top;text-align:left}.rich :global(th){background:var(--surface)}
+.rich :global(img){display:block;max-width:100%;height:auto;max-height:32rem;object-fit:contain;border-radius:.625rem;margin:1em 0}.rich :global(figure){margin:1em 0}.rich :global(figcaption){font-size:.85em;color:var(--muted)}
+.rich>:first-child{margin-top:0}.rich>:last-child{margin-bottom:0}
+.empty{font-size:.9375rem!important;color:var(--muted)!important}
