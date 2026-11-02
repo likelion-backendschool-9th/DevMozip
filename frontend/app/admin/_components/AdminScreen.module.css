@@ -15,16 +15,16 @@
 @layer devmozip-administration{:where(.scope):global(.admin-main){min-height:500px}}
 @layer devmozip-administration{:where(.scope):global(.admin-stats){display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}
 @layer devmozip-administration{:where(.scope):global(.admin-stats article){border:1px solid #eee;border-radius:12px;padding:22px;background:#fafafd;display:grid;gap:12px}}
-@layer devmozip-administration{:where(.scope):global(.admin-stats span){font-size:13px;color:#777}}
+@layer devmozip-administration{:where(.scope):global(.admin-stats span){font-size:15px;color:#777}}
 @layer devmozip-administration{:where(.scope):global(.admin-stats strong){font-size:30px;color:#7152ac}}
 @layer devmozip-administration{:where(.scope):global(.admin-row){display:flex;justify-content:space-between;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid #eee;overflow-wrap:anywhere}}
 @layer devmozip-administration{:where(.scope):global(.admin-row a){color:#6b4fa0;font-weight:600}}
-@layer devmozip-administration{:where(.scope):global(.admin-row small){display:block;color:#777;font-size:12px;margin-top:7px}}
-@layer devmozip-administration{:where(.scope):global(.admin-row p){font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-row small){display:block;color:#777;font-size:14px;margin-top:7px}}
+@layer devmozip-administration{:where(.scope):global(.admin-row p){font-size:15px}}
 @layer devmozip-administration{:where(.scope):global(.admin-row .button){white-space:nowrap}}
-@layer devmozip-administration{:where(.scope):global(.admin-search){display:block;max-width:420px;margin-bottom:24px;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-search){display:block;max-width:420px;margin-bottom:24px;font-size:15px}}
 @layer devmozip-administration{:where(.scope):global(.admin-search input){margin-top:8px}}
-@layer devmozip-administration{:where(.scope):global(.admin-log){padding:16px;background:#f8f8fb;margin:12px 0;border-radius:10px;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-log){padding:16px;background:#f8f8fb;margin:12px 0;border-radius:10px;font-size:15px}}
 @layer devmozip-administration{:where(.scope):global(.admin-log code){margin-left:15px;color:#9165a8}}
 @layer devmozip-administration{:where(.scope):global(.governance-denied){text-align:center;padding:100px 0}}
 @layer devmozip-administration{:where(.scope):global(.governance-denied>svg){color:#8360bf}}
@@ -37,10 +37,10 @@
 @layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.governance-panel){padding:20px}}}
 @layer devmozip-presentation{:where(.scope):global(.governance-actions){gap:10px}}
 @layer devmozip-presentation{:where(.scope):global(.admin-navigation){height:auto}}
-@layer devmozip-presentation{:where(.scope):global(.admin-navigation button){font-size:14px}}
+@layer devmozip-presentation{:where(.scope):global(.admin-navigation button){font-size:15px}}
 @layer devmozip-presentation{:where(.scope):global(.admin-row>div){min-width:0}}
 @layer devmozip-presentation{:where(.scope):global(.admin-row .governance-actions){flex-shrink:0}}
-@layer devmozip-presentation{:where(.scope):global(.governance-panel>p){font-size:14px}}
+@layer devmozip-presentation{:where(.scope):global(.governance-panel>p){font-size:15px}}
 @layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.admin-row .governance-actions){flex-shrink:1}}}
 @layer devmozip-responsive{:where(.scope):global(.admin-stats){grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:1rem}}
 @layer devmozip-responsive{:where(.scope):global(.admin-workspace){grid-template-columns:minmax(10rem,12.5rem) minmax(0,1fr);gap:var(--layout-gap)}}
@@ -59,7 +59,7 @@
  :where(.scope):global(.admin-navigation){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));overflow:visible;gap:.375rem}
 }}
 @layer devmozip-responsive{@media(max-width:50rem){
- :where(.scope):global(.admin-navigation button){white-space:normal;padding:.625rem .75rem;font-size:.8125rem}
+ :where(.scope):global(.admin-navigation button){white-space:normal;padding:.625rem .75rem;font-size:0.9375rem}
 }}
 @layer devmozip-responsive{@media(max-width:50rem){
  :where(.scope):global(.admin-row){flex-wrap:wrap}

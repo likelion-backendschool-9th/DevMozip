@@ -1,14 +1,14 @@
 @layer devmozip-profile{:where(.scope):global(.activity-list){display:flex;flex-direction:column;gap:15px}}
 @layer devmozip-profile{:where(.scope):global(.activity-card){display:flex;align-items:center;padding:24px;gap:23px}}
 @layer devmozip-profile{:where(.scope):global(.activity-mark){display:grid;place-items:center;height:58px;width:58px;border-radius:14px;flex-shrink:0;font-size:27px;font-weight:750}}
-@layer devmozip-profile{:where(.scope):global(.activity-status){background:#eee8fb;color:#9976bc;font-size:9px;border-radius:4px;padding:3px 7px}}
+@layer devmozip-profile{:where(.scope):global(.activity-status){background:#eee8fb;color:#9976bc;font-size:14px;border-radius:4px;padding:3px 7px}}
 @layer devmozip-profile{:where(.scope):global(.activity-status.ended){background:#edf5f3;color:#7fa296}}
 @layer devmozip-profile{:where(.scope):global(.activity-card h3){font-size:15px;letter-spacing:-.3px;margin:9px 0 5px}}
 @layer devmozip-profile{:where(.scope):global(.activity-card h3:hover){color:var(--purple)}}
-@layer devmozip-profile{:where(.scope):global(.activity-card p){font-size:11px;color:#a193ae;margin:0}}
+@layer devmozip-profile{:where(.scope):global(.activity-card p){font-size:14px;color:#a193ae;margin:0}}
 @layer devmozip-profile{:where(.scope):global(.activity-card>.icon-button){margin-left:auto}}
 @layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-card){padding:18px;gap:14px}}}
 @layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-mark){width:44px;height:44px;font-size:22px}}}
-@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-card h3){font-size:12px}}}
-@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-card p){font-size:9px}}}
-@layer devmozip-presentation{:where(.scope):global(.activity-card p){font-size:12px;color:var(--muted)}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-card h3){font-size:14px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.activity-card p){font-size:14px}}}
+@layer devmozip-presentation{:where(.scope):global(.activity-card p){font-size:14px;color:var(--muted)}}

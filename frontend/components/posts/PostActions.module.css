@@ -1,22 +1,22 @@
 @layer devmozip-social{:where(.scope):global(.sns-post-actions){display:flex;align-items:center;gap:7px 17px;flex-wrap:wrap;padding-top:15px;border-top:1px solid var(--border)}}
-@layer devmozip-social{:where(.scope):global(.sns-post-actions>button){display:inline-flex;align-items:center;gap:5px;border:0;background:none;font-size:10px;color:#ac92bd;padding:3px 0;white-space:nowrap}}
-@layer devmozip-social{:where(.scope):global(.sns-post-actions>a){display:inline-flex;align-items:center;gap:5px;border:0;background:none;font-size:10px;color:#ac92bd;padding:3px 0;white-space:nowrap}}
+@layer devmozip-social{:where(.scope):global(.sns-post-actions>button){display:inline-flex;align-items:center;gap:5px;border:0;background:none;font-size:14px;color:#ac92bd;padding:3px 0;white-space:nowrap}}
+@layer devmozip-social{:where(.scope):global(.sns-post-actions>a){display:inline-flex;align-items:center;gap:5px;border:0;background:none;font-size:14px;color:#ac92bd;padding:3px 0;white-space:nowrap}}
 @layer devmozip-social{:where(.scope):global(.sns-post-actions>button:hover){color:var(--purple)}}
 @layer devmozip-social{:where(.scope):global(.sns-post-actions>a:hover){color:var(--purple)}}
 @layer devmozip-social{:where(.scope):global(.sns-post-actions>.liked){color:#d077a1}}
 @layer devmozip-social{:where(.scope):global(.sns-post-actions>[aria-pressed=true]){color:var(--purple)}}
 @layer devmozip-social{:where(.scope):global(.sns-post-actions>button:disabled){opacity:.5}}
-@layer devmozip-social{:where(.scope):global(.repost-original-title){font-size:13px;font-weight:600;color:#a084b5}}
+@layer devmozip-social{:where(.scope):global(.repost-original-title){font-size:15px;font-weight:600;color:#a084b5}}
 @layer devmozip-social{@media(max-width:1000px){:where(.scope):global(.sns-post-actions){gap:9px 15px}}}
 @layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-post-actions){gap:11px 17px}}}
-@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-post-actions>button){font-size:9px}}}
-@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-post-actions>a){font-size:9px}}}
-@layer devmozip-presentation{:where(.scope):global(.sns-post-actions>button){font-size:12px}}
-@layer devmozip-presentation{:where(.scope):global(.sns-post-actions>a){font-size:12px}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-post-actions>button){font-size:14px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-post-actions>a){font-size:14px}}}
+@layer devmozip-presentation{:where(.scope):global(.sns-post-actions>button){font-size:14px}}
+@layer devmozip-presentation{:where(.scope):global(.sns-post-actions>a){font-size:14px}}
 @layer devmozip-responsive{:where(.scope):global(.sns-post-actions){gap:clamp(.5rem,1.5vw,1.25rem)}}
 @layer devmozip-responsive{@media(max-width:30rem){
- :where(.scope):global(.sns-post-actions>button){font-size:.75rem}
+ :where(.scope):global(.sns-post-actions>button){font-size:0.875rem}
 }}
 @layer devmozip-responsive{@media(max-width:30rem){
- :where(.scope):global(.sns-post-actions>a){font-size:.75rem}
+ :where(.scope):global(.sns-post-actions>a){font-size:0.875rem}
 }}
