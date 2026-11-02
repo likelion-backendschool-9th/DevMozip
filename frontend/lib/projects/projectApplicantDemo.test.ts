@@ -1,0 +1,12 @@
+import {describe,it,expect} from 'vitest';
+import {demoAccounts} from '@/mocks/auth';
+import {freshProfileState,applyProfileAction,temperature} from '@/lib/profiles/profileService';
+import {freshRecruitmentState,applyRecruitmentAction,parseRecruitmentState} from './projectService';
+import {teamFor} from './projectSelectors';
+const host=demoAccounts.find(a=>a.id==='demo-premium')!;const profiles=freshProfileState();const now=new Date('2026-11-02T12:00:00+09:00');
+describe('지원자 데모',()=>{
+ it('중복 없이 추가하고 기존 지원·포트폴리오 소유 관계를 보존한다',()=>{const initial=freshRecruitmentState();let state=applyRecruitmentAction(initial,{type:'demo-applicants',projectId:'devgarden'},host,profiles,now).state;expect(state.applications).toHaveLength(3);expect(initial.applications).toHaveLength(0);state=applyRecruitmentAction(state,{type:'demo-applicants',projectId:'devgarden'},host,profiles,now).state;expect(state.applications).toHaveLength(3);for(const a of state.applications)expect(profiles.portfolios.some(p=>p.id===a.portfolioId&&p.ownerId===a.userId)).toBe(true);expect(parseRecruitmentState(JSON.stringify(state)).applications).toEqual(state.applications);});
+ it('승인 후 팀원·채팅·알림에 반영하며 다시 추가해도 되돌리지 않는다',()=>{let state=applyRecruitmentAction(freshRecruitmentState(),{type:'demo-applicants',projectId:'pocket'},host,profiles,now).state;const a=state.applications[0];state=applyRecruitmentAction(state,{type:'decide',projectId:'pocket',applicationId:a.id,decision:'지원 승인'},host,profiles,now).state;expect(teamFor(state,'pocket').some(m=>m.userId===a.userId)).toBe(true);expect(state.chatMembers.pocket).toContain(a.userId);expect(state.notifications.some(n=>n.recipientId===a.userId&&n.title==='지원 승인')).toBe(true);state=applyRecruitmentAction(state,{type:'demo-applicants',projectId:'pocket'},host,profiles,now).state;expect(state.applications.find(v=>v.id===a.id)?.status).toBe('지원 승인');});
+ it('타인 및 종료 프로젝트 추가를 제한한다',()=>{expect(()=>applyRecruitmentAction(freshRecruitmentState(),{type:'demo-applicants',projectId:'pocket'},demoAccounts[0],profiles,now)).toThrow('주최자');});
+});
+describe('리뷰 데모',()=>{it('협업 리뷰만 추가하고 평균·온도에 반영하며 중복 추가하지 않는다',()=>{const before=freshProfileState();const after=applyProfileAction(before,'demo-user',{type:'reviews-demo'},now);expect(after.reviews.filter(r=>r.targetId==='demo-user')).toHaveLength(4);expect(temperature(after.reviews,'demo-user')).toBe(39.5);expect(before.reviews).toHaveLength(1);expect(applyProfileAction(after,'demo-user',{type:'reviews-demo'},now).reviews).toEqual(after.reviews);});});

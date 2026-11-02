@@ -1,3 +1,4 @@
+import {addDemoApplicants} from './projectApplicantDemo';
 import {validKickVotes} from '@/lib/projects/chatKickService';
 import {canCreateProject} from '@/lib/projects/projectPermissionsService';
 export {canCreateProject} from '@/lib/projects/projectPermissionsService';
@@ -30,7 +31,7 @@ export function applicationRestriction(project:RecruitmentProject,user:AuthUser|
  if(!project.slots.some(s=>s.filled<s.count))return '모집 인원이 모두 충원되었습니다.';
  return '';
 }
-function applyBaseAction(state:RecruitmentState,action:Exclude<RecruitmentAction,ManagementAction>,user:AuthUser|null,profiles:ProfileState,now=new Date()):{state:RecruitmentState;message:string;projectId?:string}{
+function applyBaseAction(state:RecruitmentState,action:Exclude<RecruitmentAction,ManagementAction|{type:'demo-applicants'}>,user:AuthUser|null,profiles:ProfileState,now=new Date()):{state:RecruitmentState;message:string;projectId?:string}{
  if(!user)throw new Error('로그인 후 이용해 주세요.');
  const next=structuredClone(state);
  if(action.type==='create'){
@@ -53,7 +54,7 @@ function applyBaseAction(state:RecruitmentState,action:Exclude<RecruitmentAction
  const record={id:application?.id||createMockId(),projectId:project.id,userId:user.id,role:action.role,portfolioId:portfolio.id,portfolioTitle:portfolio.title,message:action.message.trim(),status:'지원 완료' as const,createdAt:now.toISOString()};next.applications=next.applications.filter(a=>a.id!==application?.id);next.applications.unshift(record);return {state:next,message:'프로젝트 지원을 완료했습니다.'};
 }
 export function applyRecruitmentAction(state:RecruitmentState,action:RecruitmentAction,user:AuthUser|null,profiles:ProfileState,now=new Date()){
- const result=['edit','delete','decide','status','extend'].includes(action.type)?manageProject(state,action as ManagementAction,user,now):applyBaseAction(state,action as Exclude<RecruitmentAction,ManagementAction>,user,profiles,now);
+ const result=action.type==='demo-applicants'?addDemoApplicants(state,action.projectId,user,profiles):['edit','delete','decide','status','extend'].includes(action.type)?manageProject(state,action as ManagementAction,user,now):applyBaseAction(state,action as Exclude<RecruitmentAction,ManagementAction|{type:'demo-applicants'}>,user,profiles,now);
  if(user&&action.type==='apply')addNotice(result.state,allProjects(result.state).find(p=>p.id===action.projectId)!.hostId,action.projectId,'프로젝트 지원 도착',`${user.nickname}님이 지원했습니다.`,now);
  if(user&&action.type==='cancel')addNotice(result.state,allProjects(result.state).find(p=>p.id===action.projectId)!.hostId,action.projectId,'프로젝트 지원 취소',`${user.nickname}님이 지원을 취소했습니다. 팀원·채팅 준비 상태를 반영했습니다.`,now);
  return {...result,state:syncProjectState(result.state,now,profiles)};

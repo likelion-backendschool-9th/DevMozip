@@ -1,3 +1,5 @@
+import {demoCollaborationReviews} from '@/mocks/reviewDemos';
+import {demoAccounts} from '@/mocks/auth';
 import {portfolioBlockErrors,preparePortfolioBlocks,validPortfolioBlocks} from './portfolioBlocks';
 import {portfolioMediaErrors} from './portfolioMedia';
 import {upgradePortfolioMock} from './portfolioMockMigration';
@@ -48,6 +50,8 @@ export function applyProfileAction(state:ProfileState,actorId:string|null,action
  const ownPost=(id:string)=>{const p=next.posts.find(p=>p.id===id);if(!p||p.authorId!==actorId)throw new Error('본인 게시글만 관리할 수 있습니다.');return p;};
  const ownRepost=(id:string)=>{const p=next.reposts.find(p=>p.id===id);if(!p||p.ownerId!==actorId)throw new Error('본인이 퍼간 글만 관리할 수 있습니다.');return p;};
  switch(action.type){
+ case 'reviews-demo':{if(!demoAccounts.some(account=>account.id===actorId))throw new Error('데모 계정에서만 리뷰 예시를 추가할 수 있습니다.');for(const review of demoCollaborationReviews){const project=history.find(c=>c.projectId===review.projectId&&c.status==='프로젝트 종료');if(!project||!project.members.some(m=>m.userId===review.authorId)||!project.members.some(m=>m.userId===review.targetId)||!next.profiles[review.authorId]||!next.profiles[review.targetId]||next.reviews.some(r=>r.projectId===review.projectId&&r.authorId===review.authorId&&r.targetId===review.targetId))continue;next.reviews.push({...review,keywords:review.keywords.filter(k=>allowedKeywords.includes(k))});}break;}
+
  case 'reviews-batch':{if(!action.entries.length||new Set(action.entries.map(e=>e.targetId)).size!==action.entries.length)throw new Error('평가할 팀원을 확인해 주세요.');for(const entry of action.entries){const reason=reviewEligibility(next,actorId,entry.targetId,action.projectId,now,history);if(reason)throw new Error(reason);if(!Number.isInteger(entry.rating)||entry.rating<1||entry.rating>5)throw new Error('모든 팀원의 별점을 선택해 주세요.');if(entry.keywords.some(k=>!allowedKeywords.includes(k))||new Set(entry.keywords).size!==entry.keywords.length)throw new Error('리뷰 키워드를 확인해 주세요.');next.reviews.unshift({id:createMockId(),projectId:action.projectId,authorId:actorId,targetId:entry.targetId,rating:entry.rating,keywords:[...entry.keywords],createdAt:now.toISOString()});}break;}
 
  case 'onboarding':{const input=sanitizeDraft(action.input);if(!input)throw new Error('온보딩 입력을 확인해 주세요.');const duplicate=Object.values(next.profiles).some(p=>p.id!==actorId&&p.nickname.toLowerCase()===input.nickname.trim().toLowerCase());const errors=onboardingErrors(input,3,duplicate);if(errors.length)throw new Error(errors[0]);const p=next.profiles[actorId];Object.assign(p,{nickname:input.nickname.trim(),bio:input.bio.trim(),avatar:input.avatar,jobs:input.jobs,job:input.jobs[0],career:input.career,stacks:input.stacks,interests:[...input.interests,...input.customFields],customFields:input.customFields,available:input.available,projectInterests:input.projectInterests,contact:input.contact.trim(),github:input.github.trim(),blog:input.blog.trim()});break;}
