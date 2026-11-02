@@ -1,5 +1,5 @@
 @layer devmozip-account{:where(.scope):global(.onboarding-tags){min-width:0}}
 @layer devmozip-account{:where(.scope):global(.selected-tags){display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}}
-@layer devmozip-account{:where(.scope):global(.selected-tags button){display:flex;gap:10px;align-items:center;border:1px solid #ded3f7;background:#f7f3ff;border-radius:20px;color:#7650b6;font-size:12px;padding:6px 12px}}
+@layer devmozip-account{:where(.scope):global(.selected-tags button){display:flex;gap:10px;align-items:center;border:1px solid #ded3f7;background:#f7f3ff;border-radius:20px;color:#7650b6;font-size:14px;padding:6px 12px}}
 @layer devmozip-account{:where(.scope):global(.selected-tags button>span){font-size:16px}}
 @layer devmozip-responsive{:where(.scope):global(.selected-tags button){max-width:100%;text-align:left;overflow-wrap:anywhere}}

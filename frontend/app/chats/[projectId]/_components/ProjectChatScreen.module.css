@@ -5,14 +5,14 @@
 @layer devmozip-messaging{:where(.scope):global(.project-chat-layout){display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:25px;margin-top:26px;align-items:start}}
 @layer devmozip-messaging{:where(.scope):global(.project-chat-layout>.conversation-pane){border:1px solid var(--border);border-radius:13px;overflow:hidden}}
 @layer devmozip-messaging{:where(.scope):global(.chat-member-panel){border:1px solid var(--border);border-radius:12px;padding:23px;background:white}}
-@layer devmozip-messaging{:where(.scope):global(.chat-member-panel h2){font-size:14px;margin:0 0 22px}}
-@layer devmozip-messaging{:where(.scope):global(.chat-member-panel h2 span){font-size:11px;color:var(--purple);margin-left:6px}}
+@layer devmozip-messaging{:where(.scope):global(.chat-member-panel h2){font-size:15px;margin:0 0 22px}}
+@layer devmozip-messaging{:where(.scope):global(.chat-member-panel h2 span){font-size:14px;color:var(--purple);margin-left:6px}}
 @layer devmozip-messaging{:where(.scope):global(.chat-member-panel>div){padding:12px 0;border-top:1px solid var(--border)}}
 @layer devmozip-messaging{:where(.scope):global(.chat-member-panel>div>a:first-child){display:flex;align-items:center;gap:10px}}
-@layer devmozip-messaging{:where(.scope):global(.chat-member-panel strong){font-size:11px;color:#9d82ae}}
-@layer devmozip-messaging{:where(.scope):global(.chat-member-panel small){display:block;font-size:9px;color:#bba1cd;margin-top:3px}}
-@layer devmozip-messaging{:where(.scope):global(.chat-review-link){font-size:9px;color:#a380bb;display:block;margin:8px 0 0 49px}}
-@layer devmozip-messaging{:where(.scope):global(.chat-member-panel>.auth-hint){margin:18px 0 0;font-size:9px;line-height:1.9}}
+@layer devmozip-messaging{:where(.scope):global(.chat-member-panel strong){font-size:14px;color:#9d82ae}}
+@layer devmozip-messaging{:where(.scope):global(.chat-member-panel small){display:block;font-size:14px;color:#bba1cd;margin-top:3px}}
+@layer devmozip-messaging{:where(.scope):global(.chat-review-link){font-size:14px;color:#a380bb;display:block;margin:8px 0 0 49px}}
+@layer devmozip-messaging{:where(.scope):global(.chat-member-panel>.auth-hint){margin:18px 0 0;font-size:14px;line-height:1.9}}
 @layer devmozip-messaging{@media(max-width:1000px){:where(.scope):global(.project-chat-layout){grid-template-columns:minmax(0,1fr) 220px;gap:18px}}}
 @layer devmozip-messaging{@media(max-width:1000px){:where(.scope):global(.chat-member-panel){padding:18px}}}
 @layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.project-chat-page h1){font-size:22px}}}
@@ -21,13 +21,13 @@
 @layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.chat-member-panel h2){width:100%;margin-bottom:5px}}}
 @layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.chat-member-panel>div){border:0;padding:6px 0}}}
 @layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.chat-member-panel>.auth-hint){width:100%;margin-top:5px}}}
-@layer devmozip-presentation{:where(.scope):global(.chat-member-panel strong){color:var(--text);font-size:14px}}
-@layer devmozip-presentation{:where(.scope):global(.chat-member-panel small){font-size:12px;color:var(--muted)}}
-@layer devmozip-presentation{:where(.scope):global(.chat-member-panel>.auth-hint){font-size:12px}}
-@layer devmozip-presentation{:where(.scope):global(.chat-review-link){font-size:12px;color:var(--purple)}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-request-button){margin:10px 0 0 48px;border:1px solid #e5dcf2;border-radius:7px;background:#fff;color:#8660af;font-size:11px;padding:7px 9px;cursor:pointer}}
+@layer devmozip-presentation{:where(.scope):global(.chat-member-panel strong){color:var(--text);font-size:15px}}
+@layer devmozip-presentation{:where(.scope):global(.chat-member-panel small){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.chat-member-panel>.auth-hint){font-size:14px}}
+@layer devmozip-presentation{:where(.scope):global(.chat-review-link){font-size:14px;color:var(--purple)}}
+@layer devmozip-chat-kick{:where(.scope):global(.kick-request-button){margin:10px 0 0 48px;border:1px solid #e5dcf2;border-radius:7px;background:#fff;color:#8660af;font-size:14px;padding:7px 9px;cursor:pointer}}
 @layer devmozip-chat-kick{:where(.scope):global(.kick-request-button:disabled){opacity:.5;cursor:not-allowed}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-date-details){border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:20px 0;background:white;font-size:12px;color:var(--muted)}}
+@layer devmozip-chat-kick{:where(.scope):global(.kick-date-details){border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:20px 0;background:white;font-size:14px;color:var(--muted)}}
 @layer devmozip-chat-kick{:where(.scope):global(.kick-date-details summary){cursor:pointer}}
 @layer devmozip-chat-kick{:where(.scope):global(.kick-date-details .project-date-simulator){margin:15px 0 0}}
 @layer devmozip-chat-kick{:where(.scope):global(.project-chat-page .conversation-pane){min-width:0}}
@@ -43,3 +43,15 @@
 @layer devmozip-responsive{@media(max-width:50rem){
  :where(.scope):global(.chat-member-panel>div){border-top:1px solid var(--border);padding:.75rem 0}
 }}
+
+.memberRow{position:relative;padding-right:42px!important;min-height:60px}
+.memberRow>a:first-child{min-width:0}
+.memberRow>a:first-child>span{min-width:0;overflow-wrap:anywhere}
+.reportIcon{position:absolute;right:0;top:14px;width:30px;height:30px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.reportIcon:hover{background:#fff0f2;color:#c45168}
+.reportIcon:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+
+.memberList:global(.chat-member-panel){border:0;padding:0;border-radius:0}
+.memberSummary{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.6}
+.memberRow strong{font-size:14px!important;color:var(--text)!important}
+.memberRow small{font-size:12px!important;color:var(--muted)!important}

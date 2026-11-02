@@ -1,6 +1,6 @@
-@layer devmozip-project{:where(.scope):global(.application-project-title){font-size:14px;color:#9980ad;font-weight:600}}
+@layer devmozip-project{:where(.scope):global(.application-project-title){font-size:15px;color:#9980ad;font-weight:600}}
 @layer devmozip-project{:where(.scope):global(.cancellation-warning){border:1px solid #efdfc4;border-radius:9px;background:#fffbf3;padding:18px;color:#b5996e;margin-top:20px}}
-@layer devmozip-project{:where(.scope):global(.cancellation-warning strong){font-size:12px}}
-@layer devmozip-project{:where(.scope):global(.cancellation-warning p){font-size:11px;color:#b19a79;line-height:1.9}}
-@layer devmozip-project{:where(.scope):global(.cancellation-warning .checkbox-label){font-size:10px;color:#ab9374;align-items:flex-start}}
-@layer devmozip-presentation{:where(.scope):global(.cancellation-warning p){font-size:12px}}
+@layer devmozip-project{:where(.scope):global(.cancellation-warning strong){font-size:14px}}
+@layer devmozip-project{:where(.scope):global(.cancellation-warning p){font-size:14px;color:#b19a79;line-height:1.9}}
+@layer devmozip-project{:where(.scope):global(.cancellation-warning .checkbox-label){font-size:14px;color:#ab9374;align-items:flex-start}}
+@layer devmozip-presentation{:where(.scope):global(.cancellation-warning p){font-size:14px}}
