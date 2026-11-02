@@ -8,7 +8,7 @@ import {reviewPolicy} from '@/mocks/projectWorkspace';
 import {onboardingErrors,sanitizeDraft,validAvatar} from '@/lib/account/onboardingService';
 import { addActivityNotice } from '@/lib/social/activityNoticeService';
 import { publishFollowEvent } from '@/lib/profiles/followService';
-import { applySocialAction, cleanupPostSocial, legacySocial, parseSocial, validImage } from '@/lib/social/socialService';
+import { applySocialAction, cleanupPostSocial, legacySocial, parseSocial, validImage, validPostTags } from '@/lib/social/socialService';
 import type { SocialAction } from '@/types/social';
 import { safeExternalUrl } from '@/lib/utils/externalUrl';
 export { safeExternalUrl } from '@/lib/utils/externalUrl';
@@ -88,6 +88,7 @@ export function parseProfileState(raw:string|null):ProfileState{
  if(!Object.values(data.following).every(v=>strings(v)))return freshProfileState();
  if(data.social!==undefined&&!parseSocial(data.social))return freshProfileState();
  if(data.posts.some((p:any)=>['github','external','createdAt','updatedAt'].some(k=>p[k]!==undefined&&typeof p[k]!=='string')||(p.views!==undefined&&(!Number.isFinite(p.views)||p.views<0))))return freshProfileState();
+ if(data.posts.some((p:any)=>p.interests!==undefined&&!validPostTags(p.interests)))return freshProfileState();
  if(data.posts.some((p:any)=>p.images!==undefined&&(!Array.isArray(p.images)||p.images.length>3||!p.images.every(validImage))))return freshProfileState();
  if(data.followPreferences!==undefined&&(!data.followPreferences||typeof data.followPreferences!=='object'||Array.isArray(data.followPreferences)||!Object.values(data.followPreferences).every((v:any)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.values(v).every((p:any)=>p&&typeof p.activity==='boolean'&&typeof p.projects==='boolean'))))return freshProfileState();
  if(data.followNotices!==undefined&&(!Array.isArray(data.followNotices)||!data.followNotices.every((n:any)=>n&&['id','recipientId','actorId','recordId','title','createdAt'].every(k=>typeof n[k]==='string')&&['activity','project'].includes(n.kind))))return freshProfileState();
