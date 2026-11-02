@@ -1,12 +1,11 @@
 'use client';
 import styles from './AboutTab.module.css';
-import { ExternalLink, Pencil } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
-import { safeExternalUrl } from '@/lib/profiles/profileService';
-import type { Profile } from '@/types/profile';
-export function AboutTab({ profile, owner, onEdit }: {
-    profile: Profile;
-    owner: boolean;
-    onEdit: () => void;
-}) { return <div className={[styles.scope, "about-grid"].join(" ")}><Card className={[styles.scope, "profile-section about-intro"].join(" ")}><div className={[styles.scope, "tab-section-title"].join(" ")}><h2>반가워요, {profile.nickname}입니다.</h2>{owner && <Button variant="secondary" onClick={onEdit}><Pencil size={13}/>수정</Button>}</div><p className={[styles.scope, "preserve-text"].join(" ")}>{profile.introduction || '아직 상세 소개를 작성하지 않았습니다.'}</p></Card><Card className={[styles.scope, "profile-section"].join(" ")}><h2>기술 스택</h2><div className={[styles.scope, "profile-tags"].join(" ")}>{profile.stacks.map(s => <span key={s}>{s}</span>)}</div><h2 className={[styles.scope, "sub-heading"].join(" ")}>관심 분야</h2><div className={[styles.scope, "profile-tags cyan-tags"].join(" ")}>{profile.interests.map(s => <span key={s}>{s}</span>)}</div>{!!profile.projectInterests?.length && <><h2 className={[styles.scope, "sub-heading"].join(" ")}>관심 프로젝트 분야</h2><div className={[styles.scope, "profile-tags"].join(" ")}>{profile.projectInterests.map(s => <span key={s}>{s}</span>)}</div></>}</Card><Card className={[styles.scope, "profile-section profile-links"].join(" ")}><h2>더 알아보기</h2>{(['github', 'blog'] as const).map(key => profile[key] && safeExternalUrl(profile[key]) ? <a key={key} href={safeExternalUrl(profile[key])} target="_blank" rel="noreferrer"><span>{key === 'github' ? 'GitHub' : '블로그'}</span><span>{profile[key]}</span><ExternalLink size={14}/></a> : <p key={key}>{key === 'github' ? 'GitHub' : '블로그'} 링크 미등록</p>)}</Card></div>; }
+import {ExternalLink,Pencil} from 'lucide-react';
+import {Button} from '@/components/common/Button';
+import {Card} from '@/components/common/Card';
+import {safeExternalUrl} from '@/lib/utils/externalUrl';
+import {ProfileIntroduction} from './ProfileIntroduction';
+import type {Profile} from '@/types/profile';
+export function AboutTab({profile,owner,onEdit}:{profile:Profile;owner:boolean;onEdit:()=>void}){
+ return <div className={styles.wrapper}><div className={`${styles.layout} about-grid`}><Card className={`${styles.introduction} profile-section about-intro`}><div className={`${styles.title} tab-section-title`}><div><span className={styles.eyebrow}>ABOUT ME</span><h2>반가워요, {profile.nickname}입니다.</h2></div>{owner&&<Button variant="secondary" onClick={onEdit}><Pencil size={13}/>수정</Button>}</div><ProfileIntroduction value={profile.introduction} format={profile.introductionFormat}/></Card><Card className={`${styles.sidebar} profile-section`}><section className={styles.group} aria-label="기술 스택"><h2>기술 스택</h2><div className="profile-tags">{profile.stacks.map(stack=><span key={stack}>{stack}</span>)}</div>{!profile.stacks.length&&<p className={styles.empty}>등록된 기술 스택이 없습니다.</p>}</section><section className={styles.group} aria-label="관심 분야"><h2>관심 분야</h2><div className="profile-tags cyan-tags">{profile.interests.map(interest=><span key={interest}>{interest}</span>)}</div>{!profile.interests.length&&<p className={styles.empty}>등록된 관심 분야가 없습니다.</p>}{!!profile.projectInterests?.length&&<div className={styles.projectInterests}><h3>관심 프로젝트 분야</h3><div className="profile-tags">{profile.projectInterests.map(interest=><span key={interest}>{interest}</span>)}</div></div>}</section><section className={`${styles.group} ${styles.links} profile-links`} aria-label="외부 링크"><h2>외부 링크</h2>{(['github','blog'] as const).map(key=>{const href=profile[key]&&safeExternalUrl(profile[key]);return href?<a href={href} target="_blank" rel="noopener noreferrer" key={key}><span className={styles.linkLabel}>{key==='github'?'GitHub':'블로그'}</span><span className={styles.linkUrl}>{profile[key]}</span><ExternalLink size={14}/></a>:<p className={styles.empty} key={key}>{key==='github'?'GitHub':'블로그'} 링크 미등록</p>;})}</section></Card></div></div>;
+}

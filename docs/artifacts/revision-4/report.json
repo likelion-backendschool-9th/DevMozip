@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-30T08:46:05.412Z",
-  "base": "http://localhost:4173",
+  "date": "2026-11-02T01:11:06.643Z",
+  "base": "http://localhost:5173",
   "viewport": {
     "width": 1440,
     "height": 1000
@@ -27,7 +27,7 @@
       "status": "passed"
     },
     {
-      "name": "추천 카드에서 프로필 이동 및 협업 제안 메시지 전송",
+      "name": "추천 카드 프로필 이동 및 협업 제안 제거",
       "status": "passed"
     },
     {
