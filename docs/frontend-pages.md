@@ -1,6 +1,6 @@
 # 페이지 및 라우팅 목록
 
-현재 28개 경로를 모두 구현했습니다. 아래 화면은 공통 헤더·내비게이션·푸터와 Mock 상태를 사용하며, 서버 페이지나 준비 화면으로 우회하지 않습니다. `*`는 복구 링크가 있는 404 화면입니다. 주소 직접 접근·새로고침은 Vite 개발/미리보기 서버에서 지원하며 향후 정적 호스팅 시 SPA fallback이 필요합니다.
+현재는 Next.js App Router로 28개 경로를 구현했습니다. 각 `frontend/app/**/page.tsx`가 기존 화면·기능을 연결하고 공통 레이아웃/Mock 상태를 공유합니다. 미등록 URL은 `app/not-found.tsx`와 HTTP 404로 처리합니다. 저장소 기반 UI는 마운트 후 복원하며 실제 Next.js 개발/프로덕션 서버가 직접 접근·새로고침을 지원합니다. [파일 경로 매핑](routing.md)을 참고하세요.
 
 | 경로 | 화면 및 동작 | 권한 |
 |---|---|---|
@@ -51,7 +51,7 @@
 
 메인 SNS는 가로 슬라이드, 전체 피드와 프로필 내 글은 세로 목록을 유지합니다. 프로필 상단은 5개 탭에서 유지합니다. 동적 상세 경로도 화면별 문서 제목을 사용하며 `/projects/new`, `/posts/new` 같은 정적 경로가 우선합니다.
 
-최신 검증은 [5차 보고서](changes-responsive-integration.md), [6개 해상도 화면 검사](artifacts/revision-5/responsive/report.json), [라우트 회귀 검사](artifacts/revision-5/regression/report.json)를 참고하세요. 초기 검증 기록은 당시 보고서에 보존했습니다.
+최신 검증은 [Next.js 마이그레이션 보고서](changes-nextjs-migration.md), [6개 해상도 검사](artifacts/nextjs-migration/responsive/report.json), [Next.js 경로/응답 검사](artifacts/nextjs-migration/framework/report.json)를 참고하세요. 이전 단계 결과는 당시 기록으로 보존했습니다.
 
 ## 1차 수정 개인 공간
 
@@ -78,3 +78,7 @@
 헤더 오른쪽 검색창을 통합 검색 아이콘으로 교체했습니다. 기존 검색 페이지와 대상/필터는 유지합니다. 800px 이하에서는 헤더 메뉴를 다음 행으로 배치하고 개인 계정 Aside/AI 기록을 접이식 메뉴로 전환합니다. 프로필 5개 탭은 유지하며 작은 화면에서는 필요하면 줄바꿈합니다. 카드와 Aside 본문은 가용 너비에 맞춰 조절하고 긴 문구/이미지는 컨테이너 안에 표시합니다. 페이지 전체 가로 스크롤은 숨기지 않고 실제 요소 너비를 조정했습니다. SNS 슬라이드·메시지·긴 비교 표 등 필요한 내부 스크롤은 유지합니다.
 
 [라우팅 동작](routing.md), [Mock 데이터 구조](mock-data.md).
+
+## Next.js 마이그레이션
+
+URL과 기능/권한은 유지하고 실행 라우터를 App Router 파일 구조로 교체했습니다. 신규 업무 경로는 추가하지 않았습니다. 화면별 `_components`와 인접 CSS Module, 공통 `components`, 검증/저장 `lib` 구조를 사용합니다. React Router는 제거했습니다.

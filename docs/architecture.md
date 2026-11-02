@@ -1,33 +1,28 @@
-# 구조 분석 및 결정
+# 현재 프론트엔드 구조
 
-## 현재 디렉터리
+2026-11-01 Next.js 마이그레이션 기준입니다. React 19/TypeScript와 Mock 상태를 유지하며 Next.js 16.4.3 App Router를 사용합니다. 이전 `src` 계층과 React Router/Vite 진입점은 제거했습니다.
 
-초기 확인 시 `.github/workflows/notify.yml` 외 애플리케이션 파일은 없었습니다.
-기존 워크플로는 수정하지 않았습니다. 기존 프론트엔드/백엔드 기능은 없었습니다.
+## 위치와 책임
 
-## 참고 저장소
+- `frontend/app`: 프론트엔드 프로젝트 루트의 App Router. `page.tsx`와 `[id]`가 경로를 정하며 루트 layout, error, not-found, globals를 포함합니다.
+- `app/{경로}/_components`: 해당 화면의 UI와 인접 `*.module.css`. 프로필 탭은 `app/users/[userId]/_components`, AI 대화는 `app/matching/_components` 등입니다.
+- `frontend/components`: 둘 이상의 경로에서 사용하는 공통 레이아웃·컨트롤·프로젝트/게시글/메신저 UI. 각 스타일 파일도 컴포넌트 옆에 둡니다.
+- `frontend/lib/{account,profiles,projects,matching,social,messaging,administration,search,settings,shared,utils}`: 기존 서비스의 검증·상태 변경·저장 함수. 실제 API 호출은 없습니다.
+- `frontend/lib/state`: 기존 6개 Context. 컴포넌트 사이 상태를 공유하고 기존 저장 키/버전을 유지합니다.
+- `frontend/mocks`, `types`: 원본 데이터·선택지·임시 정책, 도메인 타입.
+- `frontend/public`: 로고/로컬 글꼴. `app/icon.svg`는 Next.js 아이콘 규칙입니다.
+- `frontend/tests`: 화면 SSR 단위 검사의 테스트 전용 URL fixture와 실제 App Router 파일 검사. 애플리케이션 라우팅은 여기서 실행하지 않습니다.
 
-https://github.com/LuvZian/superOfTheKing.git
+## 서버/클라이언트 경계
 
-2026-10-30 확인: GitHub 웹과 `https://api.github.com/repos/LuvZian/superOfTheKing` 모두 404.
-비공개 여부나 저장소 존재 여부는 단정할 수 없습니다. frontend/backend 분리, React 구조, 라우팅, API 호출, 공통 컴포넌트, CSS, Spring 패키지 및 DTO 구조는 **분석 불가**입니다.
-사용자가 지정한 기본 구조를 적용했습니다. 참고 프로젝트의 카페 기능/디자인은 사용하지 않았습니다.
+루트 레이아웃·각 page/metadata는 Server Component입니다. `ClientProviders`가 마운트 전에는 일관된 로딩 UI를 반환하고 이후 Prototype→Auth→Profile→Project→Messaging→Home을 순서대로 마운트합니다. 서버에서 브라우저 저장소에 접근하지 않고 초기 저장 효과가 기존 상태를 덮어쓰지 않도록 합니다. 상태 기반 화면은 클라이언트에서 렌더링하며 전체 본문 SSR은 후속 사항입니다. `suppressHydrationWarning`으로 오류를 숨기지 않습니다.
 
-## 현재 구성
+`next/link`와 `next/navigation`을 사용하고 `lib/navigation.ts`는 URL 쿼리/뒤로가기 도우미만 제공합니다. 별도 경로 등록/브라우저 라우터는 없습니다. 메인에서 새 추천 대화를 공유 상태에 기록하고 `/matching`으로 이동하므로 location.state에 의존하지 않습니다.
 
-- React Router의 중첩 레이아웃으로 공통 헤더/푸터 유지.
-- pages는 화면 조합, features/setup은 경로 디렉터리 UI, components는 레이아웃·모달·토스트 담당.
-- mocks는 화면 메타데이터, services는 저장/통신 경계, types는 공통 타입.
-- 현재 Context는 Prototype/Auth/Profile/Project/Messaging/Home으로 나뉩니다. 인증·프로필/SNS·프로젝트/리뷰 요청·메시지·AI 대화/사용량을 기존 서비스 검증과 함께 공유합니다. [Mock 구조](mock-data.md)를 참고하세요.
-- Axios는 환경변수 기반 인스턴스만 정의하며 호출하지 않음.
-- 백엔드는 초기 생성한 Java 21/Spring Boot/Gradle 기본 틀을 유지합니다. 현재 버전은 backend의 빌드/Wrapper 파일을 기준으로 합니다. 5차에서는 수정하거나 재빌드하지 않았습니다.
-- Spring Web MVC 및 기본 테스트 의존성만 포함. DB·인증·외부 SDK 미포함.
+## 스타일
 
-## 향후 백엔드 구조 (계획만)
+화면/컴포넌트 스타일은 인접 CSS Modules에서 로컬 scope로 제한합니다. 기존 의미 있는 클래스명도 유지하여 도메인 상태/공통 유틸리티/브라우저 검증을 보존합니다. cascade layer로 이전 테마/반응형 우선순위를 고정합니다. 토큰·reset·기본 태그·공유 컨트롤 유틸리티/Mock 색상 이름은 `app/globals.css`에 둡니다. 별도 styles 폴더는 없습니다.
 
-`com.devmozip.backend` 아래 controller, service, repository, domain, config, common 및 도메인별 dto/{request,response}를 분리합니다. 관리 기능은 admin에서 별도 관리합니다.
-현재 해당 패키지 및 Java 파일은 생성하지 않습니다. 실제 비즈니스 구현은 별도 요청 이후 진행합니다.
+## 이전 기록과 백엔드
 
-## 5차 반응형 구조
-
-페이지별 기존 CSS 뒤에서 `styles/responsive.css`가 공통 너비·Grid/Flex·카드·작은 화면 동작을 정리합니다. 컨테이너는 100%/max-width, 카드에는 auto-fit/minmax, 간격/폰트에는 clamp/rem을 사용합니다. 개인 Aside와 AI 기록은 각 컴포넌트의 화면 로컬 토글 상태를 사용하며 도메인 저장 스키마는 바꾸지 않습니다.
+최초 참고 저장소 `LuvZian/superOfTheKing`은 당시 404여서 분석 불가였고 추측하지 않았습니다. 그 후 사용자가 요청한 구조 변경을 현재 기준으로 반영했습니다. `.github/workflows/notify.yml`과 Spring Boot 파일은 이번 작업에서 변경하지 않았습니다. 백엔드 비즈니스 로직/API/DB/외부 SDK 연결은 이번 범위가 아닙니다.

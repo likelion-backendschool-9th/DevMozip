@@ -2,7 +2,7 @@
 
 현재 접속 주소: **http://192.168.219.101:5173**
 
-- Vite는 `npm run dev`의 `--host 0.0.0.0` 설정으로 실행 중입니다.
+- Next.js는 `npm run dev`의 `--host 0.0.0.0` 설정으로 실행 중입니다.
 - Windows Wi-Fi 주소의 TCP 5173만 WSL Ubuntu-26.04의 5173으로 전달했습니다.
 - 방화벽 규칙 `DevMozip-Frontend-LAN-5173`은 같은 서브넷(LocalSubnet)에서만 허용합니다.
 - 관리자 권한으로 스크립트를 적용한 후 Windows LAN 주소의 HTTP 200 응답을 확인했습니다. 다른 물리 컴퓨터에서의 접속은 직접 검증하지 않았습니다.

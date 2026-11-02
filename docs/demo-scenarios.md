@@ -2,7 +2,7 @@
 
 ## 준비
 
-1. `cd frontend` → `npm ci` → `npm run dev`, `http://localhost:5173` 접속. 백엔드는 실행하지 않습니다.
+1. `cd frontend` → `npm ci` → `npm run dev` (Next.js), `http://localhost:5173` 접속. 백엔드는 실행하지 않습니다. 현재 프론트엔드는 Next.js App Router이며 빌드 후 시연은 `npm run build` → `npm run start`, `http://localhost:4173`입니다.
 2. 발표는 PC 브라우저 1440px/배율 100%로 시작합니다. 5차에서는 1920/1440/1280/1024/768/390px, 높이 1000px를 실제 Chromium에서 검사했습니다.
 3. 상단 **데모 초기화** → 초기화 → **데모 계정 전환** → **일반 회원**.
 4. 기본 계정: 김하늘(일반), 이서준(프리미엄/Pocket 주최자), 관리자. 이메일 로그인 공통 비밀번호 `Devmozip123!`.
@@ -132,3 +132,7 @@
 7. 시연 후 필요하면 데모 초기화합니다. 서로 다른 PC/브라우저의 저장 상태는 공유되지 않습니다.
 
 [5차 검증/변경 보고서](changes-responsive-integration.md), [페이지](frontend-pages.md), [라우팅](routing.md), [Mock 구조](mock-data.md).
+
+## Next.js 마이그레이션 시연 확인
+
+기존 A~E 및 1~5차 추가 흐름을 같은 URL로 사용합니다. 처음 진입할 때 저장소 준비 안내 후 화면이 나타납니다. Next 링크/쿼리로 이동해도 계정·지원·추천·대화 상태가 유지되며 새로고침하면 같은 저장 키에서 복원합니다. 삭제/초기화 시나리오는 격리 브라우저에서 진행하세요. 현재 결과는 [Next.js 보고서](changes-nextjs-migration.md)에 있습니다.
