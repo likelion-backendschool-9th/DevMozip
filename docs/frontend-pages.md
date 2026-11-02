@@ -1,6 +1,6 @@
 # 페이지 및 라우팅 목록
 
-현재는 Next.js App Router로 28개 경로를 구현했습니다. 각 `frontend/app/**/page.tsx`가 기존 화면·기능을 연결하고 공통 레이아웃/Mock 상태를 공유합니다. 미등록 URL은 `app/not-found.tsx`와 HTTP 404로 처리합니다. 저장소 기반 UI는 마운트 후 복원하며 실제 Next.js 개발/프로덕션 서버가 직접 접근·새로고침을 지원합니다. [파일 경로 매핑](routing.md)을 참고하세요.
+현재는 Next.js App Router로 31개 경로를 구현했습니다. 각 `frontend/app/**/page.tsx`가 기존 화면·기능을 연결하고 공통 레이아웃/Mock 상태를 공유합니다. 미등록 URL은 `app/not-found.tsx`와 HTTP 404로 처리합니다. 저장소 기반 UI는 마운트 후 복원하며 실제 Next.js 개발/프로덕션 서버가 직접 접근·새로고침을 지원합니다. [파일 경로 매핑](routing.md)을 참고하세요.
 
 | 경로 | 화면 및 동작 | 권한 |
 |---|---|---|
@@ -16,6 +16,9 @@
 | `/signup` | 입력 검증·중복 확인·Mock 가입 | 공개, localhost/HTTPS 권장 |
 | `/forgot-password` | 비밀번호 복구 안내 데모 | 공개 |
 | `/search` | 개발자/프로젝트 검색·필터·팔로우 | 공개, 고급 온도 조건/정렬은 프리미엄·관리자 |
+| `/portfolios/new` | 전용 작성·섹션 자유 편집·초안·미리보기 | 로그인 |
+| `/portfolios/:portfolioId/edit` | 전용 수정·HTML/Markdown·드래그 정렬 | 작성자 |
+| `/portfolios/:portfolioId` | 대표 이미지·상세 내용·작성자 프로필·본인 전용 AI 피드백 | 본인 또는 프리미엄·관리자, 비공개 계정 접근 제한 적용 |
 | `/users/:userId` | 공통 상단 + 소개/포트폴리오/내 글/활동/리뷰 5개 가로 탭 | 공개, 수정은 본인·상세 포트폴리오는 권한별 |
 | `/projects` | 모집 검색·필터·정렬·인원/최소 경력 | 공개 |
 | `/projects/:projectId` | 상세·지원/취소·북마크·신고·공유·주최자 연락 | 조회 공개, 지원은 로그인 |
@@ -82,3 +85,7 @@
 ## Next.js 마이그레이션
 
 URL과 기능/권한은 유지하고 실행 라우터를 App Router 파일 구조로 교체했습니다. 신규 업무 경로는 추가하지 않았습니다. 화면별 `_components`와 인접 CSS Module, 공통 `components`, 검증/저장 `lib` 구조를 사용합니다. React Router는 제거했습니다.
+
+포트폴리오 상세는 프로젝트 이미지 갤러리·이름/URL 링크·팀 구성·본인 기여를 지원하며 인쇄/PDF 스타일을 제공한다. [프로젝트 사례 상세 개편](portfolio-case-study-update.md) 참고.
+
+포트폴리오 등록·수정은 전용 페이지에서 섹션 제목/본문/형식/순서를 편집한다. [자유 구성 작성기](portfolio-composer.md) 참고.

@@ -1,6 +1,6 @@
 # Next.js App Router 라우팅
 
-현재 프론트엔드 루트는 `frontend/`, App Router 디렉터리는 `frontend/app/`입니다. 명시 페이지 28개와 `not-found.tsx`를 유지합니다. 전체 화면/권한은 [페이지 목록](frontend-pages.md)을 참고하세요.
+현재 프론트엔드 루트는 `frontend/`, App Router 디렉터리는 `frontend/app/`입니다. 명시 페이지 31개와 `not-found.tsx`를 유지합니다. 전체 화면/권한은 [페이지 목록](frontend-pages.md)을 참고하세요.
 
 ## 파일 기반 경로
 
@@ -8,6 +8,9 @@
 |---|---|
 | `/` | `app/page.tsx` |
 | `/login`, `/signup`, `/forgot-password`, `/onboarding` | 각 디렉터리 `page.tsx` |
+| `/portfolios/new` | `app/portfolios/new/page.tsx` |
+| `/portfolios/:portfolioId/edit` | `app/portfolios/[portfolioId]/edit/page.tsx` |
+| `/portfolios/:portfolioId` | `app/portfolios/[portfolioId]/page.tsx` |
 | `/users/:userId` | `app/users/[userId]/page.tsx` |
 | `/profile/me/likes`, `/profile/me/bookmarks` | 각 디렉터리 `page.tsx` |
 | `/settings/account` | `app/settings/account/page.tsx` |
