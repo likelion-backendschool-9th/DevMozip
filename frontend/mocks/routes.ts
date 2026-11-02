@@ -23,7 +23,7 @@ export const routes: RouteDefinition[] = [
  { path: '/posts/:postId/edit', title: '게시글 수정', description: '본인 게시글 전체 항목 수정', stage: 3, group: '커뮤니티' },
  { path: '/posts/:postId', title: '게시글 상세', description: '본문, 댓글, 좋아요와 퍼가기', stage: 3, group: '커뮤니티' },
  { path: '/following', title: '팔로잉', description: '함께하고 싶은 개발자와 연결', stage: 3, group: '커뮤니티' },
- { path: '/messages', title: '쪽지', description: '개발자와 1:1 대화 및 협업 제안', stage: 4, group: '소통' },
+ { path: '/messages', title: '쪽지', description: '개발자와 1:1 대화', stage: 4, group: '소통' },
  { path: '/chats/:projectId', title: '프로젝트 채팅', description: '참여 상태와 연결되는 팀 단체 대화', stage: 4, group: '소통' },
  { path: '/notifications', title: '알림', description: '프로젝트와 개발자 활동 소식 확인', stage: 4, group: '소통' },
  { path: '/premium', title: '프리미엄', description: '요금제 비교와 데모 구독 상태 관리', stage: 4, group: '운영' },
