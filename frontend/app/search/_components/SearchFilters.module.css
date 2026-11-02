@@ -1,4 +1,4 @@
-@layer devmozip-search{:where(.scope):global(.search-filter-panel){border:1px solid var(--border);border-radius:12px;background:white;padding:21px;position:sticky;top:102px}}
+@layer devmozip-search{:where(.scope):global(.search-filter-panel){border:1px solid var(--border);border-radius:12px;background:white;padding:21px;position:static}}
 @layer devmozip-search{:where(.scope):global(.search-filter-heading){display:flex;align-items:center;justify-content:space-between;margin-bottom:23px;gap:10px}}
 @layer devmozip-search{:where(.scope):global(.search-filter-heading strong){display:flex;align-items:center;gap:7px;font-size:14px}}
 @layer devmozip-search{:where(.scope):global(.search-filter-heading strong>span){font-size:14px;color:var(--purple);background:var(--purple-soft);padding:1px 5px;border-radius:4px}}

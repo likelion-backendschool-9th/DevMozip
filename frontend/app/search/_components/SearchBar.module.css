@@ -40,3 +40,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.search-main-bar .button){flex:0 0 auto}
 }}
+
+@layer devmozip-responsive{:where(.scope):global(.search-main-bar select){appearance:auto;flex:0 0 7.5rem;width:7.5rem;min-width:7.5rem;max-width:none;height:44px;padding:8px 12px;line-height:1.5;font-size:15px;white-space:nowrap}:where(.scope):global(.search-main-bar .form-input){flex:1;min-width:0;width:0}}

@@ -5,7 +5,7 @@ import { projects } from '@/mocks/home';
 const filters=(query='')=>parseSearch(new URLSearchParams(query));
 const profiles=()=>Object.values(freshProfileState().profiles);
 describe('통합 검색 조건 및 URL',()=>{
- it('알 수 없는 값은 유효한 기본값으로 복원하고 기술 중복을 제거한다',()=>{const f=filters('target=missing&job=unknown&career=99&available=maybe&stack=React&stack=React&stack=unknown');expect(f.target).toBe('developer');expect(f.job).toBe('');expect(f.career).toBe('');expect(f.available).toBe('');expect(f.stacks).toEqual(['React']);});
+ it('알 수 없는 값은 유효한 기본값으로 복원하고 기술 중복을 제거한다',()=>{const f=filters('target=missing&job=unknown&career=99&available=maybe&stack=React&stack=React&stack=unknown');expect(f.target).toBe('developer');expect(f.job).toBe('');expect(f.career).toBe('');expect(f.available).toBe('');expect(f.stacks).toEqual(['React','unknown']);});
  it('대상 전환은 검색어를 유지하고 이전 대상 필터를 초기화한다',()=>{const p=changeSearchTarget(new URLSearchParams('target=developer&job=백엔드 개발자&scope=following&stack=Java'),'project',' Spring Boot ');expect(p.get('q')).toBe('Spring Boot');expect(p.get('target')).toBe('project');expect(p.has('job')).toBe(false);expect(p.has('scope')).toBe(false);expect(p.has('stack')).toBe(false);});
  it('같은 대상에서 새 검색어로 검색하면 기존 상세 필터를 유지한다',()=>{const p=changeSearchTarget(new URLSearchParams('target=project&status=모집 중&stack=React'),'project','Flowmate');expect(p.get('status')).toBe('모집 중');expect(p.getAll('stack')).toEqual(['React']);expect(p.get('q')).toBe('Flowmate');});
  it('프로젝트 검색은 개발자 전용 조건을 무시한다',()=>{const f=filters('target=project&scope=following&job=백엔드 개발자&available=yes');expect(f.scope).toBe('all');expect(f.job).toBe('');expect(f.available).toBe('');});
@@ -26,3 +26,5 @@ describe('프로젝트 Mock 검색',()=>{
  it('상태가 없는 기존 Mock 공고는 모집 중으로 취급한다',()=>{expect(searchProjects(projects,filters('target=project&status=모집 중')).some(p=>p.id==='flowmate')).toBe(true);expect(searchProjects(projects,filters('target=project&status=프로젝트 종료')).every(p=>p.status==='프로젝트 종료')).toBe(true);});
  it('검색으로 원본 목록을 변경하지 않고 빈 결과를 처리한다',()=>{const original=JSON.stringify(projects);expect(searchProjects(projects,filters('target=project&q=없는프로젝트'))).toEqual([]);searchProjects(projects,filters('target=project'));expect(JSON.stringify(projects)).toBe(original);});
 });
+
+describe('분야 복수 선택',()=>{it('개발자 분야는 OR, 스택은 AND로 조합한다',()=>{const f=filters('interest=교육&interest=커뮤니티&stack=React');const result=searchDevelopers(profiles(),f,[],true);expect(result.length).toBeGreaterThan(0);expect(result.every(p=>p.stacks.includes('React')&&p.interests.some(i=>['교육','커뮤니티'].includes(i)))).toBe(true);expect(activeFilterCount(f)).toBe(3);});it('프로젝트 분야 복수 선택 및 반복 URL 복원을 지원한다',()=>{const f=filters('target=project&field=교육&field=핀테크&field=교육');expect(f.fields).toEqual(['교육','핀테크']);expect(searchProjects(projects,f).every(p=>['교육','핀테크'].includes(p.field))).toBe(true);});});

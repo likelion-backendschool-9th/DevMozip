@@ -1,0 +1,149 @@
+{
+  "checks": [
+    {
+      "width": 1920,
+      "scroll": 0,
+      "filterBottom": 1158.34375,
+      "advancedTop": 1174.34375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "scroll": 400,
+      "filterBottom": 758.34375,
+      "advancedTop": 774.34375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "scroll": 800,
+      "filterBottom": 358.34375,
+      "advancedTop": 374.34375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "scroll": 0,
+      "filterBottom": 1156.90625,
+      "advancedTop": 1172.90625,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "scroll": 400,
+      "filterBottom": 756.90625,
+      "advancedTop": 772.90625,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "scroll": 800,
+      "filterBottom": 356.90625,
+      "advancedTop": 372.90625,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "scroll": 0,
+      "filterBottom": 1150.8125,
+      "advancedTop": 1166.8125,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "scroll": 400,
+      "filterBottom": 750.8125,
+      "advancedTop": 766.8125,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "scroll": 800,
+      "filterBottom": 350.8125,
+      "advancedTop": 366.8125,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "scroll": 0,
+      "filterBottom": 1141.84375,
+      "advancedTop": 1157.84375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "scroll": 400,
+      "filterBottom": 741.84375,
+      "advancedTop": 757.84375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "scroll": 800,
+      "filterBottom": 341.84375,
+      "advancedTop": 357.84375,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "scroll": 0,
+      "filterBottom": 878.1875,
+      "advancedTop": 894.1875,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "scroll": 400,
+      "filterBottom": 478.1875,
+      "advancedTop": 494.1875,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "scroll": 800,
+      "filterBottom": 78.1875,
+      "advancedTop": 94.1875,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "scroll": 0,
+      "filterBottom": 1200.796875,
+      "advancedTop": 1216.796875,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "scroll": 400,
+      "filterBottom": 800.796875,
+      "advancedTop": 816.796875,
+      "overlap": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "scroll": 800,
+      "filterBottom": 400.796875,
+      "advancedTop": 416.796875,
+      "overlap": false,
+      "overflow": false
+    }
+  ],
+  "controls": "신뢰 온도 선택·정렬 동작 확인"
+}
