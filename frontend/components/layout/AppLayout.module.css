@@ -122,3 +122,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.utility-inner button){font-size:.6875rem}
 }}
+
+@layer devmozip-responsive{.profileLink{border-radius:50%;text-decoration:none}}
