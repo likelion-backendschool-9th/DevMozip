@@ -1,0 +1,11 @@
+'use client';
+import {useRef,useState} from 'react';
+import {Plus,X} from 'lucide-react';
+import {readAvatar} from '@/lib/account/onboardingService';
+import {avatarPolicy} from '@/mocks/account';
+import {ProfileAvatar} from '@/components/profile/ProfileAvatar';
+import styles from './ProfileImageEditor.module.css';
+export function ProfileImageEditor({label,value,name,color,banner=false,onChange,onBusy}:{label:string;value:string;name:string;color:string;banner?:boolean;onChange:(value:string)=>void;onBusy:(busy:boolean)=>void}){
+ const input=useRef<HTMLInputElement>(null);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+ return <section className={banner?styles.bannerEditor:styles.avatarEditor} aria-label={`${label} 편집`}><div className={banner?styles.banner:styles.avatar}>{banner?(value?<img src={value} alt="배너 미리보기"/>:<span>배너 미리보기</span>):<ProfileAvatar name={name} color={color} image={value}/>}</div><div className={styles.actions}><button type="button" className={styles.change} disabled={busy} aria-label={`${label} 변경`} title={`${label} 변경`} onClick={()=>input.current?.click()}><Plus size={20} aria-hidden="true"/></button>{value&&<button type="button" className={styles.remove} disabled={busy} aria-label={`${label} 삭제`} title={`${label} 삭제`} onClick={()=>onChange('')}><X size={16} aria-hidden="true"/></button>}</div><input ref={input} hidden type="file" aria-label={label} accept={avatarPolicy.types.join(',')} disabled={busy} onChange={async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;setError('');setBusy(true);onBusy(true);try{const data=await readAvatar(file);await new Promise<void>((resolve,reject)=>{const image=new Image();image.onload=()=>resolve();image.onerror=()=>reject(new Error('이미지를 확인해 주세요.'));image.src=data;});onChange(data);}catch{setError('PNG/JPEG/WebP 이미지, 256KB 이하의 파일을 선택해 주세요.');}finally{setBusy(false);onBusy(false);}}}/>{busy&&<p role="status">이미지를 확인하고 있어요.</p>}{error&&<p role="alert" className="form-error">{error}</p>}</section>;
+}

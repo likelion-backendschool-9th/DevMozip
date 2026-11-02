@@ -1,4 +1,5 @@
 'use client';
+import {loadProfiles} from '@/lib/profiles/profileService';
 import {canViewAccount} from '@/lib/profiles/privacyService';
 import {createContext,useContext,useRef,useState,type ReactNode} from 'react';
 import {applyAdministration,effectiveUser,isSuspended,loadAdministration,saveAdministration,freshAdministration} from '@/lib/administration/administrationService';
@@ -13,6 +14,7 @@ import type {AccountAreaState,AccountAreaAction,OnboardingDraft,PasswordChangeIn
 import type {AccountRole,AuthUser,SignupInput} from '@/types/auth';
 type PreferenceAction=Exclude<AccountAreaAction,{type:'onboarding-complete'}|{type:'password-confirmed'}>;
 interface AuthContextValue {
+ syncProfileName:(id:string,nickname:string)=>void;resetProfileNames:()=>void;
  canViewProfile:(targetId:string)=>boolean;user:AuthUser|null;accountUser:AuthUser|null;publicUsers:AuthUser[];accountArea:AccountAreaState;needsOnboarding:boolean;
  administration:AdministrationState;administer:(action:AdministrationAction)=>boolean;resetAdministration:()=>void;
  accountAct:(action:PreferenceAction)=>boolean;completeOnboarding:(draft:OnboardingDraft)=>boolean;confirmPasswordChange:(input:PasswordChangeInput)=>Promise<void>;resetAccountArea:()=>void;
@@ -24,8 +26,9 @@ export function AuthProvider({children}:{children:ReactNode}){
  const [accounts,setAccounts]=useState(loadAccounts);const [sessionUser,setUser]=useState(()=>loadSession(accounts));const {notify}=usePrototype();
  const [administration,setAdministration]=useState(loadAdministration);const [accountArea,setAccountArea]=useState(loadAccountArea);const areaRef=useRef(accountArea);areaRef.current=accountArea;
  const accountUser=sessionUser&&!isSuspended(administration,sessionUser.id)?effectiveUser(sessionUser,administration):null;
- const user=accountUser;
- const publicUsers=[...demoAccounts,...accounts.map(a=>a.user)].map(u=>effectiveUser(u,administration));
+ const [profileNames,setProfileNames]=useState<Record<string,string>>(()=>Object.fromEntries(Object.values(loadProfiles().profiles).map(p=>[p.id,p.nickname])));
+ const user=accountUser?{...accountUser,nickname:profileNames[accountUser.id]||accountUser.nickname}:null;
+ const publicUsers=[...demoAccounts,...accounts.map(a=>a.user)].map(u=>({...effectiveUser(u,administration),nickname:profileNames[u.id]||u.nickname}));
  const commitArea=(next:AccountAreaState)=>{areaRef.current=next;setAccountArea(next);if(!saveAccountArea(next))notify('변경했지만 저장 공간을 사용할 수 없어 현재 세션에만 유지됩니다.');};
  const accountAct=(action:PreferenceAction)=>{try{commitArea(applyAccountArea(areaRef.current,accountUser?.id||null,action));return true;}catch(e){notify(e instanceof Error?e.message:'변경 실패');return false;}};
  const administer=(action:AdministrationAction)=>{try{const next=applyAdministration(administration,user,action,publicUsers.map(u=>u.id));setAdministration(next);notify(saveAdministration(next)?'Mock 상태를 반영했습니다.':'변경했지만 저장할 수 없어 현재 세션에만 유지됩니다.');return true;}catch(e){notify(e instanceof Error?e.message:'변경 실패');return false;}};
@@ -36,6 +39,6 @@ export function AuthProvider({children}:{children:ReactNode}){
  const completeOnboarding=(draft:OnboardingDraft)=>{try{if(!user)throw new Error('로그인 후 이용해 주세요.');const errors=onboardingErrors(draft,3,publicUsers.some(u=>u.id!==user.id&&u.nickname.toLowerCase()===draft.nickname.trim().toLowerCase()));if(errors.length)throw new Error(errors[0]);const updated={...sessionUser!,nickname:draft.nickname.trim(),job:draft.jobs[0],career:draft.career,stacks:[...draft.stacks],interests:draft.interests.filter(i=>interestOptions.slice(1).includes(i)),available:draft.available,onboardingCompleted:true};const next=accounts.map(a=>a.user.id===updated.id?{...a,user:updated}:a);setAccounts(next);setUser(updated);if(!persistAccounts(next))notify('프로필은 반영했지만 계정 변경을 저장할 수 없어 현재 세션에만 유지됩니다.');commitArea(applyAccountArea(areaRef.current,user.id,{type:'onboarding-complete'}));return true;}catch(e){notify(e instanceof Error?e.message:'온보딩 완료 실패');return false;}};
  const confirmPasswordChange=async(input:PasswordChangeInput)=>{if(!user)throw new Error('로그인 후 이용해 주세요.');const errors=passwordChangeErrors(input);if(errors.length)throw new Error(errors[0]);await authenticate(user.email,input.currentPassword,accounts);commitArea(applyAccountArea(areaRef.current,user.id,{type:'password-confirmed'}));};
  const switchDemo=(role:AccountRole|'guest')=>{if(role==='guest'){logout();return true;}const demo=demoAccounts.find(a=>a.role===role);return demo?start(demo,true):false;};
- return <Context.Provider value={{canViewProfile:targetId=>canViewAccount(accountArea,targetId,user?.id||null),user,accountUser,publicUsers,accountArea,needsOnboarding:!!user&&!onboardingComplete(accountArea,user),accountAct,completeOnboarding,confirmPasswordChange,resetAccountArea:()=>commitArea(freshAccountArea()),administration,administer,resetAdministration:()=>{const next=freshAdministration();setAdministration(next);saveAdministration(next);},login,signup,logout,switchDemo,checkEmail:email=>emailAvailable(email,accounts),checkNickname:nickname=>nicknameAvailable(nickname,accounts)}}>{children}</Context.Provider>;
+ return <Context.Provider value={{syncProfileName:(id,nickname)=>setProfileNames(prev=>({...prev,[id]:nickname})),resetProfileNames:()=>setProfileNames({}),canViewProfile:targetId=>canViewAccount(accountArea,targetId,user?.id||null),user,accountUser,publicUsers,accountArea,needsOnboarding:!!user&&!onboardingComplete(accountArea,user),accountAct,completeOnboarding,confirmPasswordChange,resetAccountArea:()=>commitArea(freshAccountArea()),administration,administer,resetAdministration:()=>{const next=freshAdministration();setAdministration(next);saveAdministration(next);},login,signup,logout,switchDemo,checkEmail:email=>emailAvailable(email,accounts),checkNickname:nickname=>!publicUsers.some(u=>u.nickname.toLowerCase()===nickname.trim().toLowerCase())}}>{children}</Context.Provider>;
 }
 export function useAuth(){const value=useContext(Context);if(!value)throw new Error('AuthProvider required');return value;}
