@@ -1,0 +1,75 @@
+@layer devmozip-administration{:where(.scope):global(.admin-page){padding-top:48px;padding-bottom:72px}}
+@layer devmozip-administration{:where(.scope):global(.governance-panel>p){color:#727583;line-height:1.7}}
+@layer devmozip-administration{:where(.scope):global(.admin-heading p){color:#727583;line-height:1.7}}
+@layer devmozip-administration{:where(.scope):global(.governance-panel){background:white;border:1px solid #e7e7ee;border-radius:16px;padding:28px;margin-bottom:24px}}
+@layer devmozip-administration{:where(.scope):global(.governance-panel h2){margin:0 0 16px;font-size:23px}}
+@layer devmozip-administration{:where(.scope):global(.governance-panel h3){margin-top:28px}}
+@layer devmozip-administration{:where(.scope):global(.governance-actions){display:flex;flex-wrap:wrap;gap:8px;align-items:center}}
+@layer devmozip-administration{:where(.scope):global(.governance-panel .text-link){display:inline-block;margin:16px}}
+@layer devmozip-administration{:where(.scope):global(.admin-heading){display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}}
+@layer devmozip-administration{:where(.scope):global(.admin-heading h1){display:flex;align-items:center;gap:10px}}
+@layer devmozip-administration{:where(.scope):global(.admin-workspace){display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px}}
+@layer devmozip-administration{:where(.scope):global(.admin-navigation){display:flex;flex-direction:column;gap:6px;align-self:start;background:white;border:1px solid #e7e7ee;border-radius:14px;padding:12px}}
+@layer devmozip-administration{:where(.scope):global(.admin-navigation button){text-align:left;padding:13px 16px;border:0;background:none;color:#777;border-radius:8px;cursor:pointer}}
+@layer devmozip-administration{:where(.scope):global(.admin-navigation button.active){background:#f1eafa;color:#7652b0;font-weight:700}}
+@layer devmozip-administration{:where(.scope):global(.admin-main){min-height:500px}}
+@layer devmozip-administration{:where(.scope):global(.admin-stats){display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}
+@layer devmozip-administration{:where(.scope):global(.admin-stats article){border:1px solid #eee;border-radius:12px;padding:22px;background:#fafafd;display:grid;gap:12px}}
+@layer devmozip-administration{:where(.scope):global(.admin-stats span){font-size:13px;color:#777}}
+@layer devmozip-administration{:where(.scope):global(.admin-stats strong){font-size:30px;color:#7152ac}}
+@layer devmozip-administration{:where(.scope):global(.admin-row){display:flex;justify-content:space-between;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid #eee;overflow-wrap:anywhere}}
+@layer devmozip-administration{:where(.scope):global(.admin-row a){color:#6b4fa0;font-weight:600}}
+@layer devmozip-administration{:where(.scope):global(.admin-row small){display:block;color:#777;font-size:12px;margin-top:7px}}
+@layer devmozip-administration{:where(.scope):global(.admin-row p){font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-row .button){white-space:nowrap}}
+@layer devmozip-administration{:where(.scope):global(.admin-search){display:block;max-width:420px;margin-bottom:24px;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-search input){margin-top:8px}}
+@layer devmozip-administration{:where(.scope):global(.admin-log){padding:16px;background:#f8f8fb;margin:12px 0;border-radius:10px;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.admin-log code){margin-left:15px;color:#9165a8}}
+@layer devmozip-administration{:where(.scope):global(.governance-denied){text-align:center;padding:100px 0}}
+@layer devmozip-administration{:where(.scope):global(.governance-denied>svg){color:#8360bf}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-workspace){grid-template-columns:1fr}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-navigation){flex-direction:row;overflow-x:auto}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-navigation button){white-space:nowrap}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-stats){grid-template-columns:repeat(2,1fr)}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-row){flex-wrap:wrap}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-heading){flex-wrap:wrap}}}
+@layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.governance-panel){padding:20px}}}
+@layer devmozip-presentation{:where(.scope):global(.governance-actions){gap:10px}}
+@layer devmozip-presentation{:where(.scope):global(.admin-navigation){height:auto}}
+@layer devmozip-presentation{:where(.scope):global(.admin-navigation button){font-size:14px}}
+@layer devmozip-presentation{:where(.scope):global(.admin-row>div){min-width:0}}
+@layer devmozip-presentation{:where(.scope):global(.admin-row .governance-actions){flex-shrink:0}}
+@layer devmozip-presentation{:where(.scope):global(.governance-panel>p){font-size:14px}}
+@layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.admin-row .governance-actions){flex-shrink:1}}}
+@layer devmozip-responsive{:where(.scope):global(.admin-stats){grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:1rem}}
+@layer devmozip-responsive{:where(.scope):global(.admin-workspace){grid-template-columns:minmax(10rem,12.5rem) minmax(0,1fr);gap:var(--layout-gap)}}
+@layer devmozip-responsive{:where(.scope):global(.admin-main){width:100%}}
+@layer devmozip-responsive{:where(.scope):global(.admin-row>div:first-child){flex:1 1 12rem;min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.admin-row .governance-actions){flex:0 1 auto;flex-wrap:wrap}}
+@layer devmozip-responsive{:where(.scope):global(.admin-log code){white-space:normal;word-break:break-word}}
+@layer devmozip-responsive{:where(.scope):global(.governance-panel){padding:clamp(1rem,2.5vw,1.75rem)}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-workspace){grid-template-columns:minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-heading){flex-wrap:wrap;align-items:flex-start}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-navigation){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));overflow:visible;gap:.375rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-navigation button){white-space:normal;padding:.625rem .75rem;font-size:.8125rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-row){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.admin-heading .demo-pill){max-width:100%}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.admin-stats){grid-template-columns:repeat(2,minmax(0,1fr))}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.admin-stats article){padding:1rem}
+}}

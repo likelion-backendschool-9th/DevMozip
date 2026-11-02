@@ -1,0 +1,62 @@
+@layer devmozip-project{:where(.scope):global(.project-detail-page){padding-top:35px;padding-bottom:65px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-heading){margin:26px 0 30px;border-bottom:1px solid var(--border);padding-bottom:25px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-labels){display:flex;align-items:center;gap:9px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-heading h1){font-size:30px;letter-spacing:-1.1px;margin:15px 0 10px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-heading>p){font-size:13px;color:#9d86ae;margin:0 0 24px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-layout){display:grid;grid-template-columns:minmax(0,1fr) 310px;align-items:start;gap:27px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-main){display:flex;flex-direction:column;gap:22px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-sidebar){display:flex;flex-direction:column;gap:20px;position:sticky;top:105px}}
+@layer devmozip-project{:where(.scope):global(.apply-summary .eyebrow){font-size:8px}}
+@layer devmozip-project{:where(.scope):global(.apply-summary h2){font-size:20px;margin:13px 0 17px}}
+@layer devmozip-project{:where(.scope):global(.apply-summary>p:not(.auth-hint)){display:flex;align-items:center;gap:8px;font-size:10px;color:#a68db8;margin:9px 0}}
+@layer devmozip-project{:where(.scope):global(.apply-summary>.button){width:100%;font-size:12px;margin-top:18px;padding:11px 7px}}
+@layer devmozip-project{:where(.scope):global(.apply-summary .auth-hint){font-size:9px;margin:15px 0 0;line-height:1.9;color:#b49ac6}}
+@layer devmozip-project{:where(.scope):global(.application-status){border:1px solid #e5d9f3;background:#faf7ff;padding:15px;border-radius:9px;margin-top:18px;color:var(--purple)}}
+@layer devmozip-project{:where(.scope):global(.application-status strong){font-size:13px}}
+@layer devmozip-project{:where(.scope):global(.application-status p){font-size:10px;margin:7px 0;color:#a58bb6;overflow-wrap:anywhere}}
+@layer devmozip-project{:where(.scope):global(.application-status small){font-size:9px;color:#ad94bd}}
+@layer devmozip-project{:where(.scope):global(.application-restriction){font-size:10px!important;color:#ad95ba!important;line-height:1.9}}
+@layer devmozip-project{:where(.scope):global(.project-host h3){font-size:12px;margin:0 0 17px}}
+@layer devmozip-project{:where(.scope):global(.project-host>a:not(.button)){display:flex;gap:11px;align-items:center}}
+@layer devmozip-project{:where(.scope):global(.project-host strong){display:block;font-size:12px;color:#8e71a0}}
+@layer devmozip-project{:where(.scope):global(.project-host small){display:block;font-size:9px;color:#b298c5;margin-top:3px}}
+@layer devmozip-project{:where(.scope):global(.project-host .button){margin-top:22px;font-size:10px;width:100%;padding:9px}}
+@layer devmozip-project{:where(.scope):global(.project-host .auth-hint){font-size:9px;margin-bottom:0}}
+@layer devmozip-project{:where(.scope):global(.role-requirements){border:1px solid var(--border);border-radius:9px;overflow:hidden}}
+@layer devmozip-project{:where(.scope):global(.role-row){display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;padding:13px 16px;border-top:1px solid var(--border);font-size:11px;color:#a085b3}}
+@layer devmozip-project{:where(.scope):global(.role-row:first-child){border:0}}
+@layer devmozip-project{:where(.scope):global(.role-row strong){font-weight:500;color:#9476a8}}
+@layer devmozip-project{:where(.scope):global(.role-table-heading){background:#faf7fd;color:#b8a2c8;font-size:9px}}
+@layer devmozip-project{:where(.scope):global(.project-schedule){margin:0;display:flex;flex-direction:column;gap:17px}}
+@layer devmozip-project{:where(.scope):global(.project-schedule>div){display:flex;gap:30px;font-size:11px}}
+@layer devmozip-project{:where(.scope):global(.project-schedule dt){color:#ad93bd;min-width:65px}}
+@layer devmozip-project{:where(.scope):global(.project-schedule dd){margin:0;color:#9276a5}}
+@layer devmozip-project{:where(.scope):global(.project-detail-main .auth-hint){font-size:10px}}
+@layer devmozip-project{:where(.scope):global(.project-detail-page .preserve-text){overflow-wrap:anywhere}}
+@layer devmozip-project{@media(max-width:1050px){:where(.scope):global(.project-detail-layout){grid-template-columns:minmax(0,1fr) 280px;gap:20px}}}
+@layer devmozip-project{@media(max-width:1050px){:where(.scope):global(.project-detail-sidebar .profile-section){padding:21px}}}
+@layer devmozip-project{@media(max-width:1050px){:where(.scope):global(.project-detail-heading h1){font-size:26px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-detail-heading h1){font-size:23px;line-height:1.6}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-detail-heading>p){font-size:12px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-detail-layout){grid-template-columns:1fr}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-detail-sidebar){position:static;grid-row:1}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-detail-main .profile-section){padding:22px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.role-row){padding:12px;font-size:10px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.role-table-heading){font-size:9px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-schedule>div){gap:15px;font-size:10px}}}
+@layer devmozip-project{:where(.scope):global(.project-detail-heading h1){overflow-wrap:anywhere}}
+@layer devmozip-messaging{:where(.scope):global(.project-host .auth-hint){font-size:9px}}
+@layer devmozip-presentation{:where(.scope):global(.project-detail-layout>*){min-width:0}}
+@layer devmozip-presentation{:where(.scope):global(.role-row){font-size:12px}}
+@layer devmozip-presentation{:where(.scope):global(.project-schedule>div){font-size:12px}}
+@layer devmozip-presentation{:where(.scope):global(.application-restriction){font-size:12px}}
+@layer devmozip-presentation{:where(.scope):global(.project-host .button){font-size:13px}}
+@layer devmozip-responsive{:where(.scope):global(.project-detail-layout){grid-template-columns:minmax(0,1fr) minmax(15rem,20rem);gap:var(--layout-gap)}}
+@layer devmozip-responsive{:where(.scope):global(.project-host){min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.project-detail-sidebar){min-width:0}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.project-detail-layout){grid-template-columns:minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.role-row){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:.5rem;padding:.75rem}
+}}

@@ -1,2 +1,0 @@
-import { planFeatures } from '../../mocks/administration';
-export function PlanComparison(){return <div className="management-table-scroll"><table className="management-table"><caption>무료 / 프리미엄 기능 비교</caption><thead><tr><th>기능</th><th>무료</th><th>프리미엄 <span className="premium-label">PRO</span></th></tr></thead><tbody>{planFeatures.map(([label,free,premium])=><tr key={label}><th scope="row">{label}</th><td>{free}</td><td>{premium}</td></tr>)}</tbody></table></div>;}

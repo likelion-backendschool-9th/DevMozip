@@ -1,0 +1,10 @@
+@layer devmozip-global{:where(.scope):global(.route-grid){display:grid;grid-template-columns:repeat(3,1fr);gap:14px}}
+@layer devmozip-global{:where(.scope):global(.route-card){background:#fff;border:1px solid var(--border);border-radius:10px;padding:19px 21px;transition:border-color .15s,box-shadow .15s}}
+@layer devmozip-global{:where(.scope):global(.route-card:hover){border-color:#baa9ef;box-shadow:0 4px 18px #77629d0d}}
+@layer devmozip-global{:where(.scope):global(.route-card>div){display:flex;justify-content:space-between;align-items:center}}
+@layer devmozip-global{:where(.scope):global(.route-group){font-size:10px;color:#8e83ab}}
+@layer devmozip-global{:where(.scope):global(.stage-label){font-size:9px;color:#9697a7;background:#f5f5f8;border-radius:4px;padding:2px 6px}}
+@layer devmozip-global{:where(.scope):global(.route-card h3){display:flex;justify-content:space-between;align-items:center;font-size:14px;margin:12px 0 5px}}
+@layer devmozip-global{:where(.scope):global(.route-card h3 svg){color:#aaa7ba}}
+@layer devmozip-global{:where(.scope):global(.route-card p){font-size:11px;color:var(--muted);margin:0}}
+@layer devmozip-global{@media(max-width:800px){:where(.scope):global(.route-grid){grid-template-columns:repeat(2,1fr)}}}

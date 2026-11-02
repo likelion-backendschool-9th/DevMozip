@@ -1,0 +1,6 @@
+@layer devmozip-account{:where(.scope):global(.personal-page-heading){padding:4px 0 24px}}
+@layer devmozip-account{:where(.scope):global(.personal-page-heading h1){font-size:28px;letter-spacing:-.8px;margin:12px 0}}
+@layer devmozip-account{:where(.scope):global(.personal-page-heading>p){font-size:14px;color:var(--muted)}}
+@layer devmozip-account{:where(.scope):global(.personal-post-list){display:grid;gap:24px;margin-top:24px}}
+@layer devmozip-account{:where(.scope):global(.personal-post-list .sns-post-card){margin:0}}
+@layer devmozip-account{:where(.scope):global(.saved-date){font-size:12px;color:var(--muted);margin:0 0 10px}}

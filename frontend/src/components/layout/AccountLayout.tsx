@@ -1,7 +1,0 @@
-import {useId,useState,type ReactNode} from 'react';
-import {Link,NavLink} from 'react-router-dom';
-import {UserRound,Heart,Bookmark,Settings} from 'lucide-react';
-import {useAuth} from '../../app/providers/AuthProvider';
-import {accountMenu} from '../../mocks/account';
-const icons=[UserRound,Heart,Bookmark,Settings];
-export function AccountLayout({children}:{children:ReactNode}){const {user:current}=useAuth();const [menuOpen,setMenuOpen]=useState(false);const menuId=useId();if(!current)return <div className="container planned"><section className="planned-card"><h1>로그인 후 개인 계정을 관리해 주세요.</h1><p>본인의 좋아요·북마크와 계정 정보만 확인할 수 있습니다.</p><Link className="button" to="/login">로그인하기</Link></section></div>;return <div className="container personal-workspace"><aside className="account-aside" data-open={menuOpen}><div className="account-aside-heading"><span>MY WORKSPACE</span><strong>{current.nickname}</strong><small>개인 계정 관리</small></div><button type="button" className="account-menu-toggle" aria-expanded={menuOpen} aria-controls={menuId} onClick={()=>setMenuOpen(v=>!v)}>개인 계정 메뉴 <span>{menuOpen?'접기 −':'펼치기 +'}</span></button><nav id={menuId} aria-label="개인 계정 관리">{accountMenu.map((item,i)=>{const Icon=icons[i];return <NavLink onClick={()=>setMenuOpen(false)} key={item.key} end to={item.key==='profile'?`/users/${current.id}`:item.path}><Icon size={17}/><span>{item.label}</span></NavLink>;})}</nav><p>나의 기록과 설정을 한곳에서 관리하세요.</p></aside><div className="personal-main">{children}</div></div>;}

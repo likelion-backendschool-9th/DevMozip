@@ -1,7 +1,0 @@
-import { useState } from 'react';
-import { useAuth } from '../../app/providers/AuthProvider';
-import { useProfiles } from '../../app/providers/ProfileProvider';
-import { followPreferences } from '../../services/followService';
-import { Modal } from '../../components/common/Modal';
-import { Button } from '../../components/common/Button';
-export function FollowSettings({targetId,onClose}:{targetId:string;onClose:()=>void}){const {user}=useAuth();const {state,act}=useProfiles();const [settings,setSettings]=useState(()=>followPreferences(state,user?.id||'',targetId));return <Modal title="팔로잉 개발자 알림 설정" onClose={onClose}><p>{state.profiles[targetId]?.nickname}님의 새로운 소식을 선택해 주세요.</p><form className="profile-form" onSubmit={e=>{e.preventDefault();if(act({type:'follow-preferences',targetId,preferences:settings}))onClose();}}><label className="checkbox-label"><input type="checkbox" checked={settings.activity} onChange={e=>setSettings({...settings,activity:e.target.checked})}/>새 게시글 활동 알림</label><label className="checkbox-label"><input type="checkbox" checked={settings.projects} onChange={e=>setSettings({...settings,projects:e.target.checked})}/>새 프로젝트 모집 알림</label><p className="auth-hint">선택 후 새로 작성되는 글·공고에만 Mock 알림이 생성됩니다. 실제 푸시/메일은 보내지 않습니다. 언팔로우하면 설정이 해제됩니다.</p><div className="modal-actions"><Button type="button" variant="secondary" onClick={onClose}>취소</Button><Button type="submit">설정 저장</Button></div></form></Modal>;}

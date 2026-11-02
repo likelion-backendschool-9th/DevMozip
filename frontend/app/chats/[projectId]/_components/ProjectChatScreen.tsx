@@ -1,0 +1,21 @@
+'use client';
+import styles from './ProjectChatScreen.module.css';
+import { KickVoteDialog, KickVotePanel } from '@/app/chats/[projectId]/_components/KickVotePanel';
+import { ProjectDateSimulator } from '@/components/projects/ProjectDateSimulator';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useAuth } from '@/lib/state/AuthProvider';
+import { useProfiles } from '@/lib/state/ProfileProvider';
+import { useProjects } from '@/lib/state/ProjectProvider';
+import { useMessaging } from '@/lib/state/MessagingProvider';
+import { roomAccess } from '@/lib/messaging/messagingService';
+import { ChatWindow } from '@/components/messaging/ChatWindow';
+import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
+export function ProjectChatPage() { const { projectId = '' } = useParams<{
+    projectId: string;
+    postId: string;
+    userId: string;
+}>(); const [target, setTarget] = useState<string | null>(null); const { user } = useAuth(); const { state: profiles } = useProfiles(); const { state: projects, projects: items, now } = useProjects(); const { state, act } = useMessaging(); const project = items.find(p => p.id === projectId); const access = roomAccess(projects, projectId, user?.id || null, now); const room = state.rooms[projectId]; const unread = room?.messages.filter(m => m.senderId !== user?.id && !m.readBy.includes(user?.id || '')).length || 0; useEffect(() => { if (access.canRead && room && unread)
+    act({ type: 'read-group', projectId }); }, [user?.id, projectId, access.canRead, unread, !!room]); if (!access.canRead)
+    return <div className={[styles.scope, "container planned"].join(" ")}><section className={[styles.scope, "planned-card"].join(" ")}><h1>채팅방에 입장할 수 없어요.</h1><p>{access.reason}</p><Link className={[styles.scope, "button"].join(" ")} href={user ? project ? `/projects/${projectId}` : '/projects' : '/login'}>{user ? '프로젝트 확인' : '로그인'}</Link></section></div>; const members = projects.chatMembers[projectId] || []; return <div className={[styles.scope, "container project-chat-page"].join(" ")}><Link className={[styles.scope, "text-link"].join(" ")} href="/messages">← 메신저로</Link><header className={[styles.scope, "section-heading"].join(" ")}><div><div className={[styles.scope, "eyebrow"].join(" ")}>PROJECT TEAM CHAT</div><h1>{project?.title}</h1><p>{access.reason || '프로젝트 참여 상태와 연결된 Mock 단체 채팅입니다.'}</p></div><Link className={[styles.scope, "text-link"].join(" ")} href={`/projects/${projectId}`}>프로젝트 상세 →</Link></header><details className={[styles.scope, "kick-date-details"].join(" ")}><summary>투표 기한 시뮬레이션</summary><ProjectDateSimulator /></details><div className={[styles.scope, "project-chat-layout"].join(" ")}><section className={[styles.scope, "conversation-pane"].join(" ")}><ChatWindow channelKey={projectId} messages={room?.messages || []} members={members} disabled={!access.canWrite} onSend={body => act({ type: 'send-group', projectId, body })}/></section><aside className={[styles.scope, "chat-member-panel"].join(" ")}><h2>채팅방 멤버 <span>{members.length}</span></h2>{members.map(id => { const p = profiles.profiles[id]; return <div key={id}><Link href={`/users/${id}`}><ProfileAvatar name={p?.nickname || '사용자'} color={p?.color || 'lavender'} small/><span><strong>{p?.nickname || id}</strong><small>{id === project?.hostId ? '주최자' : '팀원'}</small></span></Link>{id !== user?.id && <button className={[styles.scope, "kick-request-button"].join(" ")} disabled={!access.canWrite || projects.kickVotes.some(v => v.projectId === projectId && v.status === 'active')} onClick={() => setTarget(id)} aria-label={`${p?.nickname || id} 강퇴 투표 요청`}>강퇴 투표 요청</button>}{project?.status === '프로젝트 종료' && id !== user?.id && <Link className={[styles.scope, "chat-review-link"].join(" ")} href={`/my-projects/${projectId}/manage`}>협업 리뷰 →</Link>}</div>; })}<p className={[styles.scope, "auth-hint"].join(" ")}>지원 승인 시 초대되고 취소 시 퇴장합니다. 실제 WebSocket은 사용하지 않습니다.</p></aside></div><KickVotePanel projectId={projectId} members={members} canWrite={access.canWrite}/>{target && <KickVoteDialog key={`${projectId}:${target}:${user?.id}`} projectId={projectId} targetId={target} members={members} onClose={() => setTarget(null)}/>}</div>; }

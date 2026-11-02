@@ -1,0 +1,5 @@
+@layer devmozip-administration{:where(.scope):global(.advanced-search){margin-top:16px;border:1px solid #e7e2ef;background:white;border-radius:12px;padding:20px;display:grid;gap:16px;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.advanced-search p){color:#777;line-height:1.6}}
+@layer devmozip-administration{:where(.scope):global(.advanced-search label){display:grid;gap:8px}}
+@layer devmozip-administration{:where(.scope):global(.advanced-search label:has(input)){display:flex;align-items:center}}
+@layer devmozip-administration{:where(.scope):global(.advanced-search a){color:#7652b0}}

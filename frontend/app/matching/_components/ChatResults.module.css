@@ -1,0 +1,28 @@
+@layer devmozip-home{:where(.scope):global(.locked-reason){display:flex;align-items:center;gap:6px;font-size:9px;background:#f9f7fd;color:#a295b4;border-radius:7px;padding:11px 9px;margin-top:18px;line-height:1.8}}
+@layer devmozip-home{:where(.scope):global(.locked-reason>svg:last-child){margin-left:auto}}
+@layer devmozip-follow-matching{:where(.scope):global(.matching-reasons){background:#f9f6fd;border:1px solid #eee5f7;padding:13px 13px 13px 26px;margin:18px 0 0;border-radius:8px;font-size:9px;color:#a185b6;line-height:1.9}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-results){margin-top:18px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-results h3){font-size:15px;margin:18px 0 8px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-result-grid){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer){padding:16px!important;min-width:0}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer-heading){display:flex;justify-content:space-between;gap:6px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer-heading b){color:#7c50d9}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer p){font-size:11px;margin:6px 0;color:#778196}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer .tags){flex-wrap:wrap}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer .tags span){font-size:10px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-developer .locked-reason){font-size:10px;margin-top:12px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-card-actions){display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-card-actions .button){font-size:11px;padding:7px 10px;min-height:32px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-project-results){display:grid;gap:10px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-project-results .surface-card){padding:14px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-project-results a:first-child){display:flex;justify-content:space-between;gap:12px;font-size:12px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-project-results b){color:#7855cf}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-project-results p){font-size:11px;color:#7a8495}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-results .matching-reasons){font-size:11px}}
+@layer devmozip-matching-chat{@media(max-width:900px){:where(.scope):global(.chat-result-grid){grid-template-columns:1fr}}}
+@layer devmozip-responsive{:where(.scope):global(.chat-result-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}}
+@layer devmozip-responsive{:where(.scope):global(.chat-project-results a:first-child strong){min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.chat-project-results a:first-child b){flex-shrink:0}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.chat-card-actions .button){flex:1 1 6rem}
+}}

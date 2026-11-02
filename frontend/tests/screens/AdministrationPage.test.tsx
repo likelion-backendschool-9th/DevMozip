@@ -1,0 +1,32 @@
+import { afterEach,describe,expect,it,vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Route,Routes } from '@/tests/helpers/RouterFixture';
+import { PrototypeProvider } from '@/lib/state/PrototypeProvider';
+import { AuthProvider } from '@/lib/state/AuthProvider';
+import { ProfileProvider } from '@/lib/state/ProfileProvider';
+import { ProjectProvider } from '@/lib/state/ProjectProvider';
+import { MessagingProvider } from '@/lib/state/MessagingProvider';
+import { HomeProvider } from '@/lib/state/HomeProvider';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { PremiumPage } from '@/app/premium/_components/PremiumScreen';
+import { AdminPage } from '@/app/admin/_components/AdminScreen';
+import { SESSION_KEY } from '@/lib/account/authService';
+import { ADMINISTRATION_KEY,applyAdministration,freshAdministration } from '@/lib/administration/administrationService';
+import { PROJECT_KEY,freshRecruitmentState } from '@/lib/projects/projectService';
+import { demoAccounts } from '@/mocks/auth';
+import type { AdministrationState } from '@/types/administration';
+const ids=demoAccounts.map(u=>u.id);const [member,premium,admin]=demoAccounts;
+function page(url:string,userId?:string,state:AdministrationState=freshAdministration()){const data=new Map<string,string>([[ADMINISTRATION_KEY,JSON.stringify(state)]]);const projects=freshRecruitmentState();projects.reports.push({id:'report-demo',projectId:'pocket',userId:member.id,reason:'허위 모집 정보',detail:'Mock 신고 내용',createdAt:'2026-10-30'});data.set(PROJECT_KEY,JSON.stringify(projects));if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));vi.stubGlobal('localStorage',{getItem:(k:string)=>data.get(k)||null,setItem:(k:string,v:string)=>data.set(k,v)});vi.stubGlobal('sessionStorage',{getItem:()=>null});return renderToStaticMarkup(<PrototypeProvider><AuthProvider><ProfileProvider><ProjectProvider><MessagingProvider><HomeProvider><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route path="/premium" element={<PremiumPage/>}/><Route path="/admin" element={<AdminPage/>}/></Route></Routes></MemoryRouter></HomeProvider></MessagingProvider></ProjectProvider></ProfileProvider></AuthProvider></PrototypeProvider>);}
+afterEach(()=>vi.unstubAllGlobals());
+describe('요금제와 운영 화면',()=>{
+ it('비로그인은 요금제 비교와 로그인 버튼을 본다',()=>{const html=page('/premium');for(const text of ['무료 / 프리미엄 기능 비교','월 15회','로그인하고 체험하기','실제 청구 없음'])expect(html).toContain(text);expect(html).not.toContain('데모 구독 해지');});
+ it('무료는 전환, 프리미엄은 해지 및 결제 예시를 본다',()=>{expect(page('/premium',member.id)).toContain('무료로 데모 구독 전환');const html=page('/premium',premium.id);expect(html).toContain('데모 구독 해지');expect(html).toContain('결제 완료 예시');});
+ it('구독 저장값이 헤더 PRO·권한·한도를 바꾸며 해지 후 복원된다',()=>{let s=applyAdministration(freshAdministration(),member,{type:'subscribe'},ids);let html=page('/premium',member.id,s);expect(html).toContain('premium-label');expect(html).toContain('프리미엄 구독 활성');expect(html).toContain('/ 100회');s=applyAdministration(s,{...member,role:'premium'},{type:'unsubscribe'},ids);html=page('/premium',member.id,s);expect(html).toContain('/ 15회');expect(html).not.toContain('데모 구독 해지');});
+ it('비로그인·일반·프리미엄은 관리자 기능을 볼 수 없다',()=>{for(const id of [undefined,member.id,premium.id]){const html=page('/admin',id);expect(html).toContain('관리자 전용 화면입니다');expect(html).not.toContain('회원 목록');}});
+ it('관리자는 통계와 모든 관리 메뉴를 본다',()=>{const html=page('/admin',admin.id);for(const text of ['오늘의 DevMozip','회원','프로젝트 신고','게시글·댓글','리뷰 키워드','신뢰 온도','AI 사용량','구독 현황'])expect(html).toContain(text);expect(page('/premium',admin.id)).not.toContain('데모 구독 해지');});
+ it('회원 제재와 해제 상태가 회원 목록에 반영된다',()=>{let s=applyAdministration(freshAdministration(),admin,{type:'member',targetId:member.id,status:'suspended',reason:'운영 규칙 위반 시연'},ids);expect(page('/admin?tab=회원',admin.id,s)).toContain('운영 규칙 위반 시연');expect(page('/premium',member.id,s)).toContain('로그인하고 체험하기');s=applyAdministration(s,admin,{type:'member',targetId:member.id,status:'active',reason:'해제 완료'},ids);expect(page('/premium',member.id,s)).toContain('무료로 데모 구독 전환');});
+ it('프로젝트 신고 결과가 저장되어 표시된다',()=>{const s=applyAdministration(freshAdministration(),admin,{type:'resolve',reportId:'project:report-demo',status:'dismissed',note:'검토 결과 정상 모집'},ids);const html=page('/admin?tab=프로젝트 신고',admin.id,s);expect(html).toContain('검토 결과 정상 모집');expect(html).toContain('기각');});
+ it('게시글과 댓글 관리 동작을 제공한다',()=>{const html=page('/admin?tab=게시글·댓글',admin.id);expect(html).toContain('글 숨김');expect(html).toContain('댓글 삭제');});
+ it('커스텀 리뷰 선택지가 관리자 화면에 표시된다',()=>{const s=applyAdministration(freshAdministration(),admin,{type:'keyword-add',keyword:'코드 리뷰가 꼼꼼해요'},ids);expect(page('/admin?tab=리뷰 키워드',admin.id,s)).toContain('코드 리뷰가 꼼꼼해요');});
+ it('신뢰 온도·AI 오류 예시·구독 현황을 제공한다',()=>{expect(page('/admin?tab=신뢰 온도',admin.id)).toContain('36.5°C');expect(page('/admin?tab=AI 사용량',admin.id)).toContain('MOCK_LIMIT_REACHED');const s=applyAdministration(freshAdministration(),member,{type:'subscribe'},ids);expect(page('/admin?tab=구독 현황',admin.id,s)).toContain('프리미엄 2명');});
+});

@@ -1,0 +1,16 @@
+@layer devmozip-auth{:where(.scope):global(.auth-form){display:flex;flex-direction:column;gap:9px}}
+@layer devmozip-auth{:where(.scope):global(.auth-form>label:not(.checkbox-label)){font-size:12px;font-weight:600;display:block;margin-top:9px}}
+@layer devmozip-auth{:where(.scope):global(.auth-form .form-input){font-size:12px;padding:12px}}
+@layer devmozip-auth{:where(.scope):global(.auth-form .form-input[aria-invalid=true]){border-color:#ca5c73}}
+@layer devmozip-auth{:where(.scope):global(.auth-submit){width:100%;margin-top:12px;font-size:13px}}
+@layer devmozip-auth{:where(.scope):global(.auth-switch){font-size:11px;text-align:center;color:var(--muted);margin:22px 0}}
+@layer devmozip-auth{:where(.scope):global(.auth-switch a){font-weight:650;color:var(--purple);margin-left:5px}}
+@layer devmozip-auth{:where(.scope):global(.auth-form .check-field){display:flex;gap:8px}}
+@layer devmozip-auth{:where(.scope):global(.check-field .form-input){min-width:0}}
+@layer devmozip-auth{:where(.scope):global(.check-field .button){font-size:11px;padding:8px 12px;white-space:nowrap}}
+@layer devmozip-auth{:where(.scope):global(.auth-form .form-error){font-size:10px;margin:0}}
+@layer devmozip-auth{:where(.scope):global(.check-success){font-size:10px;color:#309b86;margin:0}}
+@layer devmozip-auth{:where(.scope):global(.auth-form fieldset){border:0;padding:0;margin:12px 0 0;min-width:0}}
+@layer devmozip-auth{:where(.scope):global(.auth-form legend){font-size:12px;font-weight:600;margin-bottom:10px;padding:0}}
+@layer devmozip-auth{:where(.scope):global(.auth-form legend span){color:#a096ac;font-size:9px;font-weight:400;margin-left:8px}}
+@layer devmozip-auth{:where(.scope):global(.auth-form .availability){margin-top:13px;padding:12px;background:#f8f7fb;border-radius:8px}}

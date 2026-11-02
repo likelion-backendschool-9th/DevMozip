@@ -22,3 +22,10 @@ build/
 .codex/
 .agents/
 .aws/
+
+# YAML configuration
+*.yml
+
+# Next.js output
+.next/
+out/
