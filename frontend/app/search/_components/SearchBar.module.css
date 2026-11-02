@@ -1,22 +1,22 @@
 @layer devmozip-global{:where(.scope):global(.header){background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}}
 @layer devmozip-home{:where(.scope):global(.header-search){display:flex;align-items:center;border:1px solid var(--border);background:#fafafd;border-radius:9px;margin-left:auto;width:330px;padding:0 6px}}
-@layer devmozip-home{:where(.scope):global(.header-search select){border:0;border-right:1px solid var(--border);background:none;color:#616173;font-size:11px;padding:0 9px}}
-@layer devmozip-home{:where(.scope):global(.header-search .form-input){min-width:0;border:0;background:none;box-shadow:none;padding:10px;font-size:11px}}
+@layer devmozip-home{:where(.scope):global(.header-search select){border:0;border-right:1px solid var(--border);background:none;color:#616173;font-size:14px;padding:0 9px}}
+@layer devmozip-home{:where(.scope):global(.header-search .form-input){min-width:0;border:0;background:none;box-shadow:none;padding:10px;font-size:14px}}
 @layer devmozip-home{:where(.scope):global(.header-search .icon-button){flex-shrink:0;width:28px}}
 @layer devmozip-home{@media(max-width:1180px){:where(.scope):global(.header-search){width:260px}}}
-@layer devmozip-home{@media(max-width:1180px){:where(.scope):global(.header-search .form-input){font-size:10px}}}
+@layer devmozip-home{@media(max-width:1180px){:where(.scope):global(.header-search .form-input){font-size:14px}}}
 @layer devmozip-home{@media(max-width:960px){:where(.scope):global(.header-search){order:3;width:100%;margin:0}}}
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.header-search){order:3}}}
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.header .logo .brand-logo){width:78px;height:52px}}}
-@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.header nav a){font-size:11px;padding:6px 0}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.header nav a){font-size:14px;padding:6px 0}}}
 @layer devmozip-home{@media(max-width:450px){:where(.scope):global(.header-search){order:4}}}
 @layer devmozip-search{:where(.scope):global(.search-main-bar){display:flex;align-items:center;border:1px solid #dcd1f0;background:white;border-radius:11px;padding:7px;box-shadow:0 8px 30px #7955df08;text-align:left}}
-@layer devmozip-search{:where(.scope):global(.search-main-bar select){font-size:12px;border:0;border-right:1px solid var(--border);background:none;padding:5px 15px;color:#806b93;outline-offset:3px}}
-@layer devmozip-search{:where(.scope):global(.search-main-bar .form-input){border:0;box-shadow:none;font-size:12px;padding:10px 15px;min-width:0}}
-@layer devmozip-search{:where(.scope):global(.search-main-bar .button){font-size:11px;padding:10px 20px;flex-shrink:0}}
-@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar select){padding:5px 8px;font-size:11px;max-width:95px}}}
-@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar .form-input){font-size:10px;padding:10px}}}
-@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar .button){padding:10px;font-size:10px;gap:5px}}}
+@layer devmozip-search{:where(.scope):global(.search-main-bar select){font-size:14px;border:0;border-right:1px solid var(--border);background:none;padding:5px 15px;color:#806b93;outline-offset:3px}}
+@layer devmozip-search{:where(.scope):global(.search-main-bar .form-input){border:0;box-shadow:none;font-size:14px;padding:10px 15px;min-width:0}}
+@layer devmozip-search{:where(.scope):global(.search-main-bar .button){font-size:14px;padding:10px 20px;flex-shrink:0}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar select){padding:5px 8px;font-size:14px;max-width:95px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar .form-input){font-size:14px;padding:10px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-main-bar .button){padding:10px;font-size:14px;gap:5px}}}
 @layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-main-bar .form-input){padding:9px 6px}}}
 @layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-main-bar .button){font-size:0;gap:0}}}
 @layer devmozip-presentation{:where(.scope):global(.header-search){min-width:180px}}

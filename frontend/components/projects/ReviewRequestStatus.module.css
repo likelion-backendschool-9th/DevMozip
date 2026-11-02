@@ -1,6 +1,6 @@
 @layer devmozip-project-workspace{:where(.scope):global(.review-request-row){display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;border-top:1px solid var(--border)}}
 @layer devmozip-project-workspace{:where(.scope):global(.review-request-row>div){min-width:0;flex:1}}
-@layer devmozip-project-workspace{:where(.scope):global(.review-request-row small){display:block;color:var(--muted);font-size:12px;margin-top:7px}}
-@layer devmozip-project-workspace{:where(.scope):global(.review-request-row>span){font-size:12px;color:var(--purple);white-space:nowrap}}
+@layer devmozip-project-workspace{:where(.scope):global(.review-request-row small){display:block;color:var(--muted);font-size:14px;margin-top:7px}}
+@layer devmozip-project-workspace{:where(.scope):global(.review-request-row>span){font-size:14px;color:var(--purple);white-space:nowrap}}
 @layer devmozip-project-workspace{@media(max-width:900px){:where(.scope):global(.review-request-row){flex-wrap:wrap}}}
 @layer devmozip-responsive{:where(.scope):global(.review-request-row){flex-wrap:wrap;min-width:0}}

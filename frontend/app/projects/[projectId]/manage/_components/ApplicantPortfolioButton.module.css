@@ -1,6 +1,6 @@
 @layer devmozip-profile{:where(.scope):global(.portfolio-details){border-top:1px solid var(--border);margin-top:22px;padding-top:20px}}
 @layer devmozip-profile{:where(.scope):global(.portfolio-details dl){display:grid;grid-template-columns:1fr 1fr;gap:20px 35px;margin:20px 0}}
-@layer devmozip-profile{:where(.scope):global(.portfolio-details dt){font-size:11px;font-weight:650;color:#806b92}}
-@layer devmozip-profile{:where(.scope):global(.portfolio-details dd){font-size:12px;color:#9b8aa9;margin:7px 0 0}}
+@layer devmozip-profile{:where(.scope):global(.portfolio-details dt){font-size:14px;font-weight:650;color:#806b92}}
+@layer devmozip-profile{:where(.scope):global(.portfolio-details dd){font-size:14px;color:#9b8aa9;margin:7px 0 0}}
 @layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.portfolio-details dl){grid-template-columns:1fr;gap:17px}}}
-@layer devmozip-presentation{:where(.scope):global(.portfolio-details dt){font-size:12px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.portfolio-details dt){font-size:14px;color:var(--muted)}}
