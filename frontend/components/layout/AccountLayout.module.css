@@ -4,15 +4,15 @@
 @layer devmozip-account{:where(.scope):global(.personal-main .profile-breadcrumb){padding-top:0;margin-top:0}}
 @layer devmozip-account{:where(.scope):global(.account-aside){position:sticky;top:104px;border:1px solid var(--border);border-radius:14px;background:white;padding:22px 14px;min-width:0}}
 @layer devmozip-account{:where(.scope):global(.account-aside-heading){padding:0 10px 20px;display:grid;gap:6px;border-bottom:1px solid var(--border)}}
-@layer devmozip-account{:where(.scope):global(.account-aside-heading>span){color:var(--purple);font-size:10px;letter-spacing:1px;font-weight:700}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading>span){color:var(--purple);font-size:14px;letter-spacing:1px;font-weight:700}}
 @layer devmozip-account{:where(.scope):global(.account-aside-heading strong){font-size:19px;overflow-wrap:anywhere}}
-@layer devmozip-account{:where(.scope):global(.account-aside-heading small){color:var(--muted);font-size:12px}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading small){color:var(--muted);font-size:14px}}
 @layer devmozip-account{:where(.scope):global(.account-aside nav){height:auto;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:16px;white-space:normal}}
-@layer devmozip-account{:where(.scope):global(.account-aside nav a){height:auto;display:flex;gap:9px;padding:12px 10px;border-radius:8px;font-size:13px;color:var(--muted);line-height:1.6}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav a){height:auto;display:flex;gap:9px;padding:12px 10px;border-radius:8px;font-size:15px;color:var(--muted);line-height:1.6}}
 @layer devmozip-account{:where(.scope):global(.account-aside nav a svg){flex-shrink:0}}
 @layer devmozip-account{:where(.scope):global(.account-aside nav a.active){background:var(--purple-soft);color:var(--purple)}}
 @layer devmozip-account{:where(.scope):global(.account-aside nav a.active:after){display:none}}
-@layer devmozip-account{:where(.scope):global(.account-aside>p){font-size:11px;color:var(--muted);padding:10px 10px 0;margin-bottom:0}}
+@layer devmozip-account{:where(.scope):global(.account-aside>p){font-size:14px;color:var(--muted);padding:10px 10px 0;margin-bottom:0}}
 @layer devmozip-account{:where(.scope):global(.personal-main .profile-top-actions){flex-wrap:wrap}}
 @layer devmozip-account{:where(.scope):global(.personal-main .review-overview){grid-template-columns:1fr}}
 @layer devmozip-account{:where(.scope):global(.personal-main .keyword-bubbles){flex-wrap:wrap}}
@@ -30,7 +30,7 @@
 @layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside-heading){display:none}}}
 @layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside nav){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}}}
 @layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside>p){display:none}}}
-@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside nav a){font-size:12px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside nav a){font-size:14px}}}
 @layer devmozip-responsive{:where(.scope):global(.personal-workspace){grid-template-columns:minmax(11rem,14rem) minmax(0,1fr);gap:var(--layout-gap)}}
 @layer devmozip-responsive{:where(.scope):global(.personal-main>.container){width:100%;max-width:none}}
 @layer devmozip-responsive{:where(.scope):global(.account-aside){top:6rem}}
@@ -56,10 +56,10 @@
  :where(.scope):global(.account-aside>p){display:none}
 }}
 @layer devmozip-responsive{@media(max-width:50rem){
- :where(.scope):global(.account-menu-toggle){display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;padding:.5rem;border:0;background:transparent;color:var(--text);font-weight:650;font-size:.8125rem;min-height:2.5rem;text-align:left}
+ :where(.scope):global(.account-menu-toggle){display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;padding:.5rem;border:0;background:transparent;color:var(--text);font-weight:650;font-size:0.9375rem;min-height:2.5rem;text-align:left}
 }}
 @layer devmozip-responsive{@media(max-width:50rem){
- :where(.scope):global(.account-menu-toggle>span){font-size:.75rem;color:var(--purple)}
+ :where(.scope):global(.account-menu-toggle>span){font-size:0.875rem;color:var(--purple)}
 }}
 @layer devmozip-responsive{@media(max-width:50rem){
  :where(.scope):global(.account-aside nav){display:none;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:.5rem}

@@ -1,11 +1,11 @@
 @layer devmozip-home{:where(.scope):global(.home-page){padding-bottom:55px}}
-@layer devmozip-home{:where(.scope):global(.home-demo-note){font-size:10px;color:#92909e;display:flex;align-items:center;gap:7px;margin:22px 0 0}}
+@layer devmozip-home{:where(.scope):global(.home-demo-note){font-size:14px;color:#92909e;display:flex;align-items:center;gap:7px;margin:22px 0 0}}
 @layer devmozip-home{:where(.scope):global(.premium-banner){display:flex;align-items:center;gap:20px;padding:24px 28px;margin-top:36px;border:1px solid #e8e0f8;background:linear-gradient(110deg,#f4efff,#f5fbfc);border-radius:12px}}
 @layer devmozip-home{:where(.scope):global(.premium-spark){color:#9475d6}}
-@layer devmozip-home{:where(.scope):global(.premium-banner strong){font-size:14px}}
-@layer devmozip-home{:where(.scope):global(.premium-banner p){font-size:11px;color:#9b8fae;margin:4px 0 0}}
-@layer devmozip-home{:where(.scope):global(.premium-banner>a){margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--purple);font-weight:650;white-space:nowrap}}
+@layer devmozip-home{:where(.scope):global(.premium-banner strong){font-size:15px}}
+@layer devmozip-home{:where(.scope):global(.premium-banner p){font-size:14px;color:#9b8fae;margin:4px 0 0}}
+@layer devmozip-home{:where(.scope):global(.premium-banner>a){margin-left:auto;display:flex;align-items:center;gap:12px;font-size:14px;color:var(--purple);font-weight:650;white-space:nowrap}}
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.premium-banner){padding:20px;gap:12px;flex-wrap:wrap}}}
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.premium-banner>a){margin-left:38px}}}
-@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.premium-banner strong){font-size:12px}}}
-@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-demo-note){font-size:9px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.premium-banner strong){font-size:14px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-demo-note){font-size:14px}}}

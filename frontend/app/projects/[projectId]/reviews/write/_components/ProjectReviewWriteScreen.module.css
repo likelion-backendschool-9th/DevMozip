@@ -2,19 +2,19 @@
 @layer devmozip-project-workspace{:where(.scope):global(.project-review-write-page h1){font-size:29px;letter-spacing:-.8px;margin:10px 0}}
 @layer devmozip-project-workspace{:where(.scope):global(.project-review-write-page>header>p){color:var(--muted)}}
 @layer devmozip-project-workspace{:where(.scope):global(.workspace-actions){display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:24px}}
-@layer devmozip-project-workspace{:where(.scope):global(.workspace-actions>p){font-size:13px;color:var(--muted);flex:1;min-width:200px}}
+@layer devmozip-project-workspace{:where(.scope):global(.workspace-actions>p){font-size:15px;color:var(--muted);flex:1;min-width:200px}}
 @layer devmozip-project-workspace{:where(.scope):global(.project-review-write-page){max-width:1120px}}
 @layer devmozip-project-workspace{:where(.scope):global(.project-review-write-page>header){margin:28px 0}}
 @layer devmozip-project-workspace{:where(.scope):global(.project-review-write-page>header>h2){font-size:17px;color:#70617f;font-weight:500}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-review-card>header){display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-review-card>header>h2){margin:0;font-size:21px}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-review-card fieldset){border:0;padding:0;margin:22px 0}}
-@layer devmozip-project-workspace{:where(.scope):global(.team-review-card legend){font-size:13px;font-weight:600;margin-bottom:13px}}
+@layer devmozip-project-workspace{:where(.scope):global(.team-review-card legend){font-size:15px;font-weight:600;margin-bottom:13px}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-rating-input){display:flex;flex-wrap:wrap;gap:12px}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-rating-input>label){position:relative}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-rating-input input){position:absolute;width:1px;height:1px;opacity:0}}
-@layer devmozip-project-workspace{:where(.scope):global(.team-rating-input span){display:flex;align-items:center;gap:6px;padding:10px 14px;background:#faf9fd;border:1px solid var(--border);border-radius:8px;color:#b2a2cb;font-size:13px;cursor:pointer}}
-@layer devmozip-project-workspace{:where(.scope):global(.team-rating-input small){font-size:11px;color:var(--muted)}}
+@layer devmozip-project-workspace{:where(.scope):global(.team-rating-input span){display:flex;align-items:center;gap:6px;padding:10px 14px;background:#faf9fd;border:1px solid var(--border);border-radius:8px;color:#b2a2cb;font-size:15px;cursor:pointer}}
+@layer devmozip-project-workspace{:where(.scope):global(.team-rating-input small){font-size:14px;color:var(--muted)}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-rating-input input:checked+span){color:var(--purple);border-color:#bda9ed;background:#f1eafa}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-rating-input input:focus-visible+span){outline:3px solid var(--cyan);outline-offset:2px}}
 @layer devmozip-project-workspace{:where(.scope):global(.team-review-card fieldset:disabled){opacity:.55}}

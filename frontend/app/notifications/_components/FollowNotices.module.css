@@ -1,14 +1,14 @@
 @layer devmozip-project-management{:where(.scope):global(.project-notices h2){font-size:19px;letter-spacing:-.5px;margin-bottom:8px}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices h2>span){color:var(--purple);font-size:13px;margin-left:6px}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices h2>span){color:var(--purple);font-size:15px;margin-left:6px}}
 @layer devmozip-project-management{:where(.scope):global(.project-notices article){background:white;border:1px solid var(--border);border-radius:11px;padding:20px 23px;margin-top:14px}}
 @layer devmozip-project-management{:where(.scope):global(.project-notices article>div){display:flex;align-items:center;justify-content:space-between;gap:15px}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices article strong){font-size:12px;color:#9377a5}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices time){font-size:9px;color:#b39fc0}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices article p){color:#a68ab9;font-size:11px;line-height:1.9;overflow-wrap:anywhere}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices article a){font-size:10px;color:#a07bbd}}
-@layer devmozip-project-management{:where(.scope):global(.project-notices article small){font-size:9px;margin-left:12px;color:#b29bc3}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices article strong){font-size:14px;color:#9377a5}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices time){font-size:14px;color:#b39fc0}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices article p){color:#a68ab9;font-size:14px;line-height:1.9;overflow-wrap:anywhere}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices article a){font-size:14px;color:#a07bbd}}
+@layer devmozip-project-management{:where(.scope):global(.project-notices article small){font-size:14px;margin-left:12px;color:#b29bc3}}
 @layer devmozip-project-management{@media(max-width:800px){:where(.scope):global(.project-notices article>div){flex-wrap:wrap}}}
 @layer devmozip-project-management{@media(max-width:800px){:where(.scope):global(.project-notices article){padding:18px}}}
 @layer devmozip-follow-matching{:where(.scope):global(.follow-notices){margin-top:35px}}
 @layer devmozip-project-workspace{:where(.scope):global(.project-notices article>.button){display:inline-flex;margin:10px 10px 0 0}}
-@layer devmozip-project-workspace{:where(.scope):global(.project-notices article>div>strong>small){color:#359688;font-size:11px;margin-left:10px}}
+@layer devmozip-project-workspace{:where(.scope):global(.project-notices article>div>strong>small){color:#359688;font-size:14px;margin-left:10px}}

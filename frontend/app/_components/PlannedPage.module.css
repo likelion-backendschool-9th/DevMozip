@@ -1,5 +1,5 @@
 @layer devmozip-global{:where(.scope):global(.planned-icon){display:grid;place-items:center;width:68px;height:68px;background:#f1ebff;color:var(--purple);border-radius:20px;margin:0 auto 20px}}
-@layer devmozip-global{:where(.scope):global(.planned-detail){margin:30px 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:left;font-size:13px}}
-@layer devmozip-global{:where(.scope):global(.planned-detail p){font-size:12px}}
+@layer devmozip-global{:where(.scope):global(.planned-detail){margin:30px 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:left;font-size:15px}}
+@layer devmozip-global{:where(.scope):global(.planned-detail p){font-size:14px}}
 @layer devmozip-global{:where(.scope):global(.planned-detail code){display:block;color:var(--purple);padding-top:5px}}
 @layer devmozip-global{:where(.scope):global(.planned-detail small){display:block;margin-top:8px;color:var(--muted)}}
