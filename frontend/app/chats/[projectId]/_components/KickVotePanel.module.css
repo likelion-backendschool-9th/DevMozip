@@ -23,3 +23,8 @@
 @layer devmozip-chat-kick{@media(max-width:800px){:where(.scope):global(.kick-vote-counts>span){font-size:12px}}}
 @layer devmozip-responsive{:where(.scope):global(.kick-ballots){flex-wrap:wrap;min-width:0}}
 @layer devmozip-responsive{:where(.scope):global(.kick-ballots>p){min-width:0;flex-basis:12rem}}
+
+/* Keep project voting inside the scrollable conversation, above the composer. */
+.scope:global(.kick-vote-panel){margin:16px 0 0;padding:clamp(14px,2vw,22px);min-width:0;overflow-wrap:anywhere}
+.scope:global(.kick-vote-panel)>header>h2{font-size:17px}
+.scope :global(.kick-vote-card){padding:clamp(12px,2vw,18px);margin-top:14px;min-width:0}

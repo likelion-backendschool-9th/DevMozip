@@ -43,3 +43,15 @@
 @layer devmozip-responsive{@media(max-width:50rem){
  :where(.scope):global(.chat-member-panel>div){border-top:1px solid var(--border);padding:.75rem 0}
 }}
+
+.memberRow{position:relative;padding-right:42px!important;min-height:60px}
+.memberRow>a:first-child{min-width:0}
+.memberRow>a:first-child>span{min-width:0;overflow-wrap:anywhere}
+.reportIcon{position:absolute;right:0;top:14px;width:30px;height:30px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.reportIcon:hover{background:#fff0f2;color:#c45168}
+.reportIcon:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+
+.memberList:global(.chat-member-panel){border:0;padding:0;border-radius:0}
+.memberSummary{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.6}
+.memberRow strong{font-size:14px!important;color:var(--text)!important}
+.memberRow small{font-size:12px!important;color:var(--muted)!important}
