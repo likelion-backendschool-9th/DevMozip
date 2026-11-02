@@ -51,7 +51,7 @@
 @layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.message-bubble p){font-size:14px}}}
 @layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.proposal-message-title){font-size:13px}}}
 @layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.message-compose-bottom){flex-wrap:wrap}}}
-@layer devmozip-responsive{:where(.scope):global(.message-history){height:clamp(20rem,45dvh,32rem);overscroll-behavior:contain}}
+@layer devmozip-responsive{:where(.scope):global(.message-history){height:clamp(34rem,65dvh,54rem);overscroll-behavior:contain}}
 @layer devmozip-responsive{:where(.scope):global(.message-compose){padding:clamp(1rem,2vw,1.5rem)}}
 @layer devmozip-responsive{:where(.scope):global(.chat-message){min-width:0}}
 @layer devmozip-responsive{@media(max-width:30rem){
@@ -60,3 +60,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.message-compose-bottom){flex-wrap:wrap}
 }}
+
+@layer devmozip-responsive{@media(max-width:50rem){:where(.scope):global(.message-history){height:clamp(28rem,65dvh,44rem)}}}
