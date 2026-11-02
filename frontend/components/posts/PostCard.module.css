@@ -46,3 +46,6 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.sns-category){margin-left:0}
 }}
+@layer devmozip-social{:where(.scope):global(.sns-author){flex-wrap:wrap;align-items:center}:where(.scope):global(.sns-author>div:nth-child(2)){min-width:0;flex:1}:where(.scope):global(.sns-author>div:nth-child(2) strong){overflow-wrap:anywhere}:where(.scope):global(.sns-category){margin-left:0}}
+@layer devmozip-social{@media(max-width:40rem){:where(.scope):global(.sns-author){display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px 12px}:where(.scope):global(.sns-author>a){grid-column:1;grid-row:2}:where(.scope):global(.sns-author>div:nth-child(2)){grid-column:2;grid-row:2}:where(.scope):global(.sns-author>.sns-category){grid-column:2;grid-row:3;justify-self:start}:where(.scope):global(.sns-author>[aria-label="포스팅 관리"]){grid-column:1/-1;grid-row:1;justify-self:end;margin-left:0}}}
+.interests{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.interests span{font-size:14px;padding:5px 10px;border-radius:6px;background:#eaf7f8;color:#287f89;overflow-wrap:anywhere}

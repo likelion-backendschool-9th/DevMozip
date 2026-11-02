@@ -94,7 +94,7 @@
 @layer devmozip-home{.tabs{display:flex;gap:24px;border-bottom:1px solid var(--border)}}
 @layer devmozip-home{.tabs button{border:0;background:none;color:#9994a5;font-size:14px;padding:0 0 11px;position:relative}}
 @layer devmozip-home{.tabs button.active{color:var(--text);font-weight:700}}
-@layer devmozip-home{.tabs button.active:after{content:'';position:absolute;bottom:-1px;height:2px;left:0;right:0;background:var(--purple)}}
+@layer devmozip-home{.tabs button.active:after{content:'';position:absolute;bottom:0;height:2px;left:0;right:0;background:var(--purple)}}
 @layer devmozip-home{.mint{background:#e1f3f0;color:#369c8e}}
 @layer devmozip-home{.peach{background:#fff0e7;color:#d48f65}}
 @layer devmozip-home{.blue{background:#e8efff;color:#5e87c7}}
@@ -236,7 +236,7 @@
 @layer devmozip-presentation{.toast>.icon-button{flex-shrink:0}}
 @layer devmozip-presentation{.toast>span{min-width:0;overflow-wrap:anywhere}}
 @layer devmozip-presentation{.tags{flex-wrap:wrap}}
-@layer devmozip-presentation{.tabs{overflow-x:auto;scrollbar-width:thin}}
+@layer devmozip-presentation{.tabs{flex-wrap:wrap;overflow:visible;min-height:0;height:auto;row-gap:12px}}
 @layer devmozip-presentation{.tabs>button{flex-shrink:0}}
 @layer devmozip-presentation{.empty-state{line-height:1.8}}
 @layer devmozip-presentation{.planned-card{line-height:1.8}}

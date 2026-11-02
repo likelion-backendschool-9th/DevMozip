@@ -1,6 +1,6 @@
 import type { PostCategory } from '@/types/home';
 export interface PostImage { id:string;name:string;url:string;type:string;size:number }
-export interface PostInput { title:string;body:string;category:PostCategory;tags:string[];images:PostImage[];github:string;external:string }
+export interface PostInput { interests?:string[]; title:string;body:string;category:PostCategory;tags:string[];images:PostImage[];github:string;external:string }
 export interface PostComment { id:string;postId:string;authorId:string;body:string;createdAt:string;updatedAt?:string }
 export interface SocialReport { id:string;targetType:'post'|'comment';targetId:string;reporterId:string;reason:string;createdAt:string }
 export interface SocialState { likedAt?:Record<string,Record<string,string>>; likes:Record<string,string[]>;bookmarks:Record<string,string[]>;comments:PostComment[];reports:SocialReport[];views:Record<string,string[]> }

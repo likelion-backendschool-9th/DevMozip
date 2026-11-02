@@ -17,3 +17,4 @@
 @layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-repost-card .original-post-link){display:block;margin:8px 0 0}}}
 @layer devmozip-presentation{:where(.scope):global(.profile-post-head){font-size:14px;color:var(--muted)}}
 @layer devmozip-presentation{:where(.scope):global(.original-author){font-size:14px;color:var(--muted)}}
+@layer devmozip-profile{:where(.scope):global(.profile-posts>.tab-section-title){display:flex;align-items:center;justify-content:space-between;gap:16px}:where(.scope):global(.profile-posts>.tab-section-title>.button){margin-left:auto;flex-shrink:0}}

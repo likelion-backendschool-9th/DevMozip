@@ -15,7 +15,7 @@ export const routes: RouteDefinition[] = [
  { path: '/forgot-password', title: '비밀번호 찾기', description: 'Mock 비밀번호 복구 안내', stage: 2, group: '계정' },
  { path: '/signup', title: '회원가입', description: '개발 직군, 기술 스택과 관심 분야 등록', stage: 2, group: '계정' },
  { path: '/search', title: '통합 검색', description: '기술과 관심사가 맞는 개발자와 프로젝트 탐색', stage: 2, group: '탐색' },
- { path: '/users/:userId', title: '개발자 프로필', description: '소개 · 포트폴리오 · 내 글 · 활동 · 리뷰의 5개 가로 탭', stage: 2, group: '탐색' },
+ { path: '/users/:userId', title: '개발자 프로필', description: '소개 · 포트폴리오 · 포스팅 · 활동 · 리뷰의 5개 가로 탭', stage: 2, group: '탐색' },
  { path: '/projects', title: '프로젝트 모집', description: '새로운 협업을 시작할 프로젝트 탐색', stage: 2, group: '프로젝트' },
  { path: '/projects/:projectId', title: '프로젝트 상세', description: '프로젝트 목표, 모집 직군과 요구 기술 확인', stage: 2, group: '프로젝트' },
  { path: '/matching', title: 'AI 팀원 추천', description: '프로젝트 설명과 기술 스택 기반 Mock 추천', stage: 3, group: '탐색' },

@@ -10,7 +10,7 @@ export interface PortfolioImage {src:string;caption:string}
 export interface PortfolioBlock {images?:PortfolioImage[];links?:ProfileLink[];id:string;kind:'text'|'gallery'|'links';title:string;content:string;format:'text'|'markdown'|'html';source?:'description'|'contribution'|'features'|'challenge'|'outcome'}
 export interface Portfolio {fields?:string[];blocks?:PortfolioBlock[];images?:PortfolioImage[];links?:ProfileLink[];teamSize?:string;contribution?:string;coverImage?:string;field?:string; id:string; ownerId:string; title:string; summary:string; start:string; end:string; role:string; stacks:string[]; description:string; features:string; challenge:string; outcome:string }
 export type PortfolioInput = Omit<Portfolio,'id'|'ownerId'>;
-export interface ProfilePost extends Post { hidden:boolean;images?:PostImage[];github?:string;external?:string;createdAt?:string;updatedAt?:string;views?:number }
+export interface ProfilePost extends Post { interests?:string[]; hidden:boolean;images?:PostImage[];github?:string;external?:string;createdAt?:string;updatedAt?:string;views?:number }
 export interface Repost { id:string; ownerId:string; originalId:string; opinion:string; hidden:boolean }
 export type ActivityStatus='모집 중'|'모집 완료'|'프로젝트 진행 중'|'프로젝트 종료';
 export interface Collaboration { projectId:string; start:string; end:string; status:ActivityStatus; endedAt?:string; members:{userId:string;role:string}[] }
