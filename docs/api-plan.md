@@ -140,3 +140,7 @@
 | GET/PATCH | /users/me/onboarding | 초안/단계 저장과 완료 시 프로필 반영 |
 
 기존 초기 단일 리뷰 POST 후보는 현재 2차의 요청별 일괄 제출 흐름과 통합해 최종 계약을 확정해야 합니다. 검색은 기존 `/search` 계약을 재사용합니다. 본인 대화 인가·구독/월 한도·한국 시각 기준·동시 생성 멱등성·데이터 보존/삭제·개인정보 변경 보안·소셜 연동 검증은 백엔드 단계 사항입니다. 실제 AI/OAuth/결제와 비밀번호 변경 API는 이번에 연결하지 않았습니다.
+
+## Next.js 이전 후 실행 경계
+
+프론트엔드는 Next.js App Router로 이전했지만 실제 서비스 API 계획은 Spring Boot 기준으로 유지합니다. Next Route Handler/Server Action을 비즈니스 API로 구현하지 않았습니다. 브라우저의 RSC·정적 청크 요청은 Next.js 페이지 이동에 필요한 프레임워크 요청입니다. 미사용 Axios 공통 인스턴스는 `frontend/lib/shared/api.ts`, 선택 환경변수는 `NEXT_PUBLIC_API_BASE_URL`입니다.

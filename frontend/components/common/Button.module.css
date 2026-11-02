@@ -1,0 +1,1 @@
+@layer devmozip-global{.control{display:inline-flex;align-items:center;justify-content:center;gap:.625rem;border-radius:var(--radius-control,9px)}.control:disabled{cursor:not-allowed}}

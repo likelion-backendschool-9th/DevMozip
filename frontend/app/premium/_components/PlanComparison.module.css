@@ -1,0 +1,7 @@
+@layer devmozip-administration{:where(.scope):global(.management-table-scroll){overflow-x:auto}}
+@layer devmozip-administration{:where(.scope):global(.management-table){border-collapse:collapse;width:100%;text-align:left;min-width:570px;font-size:14px}}
+@layer devmozip-administration{:where(.scope):global(.management-table caption){text-align:left;margin-bottom:12px;color:#777;font-size:13px}}
+@layer devmozip-administration{:where(.scope):global(.management-table th){padding:17px;border-bottom:1px solid #ededf2}}
+@layer devmozip-administration{:where(.scope):global(.management-table td){padding:17px;border-bottom:1px solid #ededf2}}
+@layer devmozip-administration{:where(.scope):global(.management-table thead){background:#f7f7fa}}
+@layer devmozip-administration{:where(.scope):global(.management-table tbody th){font-weight:500}}

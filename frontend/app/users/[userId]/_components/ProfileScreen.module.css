@@ -1,0 +1,20 @@
+@layer devmozip-profile{:where(.scope):global(.profile-page){padding-top:24px;padding-bottom:65px}}
+@layer devmozip-profile{:where(.scope):global(.profile-tabs){display:flex;border-bottom:1px solid var(--border);gap:0;margin-top:18px;background:var(--background)}}
+@layer devmozip-profile{:where(.scope):global(.profile-tabs>button){flex:1;border:0;background:none;font-size:13px;font-weight:600;color:#aaa0b5;padding:19px 10px;position:relative}}
+@layer devmozip-profile{:where(.scope):global(.profile-tabs>button.active){color:var(--purple)}}
+@layer devmozip-profile{:where(.scope):global(.profile-tabs>button.active:after){content:'';position:absolute;left:24%;right:24%;bottom:-1px;height:3px;background:var(--purple);border-radius:4px}}
+@layer devmozip-profile{:where(.scope):global(.profile-tab-panel){padding-top:29px;min-height:330px;outline:none}}
+@layer devmozip-profile{:where(.scope):global(.profile-tab-panel:focus-visible){outline:2px solid var(--cyan);outline-offset:6px}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-page){padding-top:20px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-tabs>button){font-size:11px;padding:16px 5px}}}
+@layer devmozip-presentation{:where(.scope):global(.profile-tabs){overflow-x:auto}}
+@layer devmozip-presentation{:where(.scope):global(.profile-tabs>button){flex-shrink:0}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.profile-tabs){flex-wrap:wrap;gap:.5rem 1.25rem;overflow:visible}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.profile-tabs>button){white-space:normal}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.profile-tabs>button){font-size:.75rem;padding:.75rem .25rem}
+}}

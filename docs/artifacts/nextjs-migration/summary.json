@@ -1,0 +1,13 @@
+{
+  "framework": "Next.js 16.4.3 App Router",
+  "sourcePages": 28,
+  "cssModules": 76,
+  "backendUnchanged": true,
+  "backendFiles": 12,
+  "browserAndHttpChecks": 398,
+  "unitTests": 363,
+  "businessApiRequests": 0,
+  "consoleErrors": 0,
+  "runtimeErrors": 0,
+  "oldSrcExists": false
+}

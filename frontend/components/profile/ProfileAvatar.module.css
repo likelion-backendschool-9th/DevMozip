@@ -1,0 +1,1 @@
+@layer devmozip-profile{:where(.scope):global(.compact-avatar svg){padding-top:4px}}

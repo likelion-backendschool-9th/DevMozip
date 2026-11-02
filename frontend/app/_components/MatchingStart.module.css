@@ -1,0 +1,38 @@
+@layer devmozip-home{:where(.scope):global(.matching-section){display:grid;grid-template-columns:.95fr 1.05fr;gap:30px 55px;padding:38px 0 44px;border-bottom:1px solid var(--border)}}
+@layer devmozip-home{:where(.scope):global(.matching-intro){padding:15px 0;position:relative}}
+@layer devmozip-home{:where(.scope):global(.matching-intro h1){font-size:37px;line-height:1.45;letter-spacing:-1.7px;margin:17px 0}}
+@layer devmozip-home{:where(.scope):global(.matching-intro h1 span){color:var(--purple)}}
+@layer devmozip-home{:where(.scope):global(.matching-intro>p){font-size:13px;color:var(--muted);line-height:1.9}}
+@layer devmozip-home{:where(.scope):global(.matching-form){background:#fff;border:1px solid #e5dff3;border-radius:16px;padding:24px;box-shadow:0 10px 40px #7955df07}}
+@layer devmozip-home{:where(.scope):global(.matching-submit){display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-top:20px}}
+@layer devmozip-home{:where(.scope):global(.matching-submit label){font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:4px}}
+@layer devmozip-home{:where(.scope):global(.matching-submit select){border:1px solid var(--border);border-radius:7px;padding:9px 25px 9px 10px;min-width:140px;color:#6e687d;background:#fff;font-size:11px}}
+@layer devmozip-home{:where(.scope):global(.matching-submit .button){padding:10px 15px;font-size:12px}}
+@layer devmozip-home{@media(max-width:1180px){:where(.scope):global(.matching-section){gap:30px}}}
+@layer devmozip-home{@media(max-width:1180px){:where(.scope):global(.matching-intro h1){font-size:32px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-section){grid-template-columns:1fr 1.15fr;gap:22px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-intro h1){font-size:28px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-intro>p){font-size:11px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-form){padding:18px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-submit){align-items:stretch}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-submit select){min-width:110px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.matching-submit .button){font-size:10px;padding:9px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.matching-section){grid-template-columns:1fr;padding-top:25px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.matching-intro h1){font-size:33px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.matching-intro>p){font-size:13px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.matching-form){padding:22px}}}
+@layer devmozip-home{@media(max-width:450px){:where(.scope):global(.matching-submit label){flex:1}}}
+@layer devmozip-home{@media(max-width:450px){:where(.scope):global(.matching-intro h1){font-size:30px}}}
+@layer devmozip-follow-matching{:where(.scope):global(.matching-submit>small){font-size:9px;color:#b09ac0;max-width:150px;line-height:1.8}}
+@layer devmozip-matching-chat{:where(.scope):global(.matching-start){grid-template-columns:1fr 1.2fr}}
+@layer devmozip-matching-chat{:where(.scope):global(.matching-start .matching-form>label){display:block;margin-bottom:14px}}
+@layer devmozip-responsive{:where(.scope):global(.matching-start){grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(1.5rem,4vw,3.5rem)}}
+@layer devmozip-responsive{:where(.scope):global(.matching-intro h1){font-size:clamp(1.75rem,3.1vw,2.75rem)}}
+@layer devmozip-responsive{:where(.scope):global(.matching-form){min-width:0;padding:clamp(1.125rem,2.4vw,2rem)}}
+@layer devmozip-responsive{:where(.scope):global(.matching-submit){gap:1rem;flex-wrap:wrap}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.matching-start){grid-template-columns:minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.matching-start){padding-top:1.5rem}
+}}

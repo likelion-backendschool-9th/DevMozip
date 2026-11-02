@@ -1,0 +1,9 @@
+@layer devmozip-social{:where(.scope):global(.sns-editor){gap:20px}}
+@layer devmozip-social{:where(.scope):global(.sns-editor .auth-two-columns){gap:17px}}
+@layer devmozip-social{:where(.scope):global(.sns-upload>input[type=file]){display:block;font-size:11px;color:#aa91bb;margin:12px 0}}
+@layer devmozip-social{:where(.scope):global(.sns-upload>label.button){font-size:11px;padding:9px 13px;display:inline-flex}}
+@layer devmozip-social{:where(.scope):global(.sns-image-previews){display:flex;flex-wrap:wrap;gap:13px}}
+@layer devmozip-social{:where(.scope):global(.sns-image-previews>div){position:relative;max-width:160px;border:1px solid var(--border);border-radius:8px;overflow:hidden}}
+@layer devmozip-social{:where(.scope):global(.sns-image-previews img){width:150px;height:115px;object-fit:contain;display:block;background:#f9f6fc}}
+@layer devmozip-social{:where(.scope):global(.sns-image-previews .icon-button){position:absolute;right:4px;top:4px;background:#fffe;width:24px;height:24px;color:#a187b3}}
+@layer devmozip-responsive{:where(.scope):global(.sns-image-previews img){width:100%;object-fit:contain}}

@@ -1,0 +1,38 @@
+@layer devmozip-search{:where(.scope):global(.search-page){padding-top:45px;padding-bottom:70px;min-height:80vh}}
+@layer devmozip-search{:where(.scope):global(.search-page-heading){max-width:800px;margin:0 auto 38px;text-align:center}}
+@layer devmozip-search{:where(.scope):global(.search-page-heading .eyebrow){justify-content:center}}
+@layer devmozip-search{:where(.scope):global(.search-page-heading h1){font-size:31px;letter-spacing:-1.3px;margin:13px 0}}
+@layer devmozip-search{:where(.scope):global(.search-page-heading h1 span){color:var(--purple)}}
+@layer devmozip-search{:where(.scope):global(.search-page-heading>p){font-size:12px;color:#a193ad;margin:0 0 23px}}
+@layer devmozip-search{:where(.scope):global(.search-workspace){display:grid;grid-template-columns:235px minmax(0,1fr);gap:30px;align-items:start}}
+@layer devmozip-search{:where(.scope):global(.search-results-heading){display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);min-height:40px;margin-bottom:20px}}
+@layer devmozip-search{:where(.scope):global(.search-results-heading .tabs){border:0}}
+@layer devmozip-search{:where(.scope):global(.search-results-heading .tabs button){padding-bottom:13px}}
+@layer devmozip-search{:where(.scope):global(.search-results-heading h2){font-size:14px;margin:0 0 13px}}
+@layer devmozip-search{:where(.scope):global(.search-count){font-size:11px;color:#9c89ae;padding-bottom:11px}}
+@layer devmozip-search{:where(.scope):global(.search-query-caption){color:#aa95ba;font-size:11px;margin:0 0 17px;overflow-wrap:anywhere}}
+@layer devmozip-search{:where(.scope):global(.active-search-filters){display:flex;flex-wrap:wrap;gap:7px;margin:0 0 18px}}
+@layer devmozip-search{:where(.scope):global(.active-search-filters button){display:flex;align-items:center;gap:7px;border:1px solid #e7def3;background:#f6f2fc;border-radius:6px;color:#a68cbc;padding:5px 8px;font-size:9px}}
+@layer devmozip-search{:where(.scope):global(.search-data-note){font-size:9px;color:#b7a7c2;margin-top:22px;text-align:right}}
+@layer devmozip-search{:where(.scope):global(.search-empty){border:1px dashed #e2d7ec;border-radius:14px;background:#fbf9fd;text-align:center;padding:70px 25px}}
+@layer devmozip-search{:where(.scope):global(.search-empty>span){display:grid;place-items:center;width:64px;height:64px;border-radius:50%;margin:auto;background:#f0e9f9;color:#b69ccc}}
+@layer devmozip-search{:where(.scope):global(.search-empty h2){font-size:18px;color:#8e74a0;margin:20px 0 9px}}
+@layer devmozip-search{:where(.scope):global(.search-empty p){font-size:11px;color:#b29ac1;max-width:380px;margin:0 auto 24px;line-height:1.9}}
+@layer devmozip-search{:where(.scope):global(.search-empty .button){font-size:11px}}
+@layer devmozip-search{@media(max-width:1180px){:where(.scope):global(.search-workspace){gap:22px;grid-template-columns:215px minmax(0,1fr)}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-page){padding-top:30px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-page-heading h1){font-size:24px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-page-heading>p){font-size:11px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-workspace){grid-template-columns:1fr;gap:25px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-empty){padding:45px 20px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-empty h2){font-size:16px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-page-heading .eyebrow){font-size:8px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-page-heading h1){font-size:21px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-page-heading h1 span){display:block;margin-top:3px}}}
+@layer devmozip-presentation{:where(.scope):global(.search-results){min-width:0}}
+@layer devmozip-presentation{:where(.scope):global(.search-workspace>div){min-width:0}}
+@layer devmozip-presentation{:where(.scope):global(.search-empty){line-height:1.8}}
+@layer devmozip-responsive{:where(.scope):global(.search-workspace){grid-template-columns:minmax(12rem,15rem) minmax(0,1fr);gap:var(--layout-gap)}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.search-workspace){grid-template-columns:minmax(0,1fr)}
+}}

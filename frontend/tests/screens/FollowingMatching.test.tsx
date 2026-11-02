@@ -1,0 +1,40 @@
+import { newMatchingConversation,sendMatchingMessage } from '@/lib/matching/matchingChatService';
+import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Route,Routes } from '@/tests/helpers/RouterFixture';
+import { PrototypeProvider } from '@/lib/state/PrototypeProvider';
+import { AuthProvider } from '@/lib/state/AuthProvider';
+import { ProfileProvider } from '@/lib/state/ProfileProvider';
+import { ProjectProvider } from '@/lib/state/ProjectProvider';
+import { MessagingProvider } from '@/lib/state/MessagingProvider';
+import { HomeProvider } from '@/lib/state/HomeProvider';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { FollowingPage } from '@/app/following/_components/FollowingScreen';
+import { MatchingPage } from '@/app/matching/_components/MatchingScreen';
+import { HomePage } from '@/app/_components/HomeScreen';
+import { ProjectNotificationsPage } from '@/app/notifications/_components/ProjectNotificationsPage';
+import { FollowSettings } from '@/components/follow/FollowSettings';
+import { SESSION_KEY } from '@/lib/account/authService';
+import { HOME_KEY,freshHomeState } from '@/lib/matching/homeService';
+import { PROFILE_KEY,applyProfileAction,freshProfileState } from '@/lib/profiles/profileService';
+import { demoAccounts } from '@/mocks/auth';
+import { developers,projects } from '@/mocks/home';
+import { emptyPost } from '@/mocks/social';
+import type { HomeState } from '@/types/home';
+import type { ProfileState } from '@/types/profile';
+const now=new Date('2026-10-30T12:00:00+09:00');
+function matched(user=demoAccounts[0]){const state=freshHomeState();const result=sendMatchingMessage(newMatchingConversation(now),'추천해 주세요',{description:'React 일정 관리 웹 서비스를 만들고 싶어요.',fields:['웹'],interests:['생산성'],stacks:['React'],roles:[{name:'프론트엔드',count:2}],career:'경력 무관',duration:'3개월'},state.matching,user,developers,projects,now);state.matching=result.matching;state.chat={conversations:{[user.id]:[result.conversation]},active:{[user.id]:result.conversation.id}};return state;}
+function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return renderToStaticMarkup(<PrototypeProvider><AuthProvider><ProfileProvider><ProjectProvider><MessagingProvider><HomeProvider><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route path="/following" element={<FollowingPage/>}/><Route path="/matching" element={<MatchingPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></HomeProvider></MessagingProvider></ProjectProvider></ProfileProvider></AuthProvider></PrototypeProvider>);}
+beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
+describe('팔로우·추천 화면 렌더링',()=>{
+ it('팔로잉 검색에 프로필·협업 상태·알림 설정을 표시한다',()=>{const html=page('/following?q=유나','demo-user');expect(html).toContain('이유나');expect(html).not.toContain('박민준');expect(html).toContain('/users/yuna');expect(html).toContain('협업 가능');expect(html).toContain('언팔로우');expect(html).toContain('이유나 알림 설정');});
+ it('팔로워 탭과 공개 사용자 목록을 조회할 수 있다',()=>{const html=page('/following?user=yuna&tab=followers','demo-user');expect(html).toContain('김하늘');expect(html).toContain('팔로워');expect(page('/following?user=missing','demo-user')).toContain('사용자를 찾을 수 없어요.');expect(page('/following')).toContain('로그인하고 나의 연결을 확인하세요.');});
+ it('언팔로우 변경이 목록에 바로 반영된다',()=>{const profiles=applyProfileAction(freshProfileState(),'demo-user',{type:'follow',targetId:'yuna'},now);expect(page('/following?q=유나','demo-user',undefined,profiles)).toContain('표시할 개발자가 없습니다.');});
+ it('사용자별 활동/모집 알림 설정을 표시한다',()=>{const profiles=applyProfileAction(freshProfileState(),'demo-user',{type:'follow-preferences',targetId:'yuna',preferences:{activity:true,projects:false}},now);const html=page('/settings','demo-user',undefined,profiles);expect(html).toContain('새 게시글 활동 알림');expect(html).toContain('새 프로젝트 모집 알림');expect((html.match(/checked=""/g)||[])).toHaveLength(1);});
+ it('선택한 새 글 알림이 해당 계정 알림에 반영된다',()=>{let p=applyProfileAction(freshProfileState(),'demo-user',{type:'follow-preferences',targetId:'yuna',preferences:{activity:true,projects:false}},now);p=applyProfileAction(p,'yuna',{type:'social-create',id:'follow-news',input:{...structuredClone(emptyPost),title:'알림 시연 글',body:'새 소식을 함께 공유합니다.'}},now);expect(page('/notifications','demo-user',undefined,p)).toContain('알림 시연 글');expect(page('/notifications','demo-premium',undefined,p)).not.toContain('알림 시연 글');});
+ it('메인과 추천 페이지가 같은 무료 사용량을 표시한다',()=>{const home=matched();for(const url of ['/','/matching']){const html=page(url,'demo-user',home);expect(html).toContain('14');expect(html).toContain('/ 15회');expect(html).toContain('1회 사용');}});
+ it('무료는 상세 이유 잠금, 프리미엄은 상세 이유와 확대 한도를 표시한다',()=>{expect(page('/matching','demo-user',matched())).toContain('상세 추천 이유는 프리미엄에서');const html=page('/matching','demo-premium',matched(demoAccounts[1]));expect(html).toContain('/ 100회');expect(html).toContain('99');expect(html).toContain('일치 기술');expect(html).not.toContain('상세 추천 이유는 프리미엄에서');});
+ it('제한 도달 시 안내와 비활성 버튼을 표시한다',()=>{const home=matched();home.matching.usage['demo-user']['2026-10']=15;const html=page('/matching','demo-user',home);expect(html).toContain('이번 달 추천 횟수를 모두 사용했습니다.');expect(html).toContain('disabled=""');});
+ it('다른 계정의 결과는 표시하지 않고 사용량을 구분한다',()=>{const home=matched();const html=page('/matching','demo-premium',home);expect(html).toContain('100');expect(html).toContain('0회 사용');expect(html).not.toContain('이런 동료와 함께해 보세요');});
+ it('비로그인에게 로그인 안내와 정보 입력 폼을 제공한다',()=>{const html=page('/matching');expect(html).toContain('로그인하고 추천 받기');expect(html).toContain('모집 개발 직군 · 복수 선택');expect(html).toContain('Gemini 연결 없는 Mock 규칙 기반 추천');});
+});

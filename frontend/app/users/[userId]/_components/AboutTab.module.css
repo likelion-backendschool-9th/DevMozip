@@ -1,0 +1,14 @@
+@layer devmozip-profile{:where(.scope):global(.about-grid){display:grid;grid-template-columns:1.25fr 1fr;gap:20px}}
+@layer devmozip-profile{:where(.scope):global(.about-intro){grid-row:span 2}}
+@layer devmozip-profile{:where(.scope):global(.cyan-tags>span){background:#eaf7f7;border-color:#dcf0f0;color:#56a3a5}}
+@layer devmozip-profile{:where(.scope):global(.profile-links a){display:flex;align-items:center;gap:13px;padding:12px 0;border-top:1px solid var(--border);font-size:11px}}
+@layer devmozip-profile{:where(.scope):global(.profile-links a>span:first-child){color:#6f5e83;min-width:42px}}
+@layer devmozip-profile{:where(.scope):global(.profile-links a>span:nth-child(2)){color:#a294af;overflow-wrap:anywhere;min-width:0}}
+@layer devmozip-profile{:where(.scope):global(.profile-links svg){margin-left:auto;flex-shrink:0;color:#b3a6c0}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.about-grid){grid-template-columns:1fr}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.about-intro){grid-row:auto}}}
+@layer devmozip-presentation{:where(.scope):global(.profile-links a){font-size:12px;color:var(--muted)}}
+@layer devmozip-responsive{:where(.scope):global(.about-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.about-grid){grid-template-columns:minmax(0,1fr)}
+}}

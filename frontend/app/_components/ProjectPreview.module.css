@@ -1,0 +1,30 @@
+@layer devmozip-home{:where(.scope):global(.home-section){margin-top:42px}}
+@layer devmozip-home{:where(.scope):global(.home-section .section-heading h2){font-size:23px}}
+@layer devmozip-home{:where(.scope):global(.home-section .eyebrow){font-size:9px}}
+@layer devmozip-home{:where(.scope):global(.home-section .section-heading){margin-bottom:18px}}
+@layer devmozip-home{:where(.scope):global(.project-grid){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:20px}}
+@layer devmozip-home{:where(.scope):global(.project-cover){height:145px;position:relative;padding:15px 20px;overflow:hidden}}
+@layer devmozip-home{:where(.scope):global(.project-cover>span:first-child){font-size:10px;letter-spacing:1px}}
+@layer devmozip-home{:where(.scope):global(.cover-glyph){position:absolute;top:20px;left:45%;font-size:87px;font-weight:850;line-height:1.3;transform:rotate(-12deg);letter-spacing:-8px;opacity:.65}}
+@layer devmozip-home{:where(.scope):global(.cover-glyph span){font-size:68px}}
+@layer devmozip-home{:where(.scope):global(.recruit-badge){position:absolute;bottom:13px;right:15px;background:#ffffffd9;padding:3px 9px;border-radius:5px;color:#67616e;font-size:9px}}
+@layer devmozip-home{:where(.scope):global(.project-content){padding:20px}}
+@layer devmozip-home{:where(.scope):global(.project-meta){font-size:10px;color:var(--purple);margin-bottom:9px}}
+@layer devmozip-home{:where(.scope):global(.project-content h3){font-size:14px;letter-spacing:-.4px;margin:0 0 8px;line-height:1.65}}
+@layer devmozip-home{:where(.scope):global(.project-content h3:hover){color:var(--purple)}}
+@layer devmozip-home{:where(.scope):global(.project-content>p){font-size:11px;line-height:1.8;color:var(--muted);min-height:40px;margin:0 0 17px}}
+@layer devmozip-home{:where(.scope):global(.project-facts){display:flex;flex-wrap:wrap;gap:6px 12px;color:#938b9e;font-size:9px;margin:20px 0 15px}}
+@layer devmozip-home{:where(.scope):global(.project-facts>span){display:flex;align-items:center;gap:5px}}
+@layer devmozip-home{:where(.scope):global(.project-bottom){border-top:1px solid var(--border);padding-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#97909f}}
+@layer devmozip-home{:where(.scope):global(.project-bottom a){display:flex;align-items:center;gap:3px;color:#726581}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.project-grid){gap:12px}}}
+@layer devmozip-home{@media(max-width:960px){:where(.scope):global(.project-content){padding:15px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.project-grid){grid-template-columns:1fr}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.project-cover){height:150px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.project-content>p){min-height:0}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-section .section-heading h2){font-size:20px}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-section .section-heading){align-items:flex-start}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-section .section-heading .text-link){font-size:10px;white-space:nowrap}}}
+@layer devmozip-home{@media(max-width:800px){:where(.scope):global(.home-section .section-heading p){font-size:11px}}}
+@layer devmozip-responsive{:where(.scope):global(.project-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:var(--layout-gap)}}
+@layer devmozip-responsive{:where(.scope):global(.project-cover){width:100%}}

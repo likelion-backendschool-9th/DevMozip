@@ -1,0 +1,2 @@
+@layer devmozip-social{:where(.scope):global(.sns-detail-page){max-width:970px;padding-top:30px;padding-bottom:65px}}
+@layer devmozip-social{:where(.scope):global(.sns-detail-page>.sns-post-card){margin-top:24px}}
