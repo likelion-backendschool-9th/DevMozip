@@ -1,7 +1,9 @@
 package com.devmozip.backend.service;
 
 import com.devmozip.backend.dto.profile.ProfileDetailResponse;
-import com.devmozip.backend.repository.UserRepository;
+import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.repository.JobCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,13 +14,19 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProfileService {
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
+    private final JobCategoryRepository jobCategoryRepository;
 
     public ProfileDetailResponse findBySlug(String slug) {
-        // 존재하지 않는 계정과 공개할 수 없는 계정은 동일하게 처리한다.
-        return userRepository.findByTagAndStatus(slug, "ACTIVE")
-                .map(ProfileDetailResponse::from)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."));
+        var member = memberRepository.findByTagAndStatus(slug, Member.MemberStatus.ACTIVE)
+                .orElseThrow(ProfileService::notFound);
+        if (member.getJobCategoryId() == null) throw notFound();
+        var job = jobCategoryRepository.findById(member.getJobCategoryId())
+                .orElseThrow(ProfileService::notFound);
+        return ProfileDetailResponse.from(member, job);
+    }
+
+    private static ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다.");
     }
 }

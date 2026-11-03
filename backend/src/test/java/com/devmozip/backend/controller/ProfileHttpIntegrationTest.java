@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
         "DELETE FROM job_categories",
         "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자')",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, summary, profile_image, banner_image, collaboration_status, trust_score, career) VALUES (1, 1, 'profile-http-active', '통합 테스트 개발자', 'ACTIVE', '같이 개발해요', '/profile.png', '/banner.png', 'AVAILABLE', 36.50, 18)",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (2, 1, 'profile-http-locked', '잠금 테스트', 'LOCKED', 36.50)",
+        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (2, 1, 'profile-http-locked', '잠금 테스트', 'WARNED', 36.50)",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (3, 1, 'profile-http-suspended', '제재 테스트', 'SUSPENDED', 36.50)",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (4, 1, 'profile-http-minimal', '기본 테스트', 'ACTIVE', 36.50)",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score, career) VALUES (5, 1, 'profile-http-junior', '신입 테스트', 'ACTIVE', 36.50, 0)"

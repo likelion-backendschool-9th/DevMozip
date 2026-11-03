@@ -38,7 +38,8 @@ ERD는 수정하지 않았다.
 ## 미존재 및 비공개 처리
 
 임시 정책으로 `status = ACTIVE` 사용자만 공개 조회한다.
-없는 사용자, LOCKED, SUSPENDED는 모두 동일한 HTTP 404를 반환한다.
+없는 사용자, 현재 Member 상태의 WARNED, SUSPENDED는 모두 동일한 HTTP 404를 반환한다.
+기존 LOCKED 데이터가 있다면 회원 상태 모델과 통합하기 전 데이터 정책을 확인해야 한다.
 계정 잠금과 프로필 비공개를 별도로 관리할지는 팀에서 확정해야 한다.
 현재 ERD에는 별도 프로필 공개 필드가 없어 이를 새로 만들지 않았다.
 
@@ -57,15 +58,15 @@ ERD는 수정하지 않았다.
 
 - `controller/ProfileController`: 요청 경로와 응답 처리
 - `service/ProfileService`: 읽기 전용 트랜잭션, 공개 대상 조회와 DTO 변환
-- `repository/UserRepository`: 태그·ACTIVE 상태 조회, EntityGraph로 직군 함께 로딩
-- `entity/User`, `entity/JobCategory`: 기존 테이블의 조회용 컬럼 매핑
+- `repository/MemberRepository`: 태그·ACTIVE 상태 조회, JobCategoryRepository로 직군 조회
+- `entity/Member`, `entity/JobCategory`: 기존 테이블의 조회용 컬럼 매핑
 - `dto/profile/ProfileDetailResponse`: 공개 데이터만 응답
 - `controller/ProfileExceptionHandler`: 프로필 Controller의 오류를 ProblemDetail로 응답
 - `auth/SecurityConfig`: 팀의 기존 JWT 설정에 프로필 GET 공개 조건만 추가. 다른 경로의 JWT 인증·권한 정책 유지
 
-사용자 Entity는 조회에 필요한 컬럼만 매핑했다. 생성·수정 메서드나 ID 생성 전략은
-추가하지 않았다. 인증 담당의 사용자 Entity와 통합하여 한 테이블에 중복 Entity를 만들지 않아야 한다.
-`collaboration_status`의 ENUM 값이 ERD에 정의되지 않아 현재는 문자열로 읽는다.
+프로필 수정 작업에서 인증 담당의 Member Entity로 통합했다. User/UserRepository는 제거했다.
+협업 상태는 Member.CollaborationStatus ENUM의 이름을 문자열로 응답한다.
+직군 ID가 없거나 실제 직군이 없으면 프로필 조회는 404로 처리한다.
 태그 UNIQUE는 ERD에 주석으로만 존재하므로 실제 DB 제약은 DB 담당이 확인해야 한다.
 스키마 자동 생성·변경 설정 및 마이그레이션은 추가하지 않았다.
 
@@ -91,12 +92,12 @@ cd backend
 ```
 
 - 실제 Spring Boot 서버를 127.0.0.1 임의 포트로 구동한다.
-- 독립적인 H2 메모리 DB에 직군·ACTIVE·LOCKED·SUSPENDED 테스트 사용자를 넣는다.
+- 독립적인 H2 메모리 DB에 직군·ACTIVE·WARNED·SUSPENDED 테스트 사용자를 넣는다.
 - 경력 18개월·0개월·NULL이 실제 DB 조회 후 JSON에서도 구분되는지 확인한다.
 - Java HttpClient로 HTTP 요청하며 Controller·Service·Repository를 대역으로 바꾸지 않는다.
 - ACTIVE 사용자: 200, 저장한 프로필·직군·신뢰 온도와 공개 응답 필드 일치.
 - 선택 정보가 NULL인 ACTIVE 사용자: 200, NULL 유지.
-- 미존재·LOCKED·SUSPENDED 사용자: 동일한 404 및 PROFILE_NOT_FOUND 오류.
+- 미존재·WARNED·SUSPENDED 사용자: 동일한 404 및 PROFILE_NOT_FOUND 오류.
 - 보호 경로 비로그인 요청: 401.
 - 총 7개 HTTP 통합 검사를 제공한다. 테스트 종료 시 임시 서버와 메모리 DB를 정리한다.
 - 운영 PostgreSQL·Redis 및 프론트엔드 연동은 이 검사에 포함하지 않는다.

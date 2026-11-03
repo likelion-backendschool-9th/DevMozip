@@ -1,8 +1,8 @@
 package com.devmozip.backend.service;
 
 import com.devmozip.backend.entity.JobCategory;
-import com.devmozip.backend.entity.User;
-import com.devmozip.backend.repository.UserRepository;
+import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.repository.MemberRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,19 +18,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ProfileServiceTest {
-    private UserRepository repository;
+    private MemberRepository repository;
     private ProfileService service;
+    private com.devmozip.backend.repository.JobCategoryRepository jobs;
 
     @BeforeEach
     void setUp() {
-        repository = mock(UserRepository.class);
-        service = new ProfileService(repository);
+        repository = mock(MemberRepository.class);
+        jobs = mock(com.devmozip.backend.repository.JobCategoryRepository.class);
+        service = new ProfileService(repository, jobs);
     }
 
     @Test
     void returnsPublicProfileWithJobCategory() throws Exception {
-        User user = user();
-        when(repository.findByTagAndStatus("dev-tag", "ACTIVE")).thenReturn(Optional.of(user));
+        Member user = user();
+        when(repository.findByTagAndStatus("dev-tag", Member.MemberStatus.ACTIVE)).thenReturn(Optional.of(user));
 
         var response = service.findBySlug("dev-tag");
 
@@ -49,11 +51,11 @@ class ProfileServiceTest {
 
     @Test
     void allowsMissingOptionalProfileFields() throws Exception {
-        User user = user();
+        Member user = user();
         for (String field : new String[]{"summary", "profileImage", "bannerImage", "collaborationStatus"}) {
             ReflectionTestUtils.setField(user, field, null);
         }
-        when(repository.findByTagAndStatus("dev-tag", "ACTIVE")).thenReturn(Optional.of(user));
+        when(repository.findByTagAndStatus("dev-tag", Member.MemberStatus.ACTIVE)).thenReturn(Optional.of(user));
         var response = service.findBySlug("dev-tag");
         assertNull(response.summary());
         assertNull(response.profileImage());
@@ -65,38 +67,39 @@ class ProfileServiceTest {
     @NullSource
     @ValueSource(ints = {0, 18})
     void preservesCareerMonthsIncludingZeroAndNull(Integer months) throws Exception {
-        User user = user();
+        Member user = user();
         ReflectionTestUtils.setField(user, "career", months);
-        when(repository.findByTagAndStatus("dev-tag", "ACTIVE")).thenReturn(Optional.of(user));
+        when(repository.findByTagAndStatus("dev-tag", Member.MemberStatus.ACTIVE)).thenReturn(Optional.of(user));
         assertEquals(months, service.findBySlug("dev-tag").career());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"missing", "locked-account", "suspended-account"})
     void queriesOnlyActiveAccountsAndReturns404WhenAbsent(String slug) {
-        when(repository.findByTagAndStatus(slug, "ACTIVE")).thenReturn(Optional.empty());
+        when(repository.findByTagAndStatus(slug, Member.MemberStatus.ACTIVE)).thenReturn(Optional.empty());
         var exception = assertThrows(ResponseStatusException.class, () -> service.findBySlug(slug));
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        verify(repository).findByTagAndStatus(slug, "ACTIVE");
+        verify(repository).findByTagAndStatus(slug, Member.MemberStatus.ACTIVE);
     }
 
-    private User user() throws Exception {
+    private Member user() throws Exception {
         var jobConstructor = JobCategory.class.getDeclaredConstructor();
         jobConstructor.setAccessible(true);
         var job = jobConstructor.newInstance();
         ReflectionTestUtils.setField(job, "id", 2L);
         ReflectionTestUtils.setField(job, "name", "백엔드");
-        var constructor = User.class.getDeclaredConstructor();
+        var constructor = Member.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         var user = constructor.newInstance();
         ReflectionTestUtils.setField(user, "id", 1L);
         ReflectionTestUtils.setField(user, "tag", "dev-tag");
         ReflectionTestUtils.setField(user, "nickname", "개발자");
-        ReflectionTestUtils.setField(user, "jobCategory", job);
+        ReflectionTestUtils.setField(user, "jobCategoryId", 2L);
+        when(jobs.findById(2L)).thenReturn(Optional.of(job));
         ReflectionTestUtils.setField(user, "summary", "함께 개발해요");
         ReflectionTestUtils.setField(user, "profileImage", "/profile.png");
         ReflectionTestUtils.setField(user, "bannerImage", "/banner.png");
-        ReflectionTestUtils.setField(user, "collaborationStatus", "AVAILABLE");
+        ReflectionTestUtils.setField(user, "collaborationStatus", Member.CollaborationStatus.AVAILABLE);
         ReflectionTestUtils.setField(user, "trustScore", new BigDecimal("36.50"));
         return user;
     }

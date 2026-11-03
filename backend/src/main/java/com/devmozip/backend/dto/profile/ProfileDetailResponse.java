@@ -1,6 +1,7 @@
 package com.devmozip.backend.dto.profile;
 
-import com.devmozip.backend.entity.User;
+import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.entity.JobCategory;
 import java.math.BigDecimal;
 
 public record ProfileDetailResponse(
@@ -15,12 +16,12 @@ public record ProfileDetailResponse(
         String collaborationStatus,
         BigDecimal trustScore
 ) {
-    public static ProfileDetailResponse from(User user) {
+    public static ProfileDetailResponse from(Member user, JobCategory job) {
         return new ProfileDetailResponse(
                 user.getId(), user.getTag(), user.getNickname(),
-                new JobCategoryResponse(user.getJobCategory().getId(), user.getJobCategory().getName()),
+                new JobCategoryResponse(job.getId(), job.getName()),
                 user.getSummary(), user.getCareer(), user.getProfileImage(), user.getBannerImage(),
-                user.getCollaborationStatus(), user.getTrustScore());
+                user.getCollaborationStatus() == null ? null : user.getCollaborationStatus().name(), user.getTrustScore());
     }
 
     public record JobCategoryResponse(Long id, String name) {}
