@@ -1,0 +1,58 @@
+@layer devmozip-account{:where(.scope):global(.onboarding-page){max-width:1050px;padding-top:38px;padding-bottom:70px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-heading){text-align:center}}
+@layer devmozip-account{:where(.scope):global(.onboarding-heading .eyebrow){justify-content:center}}
+@layer devmozip-account{:where(.scope):global(.onboarding-heading h1){font-size:32px;letter-spacing:-1px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-heading p){color:var(--muted);line-height:1.8}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps){display:grid;grid-template-columns:repeat(4,1fr);gap:12px;list-style:none;margin:32px 0;padding:0}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps li){display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:12px;padding:16px;background:white;color:var(--muted)}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps li>span){width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--surface);flex-shrink:0}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps strong){font-size:15px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps li.active){border-color:#baa6ee;background:#f7f3ff;color:var(--purple)}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps li.active>span){background:var(--purple);color:white}}
+@layer devmozip-account{:where(.scope):global(.onboarding-steps li.done>span){background:#e6f8f6;color:#159d9e}}
+@layer devmozip-account{:where(.scope):global(.onboarding-panel){background:white;border:1px solid var(--border);border-radius:18px;padding:32px;max-width:780px;margin:auto}}
+@layer devmozip-account{:where(.scope):global(.onboarding-step-title){margin-bottom:26px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-step-title>span){font-size:14px;color:var(--purple);font-weight:700;letter-spacing:1px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-step-title h2){font-size:24px;margin:8px 0 0}}
+@layer devmozip-account{:where(.scope):global(.onboarding-photo){display:flex;gap:22px;align-items:center;margin-bottom:12px;min-width:0}}
+@layer devmozip-account{:where(.scope):global(.onboarding-photo .profile-avatar){width:84px;height:84px;flex-shrink:0;position:static}}
+@layer devmozip-account{:where(.scope):global(.onboarding-photo>div){min-width:0;flex:1}}
+@layer devmozip-account{:where(.scope):global(.onboarding-photo input[type=file]){font-size:14px}}
+@layer devmozip-account{:where(.scope):global(.required-label){font-size:14px;color:var(--purple);font-weight:400;margin-left:5px}}
+@layer devmozip-account{:where(.scope):global(.selected-tags){display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}}
+@layer devmozip-account{:where(.scope):global(.selected-tags button){display:flex;gap:10px;align-items:center;border:1px solid #ded3f7;background:#f7f3ff;border-radius:20px;color:#7650b6;font-size:14px;padding:6px 12px}}
+@layer devmozip-account{:where(.scope):global(.selected-tags button>span){font-size:16px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-actions){display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;border-top:1px solid var(--border);margin-top:12px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-actions>span){font-size:14px;color:var(--muted)}}
+@layer devmozip-account{@media(max-width:1000px){:where(.scope):global(.onboarding-steps li){padding:12px;gap:7px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-page){padding-top:25px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-heading h1){font-size:26px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-steps){grid-template-columns:repeat(2,1fr)}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-panel){padding:24px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-photo){align-items:flex-start;gap:15px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-photo input){max-width:100%}}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-page){max-width:68rem}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-panel){width:100%;padding:clamp(1.125rem,3vw,2rem)}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-steps){grid-template-columns:repeat(4,minmax(0,1fr))}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-steps li){min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-heading h1){font-size:clamp(1.5rem,3vw,2rem)}}
+@layer devmozip-responsive{:where(.scope):global(.selected-tags button){max-width:100%;text-align:left;overflow-wrap:anywhere}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-photo input[type=file]){width:100%;max-width:100%}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.onboarding-steps){grid-template-columns:repeat(2,minmax(0,1fr));gap:.625rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.onboarding-photo){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.onboarding-photo>div){flex:1 1 12rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.onboarding-actions){gap:.5rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.onboarding-steps li){padding:.625rem;gap:.375rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.onboarding-steps strong){font-size:0.875rem}
+}}

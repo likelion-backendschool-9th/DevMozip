@@ -1,0 +1,46 @@
+{
+  "checks": [
+    "6개 해상도 배치·가로 넘침·우측 정보 순서",
+    "넓은 편집창·HTML 미리보기·저장·새로고침 복원·위험 코드 제거",
+    "기존 5개 탭 유지"
+  ],
+  "measurements": [
+    {
+      "width": 1920,
+      "introduction": 690.25,
+      "sidebarContent": 255.75,
+      "stacked": false
+    },
+    {
+      "width": 1440,
+      "introduction": 690.25,
+      "sidebarContent": 255.75,
+      "stacked": false
+    },
+    {
+      "width": 1280,
+      "introduction": 612.703125,
+      "sidebarContent": 225.328125,
+      "stacked": false
+    },
+    {
+      "width": 1024,
+      "introduction": 719.40625,
+      "sidebarContent": 676.46875,
+      "stacked": true
+    },
+    {
+      "width": 768,
+      "introduction": 698.9375,
+      "sidebarContent": 656.9375,
+      "stacked": true
+    },
+    {
+      "width": 390,
+      "introduction": 326,
+      "sidebarContent": 284,
+      "stacked": true
+    }
+  ],
+  "pageErrors": []
+}

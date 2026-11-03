@@ -1,0 +1,7 @@
+@layer devmozip-social{:where(.scope):global(.sns-editor-page){padding-top:30px;padding-bottom:65px}}
+@layer devmozip-social{:where(.scope):global(.sns-editor-page>section){max-width:900px;margin:28px auto 0;border:1px solid var(--border);border-radius:14px;background:#fff;padding:35px 40px}}
+@layer devmozip-social{:where(.scope):global(.sns-editor-page h1){font-size:28px;letter-spacing:-1px;margin:12px 0}}
+@layer devmozip-social{:where(.scope):global(.sns-editor-page>section>p){font-size:14px;color:#a38db3}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-editor-page>section){padding:25px 20px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-editor-page h1){font-size:23px}}}
+@layer devmozip-responsive{:where(.scope):global(.sns-editor-page>section){padding:clamp(1rem,3vw,2.5rem)}}

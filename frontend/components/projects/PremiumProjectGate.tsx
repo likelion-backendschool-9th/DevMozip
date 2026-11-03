@@ -1,0 +1,6 @@
+'use client';
+import Link from 'next/link';
+import {useAuth} from '@/lib/state/authStore';
+import {Modal} from '@/components/common/Modal';
+import {Button} from '@/components/common/Button';
+export function PremiumProjectGate({purpose='create',onClose,onActivated}:{purpose?:'create'|'portfolio';onClose:()=>void;onActivated?:()=>void}){const {user,administer,switchDemo}=useAuth();return <Modal title={purpose==='create'?'프로젝트 모집은 프리미엄 전용입니다':'지원자 포트폴리오 상세는 프리미엄 전용입니다'} onClose={onClose}><p>{purpose==='create'?'무료 회원도 프로젝트 조회·검색·지원·취소·북마크·참여는 이용할 수 있습니다. 모집 공고 생성은 프리미엄 구독이 필요합니다.':'제출된 지원자 포트폴리오의 상세 내용은 해당 프로젝트의 프리미엄 주최자만 열람할 수 있습니다.'}</p><p>데모 활성화는 실제 결제 없이 권한만 변경합니다.</p><div className="modal-actions"><Button variant="secondary" onClick={onClose}>닫기</Button><Link className="button secondary" href="/subscription" onClick={onClose}>프리미엄 안내</Link>{!user?<Link className="button" href="/login" onClick={onClose}>로그인하기</Link>:user.role==='admin'?<Button onClick={()=>{if(switchDemo('premium')){onClose();onActivated?.();}}}>프리미엄 데모 계정으로 전환</Button>:<Button onClick={()=>{if(user.role==='premium'||administer({type:'subscribe'})){onClose();onActivated?.();}}}>프리미엄 데모 활성화</Button>}</div></Modal>;}

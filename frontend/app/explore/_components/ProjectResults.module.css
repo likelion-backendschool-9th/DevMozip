@@ -1,0 +1,21 @@
+@layer devmozip-search{:where(.scope):global(.search-project-list){display:flex;flex-direction:column;gap:17px}}
+@layer devmozip-search{:where(.scope):global(.search-project-card){display:flex;align-items:center;gap:23px;padding:24px}}
+@layer devmozip-search{:where(.scope):global(.search-project-mark){width:76px;height:88px;flex-shrink:0;display:grid;place-items:center;font-size:35px;border-radius:12px;font-weight:750}}
+@layer devmozip-search{:where(.scope):global(.search-project-info){flex:1;min-width:0}}
+@layer devmozip-search{:where(.scope):global(.search-project-eyebrow){display:flex;align-items:center;gap:12px;font-size:14px;color:#ab92bd}}
+@layer devmozip-search{:where(.scope):global(.search-project-eyebrow .outline-badge){font-size:14px;padding:2px 6px}}
+@layer devmozip-search{:where(.scope):global(.search-project-card h3){font-size:16px;margin:10px 0 7px;letter-spacing:-.6px;overflow-wrap:anywhere}}
+@layer devmozip-search{:where(.scope):global(.search-project-card h3:hover){color:var(--purple)}}
+@layer devmozip-search{:where(.scope):global(.search-project-info>p){font-size:14px;color:#a58fb2;margin:0 0 13px}}
+@layer devmozip-search{:where(.scope):global(.search-project-facts){display:flex;align-items:center;gap:7px 17px;flex-wrap:wrap;margin-top:15px;color:#b39bc0;font-size:14px}}
+@layer devmozip-search{:where(.scope):global(.search-project-facts>span){display:flex;align-items:center;gap:5px}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-project-card){padding:18px;gap:14px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-project-mark){width:45px;height:64px;font-size:24px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-project-card h3){font-size:15px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-project-info>p){font-size:14px}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-project-facts){font-size:14px;gap:7px 10px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-project-card){gap:11px;padding:15px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-project-mark){width:34px;height:48px;font-size:20px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-project-card>.icon-button){width:23px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-project-facts){gap:7px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-project-facts>span:first-child){width:100%}}}

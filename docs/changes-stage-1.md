@@ -1,0 +1,67 @@
+# 1단계 변경 파일
+
+기존 `.github/workflows/notify.yml`은 그대로 보존했습니다. 아래 파일을 신규 생성했습니다.
+빌드 산출물, node_modules 및 로컬 캐시는 목록에서 제외했습니다.
+
+- `.gitignore`
+- `AGENTS.md`
+- `README.md`
+- `backend/.gitattributes`
+- `backend/.gitignore`
+- `backend/HELP.md`
+- `backend/build.gradle`
+- `backend/gradle/wrapper/gradle-wrapper.jar`
+- `backend/gradle/wrapper/gradle-wrapper.properties`
+- `backend/gradlew`
+- `backend/gradlew.bat`
+- `backend/settings.gradle`
+- `backend/src/main/java/com/devmozip/backend/BackendApplication.java`
+- `backend/src/main/resources/application.yml`
+- `backend/src/test/java/com/devmozip/backend/BackendApplicationTests.java`
+- `docs/api-plan.md`
+- `docs/architecture.md`
+- `docs/decisions-pending.md`
+- `docs/demo-scenarios.md`
+- `docs/frontend-pages.md`
+- `docs/project-brief.md`
+- `docs/validation.md`
+- `frontend/.env.example`
+- `frontend/index.html`
+- `frontend/package-lock.json`
+- `frontend/package.json`
+- `frontend/public/.gitkeep`
+- `frontend/src/app/providers/PrototypeProvider.tsx`
+- `frontend/src/app/router/AppRouter.tsx`
+- `frontend/src/app/router/routes.test.ts`
+- `frontend/src/assets/.gitkeep`
+- `frontend/src/components/common/Modal.tsx`
+- `frontend/src/components/common/Toast.tsx`
+- `frontend/src/components/layout/AppLayout.tsx`
+- `frontend/src/features/admin/README.md`
+- `frontend/src/features/auth/README.md`
+- `frontend/src/features/follow/README.md`
+- `frontend/src/features/matching/README.md`
+- `frontend/src/features/message/README.md`
+- `frontend/src/features/notification/README.md`
+- `frontend/src/features/post/README.md`
+- `frontend/src/features/premium/README.md`
+- `frontend/src/features/project/README.md`
+- `frontend/src/features/review/README.md`
+- `frontend/src/features/setup/RouteDirectory.tsx`
+- `frontend/src/features/user/README.md`
+- `frontend/src/hooks/.gitkeep`
+- `frontend/src/main.tsx`
+- `frontend/src/mocks/routes.ts`
+- `frontend/src/pages/NotFoundPage.tsx`
+- `frontend/src/pages/PlannedPage.tsx`
+- `frontend/src/pages/SetupPage.tsx`
+- `frontend/src/services/api.ts`
+- `frontend/src/services/settingsService.test.ts`
+- `frontend/src/services/settingsService.ts`
+- `frontend/src/styles/global.css`
+- `frontend/src/styles/tokens.css`
+- `frontend/src/types/index.ts`
+- `frontend/src/utils/.gitkeep`
+- `frontend/tsconfig.json`
+- `frontend/vite.config.ts`
+- `docs/changes-stage-1.md` (이 목록)

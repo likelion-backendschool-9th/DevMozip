@@ -1,0 +1,14 @@
+@layer devmozip-account{:where(.scope):global(.onboarding-preview){position:relative;border:1px solid var(--border);border-radius:14px;padding:0 24px 24px;overflow:hidden}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview-banner){height:85px;background:linear-gradient(120deg,#efe9ff,#e9fafa);margin:0 -24px 18px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview>.profile-avatar){position:static;width:74px;height:74px;margin-top:-48px;background:#eee9fb;border:4px solid white}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview h2){font-size:24px;margin:12px 0 8px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview>p){color:var(--muted);line-height:1.8}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview dl>div){display:grid;grid-template-columns:125px 1fr;gap:14px;border-top:1px solid var(--border);padding:14px 0;font-size:15px}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview dt){color:var(--muted)}}
+@layer devmozip-account{:where(.scope):global(.onboarding-preview dd){margin:0;overflow-wrap:anywhere}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.onboarding-preview dl>div){grid-template-columns:1fr;gap:7px}}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-preview>dl){min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.onboarding-preview dl>div){grid-template-columns:minmax(6rem,7.8rem) minmax(0,1fr)}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.onboarding-preview dl>div){grid-template-columns:minmax(0,1fr);gap:.5rem}
+}}

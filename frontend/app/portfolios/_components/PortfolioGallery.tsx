@@ -1,0 +1,7 @@
+'use client';
+import {useState} from 'react';
+import {Modal} from '@/components/common/Modal';
+import {Button} from '@/components/common/Button';
+import type {PortfolioImage} from '@/types/profile';
+import styles from './PortfolioGallery.module.css';
+export function PortfolioGallery({images,title='프로젝트 이미지'}:{images:PortfolioImage[];title?:string}){const [selected,setSelected]=useState<number|null>(null);if(!images.length)return null;return <section className={styles.section} aria-label="프로젝트 이미지 갤러리"><div className={styles.heading}><h2>{title}</h2><span>{images.length}장 · 클릭하여 크게 보기</span></div><div className={styles.grid}>{images.map((image,index)=><figure key={index}><button type="button" aria-label={`프로젝트 이미지 ${index+1} 크게 보기`} onClick={()=>setSelected(index)}><img src={image.src} alt={image.caption||`프로젝트 화면 ${index+1}`} loading="lazy"/></button><figcaption>{image.caption||`프로젝트 화면 ${index+1}`}</figcaption></figure>)}</div>{selected!==null&&images[selected]&&<Modal className={styles.dialog} title={`프로젝트 이미지 ${selected+1} / ${images.length}`} onClose={()=>setSelected(null)}><img className={styles.large} src={images[selected].src} alt={images[selected].caption||`프로젝트 화면 ${selected+1}`}/><p>{images[selected].caption}</p><div className="modal-actions"><Button variant="secondary" disabled={selected===0} onClick={()=>setSelected(selected-1)}>이전 이미지</Button><Button variant="secondary" disabled={selected===images.length-1} onClick={()=>setSelected(selected+1)}>다음 이미지</Button></div></Modal>}</section>;}

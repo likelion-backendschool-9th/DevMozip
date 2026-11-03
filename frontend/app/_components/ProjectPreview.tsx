@@ -1,0 +1,12 @@
+'use client';
+import styles from './ProjectPreview.module.css';
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowUpRight, CalendarDays, Users } from 'lucide-react';
+import { useProjects } from '@/lib/state/projectStore';
+import { projectSortOptions } from '@/mocks/home';
+import { projectStatus } from '@/lib/projects/projectService';
+import { sortProjects } from '@/lib/matching/homeService';
+import type { ProjectSort } from '@/types/home';
+import { Card } from '@/components/common/Card';
+export function ProjectPreview() { const { projects } = useProjects(); const [sort, setSort] = useState<ProjectSort>('latest'); return <section className={[styles.scope, "home-section"].join(" ")}><div className={[styles.scope, "section-heading"].join(" ")}><div><div className={[styles.scope, "eyebrow"].join(" ")}>FIND YOUR NEXT PROJECT</div><h2>함께 만들면 더 좋은 프로젝트</h2><p>당신의 경험이 필요한 팀을 만나보세요.</p></div><Link className={[styles.scope, "text-link"].join(" ")} href="/projects">전체 프로젝트<ArrowUpRight size={16}/></Link></div><div className={[styles.scope, "tabs compact"].join(" ")} aria-label="프로젝트 정렬">{projectSortOptions.map(s => <button aria-pressed={sort === s.value} key={s.value} className={[styles.scope, sort === s.value ? 'active' : ''].join(" ")} onClick={() => setSort(s.value)}>{s.label}</button>)}</div><div className={[styles.scope, "project-grid"].join(" ")}>{sortProjects(sort, projects).slice(0, 3).map(p => <Card className={[styles.scope, "project-preview"].join(" ")} key={p.id}><div className={[styles.scope, `project-cover ${p.color}`].join(" ")}><span>{p.field}</span><div className={[styles.scope, "cover-glyph"].join(" ")}>{p.mark}<span>↗</span></div><span className={[styles.scope, "recruit-badge"].join(" ")}>{projectStatus(p)}</span></div><div className={[styles.scope, "project-content"].join(" ")}><div className={[styles.scope, "project-meta"].join(" ")}>{p.roles.join(' · ')} · {projectStatus(p)}</div><Link href={`/projects/${p.id}`}><h3>{p.title}</h3></Link><p>{p.summary}</p><div className={[styles.scope, "tags"].join(" ")}>{p.stacks.map(s => <span key={s}>{s}</span>)}</div><div className={[styles.scope, "project-facts"].join(" ")}><span><Users size={13}/>{p.members}/{p.capacity}명 · {p.capacity - p.members}명 모집</span><span><CalendarDays size={13}/>{p.duration}</span></div><div className={[styles.scope, "project-bottom"].join(" ")}><span>모집 마감 {p.deadline.slice(5).replace('-', '.')}</span><Link href={`/projects/${p.id}`}>자세히 보기 <ArrowUpRight size={14}/></Link></div></div></Card>)}</div></section>; }

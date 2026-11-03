@@ -1,0 +1,16 @@
+@layer devmozip-project-workspace{:where(.scope):global(.my-projects-page){padding-top:34px;padding-bottom:65px;min-height:70vh}}
+@layer devmozip-project-workspace{:where(.scope):global(.my-projects-page h1){font-size:29px;letter-spacing:-.8px;margin:10px 0}}
+@layer devmozip-project-workspace{:where(.scope):global(.my-projects-page>.section-heading){margin-top:20px}}
+@layer devmozip-project-workspace{:where(.scope):global(.my-projects-page .section-heading p){color:var(--muted)}}
+@layer devmozip-project-workspace{:where(.scope):global(.workspace-details){display:grid;gap:12px;border-top:1px solid var(--border);padding-top:18px;margin-top:18px}}
+@layer devmozip-project-workspace{:where(.scope):global(.workspace-details>div){display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;font-size:15px}}
+@layer devmozip-project-workspace{:where(.scope):global(.workspace-details dt){color:var(--muted)}}
+@layer devmozip-project-workspace{:where(.scope):global(.workspace-details dd){margin:0;overflow-wrap:anywhere}}
+@layer devmozip-project-workspace{@media(max-width:600px){:where(.scope):global(.my-projects-page h1){font-size:24px}}}
+@layer devmozip-project-workspace{@media(max-width:600px){:where(.scope):global(.workspace-details>div){grid-template-columns:75px minmax(0,1fr)}}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.my-projects-page>.tabs){flex-wrap:wrap;gap:.5rem 1.25rem;overflow:visible}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.my-projects-page>.tabs>button){white-space:normal}
+}}

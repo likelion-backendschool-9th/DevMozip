@@ -1,0 +1,9 @@
+@layer devmozip-profile{:where(.scope):global(.text-button){border:0;background:none;display:flex;align-items:center;gap:6px;font-size:14px;color:#9c83b1;cursor:pointer}}
+@layer devmozip-project{:where(.scope):global(.create-project-form){gap:20px}}
+@layer devmozip-project{:where(.scope):global(.create-project-form .auth-two-columns){gap:16px}}
+@layer devmozip-project{:where(.scope):global(.create-project-form fieldset>.button){font-size:14px;padding:7px 12px}}
+@layer devmozip-project{:where(.scope):global(.create-role-row){display:grid;grid-template-columns:1.4fr .8fr 1fr auto;gap:11px;align-items:end;margin:0 0 14px}}
+@layer devmozip-project{:where(.scope):global(.create-role-row>.text-button){padding:10px 0}}
+@layer devmozip-project{:where(.scope):global(.create-role-row .form-input){padding:10px 8px;font-size:14px}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.create-role-row){grid-template-columns:1fr 1fr;align-items:start;border-bottom:1px solid var(--border);padding-bottom:15px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.create-role-row>.text-button){align-self:end;justify-self:start}}}

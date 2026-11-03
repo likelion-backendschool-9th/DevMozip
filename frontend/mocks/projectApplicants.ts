@@ -1,0 +1,10 @@
+import type {ProjectApplication} from '@/types/project';
+// 기존 프로필·본인 소유 포트폴리오와 연결된 발표용 지원서.
+export const demoProjectApplications:ProjectApplication[]=[
+ {id:'demo-app-pocket-haneul',projectId:'pocket',userId:'demo-user',role:'백엔드',portfolioId:'pf-haneul',portfolioTitle:'DevLog — 협업 회고 서비스',message:'DevLog에서 API 연동과 오류 상태 처리를 담당했습니다. 이번에는 거래 내역 조회와 입력 검증을 백엔드 팀과 함께 설계하고 싶습니다. 평일 저녁과 주말에 참여할 수 있습니다.',status:'지원 완료',createdAt:'2026-10-30T10:00:00+09:00'},
+ {id:'demo-app-pocket-minjun',projectId:'pocket',userId:'minjun',role:'백엔드',portfolioId:'pf-minjun',portfolioTitle:'Pocket API — 개인 자산 관리 API',message:'Java와 Spring Boot로 거래 조회 계약과 공통 오류 응답을 설계한 경험이 있습니다. 금액·기간 경계값 테스트와 API 문서화를 맡고, 매주 코드 리뷰에 참여하겠습니다.',status:'지원 완료',createdAt:'2026-10-31T19:30:00+09:00'},
+ {id:'demo-app-devgarden-haneul',projectId:'devgarden',userId:'demo-user',role:'프론트엔드',portfolioId:'pf-haneul',portfolioTitle:'DevLog — 협업 회고 서비스',message:'React와 TypeScript로 회고 작성·수정 흐름을 구현했습니다. 코드 리뷰 게시판과 프로필 화면을 맡고 싶습니다. 키보드 접근성과 모바일 레이아웃도 함께 점검하겠습니다.',status:'지원 완료',createdAt:'2026-10-29T20:00:00+09:00'},
+ {id:'demo-app-devgarden-yuna',projectId:'devgarden',userId:'yuna',role:'프론트엔드',portfolioId:'pf-yuna',portfolioTitle:'FlowUI — 팀을 위한 디자인 시스템',message:'공통 컴포넌트와 디자인 토큰을 설계한 경험을 커뮤니티에 적용하고 싶습니다. 게시글·댓글 입력 패턴과 빈 상태 화면을 정리하고, 디자이너와 사용성 리뷰를 진행할 수 있습니다.',status:'지원 완료',createdAt:'2026-10-30T13:00:00+09:00'},
+ {id:'demo-app-devgarden-minjun',projectId:'devgarden',userId:'minjun',role:'백엔드',portfolioId:'pf-minjun',portfolioTitle:'Pocket API — 개인 자산 관리 API',message:'게시글 검색과 댓글 데이터 계약 설계에 관심이 있어 지원했습니다. 이번 모집은 주간 회의 참여 시간이 맞지 않아 검토가 종료된 데모 사례입니다.',status:'지원 거절',createdAt:'2026-10-27T18:00:00+09:00',decidedAt:'2026-10-29T12:00:00+09:00'},
+ {id:'demo-app-learnloop-yuna',projectId:'learnloop',userId:'yuna',role:'프론트엔드',portfolioId:'pf-yuna',portfolioTitle:'FlowUI — 팀을 위한 디자인 시스템',message:'학습 진도와 피드백 화면의 일관된 UI를 만들고 싶어 지원했습니다. 다른 프로젝트 일정과 겹쳐 직접 지원을 취소한 데모 사례입니다.',status:'지원 취소',createdAt:'2026-10-28T17:00:00+09:00',cancelledAt:'2026-10-30T09:00:00+09:00'}
+];

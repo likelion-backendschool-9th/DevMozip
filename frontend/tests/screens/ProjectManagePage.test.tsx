@@ -1,0 +1,34 @@
+import { resetLocalStores } from "@/lib/localStore";
+import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Route,Routes } from '@/tests/helpers/RouterFixture';
+import { AppLayout } from '@/app/_components/AppLayout';
+import ProjectManagePage from '@/app/projects/[projectId]/manage/page';
+import ProjectDetailPage from '@/app/projects/[projectId]/page';
+import ProfilePage from '@/app/(user)/users/[userId]/page';
+import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
+import ProjectNotificationsPage from '@/app/notifications/page';
+import { SESSION_KEY } from '@/lib/account/authService';
+import { PROJECT_KEY,applyRecruitmentAction,freshRecruitmentState } from '@/lib/projects/projectService';
+import { freshProfileState } from '@/lib/profiles/profileService';
+import { syncProjectState } from '@/lib/projects/projectManagementService';
+import { demoAccounts } from '@/mocks/auth';
+import type { RecruitmentState } from '@/types/project';
+const now=new Date('2026-10-30T12:00:00+09:00');const member=demoAccounts[0],host=demoAccounts[1];
+const pending=()=>applyRecruitmentAction(freshRecruitmentState(),{type:'apply',projectId:'pocket',portfolioId:'pf-haneul',role:'백엔드',message:'함께 성장하며 좋은 서비스를 만들고 싶습니다.'},member,freshProfileState(),now).state;
+const approved=()=>{const s=pending();return applyRecruitmentAction(s,{type:'decide',projectId:'pocket',applicationId:s.applications[0].id,decision:'지원 승인'},host,freshProfileState(),now).state;};
+const ended=()=>applyRecruitmentAction(approved(),{type:'status',projectId:'pocket',status:'프로젝트 종료'},host,freshProfileState(),now).state;
+function page(url:string,userId:string|undefined,state:RecruitmentState){const data=new Map<string,string>();data.set(PROJECT_KEY,JSON.stringify(state));if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route path="/projects/:projectId/manage" element={<ProjectManagePage/>}/><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId" element={<ProfilePage/>}/></Route><Route path="/notifications" element={<ProjectNotificationsPage/>}/></Route></Routes></MemoryRouter></>);}
+beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
+describe('주최자 관리 화면과 계정 전환 렌더링',()=>{
+ it('주최자에게 지원자·포트폴리오·승인/거절 버튼을 표시한다',()=>{const html=page('/projects/pocket/manage',host.id,pending());expect(html).toContain('지원자 목록');expect(html).toContain('김하늘');expect(html).toContain('지원 승인');expect(html).toContain('거절');expect(html).toContain('DevLog · 개발자의 꾸준한 기록');});
+ it('비주최자와 비로그인의 관리 접근을 제한한다',()=>{for(const id of [member.id,undefined,'demo-admin'])expect(page('/projects/pocket/manage',id,pending())).toContain('주최자만 프로젝트를 관리할 수 있습니다.');});
+ it('승인된 사용자가 팀원 및 채팅 연동 준비 명단에 표시된다',()=>{const html=page('/projects/pocket/manage?tab=team',host.id,approved());expect(html).toContain('함께하는 팀원');expect(html).toContain('김하늘');expect(html).toContain('채팅 멤버 등록됨');});
+ it('지원자 계정으로 전환하면 상세와 알림에서 승인을 확인한다',()=>{const state=approved();expect(page('/projects/pocket',member.id,state)).toContain('팀원 등록 완료');const html=page('/notifications',member.id,state);expect(html).toContain('지원 승인');expect(html).not.toContain('프로젝트 지원 도착');});
+ it('주최자 상세에서 관리 경로를 제공한다',()=>{expect(page('/projects/pocket',host.id,pending())).toContain('/projects/pocket/manage');});
+ it('운영 탭은 상태 변경·기간 연장과 관련 알림을 표시한다',()=>{const html=page('/projects/pocket/manage?tab=settings',host.id,pending());expect(html).toContain('상태 변경 / 프로젝트 종료');expect(html).toContain('프로젝트 기간 연장');expect(html).toContain('프로젝트 지원 도착');});
+ it('종료 후 요청 현황과 프로젝트 리뷰 링크를 제공하며 프로필은 조회 전용이다',()=>{const state=ended();const team=page('/projects/pocket/manage?tab=team',host.id,state);expect(team).toContain('리뷰 요청 현황');expect(team).toContain('/projects/pocket/reviews?request=');const html=page('/users/demo-premium?tab=reviews&project=pocket',member.id,state);expect(html).toContain('조회 전용');expect(html).not.toContain('name="review-rating"');expect(html).not.toContain('협업 리뷰 등록');});
+ it('종료된 프로젝트의 편집·기간 연장을 비활성화한다',()=>{const html=page('/projects/pocket/manage?tab=settings',host.id,ended());expect(html).toContain('종료 당시 팀원끼리');expect(html).toContain('disabled=""');expect(page('/projects/pocket',member.id,ended())).toContain('프로젝트 종료 · 참여 기록 유지');});
+ it('취소한 지원자는 팀원 목록에서 빠진다',()=>{const state=applyRecruitmentAction(approved(),{type:'cancel',projectId:'pocket',acknowledgePenalty:true},member,freshProfileState(),now).state;expect(page('/projects/pocket/manage?tab=team',host.id,state)).not.toContain('김하늘');});
+ it('관리자는 모집 기한 경과 알림을 확인할 수 있다',()=>{const state=syncProjectState(freshRecruitmentState(),new Date('2026-11-03T01:00:00+09:00'));expect(page('/notifications','demo-admin',state)).toContain('모집 기한 경과 확인 필요');});
+});

@@ -1,0 +1,89 @@
+@layer devmozip-profile{:where(.scope):global(.profile-top){border:1px solid var(--border);border-radius:15px;background:#fff;overflow:hidden}}
+@layer devmozip-profile{:where(.scope):global(.profile-banner){height:170px;position:relative;overflow:hidden;background-image:linear-gradient(120deg,#ffffff11,#ffffff55);display:flex;align-items:center;justify-content:flex-end;padding:0 70px}}
+@layer devmozip-profile{:where(.scope):global(.profile-banner>span){font-family:monospace;font-size:26px;letter-spacing:3px;opacity:.5;z-index:1}}
+@layer devmozip-profile{:where(.scope):global(.profile-banner i){position:absolute;border:1px solid currentColor;opacity:.12;width:350px;height:350px;border-radius:60px;transform:rotate(30deg);right:0;top:-150px}}
+@layer devmozip-profile{:where(.scope):global(.profile-banner i:last-child){right:170px;top:-40px;width:220px;height:220px}}
+@layer devmozip-profile{:where(.scope):global(.profile-identity){padding:0 34px 25px;position:relative}}
+@layer devmozip-profile{:where(.scope):global(.profile-identity>.profile-avatar){margin-top:-47px;position:relative;box-shadow:0 3px 15px #3b2d5510}}
+@layer devmozip-profile{:where(.scope):global(.profile-top-actions){float:right;display:flex;gap:9px;margin-top:20px}}
+@layer devmozip-profile{:where(.scope):global(.profile-top-actions .button){font-size:14px;padding:9px 13px}}
+@layer devmozip-profile{:where(.scope):global(.profile-heading){display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-top:11px}}
+@layer devmozip-profile{:where(.scope):global(.profile-heading h1){font-size:26px;letter-spacing:-1px;margin:0}}
+@layer devmozip-profile{:where(.scope):global(.profile-heading>span:nth-child(2)){font-size:14px;color:#a69cb3}}
+@layer devmozip-profile{:where(.scope):global(.profile-job){color:#7f738e;font-size:14px;margin:7px 0}}
+@layer devmozip-profile{:where(.scope):global(.profile-job span){padding:0 6px;color:#c3bacd}}
+@layer devmozip-profile{:where(.scope):global(.profile-bio){font-size:14px;color:#847b90;margin:12px 0}}
+@layer devmozip-profile{:where(.scope):global(.profile-meta){display:flex;gap:9px 21px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:14px;color:#a297af}}
+@layer devmozip-profile{:where(.scope):global(.profile-meta>span){display:inline-flex;align-items:center;gap:6px}}
+@layer devmozip-profile{:where(.scope):global(.profile-meta>a){display:inline-flex;align-items:center;gap:6px}}
+@layer devmozip-profile{:where(.scope):global(.profile-meta a){color:#91809f}}
+@layer devmozip-profile{:where(.scope):global(.profile-meta a:hover){color:var(--purple)}}
+@layer devmozip-profile{:where(.scope):global(.profile-social){display:flex;gap:21px;align-items:center;margin-top:20px}}
+@layer devmozip-profile{:where(.scope):global(.profile-social>button){background:none;border:0;padding:0;font-size:14px;color:#9b8eaa}}
+@layer devmozip-profile{:where(.scope):global(.profile-social b){color:#61526f;margin-left:5px}}
+@layer devmozip-profile{:where(.scope):global(.trust-temperature){margin-left:auto;display:flex;align-items:center;gap:8px}}
+@layer devmozip-profile{:where(.scope):global(.trust-temperature strong){font-size:19px;letter-spacing:-.4px}}
+@layer devmozip-profile{:where(.scope):global(.trust-temperature>span){font-size:14px;color:#a99bb4}}
+@layer devmozip-profile{:where(.scope):global(.profile-people){display:flex;flex-direction:column;gap:15px;padding-top:15px}}
+@layer devmozip-profile{:where(.scope):global(.profile-people>a){display:flex;gap:13px;align-items:center}}
+@layer devmozip-profile{:where(.scope):global(.profile-people strong){font-size:14px}}
+@layer devmozip-profile{:where(.scope):global(.profile-people small){display:block;font-size:14px;color:#a58fb5;margin-top:3px}}
+@layer devmozip-profile{:where(.scope):global(.profile-people p){font-size:14px;color:#a391af}}
+@layer devmozip-profile{@media(max-width:1000px){:where(.scope):global(.profile-banner>span){font-size:22px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-banner){height:125px;padding:0 20px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-banner>span){font-size:16px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-identity){padding:0 20px 22px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-identity>.profile-avatar){margin-top:-40px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-heading h1){font-size:23px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-heading){gap:8px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-heading>span:nth-child(2)){font-size:14px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-top-actions){gap:6px;margin-top:15px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-top-actions .button){font-size:14px;padding:8px 10px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-social){gap:14px;flex-wrap:wrap}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.trust-temperature){gap:5px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.trust-temperature strong){font-size:16px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.trust-temperature>span){font-size:14px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-meta){gap:10px 16px}}}
+@layer devmozip-follow-matching{:where(.scope):global(.profile-top-actions){flex-wrap:wrap;justify-content:flex-end;max-width:50%}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.profile-top-actions){max-width:65%;gap:6px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.profile-top-actions .button){font-size:14px}}}
+@layer devmozip-presentation{:where(.scope):global(.profile-heading h1){overflow-wrap:anywhere}}
+@layer devmozip-presentation{:where(.scope):global(.profile-job){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.profile-meta){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.profile-social>button){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.profile-heading>span:nth-child(2)){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.profile-people small){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.profile-top-actions .button){font-size:15px}}
+@layer devmozip-responsive{:where(.scope):global(.profile-banner){height:clamp(8rem,14vw,11rem);padding-inline:clamp(1.25rem,4vw,4rem)}}
+@layer devmozip-responsive{:where(.scope):global(.profile-banner>span){max-width:100%;font-size:clamp(1rem,2.1vw,1.625rem)}}
+@layer devmozip-responsive{:where(.scope):global(.profile-heading){flex-wrap:wrap;gap:.75rem}}
+@layer devmozip-responsive{:where(.scope):global(.profile-social){flex-wrap:wrap;gap:.75rem}}
+@layer devmozip-responsive{:where(.scope):global(.profile-top-actions){min-width:0}}
+@layer devmozip-responsive{:where(.scope):global(.profile-meta>span){max-width:100%;flex-wrap:wrap}}
+@layer devmozip-responsive{:where(.scope):global(.profile-meta>a){max-width:100%;flex-wrap:wrap}}
+@layer devmozip-responsive{@media(max-width:64rem){
+ :where(.scope):global(.profile-social .trust-temperature){margin-left:0}
+}}
+@layer devmozip-responsive{@media(max-width:64rem){
+ :where(.scope):global(.profile-heading){align-items:flex-start}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.profile-banner){padding-inline:1.25rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.profile-heading h1){font-size:1.5rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.profile-social){gap:.75rem 1rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.trust-temperature){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.profile-top-actions){width:100%;gap:.5rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.profile-top-actions .button){padding:.625rem .75rem}
+}}
+
+.bannerImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}

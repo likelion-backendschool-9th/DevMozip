@@ -1,0 +1,33 @@
+@layer devmozip-follow-matching{:where(.scope):global(.following-page){padding-top:35px;padding-bottom:65px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-page h1){font-size:28px;letter-spacing:-1px;margin:10px 0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-tabs){gap:30px;margin-top:30px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-tabs button){padding:8px 0 15px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-tabs b){font-size:14px;color:#a188b3;margin-left:5px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-toolbar){display:flex;align-items:center;gap:23px;margin:23px 0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-toolbar>div){display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;background:white;padding-left:12px;max-width:380px;flex:1;color:#b09bc0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-toolbar .form-input){font-size:14px;border:0;box-shadow:none}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-toolbar>span){font-size:14px;color:#b49ec3;margin-left:auto}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-list){display:flex;flex-direction:column;gap:16px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person){display:flex;align-items:center;gap:22px;padding:23px 27px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person .profile-avatar){height:68px;width:68px;border:0;border-radius:19px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person-info){flex:1;min-width:0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person h2){font-size:16px;letter-spacing:-.4px;margin:0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person h2 small){font-size:14px;font-weight:400;color:#b5a0c3;margin-left:12px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person-info>p){font-size:14px;color:#a98eb9;margin:5px 0 10px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person-info>.follow-notice-summary){font-size:14px;color:#b79dc7;margin:10px 0 0}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person-actions){display:flex;flex-direction:column;gap:8px;min-width:105px}}
+@layer devmozip-follow-matching{:where(.scope):global(.following-person-actions .button){font-size:14px;padding:8px 12px;gap:6px}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-page h1){font-size:23px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person){padding:19px;gap:14px;flex-wrap:wrap}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person .profile-avatar){width:52px;height:52px;border-radius:15px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person h2){font-size:15px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person h2 small){display:block;font-size:14px;margin:3px 0 0}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person-info>p){font-size:14px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person>.availability-badge){font-size:14px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person-actions){flex-direction:row;margin-left:65px;min-width:0}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-person-actions .button){font-size:14px;padding:7px 11px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-toolbar){flex-wrap:wrap;gap:12px}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-toolbar>div){max-width:none;flex-basis:100%}}}
+@layer devmozip-follow-matching{@media(max-width:800px){:where(.scope):global(.following-toolbar>span){margin-left:auto}}}
+@layer devmozip-follow-matching{@media(max-width:420px){:where(.scope):global(.following-person>.availability-badge){margin-left:65px}}}
+@layer devmozip-follow-matching{@media(max-width:420px){:where(.scope):global(.following-person-actions){width:100%;margin-left:65px}}}

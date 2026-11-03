@@ -1,0 +1,47 @@
+@layer devmozip-matching-chat{:where(.scope):global(.chat-conditions){border:1px solid #e6e3ef;border-radius:10px;margin-bottom:12px;background:#faf9ff}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-conditions>summary){padding:12px 14px;font-size:14px;font-weight:600;cursor:pointer}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-conditions>summary span){float:right;color:#88779e;font-weight:400}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body){max-height:340px;overflow:auto;padding:0 16px 16px;display:grid;gap:15px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body>p){font-size:14px;color:#828596}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body fieldset){border:0;padding:0;min-width:0}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body legend){font-size:14px;font-weight:600;margin-bottom:8px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body>label){font-size:14px;font-weight:600;margin-bottom:8px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body .chips){gap:6px;flex-wrap:wrap}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body .chip){padding:6px 11px;font-size:14px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-body .form-input){margin-top:5px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-other){border:0;background:none;font-size:14px;color:#7051c1;padding:8px 0;cursor:pointer}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-custom){display:flex;gap:8px;align-items:center}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-custom input){flex:1;min-width:0}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-selected-tags){display:flex;gap:5px;flex-wrap:wrap}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-selected-tags button){background:#ede8ff;color:#7452c7;border:0;border-radius:6px;padding:5px 8px;font-size:14px;cursor:pointer}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-role-counts){display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-role-counts>div){display:flex;gap:6px;align-items:center;border:1px solid #e5e0ee;border-radius:8px;padding:4px 8px;background:white}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-role-counts label){display:flex;align-items:center;gap:6px;font-size:14px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-role-counts input){width:65px;padding:6px!important;margin:0!important}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-role-counts button){border:0;background:none;cursor:pointer}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-selects){display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-selects label){display:grid;gap:6px;font-size:14px}}
+@layer devmozip-matching-chat{:where(.scope):global(.chat-condition-selects select){width:100%;padding:9px;border:1px solid #dedee8;border-radius:7px;background:white}}
+@layer devmozip-matching-chat{@media(max-width:650px){:where(.scope):global(.chat-condition-selects){grid-template-columns:1fr}}}
+@layer devmozip-responsive{:where(.scope):global(.chat-condition-selects){grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))}}
+@layer devmozip-responsive{:where(.scope):global(.chat-custom){flex-wrap:wrap}}
+@layer devmozip-responsive{:where(.scope):global(.chat-custom input){flex:1 1 10rem}}
+@layer devmozip-responsive{:where(.scope):global(.chat-custom .button){flex:0 1 auto}}
+@layer devmozip-responsive{:where(.scope):global(.chat-condition-body){max-height:min(34dvh,21rem)}}
+@layer devmozip-responsive{:where(.scope):global(.chat-role-counts>div){max-width:100%}}
+@layer devmozip-responsive{:where(.scope):global(.chat-role-counts label){flex-wrap:wrap;min-width:0}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.chat-condition-body){padding-inline:.75rem;max-height:min(32dvh,20rem)}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.chat-conditions>summary){display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:0.875rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.chat-conditions>summary span){float:none;font-size:0.875rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.chat-selected-tags button){max-width:100%;text-align:left}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.chat-custom .button){width:100%}
+}}

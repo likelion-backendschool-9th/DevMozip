@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-02T01:25:43.783Z",
+  "base": "http://localhost:5173",
+  "checks": [
+    {
+      "name": "무료 작성 버튼은 모집/내 프로젝트에서 프리미엄 모달 표시",
+      "status": "passed"
+    },
+    {
+      "name": "같은 계정 프리미엄 데모 활성화 후 실제 공고 생성",
+      "status": "passed"
+    },
+    {
+      "name": "해지 시 신규 생성 제한·기존 주최자 관리 임시 유지",
+      "status": "passed"
+    },
+    {
+      "name": "무료 지원·프리미엄 주최자의 제출 포트폴리오 상세",
+      "status": "passed"
+    },
+    {
+      "name": "구독 해지 시 지원자 상세 잠금·재활성화 시 즉시 복원",
+      "status": "passed"
+    },
+    {
+      "name": "관리자도 공고 생성 우회 불가",
+      "status": "passed"
+    },
+    {
+      "name": "투표 생성·정확히 절반은 미달·중복 투표 버튼 차단",
+      "status": "passed"
+    },
+    {
+      "name": "72시간 만료·강퇴 없음·반대 투표 카운트",
+      "status": "passed"
+    },
+    {
+      "name": "프리미엄 새 방 생성·무료 지원/승인·멤버 연결",
+      "status": "passed"
+    },
+    {
+      "name": "대상자는 투표 불가·주최자 동일 1표로 과반수 가결·즉시 퇴장",
+      "status": "passed"
+    },
+    {
+      "name": "대상자 자동 퇴장·읽기/쓰기 UI 차단·새로고침 유지",
+      "status": "passed"
+    },
+    {
+      "name": "결과 알림 중복 없음·참여/활동 유지·메신저 방 제거",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": [],
+  "screens": [
+    {
+      "name": "premium-gate",
+      "width": 1440
+    },
+    {
+      "name": "premium-created",
+      "width": 1440
+    },
+    {
+      "name": "applicant-detail",
+      "width": 1440
+    },
+    {
+      "name": "vote-half",
+      "width": 1440
+    },
+    {
+      "name": "kick-passed",
+      "width": 1440
+    },
+    {
+      "name": "kicked-denied",
+      "width": 1440
+    },
+    {
+      "name": "participant-chat-excluded",
+      "width": 1440
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+@layer devmozip-auth{:where(.scope):global(.check-success){font-size:14px;color:#309b86;margin:0}}
+@layer devmozip-administration{:where(.scope):global(.payment-list){list-style:none;padding:0}}
+@layer devmozip-administration{:where(.scope):global(.payment-list li){display:flex;justify-content:space-between;gap:16px;padding:18px 0;border-bottom:1px solid #eee;font-size:15px}}
+@layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.payment-list li){flex-wrap:wrap}}}
+@layer devmozip-account{:where(.scope):global(.personal-page-heading){padding:4px 0 24px}}
+@layer devmozip-account{:where(.scope):global(.personal-page-heading h1){font-size:28px;letter-spacing:-.8px;margin:12px 0}}
+@layer devmozip-account{:where(.scope):global(.personal-page-heading>p){font-size:15px;color:var(--muted)}}
+@layer devmozip-account{:where(.scope):global(.account-panel){border:1px solid var(--border);border-radius:14px;padding:28px;background:white;margin-bottom:24px;min-width:0}}
+@layer devmozip-account{:where(.scope):global(.account-panel h2){display:flex;align-items:center;gap:8px;font-size:20px;margin:0 0 22px}}
+@layer devmozip-account{:where(.scope):global(.account-panel h3){font-size:16px;margin-top:26px}}
+@layer devmozip-account{:where(.scope):global(.account-panel label){display:grid;gap:8px;font-size:15px;max-width:560px}}
+@layer devmozip-account{:where(.scope):global(.account-panel p){font-size:15px;color:var(--muted);line-height:1.8}}
+@layer devmozip-account{:where(.scope):global(.account-password-form>.button){justify-self:start}}
+@layer devmozip-account{:where(.scope):global(.account-setting-row){display:flex;justify-content:space-between;align-items:center;gap:20px}}
+@layer devmozip-account{:where(.scope):global(.account-setting-row .button){flex-shrink:0}}
+@layer devmozip-account{:where(.scope):global(.account-setting-row p){margin-bottom:0}}
+@layer devmozip-account{:where(.scope):global(.account-details){display:grid;gap:14px}}
+@layer devmozip-account{:where(.scope):global(.account-details>div){display:grid;grid-template-columns:100px 1fr;gap:12px}}
+@layer devmozip-account{:where(.scope):global(.account-details dt){color:var(--muted);font-size:15px}}
+@layer devmozip-account{:where(.scope):global(.account-details dd){margin:0;font-size:15px}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-setting-row){flex-wrap:wrap}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-panel){padding:22px}}}
+@layer devmozip-responsive{:where(.scope):global(.account-details>div){grid-template-columns:minmax(5rem,6.25rem) minmax(0,1fr)}}
+@layer devmozip-responsive{:where(.scope):global(.account-panel){padding:clamp(1.125rem,2vw,1.75rem)}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-setting-row){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-details>div){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.payment-list li){flex-wrap:wrap}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.account-details>div){grid-template-columns:minmax(0,1fr);gap:.375rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.account-setting-row .button){flex-shrink:1}
+}}

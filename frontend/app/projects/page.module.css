@@ -1,0 +1,33 @@
+@layer devmozip-project{:where(.scope):global(.recruitment-page){padding-top:35px;padding-bottom:65px}}
+@layer devmozip-project{:where(.scope):global(.recruitment-page h1){font-size:28px;letter-spacing:-1px;margin:10px 0}}
+@layer devmozip-project{:where(.scope):global(.recruitment-page .section-heading>.button){font-size:14px;white-space:nowrap}}
+@layer devmozip-project{:where(.scope):global(.project-list-search){display:flex;align-items:center;gap:10px;border:1px solid #e3daf1;border-radius:10px;background:white;padding:8px 10px 8px 18px;margin-top:25px;color:#aa94bd}}
+@layer devmozip-project{:where(.scope):global(.project-list-search .form-input){border:0;box-shadow:none;font-size:14px}}
+@layer devmozip-project{:where(.scope):global(.project-list-search .button){font-size:14px;padding:9px 20px;flex-shrink:0}}
+@layer devmozip-project{:where(.scope):global(.project-list-filters){display:flex;align-items:flex-end;gap:15px;padding:20px 0 28px;border-bottom:1px solid var(--border)}}
+@layer devmozip-project{:where(.scope):global(.project-list-filters label){display:flex;flex-direction:column;gap:7px;font-size:14px;color:#9b86ac;flex:1}}
+@layer devmozip-project{:where(.scope):global(.project-list-filters .form-input){padding:9px 12px;font-size:14px}}
+@layer devmozip-project{:where(.scope):global(.project-list-filters>.button){font-size:14px;padding:9px 12px;gap:5px}}
+@layer devmozip-project{:where(.scope):global(.recruitment-list-heading){display:flex;align-items:center;justify-content:space-between;margin:25px 0 22px;gap:20px}}
+@layer devmozip-project{:where(.scope):global(.recruitment-list-heading>span){font-size:14px;color:#a08caf}}
+@layer devmozip-project{:where(.scope):global(.recruitment-list-heading b){color:var(--purple)}}
+@layer devmozip-project{:where(.scope):global(.recruitment-list-heading .tabs){border:0}}
+@layer devmozip-project{:where(.scope):global(.recruitment-list-heading .tabs button){padding:4px 0;font-size:14px}}
+@layer devmozip-project{:where(.scope):global(.recruitment-grid){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}}
+@layer devmozip-project{@media(max-width:1050px){:where(.scope):global(.recruitment-grid){grid-template-columns:repeat(2,minmax(0,1fr))}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-page h1){font-size:22px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-page .section-heading){flex-wrap:wrap}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-page .section-heading>.button){font-size:14px;padding:10px 13px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-list-filters){display:grid;grid-template-columns:1fr 1fr;gap:13px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-list-filters>.button){justify-self:start}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-list-heading .tabs){gap:16px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-list-heading .tabs button){font-size:14px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-list-heading>span){font-size:14px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.recruitment-grid){grid-template-columns:1fr}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-list-search .form-input){font-size:14px}}}
+@layer devmozip-project{@media(max-width:800px){:where(.scope):global(.project-list-search .button){font-size:14px;padding:9px 15px}}}
+@layer devmozip-presentation{:where(.scope):global(.project-list-filters label){font-size:14px}}
+@layer devmozip-responsive{:where(.scope):global(.recruitment-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:var(--layout-gap)}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.recruitment-list-heading){flex-wrap:wrap;gap:.75rem}
+}}

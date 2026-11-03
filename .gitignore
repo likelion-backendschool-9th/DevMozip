@@ -1,0 +1,35 @@
+# Frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+# Local configuration
+.env
+.env.*
+!.env.example
+# Backend
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+# Logs
+*.log
+
+# Local agent / cloud configuration
+.codex/
+.agents/
+.aws/
+
+# YAML configuration
+*.yml
+
+# Next.js output
+.next/
+out/
+
+# Deployment configuration is source-controlled; secrets and certificates are not.
+!.github/workflows/*.yml
+certs/

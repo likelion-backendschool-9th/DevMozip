@@ -1,0 +1,537 @@
+{
+  "startedAt": "2026-10-30T07:31:54.260Z",
+  "base": "http://localhost:4173",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "checks": [
+    {
+      "name": "route:home",
+      "status": "passed"
+    },
+    {
+      "name": "route:login",
+      "status": "passed"
+    },
+    {
+      "name": "route:signup",
+      "status": "passed"
+    },
+    {
+      "name": "route:recovery",
+      "status": "passed"
+    },
+    {
+      "name": "route:matching",
+      "status": "passed"
+    },
+    {
+      "name": "route:search",
+      "status": "passed"
+    },
+    {
+      "name": "route:project-search",
+      "status": "passed"
+    },
+    {
+      "name": "route:projects",
+      "status": "passed"
+    },
+    {
+      "name": "route:project-detail",
+      "status": "passed"
+    },
+    {
+      "name": "route:project-create",
+      "status": "passed"
+    },
+    {
+      "name": "route:project-manage",
+      "status": "passed"
+    },
+    {
+      "name": "route:profile",
+      "status": "passed"
+    },
+    {
+      "name": "route:profile-portfolio",
+      "status": "passed"
+    },
+    {
+      "name": "route:profile-posts",
+      "status": "passed"
+    },
+    {
+      "name": "route:profile-activity",
+      "status": "passed"
+    },
+    {
+      "name": "route:profile-reviews",
+      "status": "passed"
+    },
+    {
+      "name": "route:feed",
+      "status": "passed"
+    },
+    {
+      "name": "route:post-detail",
+      "status": "passed"
+    },
+    {
+      "name": "route:post-create",
+      "status": "passed"
+    },
+    {
+      "name": "route:post-edit",
+      "status": "passed"
+    },
+    {
+      "name": "route:following",
+      "status": "passed"
+    },
+    {
+      "name": "route:messages",
+      "status": "passed"
+    },
+    {
+      "name": "route:project-chat",
+      "status": "passed"
+    },
+    {
+      "name": "route:notifications",
+      "status": "passed"
+    },
+    {
+      "name": "route:premium",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-0",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-1",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-2",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-3",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-4",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-5",
+      "status": "passed"
+    },
+    {
+      "name": "route:admin-6",
+      "status": "passed"
+    },
+    {
+      "name": "route:404",
+      "status": "passed"
+    },
+    {
+      "name": "route:missing-user",
+      "status": "passed"
+    },
+    {
+      "name": "route:missing-project",
+      "status": "passed"
+    },
+    {
+      "name": "route:missing-post",
+      "status": "passed"
+    },
+    {
+      "name": "A: AI 추천 → 프로필 → 협업 제안 → 새로고침",
+      "status": "passed"
+    },
+    {
+      "name": "B: 프로젝트 검색 → 상세 → 지원 → 승인 → 프로젝트 채팅",
+      "status": "passed"
+    },
+    {
+      "name": "C: 게시글 → 좋아요 → 댓글 → 퍼가기 → 내 프로필",
+      "status": "passed"
+    },
+    {
+      "name": "D: 프로젝트 종료 → 협업 리뷰 → 버블 차트 → 신뢰 온도",
+      "status": "passed"
+    },
+    {
+      "name": "E: 무료 작성 제한 → 프리미엄 데모 활성화 → 공고 작성",
+      "status": "passed"
+    },
+    {
+      "name": "알림 읽음·안 읽음 및 헤더 개수",
+      "status": "passed"
+    },
+    {
+      "name": "SNS 가로 슬라이드와 빈 검색 결과",
+      "status": "passed"
+    },
+    {
+      "name": "긴 문구·모달 스크롤·Escape·프로필 탭",
+      "status": "passed"
+    },
+    {
+      "name": "데모 전체 초기화와 계정 3종 전환",
+      "status": "passed"
+    },
+    {
+      "name": "손상된 localStorage 복원",
+      "status": "passed"
+    },
+    {
+      "name": "저장소 접근/용량 오류에도 세션 내 기능 유지",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": [],
+  "businessRequests": [],
+  "layout": [
+    {
+      "name": "home",
+      "url": "/",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "홈 · DevMozip",
+      "overflows": [
+        {
+          "tag": "ARTICLE",
+          "class": "surface-card post-preview"
+        },
+        {
+          "tag": "DIV",
+          "class": "post-visual blue"
+        },
+        {
+          "tag": "DIV",
+          "class": "post-content"
+        },
+        {
+          "tag": "A",
+          "class": "post-author"
+        },
+        {
+          "tag": "SPAN",
+          "class": ""
+        },
+        {
+          "tag": "A",
+          "class": ""
+        },
+        {
+          "tag": "H3",
+          "class": ""
+        },
+        {
+          "tag": "P",
+          "class": ""
+        }
+      ]
+    },
+    {
+      "name": "login",
+      "url": "/login",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "로그인 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "signup",
+      "url": "/signup",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "회원가입 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "recovery",
+      "url": "/forgot-password",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "비밀번호 찾기 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "matching",
+      "url": "/matching",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "AI 팀원 추천 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "search",
+      "url": "/search?target=developer",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "통합 검색 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "project-search",
+      "url": "/search?target=project",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "통합 검색 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "projects",
+      "url": "/projects",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프로젝트 모집 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "project-detail",
+      "url": "/projects/pocket",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프로젝트 상세 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "project-create",
+      "url": "/projects/new",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "모집 공고 작성 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "project-manage",
+      "url": "/projects/pocket/manage",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프로젝트 관리 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "profile",
+      "url": "/users/demo-user",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "profile-portfolio",
+      "url": "/users/demo-user?tab=portfolio",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "profile-posts",
+      "url": "/users/demo-user?tab=posts",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "profile-activity",
+      "url": "/users/demo-user?tab=activity",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "profile-reviews",
+      "url": "/users/demo-user?tab=reviews",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "feed",
+      "url": "/feed",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "SNS 피드 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "post-detail",
+      "url": "/posts/react-patterns",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "게시글 상세 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "post-create",
+      "url": "/posts/new",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "게시글 작성 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "post-edit",
+      "url": "/posts/haneul-retro/edit",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "게시글 수정 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "following",
+      "url": "/following",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "팔로잉 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "messages",
+      "url": "/messages",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "쪽지 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "project-chat",
+      "url": "/chats/pocket",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프로젝트 채팅 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "notifications",
+      "url": "/notifications",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "알림 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "premium",
+      "url": "/premium",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프리미엄 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin",
+      "url": "/admin",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-0",
+      "url": "/admin?tab=%ED%9A%8C%EC%9B%90",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-1",
+      "url": "/admin?tab=%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8%20%EC%8B%A0%EA%B3%A0",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-2",
+      "url": "/admin?tab=%EA%B2%8C%EC%8B%9C%EA%B8%80%C2%B7%EB%8C%93%EA%B8%80",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-3",
+      "url": "/admin?tab=%EB%A6%AC%EB%B7%B0%20%ED%82%A4%EC%9B%8C%EB%93%9C",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-4",
+      "url": "/admin?tab=%EC%8B%A0%EB%A2%B0%20%EC%98%A8%EB%8F%84",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-5",
+      "url": "/admin?tab=AI%20%EC%82%AC%EC%9A%A9%EB%9F%89",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "admin-6",
+      "url": "/admin?tab=%EA%B5%AC%EB%8F%85%20%ED%98%84%ED%99%A9",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "관리자 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "404",
+      "url": "/missing-page",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "페이지를 찾을 수 없습니다 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "missing-user",
+      "url": "/users/missing",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "개발자 프로필 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "missing-project",
+      "url": "/projects/missing",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "프로젝트 상세 · DevMozip",
+      "overflows": []
+    },
+    {
+      "name": "missing-post",
+      "url": "/posts/missing",
+      "width": 1440,
+      "viewport": 1440,
+      "title": "게시글 상세 · DevMozip",
+      "overflows": []
+    }
+  ]
+}

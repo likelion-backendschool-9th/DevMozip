@@ -1,0 +1,20 @@
+@layer devmozip-profile{:where(.scope):global(.profile-posts){max-width:900px;margin:auto;display:flex;flex-direction:column;gap:20px}}
+@layer devmozip-profile{:where(.scope):global(.profile-posts>.tab-section-title){margin-bottom:0}}
+@layer devmozip-profile{:where(.scope):global(.profile-post-head){display:flex;align-items:center;gap:10px;color:#ad9abb;font-size:14px;margin-bottom:18px}}
+@layer devmozip-profile{:where(.scope):global(.profile-post-head>div:nth-child(2)>a){display:block;color:#74617e;font-size:14px}}
+@layer devmozip-profile{:where(.scope):global(.profile-post-head>div:nth-child(2)>span){font-size:14px;display:block;margin-top:2px}}
+@layer devmozip-profile{:where(.scope):global(.profile-post-head .inline-actions){margin-left:auto}}
+@layer devmozip-profile{:where(.scope):global(.original-author){font-size:14px;color:#aa8ebf}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-post-head){flex-wrap:wrap}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-post-head .inline-actions){gap:10px}}}
+@layer devmozip-profile{@media(max-width:800px){:where(.scope):global(.profile-posts>.tab-section-title){flex-wrap:wrap}}}
+@layer devmozip-social{:where(.scope):global(.sns-repost-card>.sns-post-card){margin-top:18px;padding:20px;box-shadow:none;background:#fdfbff}}
+@layer devmozip-social{:where(.scope):global(.sns-repost-card .original-post-link){font-size:14px;color:#a17bb8;margin-left:15px}}
+@layer devmozip-social{:where(.scope):global(.sns-repost-card .profile-post-head .inline-actions){margin-left:auto}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-repost-card>.sns-post-card){padding:17px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-repost-card .profile-post-head){flex-wrap:wrap;gap:10px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-repost-card .profile-post-head .inline-actions){gap:10px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-repost-card .original-post-link){display:block;margin:8px 0 0}}}
+@layer devmozip-presentation{:where(.scope):global(.profile-post-head){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.original-author){font-size:14px;color:var(--muted)}}
+@layer devmozip-profile{:where(.scope):global(.profile-posts>.tab-section-title){display:flex;align-items:center;justify-content:space-between;gap:16px}:where(.scope):global(.profile-posts>.tab-section-title>.button){margin-left:auto;flex-shrink:0}}

@@ -1,0 +1,24 @@
+@layer devmozip-search{:where(.scope):global(.search-developer-grid){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}}
+@layer devmozip-search{:where(.scope):global(.search-developer-card){padding:21px;display:flex;flex-direction:column}}
+@layer devmozip-search{:where(.scope):global(.search-card-top){display:flex;align-items:center;justify-content:space-between;gap:8px}}
+@layer devmozip-search{:where(.scope):global(.search-card-top .profile-avatar){height:53px;width:53px;border:0;border-radius:15px}}
+@layer devmozip-search{:where(.scope):global(.search-card-top .availability-badge){font-size:14px;padding:3px 6px}}
+@layer devmozip-search{:where(.scope):global(.search-person-name){display:flex;align-items:center;gap:8px;margin-top:15px}}
+@layer devmozip-search{:where(.scope):global(.search-person-name h3){font-size:15px;letter-spacing:-.5px;margin:0}}
+@layer devmozip-search{:where(.scope):global(.search-person-name svg){margin-left:auto;color:#b4a1c3}}
+@layer devmozip-search{:where(.scope):global(.search-person-name:hover){color:var(--purple)}}
+@layer devmozip-search{:where(.scope):global(.search-person-job){font-size:14px;color:#a18bab;margin:5px 0 0}}
+@layer devmozip-search{:where(.scope):global(.search-person-bio){font-size:14px;color:#ac9bb7;line-height:1.9;min-height:38px;margin:15px 0;overflow-wrap:anywhere}}
+@layer devmozip-search{:where(.scope):global(.search-developer-card .tags>span){font-size:14px;padding:3px 5px}}
+@layer devmozip-search{:where(.scope):global(.search-person-interests){display:flex;flex-wrap:wrap;gap:5px;font-size:14px;color:#baa5c6;margin:11px 0 14px}}
+@layer devmozip-search{:where(.scope):global(.search-card-trust){display:flex;align-items:center;gap:5px;font-size:14px;margin-top:auto}}
+@layer devmozip-search{:where(.scope):global(.search-card-trust>span){margin-left:auto;font-size:14px;color:#b5a1c2}}
+@layer devmozip-search{:where(.scope):global(.search-card-actions){display:flex;gap:7px;border-top:1px solid var(--border);padding-top:15px;margin-top:15px}}
+@layer devmozip-search{:where(.scope):global(.search-card-actions>.button){font-size:14px;gap:5px;flex:1;padding:8px 3px;white-space:nowrap}}
+@layer devmozip-search{@media(max-width:1180px){:where(.scope):global(.search-developer-grid){grid-template-columns:repeat(2,minmax(0,1fr))}}}
+@layer devmozip-search{@media(max-width:800px){:where(.scope):global(.search-developer-card){padding:19px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-developer-grid){grid-template-columns:1fr}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-card-top .availability-badge){font-size:14px}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-person-bio){min-height:0}}}
+@layer devmozip-search{@media(max-width:480px){:where(.scope):global(.search-card-actions>.button){font-size:14px}}}
+@layer devmozip-responsive{:where(.scope):global(.search-developer-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:var(--layout-gap)}}

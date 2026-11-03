@@ -1,0 +1,3 @@
+import type {RecruitmentState} from '@/types/project';
+import {allProjects,teamFor} from '@/lib/projects/projectSelectors';
+export function myProjects(state:RecruitmentState,userId:string,tab='all'){return allProjects(state).map(project=>{const host=project.hostId===userId;const member=teamFor(state,project.id).find(m=>m.userId===userId);const application=state.applications.find(a=>a.projectId===project.id&&a.userId===userId);return {project,host,member,application};}).filter(e=>e.host||e.member||e.application?.status==='지원 완료').filter(e=>tab==='hosted'?e.host:tab==='joined'?!!e.member&&!e.host:tab==='applied'?e.application?.status==='지원 완료':tab==='ended'?e.project.status==='프로젝트 종료':true).sort((a,b)=>b.project.createdAt.localeCompare(a.project.createdAt));}

@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-30T07:57:02.831Z",
+  "base": "http://localhost:4173",
+  "checks": [
+    {
+      "name": "비로그인 내 프로젝트 및 리뷰 링크 접근",
+      "status": "passed"
+    },
+    {
+      "name": "내 프로젝트 5개 탭·기존 참여 이력·게스트 관리 차단",
+      "status": "passed"
+    },
+    {
+      "name": "지원 → 내 지원 탭 → 주최자 승인 → 참여자/채팅",
+      "status": "passed"
+    },
+    {
+      "name": "예정 종료일 경과 알림·수정 버튼·연장 처리 상태",
+      "status": "passed"
+    },
+    {
+      "name": "프로젝트 시작·재경과 알림·종료 버튼·리뷰 요청",
+      "status": "passed"
+    },
+    {
+      "name": "프로필 직접 리뷰 작성 제거·타인/변조 링크 차단",
+      "status": "passed"
+    },
+    {
+      "name": "3일 재알림·같은 날짜 중복 방지·새로고침",
+      "status": "passed"
+    },
+    {
+      "name": "모든 팀원 별점 필수·선택 키워드·전체 제출·중복 방지",
+      "status": "passed"
+    },
+    {
+      "name": "받은 리뷰·평균·버블·온도·별 색상 반영",
+      "status": "passed"
+    },
+    {
+      "name": "완료자는 +6일 재알림 제외·미완료자만 재알림",
+      "status": "passed"
+    },
+    {
+      "name": "리뷰 기간 만료 시 링크 제한·재알림 중단",
+      "status": "passed"
+    },
+    {
+      "name": "종료 목록·주최자·조회 전용 리뷰의 1440px 주요 화면",
+      "status": "passed"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "businessRequests": [],
+  "screens": [
+    {
+      "name": "my-projects",
+      "width": 1440
+    },
+    {
+      "name": "deadline-resolved",
+      "width": 1440
+    },
+    {
+      "name": "host-review-status",
+      "width": 1440
+    },
+    {
+      "name": "review-write",
+      "width": 1440
+    },
+    {
+      "name": "review-submitted",
+      "width": 1440
+    },
+    {
+      "name": "profile-review-result",
+      "width": 1440
+    },
+    {
+      "name": "review-expired",
+      "width": 1440
+    },
+    {
+      "name": "my-projects-ended",
+      "width": 1440
+    },
+    {
+      "name": "host-ended",
+      "width": 1440
+    },
+    {
+      "name": "read-only-review",
+      "width": 1440
+    }
+  ]
+}

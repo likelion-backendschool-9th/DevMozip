@@ -1,0 +1,64 @@
+@layer devmozip-messaging{:where(.scope):global(.chat-window){display:flex;flex-direction:column;min-width:0}}
+@layer devmozip-messaging{:where(.scope):global(.message-history){height:440px;overflow-y:auto;padding:25px;display:flex;flex-direction:column;gap:21px;scrollbar-width:thin;scrollbar-color:#e3d6ee transparent;background:#fefcff}}
+@layer devmozip-messaging{:where(.scope):global(.chat-message){display:flex;flex-direction:column;align-items:flex-start;max-width:85%;align-self:flex-start}}
+@layer devmozip-messaging{:where(.scope):global(.chat-message.mine){align-items:flex-end;align-self:flex-end}}
+@layer devmozip-messaging{:where(.scope):global(.message-author){font-size:14px;color:#ae93c0;margin:0 5px 6px}}
+@layer devmozip-messaging{:where(.scope):global(.message-bubble){background:#f3eef9;border:1px solid #eee4f5;border-radius:4px 14px 14px 14px;padding:12px 16px;min-width:70px;max-width:100%}}
+@layer devmozip-messaging{:where(.scope):global(.mine .message-bubble){background:#eee6ff;border-color:#e5d9f8;border-radius:14px 4px 14px 14px}}
+@layer devmozip-messaging{:where(.scope):global(.message-bubble p){font-size:14px;color:#9778ab;margin:0;overflow-wrap:anywhere}}
+@layer devmozip-messaging{:where(.scope):global(.message-meta){display:flex;gap:8px;align-items:center;margin-top:5px;padding:0 4px;font-size:14px;color:#b99fcb}}
+@layer devmozip-messaging{:where(.scope):global(.message-meta>span){color:#a381bf}}
+@layer devmozip-messaging{:where(.scope):global(.proposal-message-title){display:flex;align-items:flex-start;gap:7px;color:#a17dbb;font-size:14px;line-height:1.8;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid #e5d8f1;overflow-wrap:anywhere}}
+@layer devmozip-messaging{:where(.scope):global(.proposal-bubble){min-width:230px}}
+@layer devmozip-messaging{:where(.scope):global(.system-message){align-self:center;text-align:center;font-size:14px;color:#b49cc7;background:#f7f2fb;border-radius:10px;padding:5px 12px;margin:3px 0}}
+@layer devmozip-messaging{:where(.scope):global(.message-compose){padding:20px 25px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}}
+@layer devmozip-messaging{:where(.scope):global(.message-compose .form-input){font-size:14px}}
+@layer devmozip-messaging{:where(.scope):global(.message-compose-bottom){display:flex;align-items:center;justify-content:space-between;gap:14px}}
+@layer devmozip-messaging{:where(.scope):global(.message-compose-bottom>span){font-size:14px;color:#b69fc7}}
+@layer devmozip-messaging{:where(.scope):global(.message-compose-bottom .button){font-size:14px;padding:9px 14px}}
+@layer devmozip-messaging{:where(.scope):global(.compose-types){display:flex;gap:17px;align-items:center}}
+@layer devmozip-messaging{:where(.scope):global(.compose-types button){display:flex;align-items:center;gap:5px;border:0;background:none;padding:3px 0;font-size:14px;color:#b199c2}}
+@layer devmozip-messaging{:where(.scope):global(.compose-types button[aria-pressed=true]){color:var(--purple);font-weight:600}}
+@layer devmozip-messaging{:where(.scope):global(.chat-empty){min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px;color:#b19ac2;text-align:center;font-size:14px}}
+@layer devmozip-messaging{:where(.scope):global(.chat-empty h2){font-size:20px;margin:0;color:#a186b3}}
+@layer devmozip-messaging{:where(.scope):global(.chat-empty p){font-size:14px;line-height:1.9}}
+@layer devmozip-messaging{:where(.scope):global(.chat-empty .button){font-size:14px}}
+@layer devmozip-messaging{@media(max-width:1000px){:where(.scope):global(.message-history){padding:20px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-history){height:390px;padding:18px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.chat-message){max-width:92%}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-bubble){padding:10px 13px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-bubble p){font-size:14px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-compose){padding:18px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-compose-bottom>span){font-size:14px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.message-compose-bottom .button){font-size:14px;padding:8px 11px}}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.proposal-bubble){min-width:0}}}
+@layer devmozip-messaging{@media(max-width:420px){:where(.scope):global(.message-compose-bottom){flex-wrap:wrap}}}
+@layer devmozip-messaging{@media(max-width:420px){:where(.scope):global(.message-compose-bottom>.button){margin-left:auto}}}
+@layer devmozip-messaging{@media(max-width:420px){:where(.scope):global(.message-meta){font-size:14px}}}
+@layer devmozip-presentation{:where(.scope):global(.message-author){font-size:14px;color:#756283}}
+@layer devmozip-presentation{:where(.scope):global(.message-bubble p){font-size:15px;color:#44364f;line-height:1.8}}
+@layer devmozip-presentation{:where(.scope):global(.message-meta){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.message-meta>span){color:#7857a4}}
+@layer devmozip-presentation{:where(.scope):global(.proposal-message-title){font-size:15px;color:#70519a}}
+@layer devmozip-presentation{:where(.scope):global(.system-message){font-size:14px;color:#756781}}
+@layer devmozip-presentation{:where(.scope):global(.message-compose .form-input){font-size:15px}}
+@layer devmozip-presentation{:where(.scope):global(.message-compose-bottom>span){font-size:14px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.message-compose-bottom .button){font-size:15px}}
+@layer devmozip-presentation{:where(.scope):global(.compose-types button){font-size:15px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.chat-empty){font-size:15px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.chat-empty p){font-size:15px;color:var(--muted)}}
+@layer devmozip-presentation{:where(.scope):global(.chat-empty h2){color:var(--text)}}
+@layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.message-bubble p){font-size:15px}}}
+@layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.proposal-message-title){font-size:15px}}}
+@layer devmozip-presentation{@media(max-width:800px){:where(.scope):global(.message-compose-bottom){flex-wrap:wrap}}}
+@layer devmozip-responsive{:where(.scope):global(.message-history){height:clamp(34rem,65dvh,54rem);overscroll-behavior:contain}}
+@layer devmozip-responsive{:where(.scope):global(.message-compose){padding:clamp(1rem,2vw,1.5rem)}}
+@layer devmozip-responsive{:where(.scope):global(.chat-message){min-width:0}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.message-history){padding:1rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.message-compose-bottom){flex-wrap:wrap}
+}}
+
+@layer devmozip-responsive{@media(max-width:50rem){:where(.scope):global(.message-history){height:clamp(28rem,65dvh,44rem)}}}

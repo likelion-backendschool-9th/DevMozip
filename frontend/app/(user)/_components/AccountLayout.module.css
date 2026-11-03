@@ -1,0 +1,78 @@
+@layer devmozip-account{:where(.scope):global(.personal-workspace){display:grid;grid-template-columns:218px minmax(0,1fr);gap:28px;padding-top:32px;padding-bottom:64px;align-items:start}}
+@layer devmozip-account{:where(.scope):global(.personal-main){min-width:0}}
+@layer devmozip-account{:where(.scope):global(.personal-main>.container){max-width:none;padding:0}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-breadcrumb){padding-top:0;margin-top:0}}
+@layer devmozip-account{:where(.scope):global(.account-aside){position:sticky;top:104px;border:1px solid var(--border);border-radius:14px;background:white;padding:22px 14px;min-width:0}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading){padding:0 10px 20px;display:grid;gap:6px;border-bottom:1px solid var(--border)}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading>span){color:var(--purple);font-size:14px;letter-spacing:1px;font-weight:700}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading strong){font-size:19px;overflow-wrap:anywhere}}
+@layer devmozip-account{:where(.scope):global(.account-aside-heading small){color:var(--muted);font-size:14px}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav){height:auto;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:16px;white-space:normal}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav a){height:auto;display:flex;gap:9px;padding:12px 10px;border-radius:8px;font-size:15px;color:var(--muted);line-height:1.6}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav a svg){flex-shrink:0}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav a.active){background:var(--purple-soft);color:var(--purple)}}
+@layer devmozip-account{:where(.scope):global(.account-aside nav a.active:after){display:none}}
+@layer devmozip-account{:where(.scope):global(.account-aside>p){font-size:14px;color:var(--muted);padding:10px 10px 0;margin-bottom:0}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-top-actions){flex-wrap:wrap}}
+@layer devmozip-account{:where(.scope):global(.personal-main .review-overview){grid-template-columns:1fr}}
+@layer devmozip-account{:where(.scope):global(.personal-main .keyword-bubbles){flex-wrap:wrap}}
+@layer devmozip-account{:where(.scope):global(.personal-main .about-grid){grid-template-columns:1.1fr 1fr}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-heading){flex-wrap:wrap}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-heading h1){font-size:26px}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-tabs){margin-top:22px}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-banner){height:150px}}
+@layer devmozip-account{:where(.scope):global(.personal-main .profile-banner>span){font-size:22px}}
+@layer devmozip-account{@media(max-width:1000px){:where(.scope):global(.personal-workspace){grid-template-columns:190px minmax(0,1fr);gap:20px}}}
+@layer devmozip-account{@media(max-width:1000px){:where(.scope):global(.account-aside){padding:18px 10px}}}
+@layer devmozip-account{@media(max-width:1000px){:where(.scope):global(.personal-main .about-grid){grid-template-columns:1fr}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.personal-workspace){grid-template-columns:1fr;padding-top:20px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside){position:static;padding:12px}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside-heading){display:none}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside nav){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside>p){display:none}}}
+@layer devmozip-account{@media(max-width:800px){:where(.scope):global(.account-aside nav a){font-size:14px}}}
+@layer devmozip-responsive{:where(.scope):global(.personal-workspace){grid-template-columns:minmax(11rem,14rem) minmax(0,1fr);gap:var(--layout-gap)}}
+@layer devmozip-responsive{:where(.scope):global(.personal-main>.container){width:100%;max-width:none}}
+@layer devmozip-responsive{:where(.scope):global(.account-aside){top:6rem}}
+@layer devmozip-responsive{:where(.scope):global(.account-menu-toggle){display:none}}
+@layer devmozip-responsive{:where(.scope):global(.personal-main .about-grid){grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))}}
+@layer devmozip-responsive{:where(.scope):global(.personal-main .profile-top-actions){flex-shrink:1}}
+@layer devmozip-responsive{@media(max-width:64rem){
+ :where(.scope):global(.personal-workspace){grid-template-columns:minmax(10rem,12rem) minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.personal-workspace){grid-template-columns:minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.personal-workspace){padding-top:1.25rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-aside){position:static;padding:.75rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-aside-heading){display:none}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-aside>p){display:none}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-menu-toggle){display:flex;align-items:center;justify-content:space-between;gap:1rem;width:100%;padding:.5rem;border:0;background:transparent;color:var(--text);font-weight:650;font-size:0.9375rem;min-height:2.5rem;text-align:left}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-menu-toggle>span){font-size:0.875rem;color:var(--purple)}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-aside nav){display:none;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:.5rem}
+}}
+@layer devmozip-responsive{@media(max-width:50rem){
+ :where(.scope):global(.account-aside[data-open=true] nav){display:grid}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.personal-main .profile-heading h1){font-size:1.5rem}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.personal-main .review-overview){grid-template-columns:minmax(0,1fr)}
+}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.account-aside nav){grid-template-columns:minmax(0,1fr)}
+}}

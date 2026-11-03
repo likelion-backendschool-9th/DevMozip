@@ -1,0 +1,10 @@
+.editor{min-width:0;border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:white}
+.heading{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.875rem 1rem;flex-wrap:wrap}.heading strong{font-size:.9375rem}
+.formats,.tabs,.toolbar{display:flex;gap:.375rem;flex-wrap:wrap}.formats button,.toolbar button,.tabs button{border:1px solid var(--border);border-radius:.375rem;background:white;padding:.4rem .65rem;font-size:0.875rem;color:var(--muted)}
+.formats button[aria-pressed=true],.tabs button[aria-selected=true]{color:var(--purple);background:#f2edff;border-color:#dfd3fa}
+.tabs{padding:0 1rem .75rem;border-bottom:1px solid var(--border)}.tabs button{border:0}
+.toolbar{padding:.75rem 1rem;background:#faf9fd;border-bottom:1px solid var(--border)}
+.code,.text{display:block;width:100%;min-height:18rem;border:0!important;border-radius:0!important;padding:1rem!important;resize:vertical;margin:0!important;font-size:0.9375rem!important;line-height:1.8}
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.preview{padding:1.25rem;min-height:18rem;max-height:34rem;overflow:auto}
+.note{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:.75rem 1rem;background:#faf9fd;border-top:1px solid var(--border);font-size:0.875rem;color:var(--muted)}.note p{margin:0;max-width:40rem;line-height:1.65}.note span{white-space:nowrap}
+@media(max-width:600px){.note{flex-wrap:wrap}.code,.text{min-height:16rem}.preview{padding:1rem}}

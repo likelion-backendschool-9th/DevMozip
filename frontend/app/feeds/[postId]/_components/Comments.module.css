@@ -1,0 +1,22 @@
+@layer devmozip-social{:where(.scope):global(.sns-comments){border:1px solid var(--border);border-radius:13px;background:white;margin-top:24px;padding:28px;scroll-margin-top:110px}}
+@layer devmozip-social{:where(.scope):global(.sns-comments h2){font-size:18px;margin:0 0 23px}}
+@layer devmozip-social{:where(.scope):global(.sns-comments h2 span){color:var(--purple);font-size:15px;margin-left:5px}}
+@layer devmozip-social{:where(.scope):global(.sns-comments>form){display:flex;align-items:flex-end;flex-direction:column;gap:10px;margin-bottom:27px}}
+@layer devmozip-social{:where(.scope):global(.sns-comments>form>.button){font-size:14px;padding:9px 15px}}
+@layer devmozip-social{:where(.scope):global(.comment-list){display:flex;flex-direction:column}}
+@layer devmozip-social{:where(.scope):global(.sns-comment){display:flex;gap:12px;padding:19px 0;border-top:1px solid var(--border)}}
+@layer devmozip-social{:where(.scope):global(.sns-comment>div){flex:1;min-width:0}}
+@layer devmozip-social{:where(.scope):global(.sns-comment header){display:flex;align-items:center;gap:12px}}
+@layer devmozip-social{:where(.scope):global(.sns-comment header strong){font-size:14px;color:#8c739d}}
+@layer devmozip-social{:where(.scope):global(.sns-comment time){font-size:14px;color:#b29bc0}}
+@layer devmozip-social{:where(.scope):global(.sns-comment p){font-size:14px;color:#a58ab6;line-height:1.9;margin:8px 0}}
+@layer devmozip-social{:where(.scope):global(.sns-comment .inline-actions){margin-top:10px;gap:13px}}
+@layer devmozip-social{:where(.scope):global(.sns-comment .inline-actions>a){font-size:14px;color:#b19ac1}}
+@layer devmozip-social{:where(.scope):global(.sns-comment .inline-actions .button){padding:6px 10px;font-size:14px}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-comments){padding:21px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-comments>form .form-input){font-size:14px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-comment){gap:9px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-comment p){font-size:14px}}}
+@layer devmozip-social{@media(max-width:800px){:where(.scope):global(.sns-comment header){gap:9px;flex-wrap:wrap}}}
+@layer devmozip-presentation{:where(.scope):global(.sns-comment header strong){font-size:14px}}
+@layer devmozip-responsive{:where(.scope):global(.sns-comment header){flex-wrap:wrap}}
