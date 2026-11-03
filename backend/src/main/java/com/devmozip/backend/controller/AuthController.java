@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.devmozip.backend.dto.auth.LoginRequest;
 import com.devmozip.backend.dto.auth.LoginResponse;
-import com.devmozip.backend.dto.auth.RefreshRequest;
+import com.devmozip.backend.dto.auth.RefreshTokenRequest;
 import com.devmozip.backend.service.AuthService;
 
 @RestController
@@ -29,14 +29,14 @@ public class AuthController {
 
     /** 액세스 토큰이 만료됐을 때 리프레시 토큰으로 새 액세스 토큰을 받는다. */
     @PostMapping("/refresh")
-    public LoginResponse refresh(@RequestBody RefreshRequest refreshRequest){
-        return service.refresh(refreshRequest.getRefreshToken());
+    public LoginResponse refresh(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        return service.refresh(refreshTokenRequest.refreshToken());
     }
 
     /** 리프레시 토큰을 폐기한다. 액세스 토큰은 남은 수명(최대 30분)까지만 유효하다. */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@RequestBody RefreshRequest refreshRequest){
-        service.logout(refreshRequest.getRefreshToken());
+    public void logout(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        service.logout(refreshTokenRequest.refreshToken());
     }
 }

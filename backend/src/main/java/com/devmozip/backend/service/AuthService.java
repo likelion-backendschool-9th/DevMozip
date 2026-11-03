@@ -44,7 +44,7 @@ public class AuthService {
     public LoginResponse login(LoginRequest loginRequest){
 
         UsernamePasswordAuthenticationToken authenticationToken 
-            = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
+            = new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password());
 
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
         // -> 권한 정보 Grant..

@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
         return toResponse(HttpStatus.FORBIDDEN, "이 기능을 사용할 권한이 없습니다.", request);
     }
 
-    /** 서비스가 상태 코드와 메시지를 지정해 던진 예외. 예: MemberService 의 404·409·400 */
+    /** 서비스가 상태 코드와 메시지를 지정해 던진 예외 (ResponseStatusException) */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException e, HttpServletRequest request) {
         String message = e.getReason() != null ? e.getReason() : defaultMessage(e.getStatusCode());

@@ -1,11 +1,3 @@
 package com.devmozip.backend.dto.auth;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-public class LoginRequest {
-    private String username;
-    private String password;
-}
+public record LoginRequest(String username, String password) {}

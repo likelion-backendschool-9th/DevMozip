@@ -18,7 +18,7 @@ export function ClientReady({ children }: { children: ReactNode }) {
                 if (!response.ok) throw new Error('세션 확인 실패');
                 const snapshot = await response.json();
                 if (active) { syncServerSession(snapshot); setReady(true); setError(false); }
-            } catch { if (active) { syncServerSession({ mode: 'server', identity: null }); setReady(true); setError(true); } }
+            } catch { if (active) { syncServerSession({ identity: null }); setReady(true); setError(true); } }
         }
         void sync();
         window.addEventListener('focus', sync);

@@ -5,10 +5,8 @@ import { backendFetch, readErrorMessage } from './backend';
 import { ACCESS_COOKIE, REFRESH_COOKIE, cookieOptions, REFRESH_MAX_AGE } from './cookies';
 import { decodeToken } from './token';
 import { safeNext } from './paths';
-import { authMode } from './env';
 
 export async function loginAction(form: FormData): Promise<{ error: string } | never> {
-    if (authMode() !== 'server') return { error: '서버 인증 모드에서 이용해 주세요.' };
     let response: Response;
     try {
         response = await backendFetch('/api/auth/login', {
@@ -26,7 +24,8 @@ export async function loginAction(form: FormData): Promise<{ error: string } | n
     redirect(safeNext(form.get('next')));
 }
 
-export async function logoutAction(): Promise<{ error: string } | never> {
+// 화면 이동은 호출한 쪽(헤더 로그아웃 버튼)이 맡는다. 여기서 redirect하면 클라이언트 이동과 겹쳐 결과를 받지 못한다.
+export async function logoutAction(): Promise<{ error: string } | null> {
     const jar = await cookies();
     const refreshToken = jar.get(REFRESH_COOKIE)?.value;
     if (refreshToken) {
@@ -39,5 +38,5 @@ export async function logoutAction(): Promise<{ error: string } | never> {
     }
     jar.set(ACCESS_COOKIE, '', { ...cookieOptions, maxAge: 0 });
     jar.set(REFRESH_COOKIE, '', { ...cookieOptions, maxAge: 0 });
-    redirect('/');
+    return null;
 }

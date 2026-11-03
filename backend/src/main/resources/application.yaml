@@ -11,15 +11,7 @@ spring:
     hibernate:
       # 엔티티 기준으로 테이블을 만들거나 갱신한다
       ddl-auto: update
-    # members_data.sql은 Hibernate가 테이블을 만든 뒤에 실행한다
-    defer-datasource-initialization: true
     open-in-view: false
-  sql:
-    init:
-      # 초기 데이터를 서버 시작 때마다 실행한다. 이미 있으면 넣지 않는 SQL이라 여러 번 실행해도 된다
-      mode: always
-      encoding: UTF-8
-      data-locations: classpath:members_data.sql
   web:
     error:
       include-stacktrace: never

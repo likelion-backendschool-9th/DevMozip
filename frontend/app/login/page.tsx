@@ -5,23 +5,17 @@ import { AuthShell } from '@/app/_components/AuthShell';
 import styles from './page.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useNavigation as useNavigate } from '@/lib/navigation';
 import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
-import { usePrototype } from '@/lib/state/prototypeStore';
 import { validEmail } from '@/lib/account/authService';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
-import { DemoAccounts } from '@/components/auth/DemoAccounts';
 function LoginForm() {
-    const { user, login, mode } = useAuth();
+    const { user } = useAuth();
     const searchParams = useSearchParams();
-    const { notify } = usePrototype();
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [remember, setRemember] = useState(true);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
     const [kakao, setKakao] = useState(false);
@@ -32,29 +26,16 @@ function LoginForm() {
             setError('이메일과 비밀번호를 확인해 주세요.');
             return;
         }
-        if (mode === 'server') {
-            const form = new FormData();
-            form.set('username', email);
-            form.set('password', password);
-            form.set('next', searchParams.get('next') ?? '/');
-            setBusy(true);
-            try {
-                const result = await loginAction(form);
-                if (result?.error) setError(result.error);
-            } finally { setBusy(false); }
-            return;
-        }
+        const form = new FormData();
+        form.set('username', email);
+        form.set('password', password);
+        form.set('next', searchParams.get('next') ?? '/');
         setBusy(true);
+        // 성공하면 서버 액션이 next 경로로 이동시키므로 오류만 돌아온다.
         try {
-            await login(email, password, remember);
-            setPassword('');
-            navigate('/');
-            notify('로그인되었습니다.');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : '로그인하지 못했습니다.');
-        } finally {
-            setBusy(false);
-        }
+            const result = await loginAction(form);
+            if (result?.error) setError(result.error);
+        } finally { setBusy(false); }
     };
     return (
         <>
@@ -99,19 +80,10 @@ function LoginForm() {
                     required
                 />
                 <div className={[styles.scope, 'auth-options'].join(' ')}>
-                    <label className={[styles.scope, 'checkbox-label'].join(' ')}>
-                        <input
-                            type="checkbox"
-                            checked={remember}
-                            onChange={e => setRemember(e.target.checked)}
-                            disabled={busy || mode === 'server'}
-                        />
-                        로그인 상태 유지
-                    </label>
                     <Link href="/forgot-password">비밀번호 찾기</Link>
                 </div>
                 <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                    {mode === 'server' ? '임시 인증 계정으로 로그인합니다. 세션은 보안 쿠키로 관리됩니다.' : '체크 해제 시에도 새로고침은 유지되며, 현재 탭을 닫으면 세션이 종료됩니다.'}
+                    서버에 등록된 계정으로 로그인합니다. 세션은 보안 쿠키로 관리됩니다.
                 </p>
                 {error && (
                     <p id="login-error" className={[styles.scope, 'form-error'].join(' ')} role="alert">
@@ -129,11 +101,10 @@ function LoginForm() {
             <p className={[styles.scope, 'auth-switch'].join(' ')}>
                 아직 DevMozip 회원이 아니신가요? <Link href="/signup">회원가입</Link>
             </p>
-            <DemoAccounts showCredentials onSelected={() => navigate('/')} />
             {kakao && (
                 <Modal title="카카오 로그인 데모 안내" onClose={() => setKakao(false)}>
                     <p>
-                        카카오 OAuth는 연결하지 않았습니다. 데모 계정을 선택하거나 Mock 이메일 로그인을 이용해 주세요.
+                        카카오 OAuth는 연결하지 않았습니다. 이메일과 비밀번호로 로그인해 주세요.
                     </p>
                     <Button onClick={() => setKakao(false)}>확인</Button>
                 </Modal>

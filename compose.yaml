@@ -3,7 +3,6 @@ services:
     build: ./frontend
     environment:
       BACKEND_URL: http://backend:8080
-      AUTH_MODE: ${AUTH_MODE:-mock}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

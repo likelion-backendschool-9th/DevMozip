@@ -14,7 +14,7 @@ cp .env.example .env
 
 DB_PASSWORD, JWT_SECRET, AUTH_USER_PASSWORD, AUTH_ADMIN_PASSWORD의 예제 자리표시를 임의의 고유 값으로 교체한다. JWT_SECRET은 `openssl rand -hex 32`로 만들 수 있다. 비밀값을 채팅·커밋·로그에 공유하지 않는다. 나머지 로컬 기본값은 유지해도 된다: COMPOSE_PROJECT_NAME=devmozip, DB_NAME=devmozip, DB_USER=devmozip, DB_PORT=5432, FRONTEND_PORT=3000, BACKEND_PORT=8080, HTTP_PORT=80, HTTPS_PORT=443. 포트 충돌 시 바꾼다. DB_PORT는 호스트 공개 포트이며 컨테이너 내부는 항상 5432다.
 
-AUTH_MODE=mock은 기존 프론트 발표 시연이고, JWT+BFF 확인 시 AUTH_MODE=server로 바꾼다. AUTH_USER_USERNAME 기본값은 member@devmozip.demo, AUTH_ADMIN_USERNAME은 admin@devmozip.demo다. 비밀번호는 새로 설정한 각 환경변수 값이다. 기존 Mock 데모 비밀번호·브라우저 가입 계정은 서버 계정으로 이관되지 않는다.
+프론트 로그인은 JWT+BFF 서버 인증을 사용한다. AUTH_USER_USERNAME 기본값은 member@devmozip.demo, AUTH_ADMIN_USERNAME은 admin@devmozip.demo다. 비밀번호는 새로 설정한 각 환경변수 값이다. 기존 Mock 데모 비밀번호·브라우저 가입 계정은 서버 계정으로 이관되지 않는다.
 
 ```bash
 docker compose up -d
