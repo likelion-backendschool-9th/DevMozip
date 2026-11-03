@@ -1,4 +1,146 @@
-import type {Metadata} from 'next';
-import {MyProjectsPage} from './_components/MyProjectsScreen';
-export const metadata:Metadata={title:'내 프로젝트 관리'};
-export default function Page(){return <MyProjectsPage/>;}
+'use client';
+import styles from './page.module.css';
+import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
+import Link from 'next/link';
+import { useQueryState as useSearchParams } from '@/lib/navigation';
+import { useAuth } from '@/lib/state/authStore';
+import { useProfiles } from '@/lib/state/profileStore';
+import { useProjects } from '@/lib/state/projectStore';
+import { myProjects } from '@/lib/projects/myProjectsService';
+import { myProjectTabs } from '@/mocks/projectWorkspace';
+import { ProjectDateSimulator } from '@/components/projects/ProjectDateSimulator';
+import { Card } from '@/components/common/Card';
+export default function MyProjectsPage() {
+    const { user } = useAuth();
+    const { state, now } = useProjects();
+    const { state: profiles } = useProfiles();
+    const [params, setParams] = useSearchParams();
+    const tab = myProjectTabs.some(t => t.id === params.get('tab')) ? params.get('tab')! : 'all';
+    if (!user)
+        return (
+            <div className={[styles.scope, 'container planned'].join(' ')}>
+                <section className={[styles.scope, 'planned-card'].join(' ')}>
+                    <h1>로그인하고 내 프로젝트를 확인하세요.</h1>
+                    <Link className={[styles.scope, 'button'].join(' ')} href="/login">
+                        로그인하기
+                    </Link>
+                </section>
+            </div>
+        );
+    const entries = myProjects(state, user.id, tab);
+    return (
+        <div className={[styles.scope, 'container my-projects-page'].join(' ')}>
+            <header className={[styles.scope, 'section-heading'].join(' ')}>
+                <div>
+                    <span className={[styles.scope, 'eyebrow'].join(' ')}>MY PROJECT WORKSPACE</span>
+                    <h1>함께 만드는 나의 프로젝트</h1>
+                    <p>모집부터 참여, 종료와 동료 리뷰까지 한곳에서 관리하세요.</p>
+                </div>
+                <ProjectCreateButton>새 프로젝트 모집</ProjectCreateButton>
+            </header>
+            <ProjectDateSimulator />
+            <div className={[styles.scope, 'tabs my-project-tabs'].join(' ')}>
+                {myProjectTabs.map(t => (
+                    <button
+                        key={t.id}
+                        className={[styles.scope, t.id === tab ? 'active' : ''].join(' ')}
+                        aria-pressed={t.id === tab}
+                        onClick={() => setParams({ tab: t.id })}
+                    >
+                        {t.label}
+                        <small>{myProjects(state, user.id, t.id).length}</small>
+                    </button>
+                ))}
+            </div>
+            <div className={[styles.scope, 'my-project-grid'].join(' ')}>
+                {entries.map(({ project: p, host, member, application }) => {
+                    const joined = !!member;
+                    return (
+                        <Card className={[styles.scope, 'my-project-card'].join(' ')} key={p.id}>
+                            <header>
+                                <span className={[styles.scope, `project-mark ${p.color}`].join(' ')}>{p.mark}</span>
+                                <span className={[styles.scope, 'demo-pill'].join(' ')}>{p.status || '모집 중'}</span>
+                            </header>
+                            <Link href={`/my-projects/${p.id}/manage`}>
+                                <h2>{p.title}</h2>
+                            </Link>
+                            <p>{p.summary}</p>
+                            <dl>
+                                <div>
+                                    <dt>주최자</dt>
+                                    <dd>{profiles.profiles[p.hostId]?.nickname || p.hostId}</dd>
+                                </div>
+                                <div>
+                                    <dt>내 역할</dt>
+                                    <dd>
+                                        {host ? '주최자' : member?.role || application?.role} ·{' '}
+                                        {host
+                                            ? '모집 운영'
+                                            : joined
+                                              ? p.status === '프로젝트 종료'
+                                                  ? '참여 종료'
+                                                  : '참여 중'
+                                              : application?.status}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>모집 기간</dt>
+                                    <dd>
+                                        {p.recruitmentStart} — {p.deadline}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>진행 기간</dt>
+                                    <dd>
+                                        {p.developmentStart} — {p.developmentEnd}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>현재 참여</dt>
+                                    <dd>
+                                        {p.members}/{p.capacity}명
+                                    </dd>
+                                </div>
+                            </dl>
+                            {p.status !== '프로젝트 종료' &&
+                                new Date(`${p.developmentEnd}T23:59:59.999+09:00`).getTime() < now.getTime() && (
+                                    <p className={[styles.scope, 'form-error'].join(' ')}>예정 종료일이 지났습니다.</p>
+                                )}
+                            <div className={[styles.scope, 'workspace-actions'].join(' ')}>
+                                <Link
+                                    className={[styles.scope, 'button secondary'].join(' ')}
+                                    href={`/my-projects/${p.id}/manage`}
+                                >
+                                    {host ? '프로젝트 관리' : '참여 정보'}
+                                </Link>
+                                {joined &&
+                                    !state.deletedChatIds.includes(p.id) &&
+                                    !state.chatExclusions[p.id]?.includes(user.id) && (
+                                        <Link
+                                            className={[styles.scope, 'text-link'].join(' ')}
+                                            href={`/messages/projects/${p.id}`}
+                                        >
+                                            단체 채팅방 →
+                                        </Link>
+                                    )}
+                            </div>
+                            {state.chatExclusions[p.id]?.includes(user.id) && (
+                                <p className={[styles.scope, 'form-error'].join(' ')}>
+                                    채팅방 강퇴 · 프로젝트 참여 이력 유지
+                                </p>
+                            )}
+                        </Card>
+                    );
+                })}
+            </div>
+            {!entries.length && (
+                <div className={[styles.scope, 'empty-state'].join(' ')}>
+                    <h2>해당하는 프로젝트가 없습니다.</h2>
+                    <Link href="/projects" className={[styles.scope, 'button secondary'].join(' ')}>
+                        모집 프로젝트 탐색
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
+}

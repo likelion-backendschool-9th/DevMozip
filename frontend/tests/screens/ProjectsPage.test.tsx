@@ -1,16 +1,11 @@
+import { resetLocalStores } from "@/lib/localStore";
 import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter,Route,Routes } from '@/tests/helpers/RouterFixture';
-import { PrototypeProvider } from '@/lib/state/PrototypeProvider';
-import { AuthProvider } from '@/lib/state/AuthProvider';
-import { ProfileProvider } from '@/lib/state/ProfileProvider';
-import { ProjectProvider } from '@/lib/state/ProjectProvider';
-import { MessagingProvider } from '@/lib/state/MessagingProvider';
-import { HomeProvider } from '@/lib/state/HomeProvider';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { ProjectsPage } from '@/app/projects/_components/ProjectsScreen';
-import { ProjectDetailPage } from '@/app/projects/[projectId]/_components/ProjectDetailScreen';
-import { CreateProjectPage } from '@/app/projects/new/_components/CreateProjectScreen';
+import { AppLayout } from '@/app/_components/AppLayout';
+import ProjectsPage from '@/app/projects/page';
+import ProjectDetailPage from '@/app/projects/[projectId]/page';
+import CreateProjectPage from '@/app/projects/new/page';
 import { ApplicationModal,CancelApplicationModal } from '@/app/projects/[projectId]/_components/ApplicationModal';
 import { SESSION_KEY } from '@/lib/account/authService';
 import { PROJECT_KEY,allProjects,applyRecruitmentAction,freshRecruitmentState } from '@/lib/projects/projectService';
@@ -20,7 +15,7 @@ import type { RecruitmentState } from '@/types/project';
 const now=new Date('2026-10-30T12:00:00+09:00');
 function render(url:string,userId?:string,state=freshRecruitmentState(),modal?:'apply'|'cancel'){
  const data=new Map<string,string>();if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));data.set(PROJECT_KEY,JSON.stringify(state));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});const project=allProjects(state).find(p=>p.id==='pocket')!;
- return renderToStaticMarkup(<PrototypeProvider><AuthProvider><ProfileProvider><ProjectProvider><MessagingProvider><HomeProvider><MemoryRouter initialEntries={[url]}>{modal?(modal==='apply'?<ApplicationModal project={project} onClose={()=>{}}/>:<CancelApplicationModal project={project} onClose={()=>{}}/>):<Routes><Route element={<AppLayout/>}><Route path="/projects" element={<ProjectsPage/>}/><Route path="/projects/new" element={<CreateProjectPage/>}/><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/></Route></Routes>}</MemoryRouter></HomeProvider></MessagingProvider></ProjectProvider></ProfileProvider></AuthProvider></PrototypeProvider>);
+ return resetLocalStores(),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}>{modal?(modal==='apply'?<ApplicationModal project={project} onClose={()=>{}}/>:<CancelApplicationModal project={project} onClose={()=>{}}/>):<Routes><Route element={<AppLayout/>}><Route path="/projects" element={<ProjectsPage/>}/><Route path="/projects/new" element={<CreateProjectPage/>}/><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/></Route></Routes>}</MemoryRouter></>);
 }
 function appliedState():RecruitmentState{return applyRecruitmentAction(freshRecruitmentState(),{type:'apply',projectId:'pocket',portfolioId:'pf-haneul',role:'백엔드',message:'협업 경험을 바탕으로 함께 멋진 서비스를 만들고 싶습니다.'},demoAccounts[0],freshProfileState(),now).state;}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});

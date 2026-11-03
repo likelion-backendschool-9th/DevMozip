@@ -1,9 +1,9 @@
 'use client';
 import styles from './ReviewRequestStatus.module.css';
 import Link from 'next/link';
-import { useAuth } from '@/lib/state/AuthProvider';
-import { useProjects } from '@/lib/state/ProjectProvider';
-import { useProfiles } from '@/lib/state/ProfileProvider';
+import { useAuth } from '@/lib/state/authStore';
+import { useProjects } from '@/lib/state/projectStore';
+import { useProfiles } from '@/lib/state/profileStore';
 import { pendingReviewTargets, requestStatus, reviewLink } from '@/lib/projects/projectReviewService';
 export function ReviewRequestStatus({ projectId }: {
     projectId: string;

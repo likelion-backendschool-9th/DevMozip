@@ -3,7 +3,7 @@ import styles from './ProjectPreview.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, CalendarDays, Users } from 'lucide-react';
-import { useProjects } from '@/lib/state/ProjectProvider';
+import { useProjects } from '@/lib/state/projectStore';
 import { projectSortOptions } from '@/mocks/home';
 import { projectStatus } from '@/lib/projects/projectService';
 import { sortProjects } from '@/lib/matching/homeService';

@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {sanitizeIntroduction,introductionHtml} from './profileIntroduction';
 import {applyProfileAction,freshProfileState,parseProfileState} from './profileService';
-import {ProfileIntroduction} from '@/app/users/[userId]/_components/ProfileIntroduction';
+import {ProfileIntroduction} from '@/app/(user)/users/[userId]/_components/ProfileIntroduction';
 import {introductionPolicy} from '@/mocks/profileIntroduction';
 const actor='demo-user';const now=new Date('2026-11-02T12:00:00+09:00');
 describe('프로필 HTML 소개',()=>{

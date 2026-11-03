@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useProfiles } from '@/lib/state/ProfileProvider';
+import { useProfiles } from '@/lib/state/profileStore';
 import { socialReportReasons } from '@/mocks/social';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';

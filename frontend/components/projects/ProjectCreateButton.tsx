@@ -2,7 +2,7 @@
 import {useState,type ReactNode} from 'react';
 import Link from 'next/link';
 import {useNavigation as useNavigate} from '@/lib/navigation';
-import {useAuth} from '@/lib/state/AuthProvider';
+import {useAuth} from '@/lib/state/authStore';
 import {canCreateProject} from '@/lib/projects/projectPermissionsService';
 import {Button} from '@/components/common/Button';
 import {PremiumProjectGate} from '@/components/projects/PremiumProjectGate';
