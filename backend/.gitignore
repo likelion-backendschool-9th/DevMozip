@@ -35,3 +35,22 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Secrets ###
+application.yml
+application.yaml
+application.properties
+application-*.yml
+application-*.yaml
+application-*.properties
+!application-example.yml
+!application-example.yaml
+!application-example.properties
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
