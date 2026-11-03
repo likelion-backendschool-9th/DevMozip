@@ -101,10 +101,17 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: read
     environment: production     # Actions 탭에 배포 이력이 남는다
     steps:
       - uses: appleboy/ssh-action@v1
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          envs: GHCR_USER,GHCR_TOKEN
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -112,6 +119,9 @@ jobs:
           # 헬스체크에 실패하면 전환하지 않고 종료 코드 1 로 끝나 이 job 이 빨간불이 된다. 서비스는 이전 색이 계속 받는다
           script: |
             set -e
+            export DOCKER_CONFIG=$(mktemp -d /tmp/devmozip-ghcr.XXXXXX)
+            trap 'rm -rf -- "$DOCKER_CONFIG"' EXIT
+            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USER" --password-stdin
             cd ~/DevMozip
             test "$(git branch --show-current)" = main
             git pull --ff-only origin main

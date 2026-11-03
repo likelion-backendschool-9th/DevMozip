@@ -152,3 +152,5 @@ sudo bash ~/DevMozip-validation/deploy/setup-host.sh
 스크립트는 먼저 3002의 헬스를 확인하고 nginx 설정 검사 뒤 reload한다. Certbot의 기존 계정으로 인증서를 발급/설치하며 계정이 없으면 그 오류를 보고한다. 이 경우 관리자에게 인증서 계정 등록을 요청한다. 확인 URL은 `https://devmozip.newlecture.com/api/health`다. 스크립트의 근거는 [Certbot 공식 명령 안내](https://eff-certbot.readthedocs.io/en/stable/man/certbot.html)다.
 
 GitHub 연결 도구는 이 비공개 저장소에 대해 404를 반환했고 서버의 HTTPS git 인증도 설정돼 있지 않았다. GitHub 자동 배포 전에 로컬 push 인증, 서버의 저장소 읽기 인증, 저장소 Secrets 3개 등록이 필요하다. HTTPS 인증 토큰이나 개인 키를 채팅·커밋에 넣지 않는다.
+
+운영 워크플로는 deploy job의 packages:read GITHUB_TOKEN으로 호스트에서 GHCR 로그인하며 임시 DOCKER_CONFIG를 배포 종료 시 제거한다. 따라서 패키지를 Public으로 바꾸거나 호스트에 장기 PAT를 저장하지 않아도 자동 배포가 가능하다. 수동 pull/특정 태그 배포에는 별도의 GHCR 읽기 인증이 필요할 수 있다.
