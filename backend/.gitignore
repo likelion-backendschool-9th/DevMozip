@@ -55,3 +55,6 @@ application-*.properties
 *.p12
 *.jks
 *.keystore
+
+### SQL ###
+*.sql
