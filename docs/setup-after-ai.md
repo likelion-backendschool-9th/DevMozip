@@ -154,3 +154,5 @@ sudo bash ~/DevMozip-validation/deploy/setup-host.sh
 GitHub 연결 도구는 이 비공개 저장소에 대해 404를 반환했고 서버의 HTTPS git 인증도 설정돼 있지 않았다. GitHub 자동 배포 전에 로컬 push 인증, 서버의 저장소 읽기 인증, 저장소 Secrets 3개 등록이 필요하다. HTTPS 인증 토큰이나 개인 키를 채팅·커밋에 넣지 않는다.
 
 운영 워크플로는 deploy job의 packages:read GITHUB_TOKEN으로 호스트에서 GHCR 로그인하며 임시 DOCKER_CONFIG를 배포 종료 시 제거한다. 따라서 패키지를 Public으로 바꾸거나 호스트에 장기 PAT를 저장하지 않아도 자동 배포가 가능하다. 수동 pull/특정 태그 배포에는 별도의 GHCR 읽기 인증이 필요할 수 있다.
+
+조직 정책 확인 결과 Deploy Key 등록과 기본 Workflow write 권한 변경이 금지돼 있었다. 조직 정책은 변경하지 않는다. 명시된 job packages:write/read 및 contents:read 권한을 사용한다. 서버 git pull은 배포 작업의 GITHUB_TOKEN과 임시 GIT_ASKPASS로 인증하며 토큰과 helper는 배포 종료 시 함께 제거한다. 서버 읽기용 별도 키는 등록하지 않았으며 실제 git 인증에 사용하지 않는다.

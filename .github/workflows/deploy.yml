@@ -122,6 +122,16 @@ jobs:
             export DOCKER_CONFIG=$(mktemp -d /tmp/devmozip-ghcr.XXXXXX)
             trap 'rm -rf -- "$DOCKER_CONFIG"' EXIT
             printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USER" --password-stdin
+            cat > "$DOCKER_CONFIG/git-askpass" <<'ASKPASS'
+            #!/bin/sh
+            case "$1" in
+              *Username*) printf '%s\n' x-access-token ;;
+              *) printf '%s\n' "$GHCR_TOKEN" ;;
+            esac
+            ASKPASS
+            chmod 700 "$DOCKER_CONFIG/git-askpass"
+            export GIT_ASKPASS="$DOCKER_CONFIG/git-askpass"
+            export GIT_TERMINAL_PROMPT=0
             cd ~/DevMozip
             test "$(git branch --show-current)" = main
             git pull --ff-only origin main
