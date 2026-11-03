@@ -2,9 +2,9 @@
 import styles from './ApplicationModal.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/state/AuthProvider';
-import { useProfiles } from '@/lib/state/ProfileProvider';
-import { useProjects } from '@/lib/state/ProjectProvider';
+import { useAuth } from '@/lib/state/authStore';
+import { useProfiles } from '@/lib/state/profileStore';
+import { useProjects } from '@/lib/state/projectStore';
 import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/common/Input';

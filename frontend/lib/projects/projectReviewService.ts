@@ -6,7 +6,7 @@ import {addNotice} from '@/lib/projects/projectNoticeService';
 import {createMockId} from '@/lib/utils/createMockId';
 import {reviewPolicy} from '@/mocks/projectWorkspace';
 const day=86400000;
-export function reviewLink(request:ProjectReviewRequest){return `/projects/${request.projectId}/reviews/write?request=${encodeURIComponent(request.id)}&token=${encodeURIComponent(request.token)}`;}
+export function reviewLink(request:ProjectReviewRequest){return `/projects/${request.projectId}/reviews?request=${encodeURIComponent(request.id)}&token=${encodeURIComponent(request.token)}`;}
 export function pendingReviewTargets(request:ProjectReviewRequest,profiles:ProfileState){return request.targetIds.filter(id=>!profiles.reviews.some(r=>r.projectId===request.projectId&&r.authorId===request.recipientId&&r.targetId===id));}
 export function requestStatus(request:ProjectReviewRequest,now:Date){if(request.usedAt)return '작성 완료';if(now.getTime()<Date.parse(request.issuedAt))return '작성 시작 전';if(now.getTime()>=Date.parse(request.expiresAt))return '기간 만료';return '작성 대기';}
 export function syncReviewRequests(state:RecruitmentState,now:Date,profiles?:ProfileState){state.reviewRequests??=[];for(const p of allProjects(state)){// 기존 종료 Mock 이력은 보존하고, 실제 종료 처리 시각이 있는 프로젝트만 초대합니다.

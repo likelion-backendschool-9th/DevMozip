@@ -1,8 +1,8 @@
 'use client';
 import styles from './DemoAccounts.module.css';
 import { useState } from 'react';
-import { useAuth } from '@/lib/state/AuthProvider';
-import { usePrototype } from '@/lib/state/PrototypeProvider';
+import { useAuth } from '@/lib/state/authStore';
+import { usePrototype } from '@/lib/state/prototypeStore';
 import { demoAccounts, demoPassword, roleLabels } from '@/mocks/auth';
 import { Button } from '@/components/common/Button';
 export function DemoAccounts({ onSelected, showCredentials = false }: {

@@ -1,13 +1,12 @@
 {
-  "name": "devmozip-frontend",
-  "private": true,
+  "name": "frontend-structure",
   "version": "0.1.0",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0 --port 5173",
+    "dev": "next dev",
     "build": "next build",
-    "start": "next start --hostname 0.0.0.0 --port 4173",
-    "preview": "npm run start --",
+    "start": "next start",
+    "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run"
   },
@@ -19,16 +18,19 @@
     "lucide-react": "^0.468.0",
     "marked": "^18.1.2",
     "next": "16.4.3",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "sanitize-html": "^2.18.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "typescript": "^5",
     "@types/sanitize-html": "^2.16.2",
-    "typescript": "~5.9.3",
     "vitest": "^5.0.5"
-  }
+  },
+  "type": "module"
 }

@@ -2,8 +2,8 @@
 import styles from './RecruitmentCard.module.css';
 import Link from 'next/link';
 import { ArrowUpRight, CalendarDays } from 'lucide-react';
-import { useAuth } from '@/lib/state/AuthProvider';
-import { useProjects } from '@/lib/state/ProjectProvider';
+import { useAuth } from '@/lib/state/authStore';
+import { useProjects } from '@/lib/state/projectStore';
 import { applicationFor, projectStatus } from '@/lib/projects/projectService';
 import { Card } from '@/components/common/Card';
 import { BookmarkButton } from '@/app/projects/[projectId]/_components/ProjectActions';
