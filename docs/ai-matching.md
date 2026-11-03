@@ -55,8 +55,21 @@ TODO: 월 경계의 시간대와 초기화 방식, 구독 판정 원천, 업그�
 
 화면 URL은 `/ai/matching`이며 현재 `frontend/app/ai/matching/page.tsx`와 일치한다. 앞선 문서의 현재 경로 `/matching` 설명은 정정했다. 라우트 변경은 필요하지 않다. 대화 생성/목록/상세/삭제, 메시지, 조건 교체, 추천 생성/조회, 프리미엄 상세 분석, 월별 사용량의 메서드·경로는 [API 명세](ai-api-spec.md)에 반영했다. 상세 분석 경로는 사용자 오타 확인에 따라 `/api/v1/ai/recommendations/{id}/detailed-analysis`로 확정했다. 대화 삭제는 본인 대화만 허용한다.
 
-사용자가 제시한 테이블은 `ai_conversations`, `ai_messages`, `ai_recommendation_requests`, `ai_recommendations`, `ai_usages`다. **저장소에 ERD·DDL·매핑 엔티티가 없어 실제 테이블명과 컬럼명은 검증되지 않았다.** 사용자·프로젝트·포트폴리오·구독 엔티티도 확인되지 않았다. 임의로 생성하거나 다른 팀원 소유 도메인을 구현하지 않는다.
+사용자가 제시한 테이블은 `ai_conversations`, `ai_messages`, `ai_recommendation_requests`, `ai_recommendations`, `ai_usages`다. 사용자 제공 ERD 사진과 users DDL을 확보했다. 실제 AI 테이블·FK·제약조건은 DB에서 검증하지 못했다. 1단계에 필요한 대화·메시지 엔티티와 검토용 DDL 초안만 추가하며, 다른 팀원 소유 사용자·프로젝트·포트폴리오·구독 엔티티는 만들지 않는다.
 
 현재 `frontend/lib/matching/matchingChatService.ts`에는 메시지만 전송해도 조건에 따라 Mock 추천을 생성하고 사용량을 차감하는 분기가 있다. 이번 정책과 차이가 있으며, 이번 문서 작업에서 변경하지 않았다. 기존 API 초안의 `/api/v1/matching/...` 후보는 신규 기준 `/api/v1/ai`와 다르므로 그대로 구현하지 않는다.
 
 TODO: ERD/DDL·연관 도메인 데이터 계약 확보, 상세 포트폴리오 접근·분석 결과 노출 정책, 개인정보 보존/삭제 정책, 외부 AI 공급자·모델·실패 처리. Gemini 등 외부 서비스는 이번 단계에 연결하지 않는다.
+
+## 1단계 추가 확정 정책
+
+- `ai_conversations.type`, `status`는 사용하지 않는다. 한 대화에서 개발자·유사 프로젝트 추천을 함께 제공하며 MVP에는 대화 종료·보관이 없다. 기존 DB에 해당 컬럼이 있다면 제거는 별도 검토·승인 후 수행한다.
+- 대화 삭제는 물리 삭제이며 연결된 메시지·추천 요청·추천 결과를 하나의 트랜잭션에서 삭제한다. 추천 요청이 대화뿐 아니라 메시지를 참조하는 FK도 고려한다. 월 사용량은 삭제하거나 복구하지 않는다.
+- 1단계 메시지 전송은 사용자 메시지 저장만 한다. 자연어 분석·조건 병합·추가 질문·Gemini·임시 AI 답변·추천 실행·월 한도 계산은 후속 범위다.
+- 인증 팀 개발과 분리하기 위해 `CurrentUserProvider`를 사용한다. 개발·테스트 고정 ID는 환경 설정으로 전달하고 기존 users에 실제 존재하는지 확인한다. 실제 인증 어댑터가 없는 운영 환경에서는 AI 요청을 거부한다. 기존 보안 설정은 변경하지 않는다.
+
+## DB 사용 방침 갱신
+
+팀은 H2를 사용하기로 했다. 적용 환경 범위, 메모리/파일 저장 방식, 팀 공통 DDL·초기화 설정은 TODO다. 현재 저장소의 기본 application.yaml/compose는 PostgreSQL이며 H2는 testRuntimeOnly로만 포함되어 있다. 문서 방침 반영과 실제 실행 설정 반영을 구분한다. 이번 갱신은 문서만 변경한다.
+
+현재 1단계 테스트는 H2의 PostgreSQL 호환 모드와 격리 fixture를 사용하며 팀 공통 H2 스키마 검증을 뜻하지 않는다. docs/sql/ai-conversations-proposal.sql은 이전 PostgreSQL 설계 검토용 초안으로 남겨두며 H2 적용용·자동 실행용·승인된 마이그레이션이 아니다. 기존 추천·로그인·차감·삭제 정책은 H2 선택으로 변경되지 않는다.

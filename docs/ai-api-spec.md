@@ -1,6 +1,6 @@
 # AI API 명세: 확정 범위와 TODO
 
-기준일: 2026-11-03. AI 업무 API는 아직 구현되지 않았다. 사용자 제공 공통 지침과 후속 URL/API 표를 반영했다. HTTP 메서드와 경로는 아래 표를 기준으로 하며, 제공되지 않은 JSON 필드·스키마는 TODO다. 논리 구조는 호출 가능한 요청/응답 예제가 아니다.
+기준일: 2026-11-03. 1단계 대화 CRUD·사용자 메시지 저장 API를 구현했으며 나머지 AI 업무 API는 미구현이다. 팀 H2 스키마·실행 설정과의 통합은 미완료다. 사용자 제공 공통 지침과 후속 URL/API 표를 반영했다. HTTP 메서드와 경로는 아래 표를 기준으로 하며, 제공되지 않은 JSON 필드·스키마는 TODO다. 논리 구조는 호출 가능한 요청/응답 예제가 아니다.
 
 ## 확정된 공통 계약
 
@@ -33,6 +33,8 @@
 
 ## 요청·응답의 논리 구조
 
+현재 승인된 1단계는 대화 생성·목록·상세(메시지 포함)·삭제와 사용자 메시지 저장의 5개 API다. 위 표의 메시지 분석·조건 병합·추가 질문은 후속 전체 기능 명세이며 1단계에서는 실행하지 않는다. Gemini 호출 및 임시 ASSISTANT 메시지 자동 생성도 하지 않는다. 대화는 생성 시간 역순, 메시지는 생성 시간과 ID 기준으로 정렬한다. 사용자 추가 설계에 따라 대화 type/status는 사용하지 않고, 삭제 시 메시지·추천 요청·추천 결과는 물리 삭제하되 월 사용량은 유지한다.
+
 | API 작업 | 요청 | 응답 | 미확정 세부 사항 |
 |---|---|---|---|
 | 대화 생성 | 생성에 필요한 입력 여부 TODO | 생성한 대화 표현 | 제목·초기 조건·익명 초안 전달 여부, ID 및 생성 시각 필드 |
@@ -64,7 +66,7 @@
 - 상세 분석: 분석 대상과 재분석·캐시 정책, 비공개 포트폴리오 원문·파생 분석의 노출 범위.
 - 공통: JSON 키 이름, 성공 HTTP 상태, 응답 envelope, 페이지네이션, 날짜 형식, 오류 코드·오류 스키마.
 
-위 항목은 모두 TODO다. 실제 ERD·도메인 계약과 사용자 확인 없이 임의의 JSON 예제를 확정 계약으로 추가하지 않는다. 무료 15회·프리미엄 100회 및 차감 규칙은 [기능 명세](ai-matching.md)에 따른다.
+위 목록은 전체 AI 기능의 설계 TODO다. 아래 1단계 구현 계약에서 구체화한 생성·조회·삭제·메시지 DTO/HTTP 항목은 해당 계약을 따른다. 나머지는 실제 ERD·도메인 계약과 사용자 확인 없이 확정하지 않는다. 무료 15회·프리미엄 100회 및 차감 규칙은 [기능 명세](ai-matching.md)에 따른다.
 
 ## 인증과 접근 권한
 
@@ -76,8 +78,49 @@
 
 기존 인증 기본 경로는 `/api/auth`이고 인증 BFF는 [팀 안내](team-auth-deployment.md)를 따른다. 신규 AI 기본 경로를 이유로 기존 인증 경로를 변경하지 않는다. 프론트에서 Spring AI API까지의 BFF/프록시 전달 계약은 TODO다.
 
-현재 `JsonAuthenticationEntryPoint`는 JSON 401 오류를 반환한다. AI API의 인증 거절 회귀 검증은 아직 실행하지 않았다. 프리미엄 권한 부족·한도 초과·검증 오류·데이터 없음·AI 장애의 상태 코드와 오류 본문은 TODO이며 기존 인증 오류를 근거 없이 전체 AI 오류 계약으로 확정하지 않는다.
+현재 `JsonAuthenticationEntryPoint`는 JSON 401 오류를 반환한다. 1단계 API의 익명 요청/사용자 식별 실패 401은 H2 기반 통합 테스트로 검증했고 운영 임시 식별 거부는 설정 테스트로 검증했다. 실제 운영 검증은 하지 않았다. 프리미엄 권한 부족·한도 초과·검증 오류·데이터 없음·AI 장애의 상태 코드와 오류 본문은 TODO이며 기존 인증 오류를 근거 없이 전체 AI 오류 계약으로 확정하지 않는다.
 
 ## 기존 문서와의 관계
 
 [api-plan.md](api-plan.md)의 `/matching/...` URL은 과거 미구현 후보이며 이 AI API의 확정 경로가 아니다. 기존 프론트 Mock 타입·필드·점수식도 서버 DTO 계약으로 확정하지 않는다. ERD·DDL과 실제 엔티티 대조를 마친 후 요청된 단계에 필요한 계약만 구체화한다.
+
+## 1단계 구현 계약
+
+아래는 이번 구현의 DTO·HTTP 계약이다. 매핑의 테이블/컬럼은 사용자 ERD를 반영했다. [이전 PostgreSQL DDL 초안](sql/ai-conversations-proposal.sql)은 참고용이며 팀의 H2 확정 스키마가 아니다. 실제 팀 스키마를 확인하거나 적용한 결과는 아니다. 추천·조건 수정·분석·사용량 API는 구현하지 않는다.
+
+| API | 요청 | 정상 응답 |
+|---|---|---|
+| POST `/api/v1/ai/conversations` | 본문 없음 또는 `{}` 또는 `{"title":"팀원 찾기"}`. title은 null 허용, 최대 255자 | 201, Location 헤더, 대화 요약 객체 |
+| GET `/api/v1/ai/conversations` | 본문 없음 | 200, 내 대화 요약 배열. createdAt DESC, id DESC. 페이지네이션은 이번 단계 미구현 |
+| GET `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 200, 대화 상세 및 messages 배열. 메시지는 createdAt ASC, id ASC |
+| DELETE `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 204, 본문 없음. 추천 결과→추천 요청→메시지→대화 순으로 삭제, 월 사용량 유지 |
+| POST `/api/v1/ai/conversations/{id}/messages` | `{"content":"백엔드 개발자를 찾고 있어요"}`. content는 필수이며 공백만 입력 불가 | 201, 저장한 USER 메시지 객체. AI 응답 생성 없음 |
+
+대화 요약은 `id`(정수), `title`(문자열 또는 null), `createdAt`·`updatedAt`(시간대/오프셋 없는 LocalDateTime ISO-8601)이다. 상세는 요약 필드에 `currentConditions`(JSON 값 또는 null), `messages`(배열)를 추가한다. 조건은 이번 단계에서 변경하지 않는다. 메시지 객체는 `id`(정수), `role`(USER/ASSISTANT), `content`(문자열), `createdAt`(시간대/오프셋 없는 LocalDateTime ISO-8601)이다. 저장 API는 역할을 USER로 정하고 요청자의 role·userId·conversationId를 신뢰하지 않는다. 실제 관계는 경로의 본인 대화와 연결한다.
+
+사용자 ID는 모든 Service 진입점에서 `CurrentUserProvider`로 얻는다. 잘못된 ID 형식·0 이하 ID, 너무 긴 제목·빈 메시지는 400, 없는 대화와 타인 대화는 동일한 404다. 소유 여부를 응답 차이로 노출하지 않는다. 기본/운영 환경의 사용자 식별 미준비·개발 사용자 설정 누락/해당 users 행 없음은 기존 인증 예외 처리로 401을 반환한다. 기존 SecurityConfig의 로그인 요구도 유지한다.
+
+오류 본문은 기존 `ErrorResponse` 구조를 재사용한다: `status`(정수), `error`(HTTP 이유), `message`(안내), `path`(요청 경로), `timestamp`(시각). JSON 파싱 오류는 기존 400 처리를, DB 접근 오류는 기존 503 처리를 사용한다. 예상하지 못한 FK 충돌도 503으로 반환하고 트랜잭션 전체를 롤백한다. 이는 충돌을 무시하거나 실제 FK가 검증되었다는 뜻이 아니다.
+
+## 개발 사용자 식별과 인증 교체 지점
+
+- `CurrentUserProvider#getCurrentUserId()`가 인증과 AI 업무 코드 사이의 교체 지점이다. 패키지는 `com.devmozip.backend.ai`다.
+- `dev` 또는 `test` 프로필 + `ai.current-user.development-enabled=true` 두 조건을 모두 만족해야 고정 ID 구현을 활성화한다. `prod` 또는 `production`이 함께 활성화되면 고정 ID 구현을 사용하지 않는다. 기본 환경도 요청을 거부한다.
+- dev 설정은 `application-dev.yaml`에서 `AI_DEV_USER_ENABLED`, `AI_DEV_USER_ID` 환경변수를 읽는다. ID 기본값은 없으며 users 테이블에 실제 행이 있어야 한다. 실행 시 테스트 사용자를 자동 INSERT하지 않는다.
+- 임시 모드는 모든 인증된 요청을 설정된 한 사용자로 취급한다. 실제 다중 사용자 환경에서 사용하면 안 된다. 기존 보안 필터를 우회하지 않으므로 현재 인증의 유효한 로그인 토큰도 필요하다.
+- 인증 팀이 사용자 ID를 제공하면 실서비스용 `CurrentUserProvider` 빈을 등록하고 이 임시 설정을 제거/비활성화한다. 기본 빈은 `ConditionalOnMissingBean`으로 교체 가능하다. AI Controller/Service에 username 변환이나 Spring Security 의존성을 추가할 필요가 없다.
+- 배포 환경에는 dev/test 프로필 및 임시 사용자 옵션을 설정하지 않는다. 기존 compose·JWT·BFF·보안 설정은 수정하지 않았다.
+
+1단계 입력 오류와 미존재/타인 대화 오류는 표준 Java 예외를 사용하고 AiConversationController의 로컬 ExceptionHandler가 위 ErrorResponse 형식으로 변환한다. 별도 AI 예외 클래스·예외 처리 파일은 두지 않는다. 공통 인증/DB 오류 처리는 기존 코드를 그대로 사용한다.
+
+AI 시간 필드는 사용자 요청으로 LocalDateTime으로 통일했다. 예: `2026-11-03T15:00:00`이며 Z/UTC 오프셋을 포함하지 않는다. Service는 서버 로컬 시각의 LocalDateTime.now()를 사용한다. DDL 초안은 TIMESTAMP WITHOUT TIME ZONE 및 LOCALTIMESTAMP 기본값으로 변경했으며 실제 DB는 변경하지 않았다. 운영 애플리케이션·DB의 기준 시간대는 팀 합의 후 일치시켜야 하며 한국 시간/UTC 중 하나로 확정한 것은 아니다.
+
+AI Service는 `service/AiConversationService` 인터페이스와 `service/impl/AiConversationServiceImpl` 구현체로 분리했다. Controller는 인터페이스를 주입받는다. Repository는 JPA 기반이며 대화/메시지는 JpaRepository, users 존재 확인은 AiConversationRepository의 nativeQuery, 추천 연관 삭제는 EntityManager 네이티브 쿼리로 처리한다. 별도 User/추천 엔티티를 추가하지 않는다.
+
+사용자 요청에 따라 별도 AiUserRepository를 제거했다. 개발용 users 행 존재 확인은 AiConversationRepository.existsUserById의 nativeQuery로 통합했으며 대화 존재 확인인 JpaRepository.existsById와 구분한다. 개발 Provider와 설정은 동일 Repository를 사용한다. CreateConversationRequest의 요청 필드는 title 하나이며 userId·id·createdAt·updatedAt은 서버에서 결정한다. DTO와 API 본문 필드는 이번 통합에서 변경하지 않았다.
+
+## 팀 H2 방침과 API 검증 범위
+
+팀은 H2를 사용하기로 했으나 적용 환경/저장 방식/공통 스키마·초기화 계약은 TODO다. 현재 기본 datasource는 PostgreSQL이며 H2 의존성은 testRuntimeOnly다. application-dev.yaml의 고정 사용자 설정은 H2 연결 설정이 아니다. 기본 실행 설정·의존성·compose 변경은 별도 팀 조율 대상이며 이번 문서 작업에서 수정하지 않았다.
+
+1단계 테스트는 H2 PostgreSQL 호환 모드와 테스트 전용 schema.sql로 수행한다. users 및 추천/사용량 fixture는 검증용 최소 정의로 팀 운영 스키마와 다를 수 있다. 따라서 API/권한/삭제 롤백의 테스트 결과와 실제 팀 H2 서버 기동·Postman 연동 완료를 구분해야 한다. DB 선택 변경으로 URL·DTO·소유권·하드 삭제·사용량 유지 정책은 바뀌지 않는다.

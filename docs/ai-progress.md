@@ -1,85 +1,98 @@
 # AI 추천 개발 진행 현황
 
-마지막 갱신: 2026-11-03. 새 채팅에서는 [AGENTS.md](../AGENTS.md), [기능 명세](ai-matching.md), [API 명세](ai-api-spec.md), 이 문서 순으로 읽고 실제 코드와 Git 상태를 다시 확인한다. 아래 예정 단계는 실행 승인이 아니다.
+마지막 갱신: 2026-11-03. 새 채팅은 [루트 작업 규칙](../AGENTS.md), [AI 작업 규칙](../backend/src/main/java/com/devmozip/backend/ai/AGENTS.md), [기능 명세](ai-matching.md), [API 명세](ai-api-spec.md)와 이 문서를 읽고 실제 Git/코드를 다시 확인한다. 이 문서는 현재 구현을 기준으로 이전 반복 기록을 정리한 것이다.
 
-## 현재 상태
+## 1단계 상태
 
-이번 요청은 문서 작성만이다. AI Controller·Service·Repository·DTO·Entity, 실제 추천 API·DB 연동·외부 AI 연결은 구현하지 않았다. 기존 JWT 인증·권한·헬스체크·배포 인프라는 AI 기능과 별개로 존재한다.
+**AI 대화 CRUD·사용자 메시지 저장 API 5개 구현 완료. 격리된 H2 테스트와 실제 팀 실행 환경 검증은 구분한다.** 팀은 H2를 사용하기로 했지만 저장소의 기본 실행·배포 설정은 아직 PostgreSQL이며 팀 H2 환경 기동·스키마 일치 확인은 미완료다. 이번 요청은 결과 확인과 문서 갱신뿐이며 기능 코드·설정·DB 스키마는 수정하지 않는다.
 
-점검 당시 브랜치는 `feat/ai-conversation`이다. 작업 전부터 `frontend/next-env.d.ts` 변경이 있었으며 이번 작업에서 수정·되돌림·커밋하지 않는다. 새 채팅은 브랜치와 변경 상태를 재확인하고 팀 브랜치 규칙에 따라 develop 대상 검증을 진행한다. 최초 문서 작업에서는 브랜치 전환·병합·커밋·푸시를 하지 않았다. 후속 사용자 요청으로 현재 `feat/ai-conversation` 브랜치에 문서 4개만 커밋한다. 푸시·병합은 수행하지 않는다.
+브랜치는 `feat/ai-conversation`이다. 기존 문서 커밋은 `dce07a2`이며 현재 1단계 코드·문서가 스테이징되어 있다. 이번 문서 갱신은 작업 트리에만 반영하므로 커밋에 포함하려면 수정 문서를 다시 스테이징해야 한다. 커밋·푸시·병합·배포는 실행하지 않았다. 추천 커밋 제목: `feat(ai): AI 대화 CRUD 및 사용자 메시지 저장 구현`.
 
-## 단계별 진행
+## 완료 기능
 
-세부 구현 단계·순서는 아직 사용자 확정 전이며 아래는 후속 작업을 나누기 위한 예정 구분이다.
-
-| 단계 | 상태 | 완료 내용 / 진입 전 필요한 사항 |
-|---|---|---|
-| 사전 점검 | 저장소 기준 완료, DB 대조 미완료 | 버전·구조·인증 코드·Mock 정책 차이를 확인했다. ERD/DDL과 실제 DB는 미확인이다. |
-| 맥락·정책 문서화 | 문서 작성 완료, 검증 결과는 아래 참조 | AGENTS 및 AI 문서 3개에 확정 정책·미확정 계약·진행 상태를 분리했다. |
-| ERD·연관 도메인 계약 확인 | 미착수 | 실제 스키마, 사용자 ID, 프로필/기술/프로젝트/포트폴리오/구독 데이터 계약 확보 필요 |
-| API 계약 정리 | 메서드·경로 반영, 세부 DTO 미확정 | 사용자 제공 API 10개의 메서드·경로·역할을 문서화했다. 상세 분석 경로는 `detailed-analysis`로 정정했다. JSON 계약·응답 상태는 TODO다. |
-| API 해당 단계 구현 | 미착수 | 사용자가 첫 구현 범위를 지정해야 한다. |
-| 추천 생성·사용량 처리 | 미착수 | 추천 기준·성공 기준·동시성·월 경계·멱등성 확정 필요 |
-| 프리미엄 추가 분석 | 미착수 | 구독·포트폴리오 접근 계약과 AI 연결 승인 필요 |
-| 프론트 연결·통합 검증 | 미착수 | 별도 요청 범위 확정 필요. 현재 Mock 흐름 보존 |
-
-## 확인한 기반과 정책 차이
-
-- `backend/build.gradle`: Spring Boot 4.1.2, Java toolchain 21, Spring Data JPA·Security·Redis 의존성.
-- `backend/gradle/wrapper/gradle-wrapper.properties`: Gradle 9.8.2.
-- `backend/src/main/resources/application.yaml`: PostgreSQL 연결 설정, `ddl-auto: none`, Redis·JWT 설정.
-- `compose.yaml`·`compose.prod.yaml`: PostgreSQL 17, Redis 7-alpine. 실제 가동 버전을 조회한 결과는 아니다.
-- 백엔드는 `com.devmozip.backend`와 `auth` 패키지가 중심이다. 업무 엔티티와 AI API는 확인되지 않았다.
-- 저장소에서 ERD·DDL 및 AI 테이블 5개의 매핑 코드를 찾지 못했다. 실제 DB에 테이블이 없다고 단정하지 않는다.
-- 인증 principal은 username 문자열이며 임시 인메모리 계정이다. 실제 사용자 ID·구독 상태와의 연결이 없다.
-- 프론트 `matchingChatService.ts`에는 메시지 전송으로 Mock 추천과 차감을 실행하는 분기가 있다. 이번의 '추천 실행에서만 생성·차감' 정책과 차이가 있다.
-- `docs/api-plan.md`의 `/matching/...` 후보와 이번 `/api/v1/ai` 기준은 다르다. 기존 초안과 Mock 필드를 확정 API로 옮기지 않는다.
-
-## 이번 변경 파일
-
-| 파일 | 변경 내용 |
+| API | 구현 및 응답 |
 |---|---|
-| `AGENTS.md` | AI 문서 읽기 순서, 단계별 승인 범위, 기존 구조·컨벤션, 팀 코드 경계와 검증·기록 규칙 |
-| `docs/ai-matching.md` | 확정 정책, 입력·로그인 흐름, 직군·기술 스택·경험 기반 적합도, 등급·월 한도, 현재 화면 경로 확인과 데이터 TODO |
-| `docs/ai-api-spec.md` | 사용자 제공 API 10개의 메서드·경로·동작, 인증·차감, 요청/응답의 논리 구조와 미확정 DTO·오류 계약 |
-| `docs/ai-progress.md` | 사전 점검·진행 상태·변경 파일·검증·남은 문제·다음 작업 |
+| POST `/api/v1/ai/conversations` | 제목 선택(null 허용, 최대 255자), 사용자 ID·생성/수정 시각 서버 설정, 201 및 Location |
+| GET `/api/v1/ai/conversations` | 내 대화만 createdAt DESC / id DESC, 200 |
+| GET `/api/v1/ai/conversations/{id}` | 내 대화·저장 조건·메시지 조회, 메시지 createdAt ASC / id ASC, 200 |
+| DELETE `/api/v1/ai/conversations/{id}` | 소유권 확인 후 연관 데이터 물리 삭제, 204 |
+| POST `/api/v1/ai/conversations/{id}/messages` | 공백이 아닌 content를 USER 메시지로 저장, conversation_id 연결·대화 수정 시각 갱신, 201 |
 
-## 검증 결과
+- 타인 대화와 미존재 대화는 동일한 404, 입력/ID 형식 오류는 400이다. 공통 ErrorResponse를 Controller에서 재사용하고 공통 인증 401·DB 오류 503 처리는 기존 코드를 유지한다.
+- `owned()`가 현재 사용자 ID와 대화 ID를 함께 조회한다. 메시지 저장·삭제는 대화 행에 비관적 쓰기 잠금을 사용한다.
+- 삭제는 추천 결과 → 추천 요청 → 메시지 → 대화 순으로 하나의 트랜잭션에서 실행한다. 대화 FK뿐 아니라 메시지 FK로 연결된 추천 요청도 포함한다. `ai_usages`는 삭제/차감/복원하지 않는다. FK 충돌 시 전체를 롤백한다.
+- `type`, `status`는 엔티티에서 제거했다. 메시지 역할은 USER/ASSISTANT지만 저장 API는 USER만 생성한다. 기존 저장 ASSISTANT 메시지는 조회할 수 있다.
+- 생성·수정 시각은 LocalDateTime이다. 생성 시각만 필요한 AiMessage에 updatedAt을 추가하지 않았다. 공통 BaseEntity도 만들지 않았다.
+- 사용자 식별은 CurrentUserProvider로 분리했다. dev/test 프로필과 명시적 opt-in 모두 필요하고, 설정된 ID가 users에 실제 존재해야 한다. 기본/prod/production에서는 실제 구현체가 없으면 요청을 거부한다. 기존 SecurityConfig의 로그인 요구는 유지한다.
+- Gemini·자동 AI 답변·요구사항 분석·조건 변경/병합·추천 생성·점수 계산·월 한도 적용·상세 분석·프론트 API 연결은 이번 단계에서 구현하지 않았다.
 
-### 최초 문서 구성 시 검증
+## 현재 구조와 변경 파일
 
-- 저장소 설정·문서·인증 코드·Mock 추천 코드 읽기 및 엔티티/ERD 관련 검색을 수행했다.
-- 기본 PATH의 Windows npm으로 `npm run build`와 추천 관련 테스트를 시도했으나 `WSL 1 is not supported` 및 `Could not determine Node.js install directory` 오류로 실행되지 않았다. 설치된 Linux Node 경로 `/home/binac/.nvm/versions/node/v24.22.1/bin`을 PATH 앞에 두고 재실행했다. 프로젝트 설정 파일은 바꾸지 않았다.
-- `frontend`에서 Linux Node로 `npm run build`: 실패(종료 코드 1). 컴파일은 성공했으나 TypeScript 단계에서 `Could not parse output from TypeScript's --showConfig.`가 발생했다. 전체 빌드 성공이 아니며 원인 해결은 이번 문서 작업 범위에서 진행하지 않았다.
-- `frontend`에서 Linux Node로 `npm test -- lib/matching/matchingService.test.ts lib/matching/matchingChatService.test.ts lib/matching/homeService.test.ts`: 성공, 3개 파일·39개 테스트 통과. 기존 프론트 Mock 회귀 확인이며 백엔드 AI 검증이 아니다.
-- 네 문서의 상대 Markdown 링크 12개 대상 파일 존재를 확인했다. `git diff --check`도 통과했다.
-- 기존 `BackendApplicationTests.java`는 인증 관련 테스트 코드다. 이번에 실행한 결과가 아니며 AI 테스트가 아니다.
-- ERD/실제 DB 스키마 비교, AI API 인증·추천·사용량·프리미엄·외부 AI 통합 테스트는 미수행이다. 대상 구현이 없다.
+소스 루트는 `backend/src/main/java/com/devmozip/backend/ai`다. AI 외 도메인·기존 인증·보안·배포 코드는 수정하지 않았다.
 
-### 후속 URL/API 표 반영 시 검증
+| 위치 | 변경 파일 및 역할 |
+|---|---|
+| AI 루트 | `AGENTS.md`: 코로케이션 3계층, 개별 DTO, Service/impl, 최소 구조 원칙 |
+| AI 루트 | `CurrentUserProvider.java`, `CurrentUserConfiguration.java`, `DevelopmentCurrentUserProvider.java`: 식별 인터페이스·환경별 선택·개발 고정 ID |
+| `controller/` | `AiConversationController.java`: API 5개와 로컬 입력/미존재 예외 처리 |
+| `service/` | `AiConversationService.java`: 인터페이스 |
+| `service/impl/` | `AiConversationServiceImpl.java`: 업무 로직·소유권·트랜잭션 |
+| `repository/` | `AiConversationRepository.java`: 대화 조회/잠금·users 존재 확인 네이티브 쿼리 |
+| `repository/` | `AiMessageRepository.java`: 메시지 저장·정렬 조회 |
+| `repository/` | `AiConversationDeletionRepository.java`: JPA EntityManager 네이티브 연관 삭제 |
+| `entity/` | `AiConversation.java`, `AiMessage.java`: ERD 기반 JPA 매핑 |
+| `dto/` | `CreateConversationRequest.java`, `CreateMessageRequest.java`, `ConversationResponse.java`, `ConversationDetailResponse.java`, `MessageResponse.java`: 타입별 public record |
+| `backend/src/main/resources/` | `application-dev.yaml`: AI_DEV_USER_ENABLED / AI_DEV_USER_ID 입력, ID 기본값 없음 |
+| `backend/src/test/java/com/devmozip/backend/ai/` | `CurrentUserConfigurationTests.java`: 사용자 식별 설정 테스트 3개 |
+| 테스트의 `ai/controller/` | `AiConversationTests.java`: MockMvc·실제 JPA Repository·H2 트랜잭션 통합 테스트 8개 |
+| `backend/src/test/resources/ai/` | `schema.sql`: 격리 H2 테스트용 최소 테이블 |
+| `docs/` | `ai-matching.md`, `ai-api-spec.md`, `ai-progress.md`: 확정 정책·API·진행 상태 |
+| `docs/sql/` | `ai-conversations-proposal.sql`: 이전 PostgreSQL 검토용 초안, 자동 실행/적용되지 않음 |
 
-- 추가 변경은 `docs/ai-api-spec.md`, `docs/ai-matching.md`, `docs/ai-progress.md`의 문서 3개다. 기능 코드·라우트·인증 설정은 변경하지 않았다.
-- 사용자 제공 API 10개의 메서드·경로·역할을 반영했다. `/ai/matching`과 현재 `/matching`의 차이 및 `detailed-analysi` 철자를 TODO로 남겼다. JSON 계약은 임의로 확정하지 않았다.
-- API 표 10개 행 존재 및 세 문서의 로컬 링크 대상 검사를 통과했다. `git diff --check`도 통과했다.
-- Linux Node 경로를 사용해 `frontend`의 `npm run build`를 재실행했으나 컴파일 후 동일한 TypeScript `--showConfig` 출력 파싱 오류로 실패했다(종료 코드 1). 빌드가 생성한 `next-env.d.ts`는 실행 직전 내용으로 복원했다.
-- 기능 테스트는 이번 후속 문서 수정에서 재실행하지 않았다. 위 39개 테스트 통과는 최초 문서 구성 시 결과다. 백엔드 AI 구현·통합 검증은 여전히 미수행이다.
+`AiUserRepository`, AiConversationDtos 래퍼, 별도 AI 예외 클래스/Advice, identity/exception 폴더는 사용하지 않는다. 사용자 존재 확인은 `AiConversationRepository.existsUserById`이며 기본 `existsById`의 대화 존재 확인과 구분한다. User/추천 엔티티는 타 팀 영역이므로 추가하지 않았다. 테스트 데이터 준비/검증의 JdbcTemplate는 유지하되 AI 업무 코드는 JPA를 사용한다.
 
-### 경로 확인·오타 정정 및 문서 커밋
+## 확정 정책 반영
 
-- 현재 `frontend/app/ai/matching/page.tsx`와 화면 이동 링크에서 `/ai/matching`을 확인했다. 앞선 현재 경로 `/matching` 안내를 정정하고 경로 이전 TODO를 해소했다. 기능 코드는 수정하지 않았다.
-- 사용자가 상세 분석 경로의 오타를 확인했다. 최종 경로는 `/api/v1/ai/recommendations/{id}/detailed-analysis`다.
-- 요청·응답 JSON 필드와 오류 계약의 의미를 API 문서에 설명했다. 설명용 필드 예시는 확정 DTO가 아니며 세부 데이터 계약은 TODO로 유지한다.
-- 사용자 요청에 따라 AGENTS.md 및 AI 문서 3개를 현재 브랜치에 커밋한다. 기존 `frontend/next-env.d.ts` 변경은 포함하지 않는다.
-- 문서 로컬 링크, API 표 10개 행, 정정된 상세 분석 경로, 실제 `/ai/matching` 페이지 파일 존재 검사 및 `git diff --check`를 통과했다. 기능 테스트는 재실행하지 않았다.
-- Linux Node로 `frontend`에서 `npm run build`를 재실행했다. 컴파일 후 기존과 동일한 TypeScript `--showConfig` 출력 파싱 오류로 실패했다(종료 코드 1). `next-env.d.ts`는 실행 직전 내용으로 보존했다. 이 실패는 미해결 상태이며 문서 커밋을 빌드 통과로 보고하지 않는다.
+- 하나의 대화에서 개발자·유사 프로젝트를 함께 추천하므로 대화 type을 쓰지 않는다. MVP 종료/보관 기능이 없어 status도 쓰지 않는다.
+- 물리 삭제와 연관 추천 삭제, 월 사용량 유지가 확정되었다. 실제 저장소에 FK가 다르거나 추가 관계가 있으면 먼저 보고하고 정책과 맞춰야 한다.
+- DTO는 타입별 개별 파일, Service는 인터페이스와 impl 구현체, 불필요한 파일·폴더·추상화는 추가하지 않는다. 별도 예외 처리 파일도 만들지 않는다.
+- 시간은 LocalDateTime이며 서버/DB 기준 시간대는 팀 합의가 필요하다. 과거 Instant 기반 설계를 현재 정책으로 사용하지 않는다.
+- 최신 사용자 안내로 H2 사용 방침을 반영했다. 개발/운영 적용 범위·in-memory/file 방식·팀 공통 초기화 스크립트·시간대는 아직 TODO다. 이전 PostgreSQL 전제를 H2 실행 완료로 바꾸어 기록하지 않는다.
+- 무료 15회·프리미엄 100회, 추천 신규 생성 성공에만 1회 차감, 메시지/조건 변경/기존 추천 추가 분석 미차감 정책은 그대로다. 이번 단계에는 추천/한도 기능을 구현하지 않았다.
 
-## 남은 문제와 다음 작업
+## 이번 검증
 
-1. ERD/DDL 위치와 실제 테이블·컬럼·관계를 확보한다. `ai_conversations`, `ai_messages`, `ai_recommendation_requests`, `ai_recommendations`, `ai_usages`는 사용자 제시 이름이며 검증 전이다.
-2. 타 팀의 사용자 ID, 공개 프로필·기술 스택, 프로젝트, 포트폴리오 접근 권한, 구독 상태 제공 계약을 확인한다. 부족한 필드·엔티티는 추가 전에 보고한다.
-3. 사용자가 첫 구현 단계의 범위를 지정한 뒤 제공된 API 표를 기준으로 해당 단계 DTO·오류 계약을 구체화한다. 화면은 현재 코드와 일치하는 `/ai/matching`, 상세 분석 API는 `/api/v1/ai/recommendations/{id}/detailed-analysis`로 확정되었다.
-4. 자연어 병합 의미, 추천 비교 항목·가중치, 빈/부분 결과 성공 기준, 월 경계·구독 변경·동시 요청·재시도 정책을 필요한 단계 전에 확정한다.
-5. 비로그인 초안 보존·로그인 후 복원/저장과 기존 Mock 정책 차이를 후속 연결 단계에서 검토한다.
-6. 프론트 빌드의 TypeScript `--showConfig` 출력 파싱 실패 원인은 별도 확인이 필요하다. 이번에 성공으로 보고하지 않는다.
+2026-11-03 현재 코드로 실제 재실행했다. 기능 코드·테스트 코드·설정은 변경하지 않았다.
 
-새 채팅에 전달할 요청 예시: “AGENTS.md와 docs/ai-matching.md, docs/ai-api-spec.md, docs/ai-progress.md를 먼저 읽고, 현재 코드·Git 상태를 확인한 뒤 이번에 지정한 단계만 진행하세요. TODO는 임의로 확정하지 말고 누락된 데이터 계약을 먼저 보고하세요.”
+| 검증 | 명령 / 대상 | 결과 |
+|---|---|---|
+| 백엔드 컴파일·전체 테스트 | backend에서 `./gradlew test --no-daemon --rerun-tasks` | 성공, 5개 작업 실제 실행, UP-TO-DATE 재사용 아님 |
+| 기존 인증 회귀 | BackendApplicationTests | 10개 통과 |
+| AI API·JPA/H2 통합 | AiConversationTests | 8개 통과 |
+| 사용자 식별 설정 | CurrentUserConfigurationTests | 3개 통과 |
+| 합계 | JUnit XML 보고서 확인 | 21개, 실패 0 / 오류 0 / 스킵 0 |
+| 프론트 빌드 | frontend에서 Linux Node 24.22.1로 `npm run build` | 실패: 컴파일 후 `Could not parse output from TypeScript's --showConfig.`(종료 코드 1) |
+| 문서·변경 범위 | 로컬 Markdown 링크, `git diff --check`, 작업 전후 비문서 파일 해시 | 통과, 기능 코드·기존 설정·Git 스테이징 상태 보존 |
+
+AI 테스트 범위는 생성/목록/상세, 시간 및 ID 정렬, 메시지 저장/연결, 기존 조건 JSON·ASSISTANT 조회, 자동 AI 답변 미생성, 타인 조회/저장/삭제 차단, 미존재/잘못된 ID, 잘못된 제목/빈 메시지/역할 위조, 익명 및 설정 사용자 부재, 연관 추천 삭제, 타인 데이터·월 사용량 유지, FK 충돌 시 전체 롤백이다. 설정 테스트는 dev/test opt-in, 기본/prod/production 거부(프로필 혼용 포함), 실제 인증 어댑터 빈 교체를 확인한다.
+
+테스트의 users/추천/사용량은 H2 fixture이며 Redis 토큰 저장소는 mock이다. 프론트 기능 테스트, 팀 공통 H2 서버 기동/Postman, 실제 인증 사용자 A/B 및 운영 검증은 이번에 실행하지 않았다. 프론트 빌드가 생성한 next-env.d.ts는 실행 직전 내용으로 보존했다. 결과 XML 위치는 `backend/build/test-results/test/`이며 생성 산출물은 커밋 대상이 아니다.
+
+## 미해결 문제
+
+1. **H2 실행 환경 미연결:** 기본 application.yaml은 PostgreSQL이고 H2 의존성은 testRuntimeOnly다. application-dev.yaml은 AI 사용자 옵션만 설정한다. dev 프로필만 켠다고 H2로 바뀌지 않는다. 팀 공통 DB 설정/의존성 수정은 이번 문서 요청에서 하지 않았다.
+2. **팀 스키마 미확인:** 테스트는 `jdbc:h2:mem:ai-crud;MODE=PostgreSQL`과 최소 fixture를 사용한다. 팀 H2의 모드·NULL·IDENTITY·JSON·FK·실제 컬럼명·초기화 방식과의 일치는 아직 미검증이다. 테스트의 최소 users/추천/사용량 테이블을 팀 공통 스키마로 사용하지 않는다.
+3. **삭제 시 추천 테이블 필요:** 현재 네이티브 쿼리는 ai_recommendation_requests의 ai_conversation_id/ai_message_id, ai_recommendations의 recommended_request_id를 참조한다. 테이블/컬럼이 없으면 삭제는 503 및 전체 롤백으로 실패한다. 이를 숨기거나 AI 두 테이블만으로 삭제 준비가 끝났다고 보고하지 않는다.
+4. **인증은 임시:** 테스트 ID가 실제 users 행이어야 한다. 모든 로그인 요청이 한 고정 ID로 매핑되므로 로그인 계정만 바꿔 다중 사용자 권한을 검증할 수 없다. 실제 인증 어댑터로 교체해야 한다.
+5. **프론트 빌드:** 기존 TypeScript --showConfig 파싱 실패가 남아 있다. AI 기능과 무관한 코드를 이번 작업에서 수정하지 않았다.
+6. **실행 확인 미완료:** 팀 H2 환경의 서버 기동/Postman 검증, 실제 사용자 A/B 인증, 동시 요청 부하 검증 및 운영 검증은 수행하지 않았다.
+
+## 다음 단계에서 주의할 점
+
+- 다음 단계는 자동 시작하지 않는다. 첫 후속 작업은 팀 H2 사용 범위·연결 설정·스키마 제공자 확인이다. 공통 DB·인증·배포 변경이 필요하면 이유와 최소 변경 범위를 먼저 설명한다.
+- PostgreSQL 초안은 이전 설계 참고용이다. 자동 실행 스크립트나 H2 확정 DDL로 옮기지 않는다. 포함해서 커밋해도 스키마 적용 승인이 아니다.
+- 테스트 users를 실제 환경에 자동 INSERT하지 않는다. dev 환경에서만 AI_DEV_USER_ENABLED=true, AI_DEV_USER_ID를 실제 ID로 설정한다. 기존 유효 로그인 토큰도 필요하다. 운영에 dev/test·고정 사용자 옵션을 켜지 않는다.
+- 인증 팀이 실제 CurrentUserProvider 빈을 제공하면 임시 구현을 비활성화하고, users 매핑과 사용자 A/B의 조회·메시지·삭제 소유권을 재검증한다. Controller/Service 인터페이스에 사용자 ID 요청 파라미터를 추가하지 않는다.
+- 연관 추천 스키마가 준비되지 않았다면 삭제 정책을 임의로 생략하지 않는다. FK 순서·트랜잭션 롤백과 월 사용량 유지 테스트를 보존한다.
+- 공통 BaseEntity는 팀 합의 전 도입하지 않는다. 생성 시각만 필요한 메시지에 수정 시각을 임의로 추가하지 않는다.
+- 추천·조건·AI·월 한도 API는 별도 단계 요청 후 필요한 정책만 구체화한다. 외부 AI·결제·OAuth·WebSocket을 미리 연결하지 않는다.
