@@ -31,6 +31,10 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    // 경력 개월 수: 0은 신입, null은 미입력.
+    @Column(name = "career")
+    private Integer career;
+
     @Column(name = "profile_image")
     private String profileImage;
 

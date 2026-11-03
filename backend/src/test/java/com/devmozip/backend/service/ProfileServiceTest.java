@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,6 +59,16 @@ class ProfileServiceTest {
         assertNull(response.profileImage());
         assertNull(response.bannerImage());
         assertNull(response.collaborationStatus());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(ints = {0, 18})
+    void preservesCareerMonthsIncludingZeroAndNull(Integer months) throws Exception {
+        User user = user();
+        ReflectionTestUtils.setField(user, "career", months);
+        when(repository.findByTagAndStatus("dev-tag", "ACTIVE")).thenReturn(Optional.of(user));
+        assertEquals(months, service.findBySlug("dev-tag").career());
     }
 
     @ParameterizedTest

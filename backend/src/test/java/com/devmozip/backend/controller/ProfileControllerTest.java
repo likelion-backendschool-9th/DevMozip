@@ -48,7 +48,7 @@ class ProfileControllerTest {
         when(service.findBySlug("dev-tag")).thenReturn(new ProfileDetailResponse(
                 1L, "dev-tag", "개발자",
                 new ProfileDetailResponse.JobCategoryResponse(2L, "백엔드"),
-                "함께 개발해요", null, null, "AVAILABLE", new BigDecimal("36.50")));
+                "함께 개발해요", 18, null, null, "AVAILABLE", new BigDecimal("36.50")));
 
         mvc.perform(get("/api/v1/users/dev-tag"))
                 .andExpect(status().isOk())
@@ -56,6 +56,7 @@ class ProfileControllerTest {
                 .andExpect(jsonPath("$.tag").value("dev-tag"))
                 .andExpect(jsonPath("$.jobCategory.name").value("백엔드"))
                 .andExpect(jsonPath("$.summary").value("함께 개발해요"))
+                .andExpect(jsonPath("$.career").value(18))
                 .andExpect(jsonPath("$.trustScore").value(36.5))
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())

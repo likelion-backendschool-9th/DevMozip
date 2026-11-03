@@ -9,6 +9,7 @@ public record ProfileDetailResponse(
         String nickname,
         JobCategoryResponse jobCategory,
         String summary,
+        Integer career,
         String profileImage,
         String bannerImage,
         String collaborationStatus,
@@ -18,7 +19,7 @@ public record ProfileDetailResponse(
         return new ProfileDetailResponse(
                 user.getId(), user.getTag(), user.getNickname(),
                 new JobCategoryResponse(user.getJobCategory().getId(), user.getJobCategory().getName()),
-                user.getSummary(), user.getProfileImage(), user.getBannerImage(),
+                user.getSummary(), user.getCareer(), user.getProfileImage(), user.getBannerImage(),
                 user.getCollaborationStatus(), user.getTrustScore());
     }
 
