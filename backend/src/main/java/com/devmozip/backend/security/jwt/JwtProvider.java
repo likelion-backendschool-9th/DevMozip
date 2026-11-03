@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Component
 public class JwtProvider {
@@ -62,6 +63,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(username)
+                .id(UUID.randomUUID().toString())   // 같은 초에 다시 로그인해도 토큰이 겹치지 않게 한다
                 .claim(TOKEN_TYPE, REFRESH)         // 리프레시 토큰임을 표시
                 .issuedAt(new java.util.Date(now))
                 .expiration(new java.util.Date(expiration))

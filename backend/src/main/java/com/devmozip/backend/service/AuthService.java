@@ -113,7 +113,8 @@ public class AuthService {
         if (refreshToken == null || !jwtProvider.validateRefreshToken(refreshToken)) {
             return; // 이미 쓸 수 없는 토큰이면 할 일이 없다
         }
-        refreshTokenStore.remove(jwtProvider.getUsername(refreshToken));
+        // 저장된 토큰이 이 토큰일 때만 지운다. (다른 기기에서 새로 로그인했다면 그 로그인은 유지된다)
+        refreshTokenStore.removeMatching(jwtProvider.getUsername(refreshToken), refreshToken);
     }
 
     /** 정지된 회원이면 LockedException을 던진다. GlobalExceptionHandler가 403으로 응답한다. */
