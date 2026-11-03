@@ -10,6 +10,7 @@ import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.security.jwt.SuspendedMemberStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -60,6 +61,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // 오류 응답(404, 409 등)이 403으로 바뀌지 않도록 스프링의 오류 경로는 허용
                 .requestMatchers("/error").permitAll()
+                // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
+                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 // 관리자만 접근 가능
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능

@@ -1,4 +1,6 @@
 'use client';
+import { loginAction } from '@/lib/auth/actions';
+import { useSearchParams } from 'next/navigation';
 import { AuthShell } from '@/app/_components/AuthShell';
 import styles from './page.module.css';
 import { useState } from 'react';
@@ -13,7 +15,8 @@ import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { DemoAccounts } from '@/components/auth/DemoAccounts';
 function LoginForm() {
-    const { user, login } = useAuth();
+    const { user, login, mode } = useAuth();
+    const searchParams = useSearchParams();
     const { notify } = usePrototype();
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
@@ -27,6 +30,18 @@ function LoginForm() {
         setError('');
         if (!validEmail(email) || !password) {
             setError('이메일과 비밀번호를 확인해 주세요.');
+            return;
+        }
+        if (mode === 'server') {
+            const form = new FormData();
+            form.set('username', email);
+            form.set('password', password);
+            form.set('next', searchParams.get('next') ?? '/');
+            setBusy(true);
+            try {
+                const result = await loginAction(form);
+                if (result?.error) setError(result.error);
+            } finally { setBusy(false); }
             return;
         }
         setBusy(true);
@@ -89,14 +104,14 @@ function LoginForm() {
                             type="checkbox"
                             checked={remember}
                             onChange={e => setRemember(e.target.checked)}
-                            disabled={busy}
+                            disabled={busy || mode === 'server'}
                         />
                         로그인 상태 유지
                     </label>
                     <Link href="/forgot-password">비밀번호 찾기</Link>
                 </div>
                 <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                    체크 해제 시에도 새로고침은 유지되며, 현재 탭을 닫으면 세션이 종료됩니다.
+                    {mode === 'server' ? '임시 인증 계정으로 로그인합니다. 세션은 보안 쿠키로 관리됩니다.' : '체크 해제 시에도 새로고침은 유지되며, 현재 탭을 닫으면 세션이 종료됩니다.'}
                 </p>
                 {error && (
                     <p id="login-error" className={[styles.scope, 'form-error'].join(' ')} role="alert">

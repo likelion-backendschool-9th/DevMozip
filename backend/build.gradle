@@ -21,6 +21,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// 헬스체크(/actuator/health) - 프론트 /api/health와 블루그린 배포가 사용한다
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -40,6 +42,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // 스프링 시큐리티 테스트 도구 추가
     testImplementation 'org.springframework.security:spring-security-test'
+	// 테스트용 PostgreSQL 컨테이너 (Testcontainers, 버전은 스프링 부트가 관리)
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 }
 
 tasks.named('test') {

@@ -143,4 +143,4 @@
 
 ## Next.js 이전 후 실행 경계
 
-프론트엔드는 Next.js App Router로 이전했지만 실제 서비스 API 계획은 Spring Boot 기준으로 유지합니다. Next Route Handler/Server Action을 비즈니스 API로 구현하지 않았습니다. 브라우저의 RSC·정적 청크 요청은 Next.js 페이지 이동에 필요한 프레임워크 요청입니다. 미사용 Axios 공통 인스턴스는 `frontend/lib/shared/api.ts`, 선택 환경변수는 `NEXT_PUBLIC_API_BASE_URL`입니다.
+프론트엔드는 Next.js App Router로 이전했지만 실제 서비스 API 계획은 Spring Boot 기준으로 유지합니다. Next Route Handler/Server Action을 비즈니스 API로 구현하지 않았습니다. 브라우저의 RSC·정적 청크 요청은 Next.js 페이지 이동에 필요한 프레임워크 요청입니다. 미사용 Axios 공통 인스턴스는 `frontend/lib/shared/api.ts`, 호출 경로는 동일 출처 `/api`이며 백엔드 주소는 서버 전용 `BACKEND_URL`입니다. 인증 BFF와 도메인 API 구분은 [팀 공유 문서](team-auth-deployment.md)를 참고하세요.

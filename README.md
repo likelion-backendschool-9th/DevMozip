@@ -1,6 +1,8 @@
 # DevMozip · 데브모집
 
-**Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. Spring Boot 백엔드를 실행할 필요가 없습니다.
+**Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. 개발 Mock 모드는 백엔드 없이 시연할 수 있고, 운영은 JWT+BFF 인증을 사용합니다. [팀 인증·브랜치 안내](docs/team-auth-deployment.md)와 [배포 준비](docs/setup-after-ai.md)를 참고하세요.
+
+운영 주소: https://devmozip.newlecture.com · [자동 배포·운영 안내](docs/deployment-operations.md)
 
 ## 실행
 
@@ -12,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-[개발 서버](http://localhost:5173)를 엽니다. 기존 접속 주소를 유지하며 `0.0.0.0`에서 수신합니다. LAN/Windows 포트 전달은 [기존 안내](docs/lan-access.md)를 참고하세요. 실제 다른 PC 접속은 이번 마이그레이션에서 재검증하지 않았습니다.
+[개발 서버](http://localhost:3000)를 엽니다. 기본 포트는 3000입니다. LAN/Windows 포트 전달은 [기존 안내](docs/lan-access.md)를 참고하세요. 실제 다른 PC 접속은 이번 마이그레이션에서 재검증하지 않았습니다.
 
 프로덕션 실행:
 
@@ -22,14 +24,14 @@ npm run build
 npm run start
 ```
 
-[프로덕션 서버](http://localhost:4173). Next.js 서버가 페이지/정적 파일/RSC 내비게이션을 제공합니다. 실제 비즈니스 API나 DB는 없습니다. Vite의 정적 `dist` 실행 방식은 제거했습니다. 개발/프로덕션을 함께 실행할 때는 기본 포트가 각각 5173/4173으로 분리됩니다.
+[프로덕션 서버](http://localhost:3000). Next.js 서버가 페이지/정적 파일/RSC 내비게이션을 제공합니다. 업무 데이터는 Mock이며 운영 로그인은 백엔드·Redis가 필요합니다. Vite의 정적 `dist` 실행 방식은 제거했습니다. 개발/프로덕션을 함께 실행할 때는 `--port`로 포트를 분리하세요. 운영 Secure 쿠키는 HTTPS 환경에서 확인합니다.
 
 ```bash
 npm run typecheck
 npm test
 ```
 
-`.env` 없이 동작합니다. 선택 설정은 `frontend/.env.example`의 `NEXT_PUBLIC_API_BASE_URL`입니다. Axios 인스턴스는 후속 API 교체를 위한 준비 코드이며 현재 UI에서 호출하지 않습니다. 로고·Pretendard 글꼴은 `public`에서 제공하고 외부 글꼴 CDN을 사용하지 않습니다.
+개발 Mock 모드는 `.env` 없이 동작합니다. 서버 전용 BACKEND_URL과 AUTH_MODE는 `frontend/.env.example`을 참고하세요. Axios 인스턴스는 후속 API 교체를 위한 준비 코드이며 현재 UI에서 호출하지 않습니다. 로고·Pretendard 글꼴은 `public`에서 제공하고 외부 글꼴 CDN을 사용하지 않습니다.
 
 ## 구조
 
@@ -54,7 +56,7 @@ frontend/
   public/           로고·글꼴
   tests/            화면·파일 경로 검사와 Next 내비게이션 테스트 fixture
   next.config.ts, next-env.d.ts, tsconfig.json, vitest.config.ts
-backend/             기존 Spring Boot 프로젝트, 이번 작업에서 변경 없음
+backend/             Spring Boot 인증·권한·헬스체크 (업무 API 없음)
 scripts/             실제 Chromium 검증과 기존 LAN 보조 스크립트
 docs/                정책·Mock 구조·API 후보·시연·검증 기록
 ```

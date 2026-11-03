@@ -1,0 +1,16 @@
+build
+.gradle
+target
+.env*
+
+bin/
+*.iml
+.idea/
+HELP.md
+
+# 로컬 전용 설정(비밀값 포함)이 이미지에 들어가지 않게 한다. 커밋되는 application.yaml만 들어간다
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+src/main/resources/application-*.yaml
+src/main/resources/application.properties
+src/main/resources/application-*.properties

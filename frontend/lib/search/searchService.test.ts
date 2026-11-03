@@ -1,3 +1,6 @@
+import { beforeEach, afterEach, vi } from 'vitest';
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-01T00:00:00+09:00')); });
+afterEach(() => { vi.useRealTimers(); });
 import { describe,expect,it } from 'vitest';
 import { activeFilterCount, changeSearchTarget, parseSearch, searchDevelopers, searchProjects } from '@/lib/search/searchService';
 import { applyProfileAction, freshProfileState } from '@/lib/profiles/profileService';

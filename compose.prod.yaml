@@ -1,0 +1,121 @@
+name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}
+# 서버용 compose. 개발용(compose.yaml + compose.override.yaml)과 따로 둔다.
+#
+# 개발용과 다른 점
+#  - 호스트에 여는 포트는 nginx 의 80 하나뿐이고, 그것도 127.0.0.1 에만 묶는다.
+#    외부에서는 호스트 nginx(호스트 도메인, HTTPS)를 거쳐야만 들어올 수 있다.
+#  - frontend, backend, postgres, redis 는 포트를 열지 않는다. 컨테이너끼리 서비스 이름으로만 통신한다.
+#  - adminer 는 띄우지 않는다. DB 는 서버에서 psql 로 본다.
+#  - 소스 마운트 없음. GitHub Actions 가 GHCR 에 올린 이미지를 받아 그대로 실행한다 (.env 의 IMAGE_PREFIX, IMAGE_TAG).
+#
+# .env 에 COMPOSE_PROJECT_NAME(devmozip)과 TEAM_PORT(3002)를 둔다.
+# 프로젝트 이름이 컨테이너·볼륨·네트워크 이름의 접두어가 되어, 한 호스트에서 팀끼리 섞이지 않는다.
+#
+# 블루그린: frontend 와 backend 가 blue, green 두 벌이다. 한 벌만 트래픽을 받고(nginx upstream),
+# 배포는 쉬고 있는 색에 새 이미지를 띄워 헬스체크를 통과하면 nginx 를 그쪽으로 돌리는 것이다.
+# postgres, redis, nginx 는 한 벌을 두 색이 같이 쓴다. 이 파일을 직접 up 하지 않고 스크립트로 다룬다.
+#   bash deploy/blue-green.sh deploy      # 쉬는 색에 새 버전 → 헬스체크 → 전환 → 이전 색 정지
+#   bash deploy/blue-green.sh rollback    # 이전 색을 다시 켜서 되돌림
+#   bash deploy/blue-green.sh status      # 어느 색이 트래픽을 받고 있는지
+
+# 두 색이 공통으로 쓰는 설정. 아래에서 <<: *frontend 로 끌어다 쓴다 (YAML 앵커)
+x-frontend: &frontend
+  image: ${IMAGE_PREFIX:?IMAGE_PREFIX 를 .env 에 설정하세요 (ghcr.io/<소유자>/<저장소>)}-frontend:${IMAGE_TAG:-latest}
+  build: ./frontend
+  restart: unless-stopped
+
+x-backend: &backend
+  image: ${IMAGE_PREFIX:?IMAGE_PREFIX 를 .env 에 설정하세요 (ghcr.io/<소유자>/<저장소>)}-backend:${IMAGE_TAG:-latest}
+  build: ./backend
+  environment:
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_NAME: ${DB_NAME:?DB_NAME required}
+    DB_USER: ${DB_USER:?DB_USER required}
+    DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+    AUTH_USER_USERNAME: ${AUTH_USER_USERNAME:-member@devmozip.demo}
+    AUTH_USER_PASSWORD: ${AUTH_USER_PASSWORD:?AUTH_USER_PASSWORD required}
+    AUTH_ADMIN_USERNAME: ${AUTH_ADMIN_USERNAME:-admin@devmozip.demo}
+    AUTH_ADMIN_PASSWORD: ${AUTH_ADMIN_PASSWORD:?AUTH_ADMIN_PASSWORD required}
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+
+  # 팀 nginx. 호스트 nginx 가 127.0.0.1:${TEAM_PORT} 로 넘겨 준 요청을 활성 색의 frontend 에 전달한다.
+  # 어느 색인지는 nginx/upstream/active.conf 에 있고, 이 파일은 블루그린 스크립트가 쓴다 (git 에 없다).
+  nginx:
+    image: nginx:1.27.5
+    ports:
+      - "127.0.0.1:${TEAM_PORT:?TEAM_PORT required}:80"
+    volumes:
+      - ./nginx/server.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/upstream:/etc/nginx/upstream:ro
+    restart: unless-stopped
+
+  # ---- blue ----
+  frontend-blue:
+    <<: *frontend
+    profiles: ["blue"]
+    environment:
+      AUTH_MODE: server
+      BACKEND_URL: http://backend-blue:8080
+    depends_on:
+      - backend-blue
+
+  backend-blue:
+    <<: *backend
+    profiles: ["blue"]
+
+  # ---- green ----
+  frontend-green:
+    <<: *frontend
+    profiles: ["green"]
+    environment:
+      AUTH_MODE: server
+      BACKEND_URL: http://backend-green:8080
+    depends_on:
+      - backend-green
+
+  backend-green:
+    <<: *backend
+    profiles: ["green"]
+
+  # ---- 두 색이 공유 ----
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DB_NAME:?DB_NAME required}
+      POSTGRES_USER: ${DB_USER:?DB_USER required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:?DB_USER required} -d ${DB_NAME:?DB_NAME required}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
