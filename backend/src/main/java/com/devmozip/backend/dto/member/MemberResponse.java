@@ -26,6 +26,7 @@ public class MemberResponse {
     private String profileImage;
     private String bannerImage;
     private String summary;
+    private Integer career;     // 경력 (개월 수)
 
     public static MemberResponse from(Member member) {
         return MemberResponse.builder()
@@ -40,6 +41,7 @@ public class MemberResponse {
                 .profileImage(member.getProfileImage())
                 .bannerImage(member.getBannerImage())
                 .summary(member.getSummary())
+                .career(member.getCareer())
                 .build();
     }
 }

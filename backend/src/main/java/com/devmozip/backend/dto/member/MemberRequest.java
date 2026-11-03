@@ -20,4 +20,5 @@ public class MemberRequest {
     private String profileImage;
     private String bannerImage;
     private String summary;
+    private Integer career;     // 경력 (개월 수)
 }

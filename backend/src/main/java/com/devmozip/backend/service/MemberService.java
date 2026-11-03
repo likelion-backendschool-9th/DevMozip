@@ -44,6 +44,10 @@ public class MemberService {
                 && memberRepository.existsByTag(request.getTag())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 사용자 태그입니다.");
         }
+        // 경력은 비워 둘 수 있지만, 입력했다면 0개월 이상이어야 한다.
+        if (request.getCareer() != null && request.getCareer() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "경력은 0개월 이상이어야 합니다.");
+        }
 
         member.setJobCategoryId(request.getJobCategoryId());
         member.setNickname(request.getNickname());
@@ -51,6 +55,7 @@ public class MemberService {
         member.setProfileImage(request.getProfileImage());
         member.setBannerImage(request.getBannerImage());
         member.setSummary(request.getSummary());
+        member.setCareer(request.getCareer());
 
         return MemberResponse.from(member);
     }

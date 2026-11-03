@@ -41,10 +41,13 @@ public class Member {
         SUSPENDED   // 정지
     }
 
-    // 협업 가능 상태 - 프로필/검색의 "협업 가능 / 쉬는 중"과 맞춘다.
+    // 협업 가능 상태
     public enum CollaborationStatus {
-        AVAILABLE,  // 협업 가능
-        RESTING     // 쉬는 중
+        AVAILABLE,      // 협업 가능
+        RESTING,        // 쉬는 중
+        BUSY,           // 현재 협업 어려움
+        OPEN_TO_OFFERS, // 제안 검토 가능
+        UNAVAILABLE     // 협업 불가
     }
 
     // 사용자 ID
@@ -117,12 +120,16 @@ public class Member {
     @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
+    // 경력 (개월 수, 신입이거나 입력하지 않으면 비어 있을 수 있다)
+    @Column(name = "career", nullable = true)
+    private Integer career;
+
     @Builder
     public Member(Long jobCategoryId, String email, String passwordHash, String kakaoId,
                   String nickname, String tag, MemberRole role, MemberStatus status,
                   String externalLinks, BigDecimal trustScore, String paymentMethods,
                   CollaborationStatus collaborationStatus, String profileImage,
-                  String bannerImage, String summary) {
+                  String bannerImage, String summary, Integer career) {
         this.jobCategoryId = jobCategoryId;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -138,5 +145,6 @@ public class Member {
         this.profileImage = profileImage;
         this.bannerImage = bannerImage;
         this.summary = summary;
+        this.career = career;
     }
 }
