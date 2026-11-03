@@ -2,6 +2,8 @@
 
 **Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. 개발 Mock 모드는 백엔드 없이 시연할 수 있고, 운영은 JWT+BFF 인증을 사용합니다. [팀 인증·브랜치 안내](docs/team-auth-deployment.md)와 [배포 준비](docs/setup-after-ai.md)를 참고하세요.
 
+운영 주소: https://devmozip.newlecture.com · [자동 배포·운영 안내](docs/deployment-operations.md)
+
 ## 실행
 
 검증 환경은 Node.js 24.22.1입니다. Next.js 요구사항은 Node.js 20.9 이상이며 Node.js 22.12 이상 사용을 권장합니다.
