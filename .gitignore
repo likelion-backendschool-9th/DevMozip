@@ -29,3 +29,7 @@ build/
 # Next.js output
 .next/
 out/
+
+# Deployment configuration is source-controlled; secrets and certificates are not.
+!.github/workflows/*.yml
+certs/

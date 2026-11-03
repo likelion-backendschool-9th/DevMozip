@@ -1,3 +1,6 @@
+import { beforeEach, afterEach, vi } from 'vitest';
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-01T00:00:00+09:00')); });
+afterEach(() => { vi.useRealTimers(); });
 import { describe,it,expect } from 'vitest';
 import { filterPosts, freshHomeState, parseHomeState, recommend, sortProjects } from '@/lib/matching/homeService';
 describe('메인 Mock 서비스',()=>{

@@ -1,3 +1,6 @@
+import { logoutAction } from '@/lib/auth/actions';
+import { projectServerIdentity } from '@/lib/account/serverIdentity';
+import type { SessionSnapshot } from '@/types/session';
 import { createLocalStore, derived, useStore } from '@/lib/localStore';
 import { loadProfiles } from '@/lib/profiles/profileService';
 import { canViewAccount } from '@/lib/profiles/privacyService';
@@ -15,16 +18,21 @@ import type { AccountRole, AuthUser, SignupInput } from '@/types/auth';
 type PreferenceAction = Exclude<AccountAreaAction, { type: 'onboarding-complete' } | { type: 'password-confirmed' }>;
 
 // 가입 계정 · 로그인 세션 · 관리자 제재 · 계정 설정 · 프로필에서 바꾼 닉네임.
+const serverSessionStore = createLocalStore<SessionSnapshot>(() => ({ mode: 'mock', identity: null }));
+export function syncServerSession(snapshot: SessionSnapshot) { serverSessionStore.set(snapshot); }
+
 const accountsStore = createLocalStore(loadAccounts);
 const sessionStore = createLocalStore(() => loadSession(accountsStore.get()));
 const administrationStore = createLocalStore(loadAdministration);
 const accountAreaStore = createLocalStore(loadAccountArea);
 const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.fromEntries(Object.values(loadProfiles().profiles).map(p => [p.id, p.nickname])));
 
-export const authSources = [...prototypeSources, accountsStore, sessionStore, administrationStore, accountAreaStore, profileNamesStore];
+export const authSources = [serverSessionStore, ...prototypeSources, accountsStore, sessionStore, administrationStore, accountAreaStore, profileNamesStore];
 
 /** 정지되지 않은 로그인 계정(관리자 경고 등 반영) */
 const accountUser = derived(authSources, () => {
+    const server = serverSessionStore.get();
+    if (server.mode === 'server') return server.identity ? projectServerIdentity(server.identity) : null;
     const sessionUser = sessionStore.get();
     return sessionUser && !isSuspended(administrationStore.get(), sessionUser.id) ? effectiveUser(sessionUser, administrationStore.get()) : null;
 });
@@ -87,6 +95,7 @@ function resetAdministration() {
 }
 
 function start(next: AuthUser, remember: boolean) {
+    if (serverSessionStore.get().mode === 'server') return false;
     if (isSuspended(administrationStore.get(), next.id)) {
         notify('정지된 회원입니다. 관리자 데모에서 해제해 주세요.');
         return false;
@@ -97,17 +106,25 @@ function start(next: AuthUser, remember: boolean) {
 }
 
 function logout() {
+    if (serverSessionStore.get().mode === 'server') {
+        const previous = serverSessionStore.get();
+        serverSessionStore.set({ mode: 'server', identity: null });
+        void logoutAction().then(result => { if (result?.error) { serverSessionStore.set(previous); notify(result.error); } }).catch(() => { serverSessionStore.set(previous); notify('로그아웃을 완료하지 못했습니다.'); });
+        return;
+    }
     clearSession();
     sessionStore.set(null);
 }
 
 async function login(email: string, password: string, remember: boolean) {
+    if (serverSessionStore.get().mode === 'server') throw new Error('서버 로그인 폼을 이용해 주세요.');
     const next = await authenticate(email, password, accountsStore.get());
     if (isSuspended(administrationStore.get(), next.id)) throw new Error('정지된 회원입니다. 관리자에게 문의해 주세요.');
     start(next, remember);
 }
 
 async function signup(input: SignupInput) {
+    if (serverSessionStore.get().mode === 'server') throw new Error('실제 회원가입은 아직 제공하지 않습니다. 임시 인증 계정을 이용해 주세요.');
     const accounts = accountsStore.get();
     const account = await createAccount(input, accounts);
     const next = [...accounts, account];
@@ -145,6 +162,7 @@ function completeOnboarding(draft: OnboardingDraft) {
 }
 
 async function confirmPasswordChange(input: PasswordChangeInput) {
+    if (serverSessionStore.get().mode === 'server') throw new Error('실제 비밀번호 변경은 아직 제공하지 않습니다.');
     const user = getUser();
     if (!user) throw new Error('로그인 후 이용해 주세요.');
     const errors = passwordChangeErrors(input);
@@ -154,6 +172,7 @@ async function confirmPasswordChange(input: PasswordChangeInput) {
 }
 
 function switchDemo(role: AccountRole | 'guest') {
+    if (serverSessionStore.get().mode === 'server') { notify('운영에서는 데모 계정으로 전환할 수 없습니다.'); return false; }
     if (role === 'guest') {
         logout();
         return true;
@@ -165,6 +184,7 @@ function switchDemo(role: AccountRole | 'guest') {
 const auth = derived(authSources, () => {
     const user = getUser();
     return {
+        mode: serverSessionStore.get().mode,
         syncProfileName,
         resetProfileNames,
         canViewProfile,

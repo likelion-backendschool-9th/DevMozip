@@ -1,0 +1,71 @@
+services:
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8080
+      AUTH_MODE: ${AUTH_MODE:-mock}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+  backend:
+    build: ./backend
+    environment: &backend-env
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-devmozip}
+      DB_USER: ${DB_USER:-devmozip}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
+      AUTH_USER_USERNAME: ${AUTH_USER_USERNAME:-member@devmozip.demo}
+      AUTH_USER_PASSWORD: ${AUTH_USER_PASSWORD:?AUTH_USER_PASSWORD required}
+      AUTH_ADMIN_USERNAME: ${AUTH_ADMIN_USERNAME:-admin@devmozip.demo}
+      AUTH_ADMIN_PASSWORD: ${AUTH_ADMIN_PASSWORD:?AUTH_ADMIN_PASSWORD required}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DB_NAME:-devmozip}
+      POSTGRES_USER: ${DB_USER:-devmozip}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  adminer:
+    image: adminer:5
+    profiles: [tools]
+    ports: ['127.0.0.1:8082:8080']
+  nginx:
+    image: nginx:1.27.5
+    profiles: [https]
+    ports: ['${HTTP_PORT:-80}:80', '${HTTPS_PORT:-443}:443']
+    volumes:
+      - ./nginx/local.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+volumes:
+  postgres_data:
+  redis_data:
