@@ -16,11 +16,14 @@ const icons = [UserRound, Heart, Bookmark, Settings];
  * 다른 사람의 프로필과 팔로우 목록(/users/{id}/follows)은 그대로 둔다.
  */
 export function AccountLayout({ children }: { children: ReactNode }) {
-    const { user: current } = useAuth();
+    const { user: current, mode } = useAuth();
     const pathname = usePathname();
     const { userId } = useParams<{ userId?: string }>();
     const [menuOpen, setMenuOpen] = useState(false);
     const menuId = useId();
+
+    // 서버 인증의 임시 Mock ID로 프로필 소유권을 추정하지 않는다.
+    if (mode === 'server' && userId) return children;
 
     if (userId && !(pathname === `/users/${userId}` && current?.id === userId)) return children;
 

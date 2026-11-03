@@ -1,0 +1,55 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ProfileApiResult } from '@/app/(user)/users/[userId]/_components/ApiProfileContent';
+import ProfilePage from '@/app/(user)/users/[userId]/page';
+import { apiProfileFixture } from '@/tests/helpers/apiProfileFixture';
+import { resetLocalStores } from '@/lib/localStore';
+import { syncServerSession } from '@/lib/state/authStore';
+import { MemoryRouter, Route, Routes } from '@/tests/helpers/RouterFixture';
+const render = (element: React.ReactNode) => renderToStaticMarkup(element);
+afterEach(() => resetLocalStores());
+describe('API 프로필 화면', () => {
+    it('실제 응답의 경력·온도를 표시하고 기존 카드·탭 배치를 유지하고 Mock 수치를 섞지 않는다', () => {
+        const html = render(<ProfileApiResult result={{ status: 'ready', profile: apiProfileFixture }} onRetry={() => {}} />);
+        for (const text of ['API 개발자', '@api-developer', '1년 6개월', '38.5', '서버에서 가져온 소개', '협업 가능']) expect(html).toContain(text);
+        for (const text of ['36.5', 'PRO', '이서준']) expect(html).not.toContain(text);
+        expect(html).toContain('<svg');
+        expect(html).toContain('프로필 수정');
+        expect(html).toContain('가입일 · 조회 연결 전');
+        expect(html).toContain('팔로워');
+        expect((html.match(/role="tab"/g) || [])).toHaveLength(5);
+        expect(html).toContain('ABOUT ME');
+        expect(html).toContain('기술 스택');
+        expect(html).toContain('외부 링크');
+        expect(html).toContain('disabled');
+    });
+    it.each(['about', 'portfolio', 'posts', 'activity', 'reviews'])('서버 모드에서도 %s 탭의 기존 틀을 유지한다', tab => {
+        const html = render(<MemoryRouter initialEntries={[`/users/api-developer?tab=${tab}`]}><ProfileApiResult result={{ status: 'ready', profile: apiProfileFixture }} onRetry={() => {}} /></MemoryRouter>);
+        expect(html).toContain(`id="profile-panel-${tab}"`);
+        expect((html.match(/role="tab"/g) || [])).toHaveLength(5);
+        expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
+        expect(html).toContain('38.5');
+    });
+    it('미입력 정보는 빈 값을 명확히 표시한다', () => {
+        const html = render(<ProfileApiResult result={{ status: 'ready', profile: { ...apiProfileFixture, career: null, summary: null, collaborationStatus: null } }} onRetry={() => {}} />);
+        expect(html).toContain('경력 미입력');
+        expect(html).toContain('한 줄 소개가 없습니다.');
+        expect(html).toContain('협업 상태 미등록');
+    });
+    it('로딩 중에 이전 Mock 프로필을 표시하지 않는다', () => {
+        const html = render(<ProfileApiResult result={{ status: 'loading' }} onRetry={() => {}} />);
+        expect(html).toContain('role="status"');
+        expect(html).not.toContain('이서준');
+    });
+    it.each([401, 403, 404, 502])('오류 %s를 명확히 표시한다', code => {
+        const html = render(<ProfileApiResult result={{ status: 'error', code }} onRetry={() => {}} />);
+        expect(html).toContain('role="alert"');
+        expect(html.includes('다시 시도</button>')).toBe(code !== 404);
+    });
+    it('서버 모드는 Mock에 없는 태그도 조회 화면으로 진입한다', () => {
+        resetLocalStores(); syncServerSession({ mode: 'server', identity: null });
+        const html = render(<MemoryRouter initialEntries={['/users/api-developer']}><Routes><Route path="/users/:userId" element={<ProfilePage />} /></Routes></MemoryRouter>);
+        expect(html).toContain('프로필 정보를 불러오고 있어요');
+        expect(html).not.toContain('초기화된 Mock');
+    });
+});

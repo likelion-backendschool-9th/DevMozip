@@ -1,5 +1,6 @@
 'use client';
 import styles from './page.module.css';
+import { ApiProfileContent } from './_components/ApiProfileContent';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -112,10 +113,11 @@ function ProfileContent({ userId }: { userId: string }) {
     );
 }
 export default function ProfilePage() {
+    const { mode } = useAuth();
     const { userId = '' } = useParams<{
         projectId: string;
         postId: string;
         userId: string;
     }>();
-    return <ProfileContent key={userId} userId={userId} />;
+    return mode === 'server' ? <ApiProfileContent key={userId} slug={userId} /> : <ProfileContent key={userId} userId={userId} />;
 }
