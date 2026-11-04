@@ -1,10 +1,10 @@
 # AI 추천 개발 청사진·진행 현황
 
-기준일: 2026-11-04. **1단계 실사용자 인증 연결과 실제 브라우저 로컬 초안 검증을 완료했다.** 서버 대화·메시지 API 5개와 로컬 초안 동작은 유지한다. 현재 브랜치는 develop을 기반으로 한 `feat/ai-message-non-login`이다. 실제 PostgreSQL 스키마 확인·통합 검증은 남아 있으며 서버 동기화는 4단계 후속 계약이다.
+기준일: 2026-11-04. **1단계 실사용자 인증 연결과 실제 브라우저 로컬 초안 검증을 완료했다.** 서버 대화·메시지 API 5개와 로컬 초안 동작은 유지한다. 현재 브랜치는 develop을 조상으로 포함한 `feat/ai-conditions`이다. 실제 PostgreSQL 스키마 확인·통합 검증은 남아 있으며 서버 동기화는 4단계 후속 계약이다.
 
 이 문서를 전체 단계와 현재 작업의 출발점으로 사용한다. [기능 정책](ai-matching.md)은 공통 정책, [API 명세](ai-api-spec.md)는 서버 계약, [개발 안내](ai-development.md)는 코드 배치를 담당한다. 인증·브랜치 운영은 [팀 안내](team-auth-deployment.md)를 따른다.
 
-최신 요청은 **CurrentUserProvider 실사용자 인증 연결과 브라우저 초안 검증(앞서 제안한 1번·2번)**이다. 로그인 후에도 추천 전까지 로컬에서 유지한다. 서버 동기화는 구현하지 않고 후속 계약으로 남긴다. 2~7단계는 개요이며 이번에 시작하지 않는다.
+최신 요청은 **2단계 준비를 위한 users 최신 DDL·빈 조건 처리 방향·패키지 지침의 문서 반영**이다. 이번에는 문서만 변경하며 2단계 구현은 단계별 프롬프트를 기다린다. 로그인 사용자도 추천 전까지 로컬 처리하고 서버 동기화는 4단계 후속 계약으로 유지한다.
 
 ## 1. 전체 기능과 단계
 
@@ -140,7 +140,7 @@ erDiagram
 
 추가 API 표의 화면·10개 API 항목을 [기존 명세](ai-api-spec.md)에 대조·반영했다. 무료 한도는 최신 표에 따라 월 15회에서 **5회**로 갱신하고 프리미엄 100회는 유지한다. `detailed-analysi`는 마지막 s가 빠진 표기로 기록하고 기존 확정 `detailed-analysis`를 유지한다. 추가로 필요한 것은 초안 인계·저장 시점·재시도/중복 방지·BFF 인증 전달·후속 DTO 계약이며, 후속 단계 구현은 시작하지 않는다.
 
-추가 users ERD에서 AI가 참조할 경력·직군·기술·관심 필드를 확인했다. **career는 ERD VARCHAR(20)/현재 Integer, 직군은 ERD job_categories JSONB/현재 job_category_id Long으로 불일치하며 skills·interests 등은 Member에 없다.** 상세 차이는 API 명세에 기록했다. 실제 DB와 담당자 계약을 먼저 확인하며 다른 팀원 코드를 임의로 수정하지 않는다.
+추가 users ERD에서 AI가 참조할 경력·직군·기술·관심 필드를 확인했다. **최신 사용자 제공 DDL 기준 career는 VARCHAR(30)/현재 Integer, 직군은 job_categories JSONB/현재 job_category_id Long으로 불일치하며 skills·interests·contact_hours는 Member에 없다.** 이전 ERD보다 최신 제공 DDL을 우선한다. 상세 차이는 API 명세에 기록했다. 실제 DB와 담당자 계약을 먼저 확인하며 다른 팀원 코드를 임의로 수정하지 않는다.
 
 ## 5. 추가로 정해야 할 사항
 
@@ -295,3 +295,15 @@ erDiagram
 - 회귀 검증: `scripts/verify-home-matching-return.mjs` 추가. production 프론트 14174 + 실제 Chromium에서 메인 → 대화 → 홈 링크/뒤로가기 3회 왕복, 입력 초기화·재입력 후 버튼 활성화·연속 requestSubmit 두 번당 대화 1개 생성을 확인해 성공(종료 코드 0)했다. 비로그인 로컬 동작 검증이며 실제 로그인/DB 검증은 이번에 재실행하지 않았다.
 - `frontend`의 `npm test`: 40개 파일·439개 테스트 통과(종료 코드 0). 최초 루트 npm test는 package.json 부재로 실패해 올바른 디렉터리에서 재실행했다. `npm run build`: 샌드박스 TypeScript --showConfig 파싱 실패 후 승인 재실행 성공(종료 코드 0). 임시 서버 포트·Chromium도 샌드박스 차단 후 승인 실행했다. 빌드 생성 next-env.d.ts는 작업 전으로 복원했다. `git diff --check` 통과.
 - 범위: 기존 미커밋 변경 유지. 백엔드 미변경으로 Gradle 테스트 미실행. 임시 검증 서버는 종료하며 사용자 서버는 변경하지 않는다. 커밋·푸시·다음 단계 구현 없음.
+
+### 2026-11-04 2단계 준비 문서 갱신
+
+- 근거: 사용자 제공 users DDL을 최신 방향으로 채택하고 빈 조건을 `{}`로 단순화한다. AGENTS.md의 `auth` 패키지 언급은 이번 AI 작업에서 적용하지 않는다.
+- 변경 파일: docs/ai-api-spec.md, docs/ai-matching.md, docs/ai-development.md, docs/ai-progress.md. 진행 문서 상단의 브랜치·최신 요청도 현재 상태로 정정했다.
+- 완료: users 전체 컬럼·CHECK·UNIQUE 방향 및 Member 차이 기록. 초기 조건 `{}`·기존 NULL 조회 정규화·PUT 전체 교체/초기화·부분 조건 저장 방향 기록. 기능 구현 완료가 아니다.
+- 보존: 사용자 수정 frontend/mocks/matching.ts는 수정하지 않는다. Member·SQL·인증·배포·AI 기능 코드 변경, 커밋·푸시 없음.
+- 미완료·다음 작업: 단계별 구현 프롬프트 수신 후 2단계 DTO·허용 코드·검증 계약을 확정한다. 실제 DB 적용·JSONB 내부 형식·경력 문자열 변환은 별도 확인한다. 다음 단계는 자동 시작하지 않는다.
+- 검증: 문서만 변경하여 새 기능 테스트·Gradle 테스트는 실행하지 않는다. 빌드·문서 검증 결과는 아래에 기록한다.
+- 이번 실행 결과: `frontend`에서 `npm run build` 최초 실행은 TypeScript `--showConfig` 파싱 실패(종료 코드 1), 승인 후 동일 명령 재실행 성공(종료 코드 0). 문서 상대 파일 링크·`git diff --check` 통과. 빌드가 생성한 next-env.d.ts 변화는 작업 전으로 복원했다. 문서 편집 최초 명령은 frontend 경로에서 실행해 파일을 찾지 못했고 파일 변경 없이 실패했으며 저장소 루트에서 재실행했다.
+
+- 원격 추가 확인: GitHub develop `10c3fbc`의 공통 계층 구조와 최신 Member·JobCategory/Skill/Interest를 읽기 전용 조회했다. 로컬과 원격 차이는 API 명세에 구분 기록했다. 원격은 career 문자열·직군/기술/관심 목록·연락 시간을 이미 매핑한다. 이번 문서 커밋은 사용자 요청에 따라 수행하며 프론트 Mock 변경은 제외한다. 2단계의 프로젝트 분야 코드·경력/기간 표현·추천 필수 조건은 구현 전 확인 대상이다.
