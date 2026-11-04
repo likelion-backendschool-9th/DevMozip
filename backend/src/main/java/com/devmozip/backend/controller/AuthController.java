@@ -58,7 +58,7 @@ public class AuthController {
         return Map.of("available", memberService.isNicknameAvailable(nickname));
     }
 
-    @PostMapping("/login")    
+    @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest loginRequest){
         LoginResponse tokenResponse = service.login(loginRequest);
         return tokenResponse;

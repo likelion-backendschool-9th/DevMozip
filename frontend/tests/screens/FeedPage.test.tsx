@@ -6,7 +6,7 @@ import { AppLayout } from '@/app/_components/AppLayout';
 import FeedPage from '@/app/feeds/page';
 import PostDetailPage from '@/app/feeds/[postId]/page';
 import { PostEditorPage } from '@/app/feeds/_components/PostEditor';
-import ProfilePage from '@/app/(user)/users/[userId]/page';
+import ProfilePage from '@/app/(user)/users/[userId]/_components/PrototypeProfilePage';
 import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
 import HomePage from '@/app/page';
 import { signIn } from '@/tests/helpers/session';

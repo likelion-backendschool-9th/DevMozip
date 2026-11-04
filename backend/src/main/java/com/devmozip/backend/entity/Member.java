@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 // 이미 있는 users 테이블에도 제약이 추가되도록 @Column(unique)가 아니라 여기에 둔다.
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
@@ -69,11 +70,11 @@ public class Member {
     private String kakaoId;
 
     // 닉네임
-    @Column(name = "nickname", length = 50)
+    @Column(name = "nickname", length = 50, unique = true)
     private String nickname;
 
     // 사용자 태그
-    @Column(name = "tag", length = 100)
+    @Column(name = "tag", length = 100, unique = true)
     private String tag;
 
     // 권한
@@ -139,6 +140,20 @@ public class Member {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "interests")
     private List<String> interests;
+
+    public void updateProfile(String nickname, String tag, List<String> jobCategories, String summary,
+                              String career, CollaborationStatus collaborationStatus) {
+        this.nickname = nickname;
+        this.tag = tag;
+        this.jobCategories = jobCategories;
+        this.summary = summary;
+        this.career = career;
+        this.collaborationStatus = collaborationStatus;
+    }
+
+    public void updateContactHours(String contactHours) { this.contactHours = contactHours; }
+    public void changeProfileImage(String url) { this.profileImage = url; }
+    public void changeBannerImage(String url) { this.bannerImage = url; }
 
     @Builder
     public Member(String email, String passwordHash, String kakaoId,

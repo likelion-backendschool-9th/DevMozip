@@ -2,7 +2,7 @@ import { resetLocalStores } from "@/lib/localStore";
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from '@/tests/helpers/RouterFixture';
-import ProfilePage from '@/app/(user)/users/[userId]/page';
+import ProfilePage from '@/app/(user)/users/[userId]/_components/PrototypeProfilePage';
 import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
 import { AppLayout } from '@/app/_components/AppLayout';
 import { signIn } from '@/tests/helpers/session';
