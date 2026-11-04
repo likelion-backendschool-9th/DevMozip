@@ -6,13 +6,13 @@
 
 ## 스키마
 
-제안한 컬럼 기준으로 코드와 임시 H2 검증을 준비했다. 실제 ERD 컬럼명·타입은 사용자 확인이 필요하며 ERD와 실제 PostgreSQL은 수정하지 않았다.
+사용자가 ERD에 두 컬럼을 추가했다고 확인했다. 코드는 아래 컬럼 기준이며 임시 H2에서 검증했다. ERD는 사용자가 관리하고, 실제 PostgreSQL 컬럼 반영은 아직 확인하지 않았다.
 
 - users.introduction: TEXT, nullable
 - users.introduction_format: VARCHAR(10), nullable. text / html만 지원하며 기존 NULL은 text로 조회한다.
 - 공통 Member의 기존 생성자와 Builder 호출은 유지하고 updateIntroduction 메서드로 두 필드만 수정한다.
 
-팀이 컬럼명을 확정한 후 적용할 수 있는 PostgreSQL 예시(미실행):
+실제 PostgreSQL에 컬럼이 없는 경우 적용할 수 있는 예시(미실행):
 
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS introduction TEXT;
@@ -74,3 +74,7 @@ PUT 요청:
 - 미작성·텍스트·HTML·삭제·20,000/20,001자·본인 권한·공개 상태·허용 필드·HTML/CSS 정리와 기존 API 회귀를 검증했다.
 - 실제 PostgreSQL·Redis 연결은 미검증이다. 브라우저 검증은 임시 H2 회원만 사용한다.
 - Safari에서 실제 로그인 후 일반 텍스트 작성·미리보기·저장·새로고침 재조회, HTML 형식 전환·서식 미리보기·저장·공개 API 조회를 확인했다. 상단 한 줄 소개와 사이드바·소개 탭 배치는 유지된다.
+
+## 별도 회원가입 변경과의 관계
+
+검토 시점에 담당자의 feat/member-auth 브랜치에는 직군·기술 스택·관심 분야 목록 및 경력 String 전환이 있고, 아직 develop에는 병합되지 않았다. 이 PR은 해당 변경을 가져오지 않는다. 회원가입 변경이 병합되면 공통 Member의 두 자기소개 필드를 보존하고, 기존 프로필 조회·수정의 프론트 요청/응답 및 테스트를 새 계약에 맞춰 별도로 통합해야 한다.
