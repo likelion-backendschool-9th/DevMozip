@@ -1,0 +1,5 @@
+# Explicit opt-in. No test user is created automatically.
+ai:
+  current-user:
+    development-enabled: ${AI_DEV_USER_ENABLED:false}
+    test-user-id: ${AI_DEV_USER_ID:}
