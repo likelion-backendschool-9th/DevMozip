@@ -7,6 +7,7 @@ export const routes: RouteDefinition[] = [
  {path:'/my-projects/:projectId/manage',title:'내 프로젝트 워크스페이스',description:'주최자/참여자별 관리',stage:3,group:'프로젝트'},
  {path:'/projects/:projectId/reviews',title:'프로젝트 팀원 리뷰',description:'참여자별 임시 요청 링크',stage:3,group:'프로젝트'},
  {path:'/onboarding',title:'프로필 온보딩',description:'4단계 프로필 완성',stage:2,group:'계정'},
+ {path:'/profile/me',title:'내 프로필',description:'로그인한 회원의 프로필 조회 및 수정',stage:2,group:'계정'},
  {path:'/profile/me/likes',title:'좋아요한 글',description:'내가 좋아요한 SNS 게시글',stage:2,group:'계정'},
  {path:'/bookmarks',title:'내 북마크함',description:'저장한 게시글과 프로젝트',stage:2,group:'계정'},
  {path:'/settings/privacy',title:'개인정보 및 계정 설정',description:'Mock 계정·연동·결제·보안',stage:2,group:'계정'},
