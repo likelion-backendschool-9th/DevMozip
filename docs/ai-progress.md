@@ -143,3 +143,8 @@ AI 테스트 범위는 생성/목록/상세, 시간 및 ID 정렬, 메시지 저
 - 연관 추천 스키마가 준비되지 않았다면 삭제 정책을 임의로 생략하지 않는다. FK 순서·트랜잭션 롤백과 월 사용량 유지 테스트를 보존한다.
 - 공통 BaseEntity는 팀 합의 전 도입하지 않는다. 생성 시각만 필요한 메시지에 수정 시각을 임의로 추가하지 않는다.
 - 추천·조건·AI·월 한도 API는 별도 단계 요청 후 필요한 정책만 구체화한다. 외부 AI·결제·OAuth·WebSocket을 미리 연결하지 않는다.
+
+
+## 프로필 브랜치의 develop 동기화 검증
+
+자기소개 PR #53에서 develop 7cf0b1b를 반영했다. 변경 파일은 backend/build.gradle과 공통 Member.java의 충돌 해결 및 docs/profile-introduction-api.md의 기록이다. 최신 회원가입의 직군 목록·경력 문자열 구조와 자기소개 컬럼을 함께 보존했다. 프론트 npm test 520개 및 npm run build, 백엔드 ./gradlew build가 통과했다. AI 기능·외부 연결·DB 스키마는 변경하지 않았고, 실제 PostgreSQL 반영과 PR CI·팀원 리뷰는 남아 있다. 다음 AI 단계를 시작하지 않았다.

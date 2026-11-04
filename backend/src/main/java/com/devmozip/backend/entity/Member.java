@@ -141,6 +141,18 @@ public class Member {
     @Column(name = "interests")
     private List<String> interests;
 
+    // 상세 자기소개는 상단 한 줄 소개(summary)와 별도로 관리한다.
+    @Column(name = "introduction", columnDefinition = "text")
+    private String introduction;
+
+    @Column(name = "introduction_format", length = 10)
+    private String introductionFormat;
+
+    public void updateIntroduction(String introduction, String introductionFormat) {
+        this.introduction = introduction;
+        this.introductionFormat = introductionFormat;
+    }
+
     public void updateProfile(String nickname, String tag, List<String> jobCategories, String summary,
                               String career, CollaborationStatus collaborationStatus) {
         this.nickname = nickname;
