@@ -82,12 +82,20 @@ class AiAuthenticatedConversationTests {
 		mvc.perform(get(BASE).header("Authorization", b)).andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(bId));
 		for (long id : new long[]{aId, 999999}) {
+			mvc.perform(put(BASE + "/" + id + "/conditions").header("Authorization", b)
+				.contentType("application/json").content("{\"fields\":[\"웹\"],\"stacks\":[\"Java\"],\"career\":\"경력 무관\",\"durationMonths\":3}"))
+				.andExpect(status().isNotFound());
 			mvc.perform(get(BASE + "/" + id).header("Authorization", b)).andExpect(status().isNotFound());
 			mvc.perform(post(BASE + "/" + id + "/messages").header("Authorization", b)
 				.contentType("application/json").content("{\"content\":\"denied\"}"))
 				.andExpect(status().isNotFound());
 			mvc.perform(delete(BASE + "/" + id).header("Authorization", b)).andExpect(status().isNotFound());
 		}
+		mvc.perform(put(BASE + "/" + aId + "/conditions").header("Authorization", a)
+			.contentType("application/json").content("{\"fields\":[\"웹\"],\"stacks\":[\"Java\"],\"career\":\"경력 무관\",\"durationMonths\":3}"))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.stacks[0]").value("Java"));
+		mvc.perform(get(BASE + "/" + bId).header("Authorization", b)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions").isEmpty());
 		mvc.perform(post(BASE + "/" + aId + "/messages").header("Authorization", a)
 			.contentType("application/json").content("{\"content\":\"my message\"}"))
 			.andExpect(status().isCreated()).andExpect(jsonPath("$.role").value("USER"));
@@ -98,11 +106,41 @@ class AiAuthenticatedConversationTests {
 	}
 
 	@Test
+	void savedConditionsArePrivateEvenFromOtherAdmins() throws Exception {
+		String owner = login(101);
+		long id = create(owner);
+		String body = "{\"fields\":[\"개인 프로젝트\"],\"stacks\":[\"PrivateTech\"],\"career\":\"경력 무관\",\"durationMonths\":3}";
+		mvc.perform(put(BASE + "/" + id + "/conditions").header("Authorization", owner)
+			.contentType("application/json").content(body)).andExpect(status().isOk());
+		for (String role : new String[]{"USER", "ADMIN"}) {
+			jdbc.update("UPDATE users SET role=? WHERE id=202", role);
+			String other = login(202);
+			mvc.perform(get(BASE).header("Authorization", other)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(0));
+			mvc.perform(get(BASE + "/" + id).header("Authorization", other)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.currentConditions").doesNotExist());
+			mvc.perform(put(BASE + "/" + id + "/conditions").header("Authorization", other)
+				.contentType("application/json").content(body)).andExpect(status().isNotFound());
+		}
+		mvc.perform(get(BASE + "/" + id)).andExpect(status().isUnauthorized());
+		mvc.perform(get(BASE + "/" + id).header("Authorization", owner)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions.fields[0]").value("개인 프로젝트"))
+			.andExpect(jsonPath("$.currentConditions.stacks[0]").value("PrivateTech"));
+	}
+
+	@Test
 	void anonymousAndDeletedUsersCannotUseAiApis() throws Exception {
 		mvc.perform(get(BASE)).andExpect(status().isUnauthorized());
 		mvc.perform(post(BASE)).andExpect(status().isUnauthorized());
 		String token = login(101);
+		long id = create(token);
+		mvc.perform(put(BASE + "/" + id + "/conditions").contentType("application/json").content("{\"fields\":[\"웹\"],\"career\":\"경력 무관\",\"durationMonths\":3}"))
+			.andExpect(status().isUnauthorized());
+		jdbc.update("DELETE FROM ai_conversations WHERE id=?", id);
 		jdbc.update("DELETE FROM users WHERE id=101");
+		mvc.perform(put(BASE + "/" + id + "/conditions").header("Authorization", token)
+			.contentType("application/json").content("{\"fields\":[\"웹\"],\"career\":\"경력 무관\",\"durationMonths\":3}"))
+			.andExpect(status().isUnauthorized());
 		mvc.perform(get(BASE).header("Authorization", token)).andExpect(status().isUnauthorized());
 		mvc.perform(post(BASE).header("Authorization", token)).andExpect(status().isUnauthorized());
 	}
@@ -111,6 +149,9 @@ class AiAuthenticatedConversationTests {
 	void suspendedUserIsRejectedEvenWithPreviouslyIssuedToken() throws Exception {
 		String token = login(101);
 		jdbc.update("UPDATE users SET status='SUSPENDED' WHERE id=101");
+		mvc.perform(put(BASE + "/1/conditions").header("Authorization", token)
+			.contentType("application/json").content("{\"fields\":[\"웹\"],\"career\":\"경력 무관\",\"durationMonths\":3}"))
+			.andExpect(status().isForbidden());
 		mvc.perform(get(BASE).header("Authorization", token)).andExpect(status().isForbidden());
 		mvc.perform(post(BASE).header("Authorization", token)).andExpect(status().isForbidden());
 		assertEquals(0L, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations", Long.class));

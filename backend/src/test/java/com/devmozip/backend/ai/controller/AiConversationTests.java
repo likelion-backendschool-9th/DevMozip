@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AiConversationTests {
 	private static final String BASE = "/api/v1/ai/conversations";
+	private static final String MINIMUM_CONDITIONS = "{\"fields\":[\"웹\"],\"career\":\"경력 무관\",\"durationMonths\":3}";
 	private static final String SECRET = UUID.randomUUID().toString() + UUID.randomUUID();
 	@Autowired MockMvc mvc;
 	@Autowired ObjectMapper mapper;
@@ -176,5 +177,203 @@ class AiConversationTests {
 		} finally {
 			jdbc.execute("DROP TABLE deletion_blocker");
 		}
+	}
+
+	@Test void savesAllConditionsAsJsonAndUpdatesOnlyTheOwnedConversation() throws Exception {
+		long id = create("conditions"), retained = create("retained");
+		message(id, "keep this message");
+		jdbc.update("UPDATE ai_conversations SET updated_at=TIMESTAMP '2020-01-01 00:00:00' WHERE id=?", id);
+		String body = """
+			{"fields":["웹","AI / 머신러닝"],"interests":["생산성","AI"],
+			 "stacks":["Java","Spring Boot"],"roles":[{"name":"백엔드 개발자","count":2}],
+			 "career":"3년 이상","durationMonths":3}
+			""";
+		String response = mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+			.contentType("application/json").content(body)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.id").value(id))
+			.andExpect(jsonPath("$.currentConditions.roles[0].count").value(2))
+			.andReturn().getResponse().getContentAsString();
+		var stored = mapper.readTree(jdbc.queryForObject("SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id));
+		assertEquals(mapper.readTree(body), stored);
+		assertEquals(stored, mapper.readTree(response).get("currentConditions"));
+		assertEquals(jdbc.queryForObject("SELECT updated_at FROM ai_conversations WHERE id=?", java.time.LocalDateTime.class, id),
+			java.time.LocalDateTime.parse(mapper.readTree(response).get("updatedAt").asText()));
+		assertTrue(java.time.LocalDateTime.parse(mapper.readTree(response).get("updatedAt").asText())
+			.isAfter(java.time.LocalDateTime.of(2020, 1, 1, 0, 0)));
+		mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions.career").value("3년 이상"))
+			.andExpect(jsonPath("$.messages[0].content").value("keep this message"));
+		mvc.perform(authenticated(get(BASE + "/" + retained))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions").isEmpty());
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
+	}
+
+	private String withRequiredConditions(String body) {
+		var conditions = (tools.jackson.databind.node.ObjectNode) mapper.readTree(body);
+		if (!conditions.has("fields")) conditions.putArray("fields").add("웹");
+		if (!conditions.has("career")) conditions.put("career", "경력 무관");
+		if (!conditions.has("durationMonths")) conditions.put("durationMonths", 3);
+		return mapper.writeValueAsString(conditions);
+	}
+
+	@Test void putRemovesOptionalConditionsWhileKeepingRequiredFieldsCareerAndDuration() throws Exception {
+		long id = create("replace");
+		String[] bodies = {
+			"{\"fields\":[\"웹\"],\"stacks\":[\"Java\"],\"career\":\"경력 무관\",\"durationMonths\":36}",
+			withRequiredConditions("{\"stacks\":[\"React\"]}"), MINIMUM_CONDITIONS,
+			withRequiredConditions("{\"interests\":null,\"stacks\":[],\"roles\":null}")
+		};
+		for (int i = 0; i < bodies.length; i++) {
+			String response = mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+				.contentType("application/json").content(bodies[i])).andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+			var expected = mapper.readTree(i == 3 ? MINIMUM_CONDITIONS : bodies[i]);
+			assertEquals(expected, mapper.readTree(response).get("currentConditions"));
+			String detail = mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+			assertEquals(expected, mapper.readTree(detail).get("currentConditions"));
+		}
+	}
+
+	@Test void missingOrNullCareerAndDurationRejectUpdatesWithoutChangingSavedData() throws Exception {
+		long id = create("required");
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+			.contentType("application/json").content(MINIMUM_CONDITIONS)).andExpect(status().isOk());
+		jdbc.update("UPDATE ai_conversations SET updated_at=TIMESTAMP '2020-01-01 00:00:00' WHERE id=?", id);
+		for (String body : new String[]{"{}", "{\"career\":\"경력 무관\"}", "{\"durationMonths\":3}",
+			"{\"career\":null,\"durationMonths\":3}", "{\"career\":\"경력 무관\",\"durationMonths\":null}",
+			"{\"career\":null,\"durationMonths\":null}"}) {
+			var conditions = (tools.jackson.databind.node.ObjectNode) mapper.readTree(body);
+			conditions.putArray("fields").add("웹");
+			body = mapper.writeValueAsString(conditions);
+			mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+				.contentType("application/json").content(body)).andExpect(status().isBadRequest());
+		}
+		assertEquals(mapper.readTree(MINIMUM_CONDITIONS), mapper.readTree(jdbc.queryForObject(
+			"SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id)));
+		assertEquals(java.time.LocalDateTime.of(2020, 1, 1, 0, 0), jdbc.queryForObject(
+			"SELECT updated_at FROM ai_conversations WHERE id=?", java.time.LocalDateTime.class, id));
+	}
+
+	@Test void initialAndLegacyNullConditionsReadAsEmptyObjectsWithoutBackfillingRows() throws Exception {
+		long id = create("empty");
+		assertEquals(mapper.readTree("{}"), mapper.readTree(jdbc.queryForObject(
+			"SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id)));
+		jdbc.update("UPDATE ai_conversations SET current_conditions=NULL WHERE id=?", id);
+		mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions").isMap()).andExpect(jsonPath("$.currentConditions").isEmpty());
+		assertNull(jdbc.queryForObject("SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id));
+	}
+
+	@Test void choicesAreTrimmedAndDeduplicatedButDuplicateRolesAreRejected() throws Exception {
+		long id = create("normalize");
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions")).contentType("application/json")
+			.content(withRequiredConditions("{\"fields\":[\" 웹 \",\"웹\"],\"interests\":[\"AI\",\"AI\"],\"stacks\":[\" Java \",\"Java\"],\"roles\":[{\"name\":\" 백엔드 개발자 \",\"count\":1}],\"career\":\" 경력 무관 \"}")))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.fields.length()").value(1))
+			.andExpect(jsonPath("$.currentConditions.interests.length()").value(1))
+			.andExpect(jsonPath("$.currentConditions.stacks[0]").value("Java"))
+			.andExpect(jsonPath("$.currentConditions.roles[0].name").value("백엔드 개발자"));
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions")).contentType("application/json")
+			.content(withRequiredConditions("{\"roles\":[{\"name\":\"백엔드 개발자\",\"count\":1},{\"name\":\" 백엔드 개발자 \",\"count\":2}]}")))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test void invalidConditionTypesCountsAndChoicesNeverChangeStoredConditionsOrTime() throws Exception {
+		long id = create("invalid");
+		jdbc.update("UPDATE ai_conversations SET updated_at=TIMESTAMP '2020-01-01 00:00:00' WHERE id=?", id);
+		String[] invalid = {
+			"", "null", "[]", "{", "{\"fields\":\"웹\"}", "{\"fields\":[null]}", "{\"fields\":[\" \"]}",
+			"{\"interests\":[\"unknown\"]}", "{\"stacks\":[\" \"]}", "{\"career\":\"신입\"}",
+			"{\"career\":0}", "{\"career\":\"\"}", "{\"roles\":[null]}", "{\"roles\":[{}]}",
+			"{\"roles\":[{\"name\":\"백엔드\",\"count\":1}]}", "{\"roles\":[{\"name\":\"백엔드 개발자\"}]}",
+			"{\"durationMonths\":0}", "{\"durationMonths\":37}", "{\"durationMonths\":1.5}",
+			"{\"durationMonths\":\"3\"}", "{\"durationMonths\":true}", "{\"userId\":202}",
+			"{\"roles\":[{\"name\":\"백엔드 개발자\",\"count\":1,\"extra\":1}]}"
+		};
+		for (String body : invalid) {
+			if (body.startsWith("{") && body.endsWith("}")) body = withRequiredConditions(body);
+			mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+				.contentType("application/json").content(body)).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(400));
+		}
+		for (String count : new String[]{"0", "-1", "1.5", "1.0", "\"2\"", "null", "true", "2147483648"}) {
+			mvc.perform(authenticated(put(BASE + "/" + id + "/conditions")).contentType("application/json")
+				.content(withRequiredConditions("{\"roles\":[{\"name\":\"백엔드 개발자\",\"count\":" + count + "}]}")))
+				.andExpect(status().isBadRequest());
+		}
+		assertEquals(mapper.readTree("{}"), mapper.readTree(jdbc.queryForObject(
+			"SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id)));
+		assertEquals(java.time.LocalDateTime.of(2020, 1, 1, 0, 0), jdbc.queryForObject(
+			"SELECT updated_at FROM ai_conversations WHERE id=?", java.time.LocalDateTime.class, id));
+	}
+
+	@Test void acceptsCustomFieldsAndStacksAndNormalizesKnownSkillLabels() throws Exception {
+		long id = create("custom");
+		String response = mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+			.contentType("application/json").content(withRequiredConditions(
+				"""
+				{"fields":[" 해양 탐사 ","해양 탐사"],"stacks":[" java ","Java"," Vue ","Vue","Docker"]}
+				""")))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.fields.length()").value(1))
+			.andExpect(jsonPath("$.currentConditions.fields[0]").value("해양 탐사"))
+			.andExpect(jsonPath("$.currentConditions.stacks.length()").value(3))
+			.andExpect(jsonPath("$.currentConditions.stacks[0]").value("Java"))
+			.andExpect(jsonPath("$.currentConditions.stacks[1]").value("Vue"))
+			.andExpect(jsonPath("$.currentConditions.stacks[2]").value("Docker"))
+			.andReturn().getResponse().getContentAsString();
+		assertEquals(mapper.readTree(response).get("currentConditions"), mapper.readTree(jdbc.queryForObject(
+			"SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id)));
+		mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.currentConditions.stacks[1]").value("Vue"));
+	}
+
+	@Test void enforcesRequiredFieldAndCustomInputBoundsWithoutChangingSavedConditions() throws Exception {
+		long id = create("bounds");
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+			.contentType("application/json").content(MINIMUM_CONDITIONS)).andExpect(status().isOk());
+		jdbc.update("UPDATE ai_conversations SET updated_at=TIMESTAMP '2020-01-01 00:00:00' WHERE id=?", id);
+		var missingField = (tools.jackson.databind.node.ObjectNode) mapper.readTree(MINIMUM_CONDITIONS);
+		missingField.remove("fields");
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions")).contentType("application/json")
+			.content(mapper.writeValueAsString(missingField))).andExpect(status().isBadRequest());
+		String tooManyFields = mapper.writeValueAsString(java.util.stream.IntStream.range(0, 11).mapToObj(i -> "분야" + i).toList());
+		String tooManyStacks = mapper.writeValueAsString(java.util.stream.IntStream.range(0, 31).mapToObj(i -> "기술" + i).toList());
+		for (String body : new String[]{"{}", "{\"fields\":null}", "{\"fields\":[]}", "{\"fields\":[null]}",
+			"{\"fields\":[\" \"]}", "{\"fields\":[123]}", "{\"fields\":[true]}",
+			"{\"fields\":[\"" + "가".repeat(31) + "\"]}", "{\"fields\":" + tooManyFields + "}",
+			"{\"stacks\":[null]}", "{\"stacks\":[\"\"]}", "{\"stacks\":[123]}", "{\"stacks\":[true]}",
+			"{\"stacks\":[\"" + "s".repeat(51) + "\"]}", "{\"stacks\":" + tooManyStacks + "}"}) {
+			mvc.perform(authenticated(put(BASE + "/" + id + "/conditions"))
+				.contentType("application/json").content(body.equals("{}") ? body : withRequiredConditions(body)))
+				.andExpect(status().isBadRequest());
+		}
+		assertEquals(mapper.readTree(MINIMUM_CONDITIONS), mapper.readTree(jdbc.queryForObject(
+			"SELECT current_conditions FROM ai_conversations WHERE id=?", String.class, id)));
+		assertEquals(java.time.LocalDateTime.of(2020, 1, 1, 0, 0), jdbc.queryForObject(
+			"SELECT updated_at FROM ai_conversations WHERE id=?", java.time.LocalDateTime.class, id));
+		String boundary = withRequiredConditions(mapper.writeValueAsString(Map.of(
+			"fields", java.util.stream.IntStream.range(0, 10).mapToObj(i -> "가".repeat(29) + i).toList(),
+			"stacks", java.util.stream.IntStream.range(0, 30).mapToObj(i -> "s".repeat(48) + String.format("%02d", i)).toList())));
+		mvc.perform(authenticated(put(BASE + "/" + id + "/conditions")).contentType("application/json").content(boundary))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.fields.length()").value(10))
+			.andExpect(jsonPath("$.currentConditions.stacks.length()").value(30));
+	}
+
+	@Test void conditionUpdatesEnforceAuthenticationOwnershipAndValidIds() throws Exception {
+		long id = create("owner");
+		otherConversation(9001);
+		mvc.perform(put(BASE + "/" + id + "/conditions").contentType("application/json").content(MINIMUM_CONDITIONS))
+			.andExpect(status().isUnauthorized());
+		for (long denied : new long[]{9001, 999999}) {
+			mvc.perform(authenticated(put(BASE + "/" + denied + "/conditions"))
+				.contentType("application/json").content(withRequiredConditions("{\"stacks\":[\"Java\"]}")))
+				.andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
+		}
+		for (String invalidId : new String[]{"0", "-1", "bad-id"}) {
+			mvc.perform(authenticated(put(BASE + "/" + invalidId + "/conditions"))
+				.contentType("application/json").content(MINIMUM_CONDITIONS))
+				.andExpect(status().isBadRequest());
+		}
+		assertNull(jdbc.queryForObject("SELECT current_conditions FROM ai_conversations WHERE id=9001", String.class));
 	}
 }
