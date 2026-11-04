@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}").permitAll()
                 // 관리자만 접근 가능
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능

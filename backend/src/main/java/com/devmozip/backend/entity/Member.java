@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -58,7 +59,7 @@ public class Member {
     private Long jobCategoryId;
 
     // 이메일
-    @Column(name = "email", length = 255)
+    @Column(name = "email", length = 255, unique = true)
     private String email;
 
     // 비밀번호 해시 (카카오 가입 회원은 비어 있을 수 있다)
@@ -70,11 +71,11 @@ public class Member {
     private String kakaoId;
 
     // 닉네임
-    @Column(name = "nickname", length = 50)
+    @Column(name = "nickname", length = 50, unique = true)
     private String nickname;
 
     // 사용자 태그
-    @Column(name = "tag", length = 100)
+    @Column(name = "tag", length = 100, unique = true)
     private String tag;
 
     // 권한
@@ -121,6 +122,23 @@ public class Member {
     // 경력 (개월 수, 신입이거나 입력하지 않으면 비어 있을 수 있다)
     @Column(name = "career", nullable = true)
     private Integer career;
+
+    @Column(name = "contact_hours", length = 100)
+    private String contactHours;
+
+    public void updateProfile(String nickname, String tag, Long jobCategoryId, String summary,
+                              Integer career, CollaborationStatus collaborationStatus) {
+        this.nickname = nickname;
+        this.tag = tag;
+        this.jobCategoryId = jobCategoryId;
+        this.summary = summary;
+        this.career = career;
+        this.collaborationStatus = collaborationStatus;
+    }
+
+    public void updateContactHours(String contactHours) { this.contactHours = contactHours; }
+    public void changeProfileImage(String url) { this.profileImage = url; }
+    public void changeBannerImage(String url) { this.bannerImage = url; }
 
     @Builder
     public Member(Long jobCategoryId, String email, String passwordHash, String kakaoId,
