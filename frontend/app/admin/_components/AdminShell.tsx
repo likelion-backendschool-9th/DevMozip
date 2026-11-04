@@ -20,7 +20,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <div className={[styles.scope, "container governance-denied"].join(" ")}>
                 <ShieldCheck size={40} />
                 <h1>관리자 전용 화면입니다</h1>
-                <p>상단 데모 계정 전환에서 관리자 계정을 선택해 주세요.</p>
+                <p>관리자 계정으로 로그인해 주세요.</p>
                 <Link href="/subscription" className={[styles.scope, "button"].join(" ")}>요금제 보기</Link>
             </div>
         );

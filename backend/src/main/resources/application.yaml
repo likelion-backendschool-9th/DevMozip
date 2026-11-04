@@ -1,3 +1,5 @@
+# compose·서버 공통 기본 설정. 비밀값은 넣지 않고 환경변수(루트 .env → compose)로 받는다.
+# 로컬에서 H2로 실행할 때는 application-local.yml(커밋하지 않음)을 만들고 local 프로필로 실행한다.
 spring:
   application:
     name: backend
@@ -7,24 +9,25 @@ spring:
     password: ${DB_PASSWORD:}
   jpa:
     hibernate:
-      ddl-auto: none
+      # 엔티티 기준으로 테이블을 만들거나 갱신한다
+      ddl-auto: update
     open-in-view: false
+  # 리프레시 토큰 저장소. compose·서버는 REDIS_HOST=redis로 받는다
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       connect-timeout: 2s
       timeout: 2s
+  web:
+    error:
+      include-stacktrace: never
+
 jwt:
   secret: ${JWT_SECRET:}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
-auth:
-  bootstrap:
-    user-username: ${AUTH_USER_USERNAME:member@devmozip.demo}
-    user-password: ${AUTH_USER_PASSWORD:}
-    admin-username: ${AUTH_ADMIN_USERNAME:admin@devmozip.demo}
-    admin-password: ${AUTH_ADMIN_PASSWORD:}
+
 management:
   endpoints:
     web:
@@ -33,3 +36,15 @@ management:
   endpoint:
     health:
       show-details: never
+
+---
+# local(H2) 프로필은 리프레시 토큰을 메모리에 두므로 Redis 없이 실행한다.
+# Redis 연결 상태를 헬스체크에서 빼야 /actuator/health가 DOWN이 되지 않는다.
+spring:
+  config:
+    activate:
+      on-profile: local
+management:
+  health:
+    redis:
+      enabled: false

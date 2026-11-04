@@ -20,8 +20,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "\\wsl.localhost\Ubuntu-26.0
 
 ## 사용 범위
 
-Mock 데이터와 로그인 상태는 각 컴퓨터의 브라우저 저장소에 별도로 유지됩니다. 다른 컴퓨터 사이에서 동기화되지 않습니다.
-현재 회원가입은 브라우저 Web Crypto 사용으로 localhost 또는 HTTPS가 필요하므로 LAN HTTP에서는 데모 계정 전환으로 로그인할 수 있습니다. 이번 작업에서는 인증 기능 코드를 변경하지 않았습니다.
+Mock 데이터와 로그인 쿠키는 각 컴퓨터의 브라우저에 별도로 유지됩니다. 다른 컴퓨터 사이에서 동기화되지 않습니다.
+로그인은 백엔드에 등록된 계정으로 하므로 LAN 접속에서도 개발 PC의 백엔드가 실행 중이어야 합니다.
 
 ## 공유 해제 (Windows 관리자 PowerShell)
 

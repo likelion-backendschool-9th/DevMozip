@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authMode } from '@/lib/auth/env';
 import { ACCESS_COOKIE, REFRESH_COOKIE, cookieOptions } from '@/lib/auth/cookies';
 import { decodeToken, isExpired } from '@/lib/auth/token';
 import { refreshAccessToken } from '@/lib/auth/refresh';
@@ -7,7 +6,7 @@ import { hasPrefix, isProtectedPath } from '@/lib/auth/paths';
 
 export async function proxy(request: NextRequest) {
     // 헬스체크에는 쿠키와 Redis 재발급 요청이 끼어들지 않는다.
-    if (request.nextUrl.pathname === '/api/health' || authMode() === 'mock') return NextResponse.next();
+    if (request.nextUrl.pathname === '/api/health') return NextResponse.next();
     let access = request.cookies.get(ACCESS_COOKIE)?.value;
     let payload = decodeToken(access);
     let refreshed = false;

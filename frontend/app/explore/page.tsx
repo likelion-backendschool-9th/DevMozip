@@ -187,7 +187,7 @@ export default function SearchPage() {
                             </h2>
                             <p>
                                 {signedOutFollowing
-                                    ? '팔로잉 목록은 계정별로 관리됩니다. 로그인하거나 데모 계정으로 전환해 주세요.'
+                                    ? '팔로잉 목록은 계정별로 관리됩니다. 로그인해 주세요.'
                                     : '검색어를 바꾸거나 선택한 필터를 줄여 다시 찾아보세요.'}
                             </p>
                             {signedOutFollowing ? (

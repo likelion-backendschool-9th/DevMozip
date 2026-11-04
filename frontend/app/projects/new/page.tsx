@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { LockKeyhole } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { canCreateProject } from '@/lib/projects/projectService';
-import { DemoAccounts } from '@/components/auth/DemoAccounts';
 import { CreateProjectForm } from '@/app/projects/_components/CreateProjectForm';
 export default function CreateProjectPage() {
     const { user } = useAuth();
@@ -42,9 +41,8 @@ export default function CreateProjectPage() {
                         프리미엄 권한 안내
                     </Button>
                     <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                        아래 데모 계정으로 전환해 프리미엄 작성 권한을 확인할 수 있습니다.
+                        프리미엄 계정으로 로그인하면 작성 권한을 확인할 수 있습니다.
                     </p>
-                    <DemoAccounts />
                 </section>
             )}
             {gate && <PremiumProjectGate onClose={() => setGate(false)} />}

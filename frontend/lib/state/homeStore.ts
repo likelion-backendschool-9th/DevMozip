@@ -137,7 +137,6 @@ const home = derived(homeSources, () => {
         run,
         update: (patch: Partial<HomeState>) => commit({ ...homeStore.get(), ...patch }),
         reset: () => commit({ ...homeStore.get(), input: structuredClone(freshHomeState().input) }),
-        resetAll: () => commit(freshHomeState()),
         conversations,
         conversation,
         newChat,

@@ -5,12 +5,12 @@ import { MemoryRouter, Route, Routes } from '@/tests/helpers/RouterFixture';
 import ProfilePage from '@/app/(user)/users/[userId]/page';
 import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
 import { AppLayout } from '@/app/_components/AppLayout';
-import { SESSION_KEY } from '@/lib/account/authService';
+import { signIn } from '@/tests/helpers/session';
 import { profileTabs,initialProfileState } from '@/mocks/profile';
 function page(url:string,userId?:string){
- const data=new Map<string,string>();if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));
+ const data=new Map<string,string>();
  vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});
- return resetLocalStores(),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId" element={<ProfilePage/>}/></Route></Route></Routes></MemoryRouter></>);
+ return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId" element={<ProfilePage/>}/></Route></Route></Routes></MemoryRouter></>);
 }
 afterEach(()=>vi.unstubAllGlobals());
 describe('프로필 화면 구성 통합 렌더링',()=>{

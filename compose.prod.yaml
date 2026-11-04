@@ -65,7 +65,6 @@ services:
     <<: *frontend
     profiles: ["blue"]
     environment:
-      AUTH_MODE: server
       BACKEND_URL: http://backend-blue:8080
     depends_on:
       - backend-blue
@@ -79,7 +78,6 @@ services:
     <<: *frontend
     profiles: ["green"]
     environment:
-      AUTH_MODE: server
       BACKEND_URL: http://backend-green:8080
     depends_on:
       - backend-green
