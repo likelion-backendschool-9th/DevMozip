@@ -1,7 +1,7 @@
 import { createLocalStore, derived, useStore } from '@/lib/localStore';
 import { moderateProfile, type ModerationAction } from '@/lib/profiles/moderationService';
-import { allProfiles, applyProfileAction, freshProfileState, loadProfiles, saveProfiles } from '@/lib/profiles/profileService';
-import { authSources, getAdministration, getPublicUsers, getUser, resetProfileNames, syncProfileName } from '@/lib/state/authStore';
+import { allProfiles, applyProfileAction, loadProfiles, saveProfiles } from '@/lib/profiles/profileService';
+import { authSources, getAdministration, getPublicUsers, getUser, syncProfileName } from '@/lib/state/authStore';
 import { notify } from '@/lib/state/prototypeStore';
 import type { Collaboration, ProfileAction, ProfileState } from '@/types/profile';
 
@@ -48,16 +48,10 @@ function moderate(action: ModerationAction) {
     }
 }
 
-function reset() {
-    resetProfileNames();
-    commit(freshProfileState());
-}
-
 const profiles = derived(profileSources, () => ({
     state: getProfileState(),
     act: profileAct,
     moderate,
-    reset,
 }));
 
 export function useProfiles() {

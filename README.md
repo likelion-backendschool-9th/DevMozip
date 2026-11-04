@@ -1,6 +1,6 @@
 # DevMozip · 데브모집
 
-**Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. 개발 Mock 모드는 백엔드 없이 시연할 수 있고, 운영은 JWT+BFF 인증을 사용합니다. [팀 인증·브랜치 안내](docs/team-auth-deployment.md)와 [배포 준비](docs/setup-after-ai.md)를 참고하세요.
+**Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. 로그인은 백엔드 JWT+BFF 인증을 사용합니다. [팀 인증·브랜치 안내](docs/team-auth-deployment.md)와 [배포 준비](docs/setup-after-ai.md)를 참고하세요.
 
 운영 주소: https://devmozip.newlecture.com · [자동 배포·운영 안내](docs/deployment-operations.md)
 
@@ -31,7 +31,7 @@ npm run typecheck
 npm test
 ```
 
-개발 Mock 모드는 `.env` 없이 동작합니다. 서버 전용 BACKEND_URL과 AUTH_MODE는 `frontend/.env.example`을 참고하세요. Axios 인스턴스는 후속 API 교체를 위한 준비 코드이며 현재 UI에서 호출하지 않습니다. 로고·Pretendard 글꼴은 `public`에서 제공하고 외부 글꼴 CDN을 사용하지 않습니다.
+로그인은 백엔드 인증(JWT+BFF)을 사용하므로 개발 서버에서도 백엔드가 실행 중이어야 합니다. 서버 전용 BACKEND_URL은 `frontend/.env.example`을 참고하세요. Axios 인스턴스는 후속 API 교체를 위한 준비 코드이며 현재 UI에서 호출하지 않습니다. 로고·Pretendard 글꼴은 `public`에서 제공하고 외부 글꼴 CDN을 사용하지 않습니다.
 
 ## 구조
 
@@ -77,11 +77,11 @@ docs/                정책·Mock 구조·API 후보·시연·검증 기록
 | 이서준 | premium@devmozip.demo | 프리미엄 / Pocket 주최자 |
 | 데브모집 관리자 | admin@devmozip.demo | 관리자 |
 
-공통 데모 비밀번호는 `Devmozip123!`입니다. 상단 **데모 계정 전환** 버튼으로 전환할 수도 있습니다. 구독 상태는 전환/새로고침 후 유지합니다. **데모 초기화**는 도메인 상태/구독/대화/사용량 등을 초기화하고 로그아웃하며 신규 가입 계정은 유지합니다. 가입은 localhost/HTTPS에서 가상 정보로 시연하세요.
+위 계정은 서버 DB에 등록되어 있고, 로컬 H2(local 프로필)에서는 `members_data.sql`이 시작 시 넣습니다. 공통 데모 비밀번호는 `Devmozip123!`입니다. 다른 계정으로 바꾸려면 헤더의 로그아웃 후 다시 로그인합니다. 구독 데모 상태는 로그아웃/새로고침 후 유지합니다. 시연 상태를 처음으로 되돌리려면 브라우저 사이트 데이터(localStorage·쿠키)를 삭제합니다. 회원가입 화면은 입력 검증까지 시연할 수 있으며 가입 제출은 아직 제공하지 않습니다.
 
 ## 기능
 
-- Mock 로그인/로그아웃·회원가입·4단계 온보딩·프로필/헤더 반영
+- 서버 계정 로그인/로그아웃·회원가입 입력 검증·4단계 온보딩·프로필/헤더 반영
 - 본인 Aside·좋아요 날짜·글/프로젝트 북마크·계정 공개/비공개·Mock 연동/설정
 - 프로필 상단 + 소개/포트폴리오/내 글/활동/받은 리뷰 5개 탭
 - 프로젝트 검색/모집/지원/취소·주최자 승인/팀원/기간/상태/종료 관리

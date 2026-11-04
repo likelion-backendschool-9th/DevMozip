@@ -18,27 +18,46 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// 리프레시 토큰 저장소 (local 프로필은 메모리 저장소를 쓴다)
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// 헬스체크(/actuator/health) - 프론트 /api/health와 블루그린 배포가 사용한다
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testRuntimeOnly 'com.h2database:h2'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+	// PostgreSQL
+	runtimeOnly 'org.postgresql:postgresql'
+	// H2
+	runtimeOnly 'com.h2database:h2'
+	// JWT 관련 라이브러리 (JJWT)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	// 스프링 시큐리티 스타터 추가
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // 스프링 시큐리티 테스트 도구 추가
+    testImplementation 'org.springframework.security:spring-security-test'
+	// 테스트용 PostgreSQL 컨테이너 (Testcontainers, 버전은 스프링 부트가 관리)
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// 로컬에서 ./gradlew bootRun만 실행해도 local(H2) 프로필로 뜨게 한다.
+// SPRING_PROFILES_ACTIVE 환경변수가 있으면(compose 개발 컨테이너 등) 그 값을 따른다. 운영 jar 실행에는 영향이 없다.
+tasks.named('bootRun') {
+	if (!System.getenv('SPRING_PROFILES_ACTIVE')) {
+		systemProperty 'spring.profiles.active', 'local'
+	}
 }

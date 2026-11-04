@@ -1,0 +1,5 @@
+# 테스트 전용 설정. @ActiveProfiles("test")로 켠다.
+# DB 접속 정보는 Testcontainers(@ServiceConnection)가 테스트 시작 시 띄운 PostgreSQL로 채우므로 여기 두지 않는다.
+jwt:
+  # 테스트에서만 쓰는 값. 실제 서버의 JWT_SECRET과 다르다 (HS256은 32바이트 이상 필요)
+  secret: test-only-secret-key-at-least-32-bytes!!
