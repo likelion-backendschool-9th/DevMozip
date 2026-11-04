@@ -77,4 +77,13 @@ PUT 요청:
 
 ## 별도 회원가입 변경과의 관계
 
-검토 시점에 담당자의 feat/member-auth 브랜치에는 직군·기술 스택·관심 분야 목록 및 경력 String 전환이 있고, 아직 develop에는 병합되지 않았다. 이 PR은 해당 변경을 가져오지 않는다. 회원가입 변경이 병합되면 공통 Member의 두 자기소개 필드를 보존하고, 기존 프로필 조회·수정의 프론트 요청/응답 및 테스트를 새 계약에 맞춰 별도로 통합해야 한다.
+회원가입 PR #54가 develop에 병합되어 직군·기술 스택·관심 분야 목록과 경력 String 구조를 최신 기준으로 반영했다. 공통 Member의 자기소개 두 필드와 updateIntroduction을 함께 보존했다. build.gradle은 기존 validation 의존성을 한 번만 유지하고 자기소개 HTML 정리 의존성을 추가했다. 같은 부분을 양쪽 브랜치에서 수정해 생긴 Git 충돌이며 enum 자체의 오류는 아니다. 프론트의 jobCategories 목록·경력 문자열 계약과 기존 테스트도 최신 develop의 구현을 유지한다.
+
+## 최신 develop 충돌 해결 검증
+
+- 기준: origin/develop 7cf0b1b (회원가입 #54 및 프로젝트 문서 #55 병합 이후)
+- 충돌 파일: backend/build.gradle, backend/src/main/java/com/devmozip/backend/entity/Member.java
+- validation 의존성 이동과 자기소개 HTML 정리 의존성 추가를 함께 반영했다.
+- Member의 jobCategories·skills·interests 목록, career String 및 회원가입 생성자를 유지하면서 introduction·introductionFormat 필드와 변경 메서드를 보존했다.
+- 같은 필드 인접 영역을 각 브랜치에서 편집해 발생한 Git 충돌을 해결했으며, 자기소개 저장 형식은 기존 text/html 문자열을 유지한다.
+- 프론트 테스트 520개 및 빌드 통과. 백엔드 전체 Gradle build 통과. 실제 DB 스키마 적용은 수행하지 않았다.

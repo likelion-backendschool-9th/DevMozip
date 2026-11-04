@@ -19,9 +19,9 @@ ERD와 운영 DB는 이 작업에서 변경하지 않았다.
 {
   "nickname": "개발자",
   "tag": "developer-tag",
-  "jobCategoryId": 1,
+  "jobCategories": ["백엔드 개발자"],
   "summary": "함께 개발해요",
-  "career": 18,
+  "career": "2년 차",
   "collaborationStatus": "AVAILABLE",
   "contactHours": "평일 19:00~22:00 · 주말 협의"
 }

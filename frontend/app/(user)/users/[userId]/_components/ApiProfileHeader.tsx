@@ -30,7 +30,7 @@ export function ApiProfileHeader({ profile, onEdit }: { profile: ProfileDetail; 
                     {collaborationLabel(profile.collaborationStatus)}
                 </span>
             </div>
-            <p className={scope('profile-job')}>{profile.jobCategory.name || '직군 미입력'} <span>·</span> {formatCareer(profile.career)}</p>
+            <p className={scope('profile-job')}>{profile.jobCategories.join(', ') || '직군 미입력'} <span>·</span> {formatCareer(profile.career)}</p>
             <p className={scope('profile-bio')}>{profile.summary?.trim() || '한 줄 소개가 없습니다.'}</p>
             <div className={scope('profile-meta')}>
                 <span><CalendarDays size={13} />가입일 · 조회 연결 전</span>

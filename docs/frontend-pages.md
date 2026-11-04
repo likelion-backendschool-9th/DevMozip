@@ -13,7 +13,7 @@
 | `/profile/me/bookmarks` | 게시글/프로젝트 북마크·해제 | 로그인, 본인 전용 Aside |
 | `/settings/account` | Mock 비밀번호 확인·연동·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지 |
 | `/login` | Mock 로그인·유지·카카오 데모·계정 전환 | 공개 |
-| `/signup` | 입력 검증·중복 확인·Mock 가입 | 공개, localhost/HTTPS 권장 |
+| `/signup` | 입력 검증·DB 중복 확인·서버 가입 후 자동 로그인 | 공개, localhost/HTTPS 권장 |
 | `/forgot-password` | 비밀번호 복구 안내 데모 | 공개 |
 | `/search` | 개발자/프로젝트 검색·필터·팔로우 | 공개, 고급 온도 조건/정렬은 프리미엄·관리자 |
 | `/portfolios/new` | 전용 작성·섹션 자유 편집·초안·미리보기 | 로그인 |

@@ -3,8 +3,8 @@ package com.devmozip.backend.service;
 import com.devmozip.backend.dto.profile.ProfileDetailResponse;
 import com.devmozip.backend.dto.profile.ProfileUpdateRequest;
 import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.entity.enums.JobCategory;
 import com.devmozip.backend.repository.MemberRepository;
-import com.devmozip.backend.repository.JobCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class ProfileUpdateService {
     private final MemberRepository memberRepository;
-    private final JobCategoryRepository jobCategoryRepository;
     private final ProfileUpdateValidator validator;
 
     @Transactional
@@ -30,8 +29,10 @@ public class ProfileUpdateService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "이 계정 상태에서는 프로필을 수정할 수 없습니다.");
         }
         var input = validator.validate(request);
-        var job = jobCategoryRepository.findById(input.jobCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 직군입니다."));
+        var jobCategories = input.jobCategories().stream().map(String::strip).distinct().toList();
+        if (!jobCategories.stream().allMatch(JobCategory::contains)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 직군입니다.");
+        }
         if (memberRepository.existsByNicknameIgnoreCaseAndIdNot(input.nickname(), member.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
@@ -39,7 +40,7 @@ public class ProfileUpdateService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 사용자 태그입니다.");
         }
         // 검증 이후 허용한 필드만 변경한다. 비밀번호·권한·사진·신뢰 온도는 그대로 유지한다.
-        member.updateProfile(input.nickname(), input.tag(), input.jobCategoryId(), input.summary(),
+        member.updateProfile(input.nickname(), input.tag(), jobCategories, input.summary(),
                 input.career(), input.collaborationStatus() == null ? null
                         : Member.CollaborationStatus.valueOf(input.collaborationStatus()));
         // 새 필드가 없는 기존 클라이언트는 저장된 연락 시간을 지우지 않는다.
@@ -47,6 +48,6 @@ public class ProfileUpdateService {
         if (input.contactHours() != null) {
             member.updateContactHours(input.contactHours().isEmpty() ? null : input.contactHours());
         }
-        return ProfileDetailResponse.from(member, job);
+        return ProfileDetailResponse.from(member);
     }
 }

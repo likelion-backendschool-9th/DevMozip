@@ -1,6 +1,6 @@
 import { createMockId } from '@/lib/utils/createMockId';
 import { chatCareerOptions,chatDomainAliases,chatDomainStacks,chatRequirementLabels,chatRoleAliases,emptyChatRequirements,initialMatchingChat } from '@/mocks/matchingChat';
-import { interestOptions,stackOptions } from '@/mocks/home';
+import { interestOptions, stackOptions } from '@/mocks/home';
 import { analyzeMatching,buildMatchingResult,matchingUsage,parseMatchingState } from '@/lib/matching/matchingService';
 import type { ChatRequirements,MatchingChatState,MatchingConversation,MatchingMessage } from '@/types/matchingChat';
 import type { MatchingState,MatchingResult } from '@/types/matching';
@@ -25,7 +25,7 @@ export function inferChatRequirements(previous:ChatRequirements,text:string):Cha
  return next;
 }
 export function missingChatRequirements(r:ChatRequirements){return (Object.keys(chatRequirementLabels) as (keyof ChatRequirements)[]).filter(k=>k==='description'?r.description.trim().length<10:k==='roles'?!r.roles.length||r.roles.some(v=>!v.name.trim()||!Number.isInteger(v.count)||v.count<1||v.count>20):!r[k].length);}
-export function validateChatRequirements(r:ChatRequirements){if(r.description.length>1500||r.fields.length>12||r.interests.length>12||r.roles.length>12||r.fields.some(x=>!x.trim()||x.length>30)||r.roles.some(x=>x.name.length>30)||r.stacks.some(x=>!stackOptions.includes(x))||r.interests.some(x=>!interestOptions.slice(1).includes(x))||r.career&&!chatCareerOptions.includes(r.career)||r.duration&&!/^([1-9]|[1-2]\d|3[0-6])개월$/.test(r.duration))throw new Error('선택 조건과 입력 길이를 확인해 주세요. 기간은 1~36개월입니다.');}
+export function validateChatRequirements(r:ChatRequirements){if(r.description.length>1500||r.fields.length>12||r.interests.length>12||r.roles.length>12||r.fields.some(x=>!x.trim()||x.length>30)||r.roles.some(x=>x.name.length>30)||r.stacks.some(x=>!stackOptions.includes(x))||r.interests.some(x=>!interestOptions.includes(x))||r.career&&!chatCareerOptions.includes(r.career)||r.duration&&!/^([1-9]|[1-2]\d|3[0-6])개월$/.test(r.duration))throw new Error('선택 조건과 입력 길이를 확인해 주세요. 기간은 1~36개월입니다.');}
 export function roleMatches(request:string,actual:string){const aliases=chatRoleAliases[request]||[request];return aliases.some(alias=>actual.toLowerCase().includes(alias.toLowerCase()))||(request==='UI/UX'&&actual.includes('디자이너'));}
 export function buildChatResult(r:ChatRequirements,candidates:(Developer&{available?:boolean;jobs?:string[]})[],projects:Project[]):MatchingResult{
  const base=buildMatchingResult({description:r.description,stacks:r.stacks,interest:r.interests[0]||'전체 분야',skipRole:true},candidates,projects);

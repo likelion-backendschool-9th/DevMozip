@@ -3,8 +3,8 @@ import { collaborationLabel, fetchProfileDetail, formatCareer, parseProfileDetai
 import { apiProfileFixture } from '@/tests/helpers/apiProfileFixture';
 afterEach(() => vi.unstubAllGlobals());
 describe('프로필 API 계약', () => {
-    it.each([[null, '경력 미입력'], [0, '신입'], [1, '1개월'], [12, '1년'], [18, '1년 6개월'], [120, '10년']])('경력 %s를 %s로 표시', (months, label) => {
-        expect(formatCareer(months as number | null)).toBe(label);
+    it.each([[null, '경력 미입력'], ['', '경력 미입력'], ['3년 차', '3년 차']])('경력 %s를 %s로 표시', (career, label) => {
+        expect(formatCareer(career)).toBe(label);
     });
     it('알 수 없는 협업 상태를 협업 가능이나 불가로 단정하지 않는다', () => {
         expect(collaborationLabel('AVAILABLE')).toBe('협업 가능');
@@ -15,7 +15,7 @@ describe('프로필 API 계약', () => {
     it('인증·결제 필드를 허용 목록에서 제거한다', () => {
         expect(parseProfileDetail({ ...apiProfileFixture, email: 'private', passwordHash: 'private', paymentMethods: [] })).toEqual(apiProfileFixture);
     });
-    it.each([{ career: -1 }, { career: 1.5 }, { nickname: null }, { trustScore: Infinity }, { jobCategory: null }, { career: undefined }])('잘못된 백엔드 응답을 거부한다 %j', patch => {
+    it.each([{ career: -1 }, { career: 18 }, { nickname: null }, { trustScore: Infinity }, { jobCategories: null }, { jobCategories: [1] }, { career: undefined }])('잘못된 백엔드 응답을 거부한다 %j', patch => {
         expect(() => parseProfileDetail({ ...apiProfileFixture, ...patch })).toThrow();
     });
     it.each(['javascript:alert(1)', 'data:image/svg+xml,test', '//external.test/a.png', '/\\external.test/a.png', 'https://user:password@example.com/a'])('안전하지 않은 이미지 %s를 사용하지 않는다', value => {

@@ -16,8 +16,8 @@ describe('본인 프로필 BFF', () => {
         expect(await response.json()).toEqual({ ...apiProfileFixture, contactHours: '평일 저녁' });
         expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/me/profile', {});
     });
-    it('경력 0·연락 시간 삭제를 전달하되 사용자 ID와 권한은 전달하지 않는다', async () => {
-        const input = { nickname: '개발자', tag: 'new-tag', jobCategoryId: 1, summary: '', career: 0, collaborationStatus: 'RESTING', contactHours: '' };
+    it('경력 문구·연락 시간 삭제를 전달하되 사용자 ID와 권한은 전달하지 않는다', async () => {
+        const input = { nickname: '개발자', tag: 'new-tag', jobCategories: ['백엔드 개발자'], summary: '', career: '신입 / 학습 중', collaborationStatus: 'RESTING', contactHours: '' };
         vi.mocked(backendFetch).mockResolvedValue(Response.json(apiProfileFixture));
         expect((await put({ ...input, id: 999, email: 'other', role: 'ADMIN', trustScore: 100 })).status).toBe(200);
         const call = vi.mocked(backendFetch).mock.calls[0];
@@ -34,8 +34,10 @@ describe('본인 프로필 BFF', () => {
         expect(response.status).toBe(status);
         expect(await response.text()).not.toContain('secret');
     });
-    it('직군 목록은 DB의 ID와 이름만 반환한다', async () => {
-        vi.mocked(backendFetch).mockResolvedValue(Response.json([{ id: 7, name: '개발자', internal: true }]));
-        expect(await (await jobs()).json()).toEqual([{ id: 7, name: '개발자' }]);
+    it('직군 목록은 문자열 배열로 반환하고 잘못된 응답은 거부한다', async () => {
+        vi.mocked(backendFetch).mockResolvedValueOnce(Response.json(['백엔드 개발자']));
+        expect(await (await jobs()).json()).toEqual(['백엔드 개발자']);
+        vi.mocked(backendFetch).mockResolvedValueOnce(Response.json([{ id: 7 }]));
+        expect((await jobs()).ok).toBe(false);
     });
 });
