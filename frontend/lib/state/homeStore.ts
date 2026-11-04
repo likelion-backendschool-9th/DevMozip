@@ -106,6 +106,28 @@ function newChat(description?: string) {
     }
 }
 
+// 메인 초안은 대화와 함께 저장한 뒤 소비한다. 연속 호출은 최신 입력을 확인한다.
+function startHomeChat(): ChatResult {
+    const current = homeStore.get();
+    const description = current.input.description.trim();
+    if (description.length < 10) return { ok: false, error: '프로젝트를 10자 이상 설명해 주세요.' };
+    try {
+        const conversation = newMatchingConversation();
+        const saved = sendMatchingMessage(conversation, description, { ...conversation.requirements, description });
+        const next = structuredClone(current);
+        const account = owner();
+        next.chat.conversations[account] = [saved, ...(next.chat.conversations[account] || [])]
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        next.chat.active[account] = saved.id;
+        next.input.description = '';
+        if (!saveHomeState(next)) return { ok: false, error: '대화를 저장하지 못했습니다. 입력은 유지됩니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.' };
+        homeStore.set(next);
+        return { ok: true };
+    } catch (error) {
+        return fail(error);
+    }
+}
+
 function selectChat(id: string) {
     const current = homeStore.get();
     if ((current.chat.conversations[owner()] || []).some(c => c.id === id)) commit({ ...current, chat: { ...current.chat, active: { ...current.chat.active, [owner()]: id } } });
@@ -154,6 +176,7 @@ const home = derived(homeSources, () => {
         conversations,
         conversation,
         newChat,
+        startHomeChat,
         selectChat,
         deleteChat,
         editChat,

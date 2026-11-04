@@ -24,6 +24,43 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('AI 로컬 초안과 계정 인계', () => {
+    it.each([undefined, 'demo-user'])('메인 초안을 저장 후 비우고 반복 제출을 막는다 (%s)', account => {
+        signIn(account);
+        const input = { ...home().state.input, description: '함께 만들 일정 관리 프로젝트' };
+        home().update({ input });
+        resetLocalStores(); signIn(account);
+        expect(home().state.input.description).toBe(input.description);
+        const submit = home().startHomeChat;
+        expect(submit()).toEqual({ ok: true });
+        const id = home().conversation!.id;
+        expect(submit().ok).toBe(false);
+        expect(home().conversations).toHaveLength(1);
+        expect(home().conversation!.messages[0].text).toBe(input.description);
+        expect(loadHomeState().input.description).toBe('');
+        resetLocalStores(); signIn(account);
+        expect(home().conversation!.id).toBe(id);
+        expect(home().state.input.description).toBe('');
+        // 같은 문장을 새로 작성하는 것은 허용하며 기존 기록은 보존한다.
+        home().update({ input });
+        expect(home().startHomeChat().ok).toBe(true);
+        expect(home().conversations).toHaveLength(2);
+    });
+
+    it('메인 대화 저장 실패 시 입력과 기존 기록을 보존하고 재시도한다', () => {
+        home().newChat('기존 대화');
+        const existing = home().conversation!.id;
+        home().update({ input: { ...home().state.input, description: '저장 실패 후 다시 보낼 프로젝트' } });
+        storage.setItem.mockImplementationOnce(() => { throw new Error('quota'); });
+        expect(home().startHomeChat().ok).toBe(false);
+        expect(home().conversation!.id).toBe(existing);
+        expect(home().conversations).toHaveLength(1);
+        expect(home().state.input.description).toBe('저장 실패 후 다시 보낼 프로젝트');
+        expect(loadHomeState().input.description).toBe('저장 실패 후 다시 보낼 프로젝트');
+        expect(home().startHomeChat().ok).toBe(true);
+        expect(home().conversations).toHaveLength(2);
+        expect(home().state.input.description).toBe('');
+    });
+
     it('비로그인 생성·조건 선택·입력문·메시지·삭제를 저장하고 네트워크/사용량을 바꾸지 않는다', () => {
         const matching = structuredClone(home().state.matching);
         home().newChat();
