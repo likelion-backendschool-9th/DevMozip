@@ -1,13 +1,12 @@
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
 import { freshHomeState, loadHomeState, saveHomeState } from '@/lib/matching/homeService';
-import { consumeMatching, inputKey, matchingUsage } from '@/lib/matching/matchingService';
+import { inputKey, matchingUsage } from '@/lib/matching/matchingService';
 import { newMatchingConversation, sendMatchingMessage } from '@/lib/matching/matchingChatService';
-import { temperature } from '@/lib/profiles/profileService';
-import { allProjects } from '@/lib/projects/projectService';
-import { canViewProfile, getPublicUsers, getUser } from '@/lib/state/authStore';
+import { canViewProfile, getUser } from '@/lib/state/authStore';
 import { getProfileState } from '@/lib/state/profileStore';
-import { getProjectState, projectSources } from '@/lib/state/projectStore';
+import { projectSources } from '@/lib/state/projectStore';
 import { notify } from '@/lib/state/prototypeStore';
+import { demoAccounts } from '@/mocks/auth';
 import type { HomeState } from '@/types/home';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 
@@ -39,29 +38,27 @@ function commit(next: HomeState) {
     if (!saveHomeState(next)) notify('저장 공간을 사용할 수 없어 대화와 추천 사용량이 이번 세션에만 유지됩니다.');
 }
 
-/** 추천 후보 — 관리자와 볼 수 없는 계정은 뺀다 */
-function candidates() {
-    const excluded = getPublicUsers().filter(u => u.role === 'admin').map(u => u.id);
-    const profileState = getProfileState();
-    return Object.values(profileState.profiles)
-        .filter(p => !excluded.includes(p.id) && canViewProfile(p.id))
-        .map(p => ({ id: p.id, name: p.nickname, role: p.job, jobs: p.jobs, career: p.career, bio: p.bio, stacks: p.stacks, interests: p.interests, color: p.color, temperature: temperature(profileState.reviews, p.id), available: p.available }));
-}
-
-const owner = () => getUser()?.id || 'guest';
+// 공통 화면의 Mock 프로필 ID가 같아도 실제 로그인 이메일이 다르면 초안을 분리한다.
+const owner = () => {
+    const user = getUser();
+    if (!user) return 'guest';
+    return demoAccounts.some(account => account.id === user.id && account.email === user.email)
+        ? user.id : `account:${user.email.toLowerCase()}`;
+};
 
 function activeConversation() {
     const current = homeStore.get();
     return (current.chat.conversations[owner()] || []).find(v => v.id === current.chat.active[owner()]) || newMatchingConversation();
 }
 
-function saveConversation(c: MatchingConversation, matching = homeStore.get().matching) {
+function saveConversation(c: MatchingConversation) {
     const current = homeStore.get();
     const chat = structuredClone(current.chat);
     const items = chat.conversations[owner()] || [];
-    chat.conversations[owner()] = [c, ...items.filter(v => v.id !== c.id)];
+    chat.conversations[owner()] = [c, ...items.filter(v => v.id !== c.id)]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
     chat.active[owner()] = c.id;
-    commit({ ...current, chat, matching });
+    commit({ ...current, chat });
 }
 
 function fail(error: unknown): ChatResult {
@@ -71,24 +68,38 @@ function fail(error: unknown): ChatResult {
 }
 
 function run(): ChatResult {
-    try {
-        const current = homeStore.get();
-        const next = consumeMatching(current.matching, getUser(), current.input, candidates(), allProjects(getProjectState()));
-        commit({ ...current, matching: next.state });
-        return { ok: true };
-    } catch (error) {
-        const message = error instanceof Error ? error.message : '추천하지 못했습니다.';
-        notify(message);
-        return { ok: false, error: message };
-    }
+    return { ok: false, error: '추천 실행은 아직 준비 중입니다. 대화와 조건은 이 브라우저에 보관됩니다.' };
+}
+
+function prepareChatLogin(): ChatResult {
+    return saveHomeState(homeStore.get()) ? { ok: true }
+        : { ok: false, error: '초안을 저장하지 못해 로그인 이동을 멈췄습니다. 입력은 현재 화면에 유지됩니다. 저장 공간을 확인해 주세요.' };
+}
+
+// 사용자 확인 후 활성 guest 초안 하나만 이동한다. 저장 실패 시 원본을 유지한다.
+function resumeGuestChat(): ChatResult {
+    if (!getUser()) return { ok: false, error: '로그인 후 초안을 이어받아 주세요.' };
+    const current = homeStore.get();
+    const guest = (current.chat.conversations.guest || []).find(c => c.id === current.chat.active.guest);
+    if (!guest) return { ok: false, error: '이어받을 비로그인 초안이 없습니다.' };
+    const next = structuredClone(current);
+    const account = owner();
+    const items = next.chat.conversations[account] || [];
+    const moved = { ...guest, id: items.some(c => c.id === guest.id) ? newMatchingConversation().id : guest.id };
+    next.chat.conversations[account] = [moved, ...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    next.chat.active[account] = moved.id;
+    next.chat.conversations.guest = (next.chat.conversations.guest || []).filter(c => c.id !== guest.id);
+    next.chat.active.guest = next.chat.conversations.guest[0]?.id || '';
+    if (!saveHomeState(next)) return { ok: false, error: '초안을 저장하지 못했습니다. 비로그인 원본을 유지했습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.' };
+    homeStore.set(next);
+    return { ok: true };
 }
 
 function newChat(description?: string) {
     try {
         const c = newMatchingConversation();
         if (description) {
-            const next = sendMatchingMessage(c, description, c.requirements, homeStore.get().matching, getUser(), candidates(), allProjects(getProjectState()));
-            saveConversation(next.conversation, next.matching);
+            saveConversation(sendMatchingMessage(c, description, { ...c.requirements, description: description.trim() }));
         } else saveConversation(c);
     } catch (e) {
         fail(e);
@@ -110,14 +121,17 @@ function deleteChat(id: string) {
 
 function editChat(patch: Partial<ChatRequirements>) {
     const c = activeConversation();
-    saveConversation({ ...c, requirements: { ...c.requirements, ...patch } });
+    saveConversation({ ...c, requirements: { ...c.requirements, ...patch }, updatedAt: new Date().toISOString() });
+}
+
+function editChatMessage(text: string) {
+    saveConversation({ ...activeConversation(), draft: text.slice(0, 1500), updatedAt: new Date().toISOString() });
 }
 
 function sendChat(text: string): ChatResult {
     try {
         const c = activeConversation();
-        const next = sendMatchingMessage(c, text, c.requirements, homeStore.get().matching, getUser(), candidates(), allProjects(getProjectState()));
-        saveConversation(next.conversation, next.matching);
+        saveConversation(sendMatchingMessage(c, text, c.requirements));
         return { ok: true };
     } catch (e) {
         return fail(e);
@@ -144,6 +158,10 @@ const home = derived(homeSources, () => {
         deleteChat,
         editChat,
         sendChat,
+        editChatMessage,
+        guestDraft: user ? (state.chat.conversations.guest || []).find(c => c.id === state.chat.active.guest) || null : null,
+        resumeGuestChat,
+        prepareChatLogin,
     };
 });
 
