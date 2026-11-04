@@ -12,13 +12,17 @@ import { usePrototype } from '@/lib/state/prototypeStore';
 import { useMessaging } from '@/lib/state/messagingStore';
 import { useProjects } from '@/lib/state/projectStore';
 import { useHome } from '@/lib/state/homeStore';
+import { OwnProfileProvider } from '@/app/(user)/_components/OwnProfileProvider';
+import { HeaderProfileLink } from './HeaderProfileLink';
 import { Toast } from './Toast';
 
 const logo = '/devmozip-logo.svg';
 
-export function AppLayout({ children }: {
-    children?: React.ReactNode;
-}) {
+export function AppLayout({ children }: { children?: React.ReactNode }) {
+    return <OwnProfileProvider><AppShell>{children}</AppShell></OwnProfileProvider>;
+}
+
+function AppShell({ children }: { children?: React.ReactNode }) {
     const { unreadCount, unreadMessages } = useMessaging();
     const { notify } = usePrototype();
     const { reset: resetHome } = useHome();
@@ -72,14 +76,7 @@ export function AppLayout({ children }: {
                                         </span>
                                     )}
                                 </Link>
-                                <Link
-                                    className={[styles.scope, styles.profileLink, "icon-button header-profile-link"].join(" ")}
-                                    href="/profile/me"
-                                    aria-label="내 프로필로 이동"
-                                    title={`${user.nickname}님의 프로필`}
-                                >
-                                    <span className={[styles.scope, "small-avatar lavender"].join(" ")}>{user.nickname.slice(0, 2)}</span>
-                                </Link>
+                                <HeaderProfileLink />
                                 <button
                                     type="button"
                                     className={[styles.scope, "icon-button"].join(" ")}
