@@ -25,11 +25,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Sql(statements = {
-        "DELETE FROM users", "DELETE FROM job_categories",
-        "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자'), (2, '프론트엔드 개발자')",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, summary, career, trust_score, profile_image, password_hash, contact_hours) VALUES (1,1,'owner@profile.test','원래닉네임','owner-tag','ACTIVE','USER','원래 소개',12,38.50,'/keep.png','unchanged-hash','기존 연락 시간')",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, career, trust_score) VALUES (2,1,'other@profile.test','OtherName','other-tag','ACTIVE','USER',24,36.50)",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, career, trust_score) VALUES (3,1,'suspended@profile.test','정지회원','suspended-tag','SUSPENDED','USER',0,36.50)"
+        "DELETE FROM users",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, summary, career, trust_score, profile_image, password_hash, contact_hours) VALUES (1,'[\"백엔드 개발자\"]' FORMAT JSON,'owner@profile.test','원래닉네임','owner-tag','ACTIVE','USER','원래 소개','1년 차',38.50,'/keep.png','unchanged-hash','기존 연락 시간')",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, career, trust_score) VALUES (2,'[\"백엔드 개발자\"]' FORMAT JSON,'other@profile.test','OtherName','other-tag','ACTIVE','USER','2년 차',36.50)",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, career, trust_score) VALUES (3,'[\"백엔드 개발자\"]' FORMAT JSON,'suspended@profile.test','정지회원','suspended-tag','SUSPENDED','USER','신입 / 학습 중',36.50)"
 })
 class ProfileUpdateIntegrationTest {
     @org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -63,15 +62,15 @@ class ProfileUpdateIntegrationTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").doesNotExist());
         mvc.perform(get("/api/v1/users/me/profile/job-categories").header("Authorization", token("owner@profile.test")))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[1].id").value(2));
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0]").value("프론트엔드 개발자"))
+                .andExpect(jsonPath("$[1]").value("백엔드 개발자"));
     }
 
     @Test
     void ownUnassignedJobCanBeLoadedForEditing() throws Exception {
-        jdbc.update("UPDATE users SET job_category_id = NULL WHERE id = 1");
+        jdbc.update("UPDATE users SET job_categories = NULL WHERE id = 1");
         mvc.perform(get("/api/v1/users/me/profile").header("Authorization", token("owner@profile.test")))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.jobCategory.id").isEmpty());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.jobCategories").isEmpty());
         mvc.perform(get("/api/v1/users/owner-tag")).andExpect(status().isNotFound());
     }
 
@@ -79,7 +78,7 @@ class ProfileUpdateIntegrationTest {
     void loginTokenCanIdentifyOwnerAndUpdatePublicProfile() throws Exception {
         String password = UUID.randomUUID().toString();
         jdbc.update("UPDATE users SET password_hash = ? WHERE id = 1", passwordEncoder.encode(password));
-        var login = mvc.perform(post("/api/auth/login").contentType("application/json")
+        var login = mvc.perform(post("/api/v1/auth/login").contentType("application/json")
                 .content(mapper.writeValueAsString(Map.of("username", "owner@profile.test", "password", password))))
                 .andExpect(status().isOk()).andReturn();
         String accessToken = mapper.readTree(login.getResponse().getContentAsString()).get("accessToken").asString();
@@ -101,12 +100,12 @@ class ProfileUpdateIntegrationTest {
                 .contentType("application/json").content(mapper.writeValueAsString(valid())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nickname").value("수정닉네임"))
-                .andExpect(jsonPath("$.jobCategory.name").value("프론트엔드 개발자"));
+                .andExpect(jsonPath("$.jobCategories[0]").value("프론트엔드 개발자"));
         var saved = members.findByEmail("owner@profile.test").orElseThrow();
         assertEquals("수정닉네임", saved.getNickname());
         assertEquals("updated-tag", saved.getTag());
-        assertEquals(2L, saved.getJobCategoryId());
-        assertEquals(18, saved.getCareer());
+        assertEquals(java.util.List.of("프론트엔드 개발자"), saved.getJobCategories());
+        assertEquals("2년 차", saved.getCareer());
         assertEquals("기존 연락 시간", saved.getContactHours());
         assertEquals("수정 소개", saved.getSummary());
         assertEquals("RESTING", saved.getCollaborationStatus().name());
@@ -115,7 +114,7 @@ class ProfileUpdateIntegrationTest {
         assertEquals("unchanged-hash", saved.getPasswordHash());
         assertEquals("OtherName", members.findById(2L).orElseThrow().getNickname());
         mvc.perform(get("/api/v1/users/updated-tag")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.career").value(18));
+                .andExpect(jsonPath("$.career").value("2년 차"));
     }
 
     @Test
@@ -165,12 +164,12 @@ class ProfileUpdateIntegrationTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(ints = {0, 18})
-    void persistsZeroAndNullCareerSeparately(Integer months) throws Exception {
-        var body = valid(); body.put("career", months); body.put("summary", null); body.put("collaborationStatus", null);
+    @ValueSource(strings = {"신입 / 학습 중", "2년 차"})
+    void persistsCareerTextAndNull(String career) throws Exception {
+        var body = valid(); body.put("career", career); body.put("summary", null); body.put("collaborationStatus", null);
         perform(body, "owner@profile.test", 200);
         var saved = members.findById(1L).orElseThrow();
-        assertEquals(months, saved.getCareer());
+        assertEquals(career, saved.getCareer());
         assertNull(saved.getSummary());
         assertNull(saved.getCollaborationStatus());
     }
@@ -184,13 +183,13 @@ class ProfileUpdateIntegrationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"negative-career", "reserved-tag", "missing-job", "blank-nickname", "invalid-status"})
+    @ValueSource(strings = {"too-long-career", "reserved-tag", "missing-job", "blank-nickname", "invalid-status"})
     void invalidInputDoesNotPersistPartialChanges(String failure) throws Exception {
         var body = valid();
         switch (failure) {
-            case "negative-career" -> body.put("career", -1);
+            case "too-long-career" -> body.put("career", "가".repeat(31));
             case "reserved-tag" -> body.put("tag", "ME");
-            case "missing-job" -> body.put("jobCategoryId", 999);
+            case "missing-job" -> body.put("jobCategories", java.util.List.of("없는 직군"));
             case "blank-nickname" -> body.put("nickname", "  ");
             default -> body.put("collaborationStatus", "INVALID");
         }
@@ -267,8 +266,8 @@ class ProfileUpdateIntegrationTest {
 
     private Map<String, Object> valid() {
         var body = new LinkedHashMap<String, Object>();
-        body.put("nickname", "수정닉네임"); body.put("tag", "updated-tag"); body.put("jobCategoryId", 2);
-        body.put("summary", "수정 소개"); body.put("career", 18); body.put("collaborationStatus", "RESTING");
+        body.put("nickname", "수정닉네임"); body.put("tag", "updated-tag"); body.put("jobCategories", java.util.List.of("프론트엔드 개발자"));
+        body.put("summary", "수정 소개"); body.put("career", "2년 차"); body.put("collaborationStatus", "RESTING");
         return body;
     }
 
@@ -276,8 +275,8 @@ class ProfileUpdateIntegrationTest {
         var owner = members.findById(1L).orElseThrow();
         assertEquals("원래닉네임", owner.getNickname());
         assertEquals("owner-tag", owner.getTag());
-        assertEquals(12, owner.getCareer());
+        assertEquals("1년 차", owner.getCareer());
         assertEquals("기존 연락 시간", owner.getContactHours());
-        assertEquals(1L, owner.getJobCategoryId());
+        assertEquals(java.util.List.of("백엔드 개발자"), owner.getJobCategories());
     }
 }

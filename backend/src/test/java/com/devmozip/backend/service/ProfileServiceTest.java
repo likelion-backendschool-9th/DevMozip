@@ -1,6 +1,5 @@
 package com.devmozip.backend.service;
 
-import com.devmozip.backend.entity.JobCategory;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.repository.MemberRepository;
 import java.math.BigDecimal;
@@ -20,13 +19,11 @@ import static org.mockito.Mockito.*;
 class ProfileServiceTest {
     private MemberRepository repository;
     private ProfileService service;
-    private com.devmozip.backend.repository.JobCategoryRepository jobs;
 
     @BeforeEach
     void setUp() {
         repository = mock(MemberRepository.class);
-        jobs = mock(com.devmozip.backend.repository.JobCategoryRepository.class);
-        service = new ProfileService(repository, jobs);
+        service = new ProfileService(repository);
     }
 
     @Test
@@ -40,8 +37,7 @@ class ProfileServiceTest {
                 () -> assertEquals(1L, response.id()),
                 () -> assertEquals("dev-tag", response.tag()),
                 () -> assertEquals("개발자", response.nickname()),
-                () -> assertEquals(2L, response.jobCategory().id()),
-                () -> assertEquals("백엔드", response.jobCategory().name()),
+                () -> assertEquals(java.util.List.of("백엔드 개발자"), response.jobCategories()),
                 () -> assertEquals("함께 개발해요", response.summary()),
                 () -> assertEquals("/profile.png", response.profileImage()),
                 () -> assertEquals("/banner.png", response.bannerImage()),
@@ -65,12 +61,12 @@ class ProfileServiceTest {
 
     @ParameterizedTest
     @NullSource
-    @ValueSource(ints = {0, 18})
-    void preservesCareerMonthsIncludingZeroAndNull(Integer months) throws Exception {
+    @ValueSource(strings = {"신입 / 학습 중", "2년 차"})
+    void preservesCareerTextAndNull(String career) throws Exception {
         Member user = user();
-        ReflectionTestUtils.setField(user, "career", months);
+        ReflectionTestUtils.setField(user, "career", career);
         when(repository.findByTagAndStatus("dev-tag", Member.MemberStatus.ACTIVE)).thenReturn(Optional.of(user));
-        assertEquals(months, service.findBySlug("dev-tag").career());
+        assertEquals(career, service.findBySlug("dev-tag").career());
     }
 
     @ParameterizedTest
@@ -83,19 +79,13 @@ class ProfileServiceTest {
     }
 
     private Member user() throws Exception {
-        var jobConstructor = JobCategory.class.getDeclaredConstructor();
-        jobConstructor.setAccessible(true);
-        var job = jobConstructor.newInstance();
-        ReflectionTestUtils.setField(job, "id", 2L);
-        ReflectionTestUtils.setField(job, "name", "백엔드");
         var constructor = Member.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         var user = constructor.newInstance();
         ReflectionTestUtils.setField(user, "id", 1L);
         ReflectionTestUtils.setField(user, "tag", "dev-tag");
         ReflectionTestUtils.setField(user, "nickname", "개발자");
-        ReflectionTestUtils.setField(user, "jobCategoryId", 2L);
-        when(jobs.findById(2L)).thenReturn(Optional.of(job));
+        ReflectionTestUtils.setField(user, "jobCategories", java.util.List.of("백엔드 개발자"));
         ReflectionTestUtils.setField(user, "summary", "함께 개발해요");
         ReflectionTestUtils.setField(user, "profileImage", "/profile.png");
         ReflectionTestUtils.setField(user, "bannerImage", "/banner.png");

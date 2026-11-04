@@ -50,7 +50,7 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 
 로그아웃은 헤더 프로필 옆의 로그아웃 버튼으로 실행한다. 다른 계정으로 바꾸려면 로그아웃 후 다시 로그인한다. 로그인 상태는 운영 쿠키 정책(액세스·리프레시 HttpOnly 쿠키)을 따른다.
 
-업무 데이터는 계속 Mock이다. JWT+BFF 인증을 도입했지만 실제 회원가입·프로젝트·SNS·메시지·결제 API나 사용자 DB는 구현하지 않았다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
+업무 데이터는 계속 Mock이다. JWT+BFF 인증과 회원가입은 users 테이블을 쓰지만 실제 프로젝트·SNS·메시지·결제 API는 구현하지 않았다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
 
 .env, 기존 PostgreSQL 볼륨, JWT_SECRET과 DB 비밀번호를 임의로 초기화하지 않는다. DB_PASSWORD 환경변수만 바꿔도 기존 DB 사용자의 비밀번호가 변경되는 것은 아니다. 비밀값 교체는 영향 범위를 확인하고 진행한다.
 

@@ -17,16 +17,16 @@ describe('API 프로필 화면', () => {
         for (const label of ['MY WORKSPACE', '내 프로필', '좋아요한 글', '내 북마크함', '개인정보 및 계정 설정', '본문']) expect(html).toContain(label);
         expect(html).toContain('href="/profile/me"');
     });
-    it('기존 수정 창 배치에 서버 값과 경력 개월 수를 채운다', () => {
-        const html = render(<ApiProfileEditor profile={{ ...apiProfileFixture, career: 18, contactHours: '평일 저녁' }} onClose={() => {}} onSaved={() => {}} />);
-        for (const label of ['기본 정보 수정', '배너 이미지', '프로필 이미지', '닉네임', '태그', '한 줄 소개', '직군', '경력(개월 수)', '연락 가능 시간', '새로운 프로젝트에 협업할 수 있어요.']) expect(html).toContain(label);
-        expect(html).toContain('value="18"');
+    it('기존 수정 창 배치에 서버 값과 경력 문구를 채운다', () => {
+        const html = render(<ApiProfileEditor profile={{ ...apiProfileFixture, career: '2년 차', contactHours: '평일 저녁' }} onClose={() => {}} onSaved={() => {}} />);
+        for (const label of ['기본 정보 수정', '배너 이미지', '프로필 이미지', '닉네임', '태그', '한 줄 소개', '직군', '경력', '연락 가능 시간', '새로운 프로젝트에 협업할 수 있어요.']) expect(html).toContain(label);
+        expect(html).toMatch(/<option[^>]*selected[^>]*>2년 차</);
         expect(html).toContain('value="평일 저녁"');
         expect(html).toContain('변경·삭제 즉시 저장');
     });
     it('실제 응답의 경력·온도를 표시하고 기존 카드·탭 배치를 유지하고 Mock 수치를 섞지 않는다', () => {
         const html = render(<ProfileApiResult result={{ status: 'ready', profile: apiProfileFixture }} onRetry={() => {}} />);
-        for (const text of ['API 개발자', '@api-developer', '1년 6개월', '38.5', '서버에서 가져온 소개', '협업 가능']) expect(html).toContain(text);
+        for (const text of ['API 개발자', '@api-developer', '2년 차', '38.5', '서버에서 가져온 소개', '협업 가능']) expect(html).toContain(text);
         for (const text of ['36.5', 'PRO', '이서준']) expect(html).not.toContain(text);
         expect(html).toContain('<svg');
         expect(html).toContain('프로필 수정');

@@ -36,11 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Sql(statements = {
-        "DELETE FROM users", "DELETE FROM job_categories",
-        "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자')",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, trust_score, banner_image, contact_hours) VALUES (1,1,'owner@image.test','이미지회원','image-owner','ACTIVE','USER',36.50,'https://external.test/keep.png','평일 저녁')",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, trust_score) VALUES (2,1,'other@image.test','다른회원','image-other','ACTIVE','USER',36.50)",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, trust_score) VALUES (3,1,'suspended@image.test','정지회원','image-suspended','SUSPENDED','USER',36.50)"
+        "DELETE FROM users",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, trust_score, banner_image, contact_hours) VALUES (1,'[\"백엔드 개발자\"]' FORMAT JSON,'owner@image.test','이미지회원','image-owner','ACTIVE','USER',36.50,'https://external.test/keep.png','평일 저녁')",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, trust_score) VALUES (2,'[\"백엔드 개발자\"]' FORMAT JSON,'other@image.test','다른회원','image-other','ACTIVE','USER',36.50)",
+        "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, trust_score) VALUES (3,'[\"백엔드 개발자\"]' FORMAT JSON,'suspended@image.test','정지회원','image-suspended','SUSPENDED','USER',36.50)"
 })
 class ProfileImageIntegrationTest {
     @TempDir static Path directory;

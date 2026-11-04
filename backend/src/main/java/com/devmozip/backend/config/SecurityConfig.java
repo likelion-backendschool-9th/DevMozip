@@ -58,7 +58,7 @@ public class SecurityConfig {
             // 경로별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth
                 // 로그인, 회원가입 등 공개 API는 토큰 없이도 접근 허용
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 // 오류 응답(404, 409 등)이 403으로 바뀌지 않도록 스프링의 오류 경로는 허용
                 .requestMatchers("/error").permitAll()
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)

@@ -20,10 +20,10 @@ export async function saveOwnProfile(input: ProfileUpdateInput): Promise<Profile
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
     }));
 }
-export async function fetchJobCategories(signal?: AbortSignal): Promise<{ id: number; name: string }[]> {
+export async function fetchJobCategories(signal?: AbortSignal): Promise<string[]> {
     const value = await request('/api/profiles/me/profile/job-categories', { signal });
-    if (!Array.isArray(value) || !value.every(j => Number.isSafeInteger(j.id) && j.id > 0 && typeof j.name === 'string')) throw new Error('직군 목록을 확인할 수 없어요.');
-    return value.map(j => ({ id: j.id, name: j.name }));
+    if (!Array.isArray(value) || !value.every(job => typeof job === 'string')) throw new Error('직군 목록을 확인할 수 없어요.');
+    return value;
 }
 export async function changeOwnImage(kind: ProfileImageKind, file: File | null): Promise<ProfileImageResult> {
     const data = new FormData();
