@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { authMode } from '@/lib/auth/env';
 import { backendFetch } from '@/lib/auth/backend';
 import { parseProfileDetail, validProfileSlug } from '@/lib/profiles/profileDetail';
 
@@ -7,7 +6,6 @@ const headers = { 'Cache-Control': 'no-store' };
 const error = (status: number, message: string) => NextResponse.json({ message }, { status, headers });
 
 export async function GET(_request: Request, context: { params: Promise<{ slug: string }> }) {
-    if (authMode() === 'mock') return error(404, '데모 모드에서는 서버 프로필 조회를 사용하지 않습니다.');
     const { slug } = await context.params;
     if (!validProfileSlug(slug)) return error(400, '올바른 사용자 태그가 필요합니다.');
     try {

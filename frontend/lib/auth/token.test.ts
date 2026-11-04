@@ -9,6 +9,7 @@ describe('인증 경계', () => {
         expect(decodeToken('broken')).toBeNull();
         expect(decodeToken(token({ sub: 'user', role: 'SUPER', exp: 9999999999 }))).toBeNull();
         expect(isExpired(decodeToken(token({ sub: 'user', role: 'USER', exp: 9999999999 })))).toBe(false);
+        expect(decodeToken(token({ sub: 'user', role: 'PREMIUM', exp: 9999999999 }))?.role).toBe('PREMIUM');
     });
     it.each(['PREMIUM', 'OWNER'])('실제 회원 역할 %s의 로그인 토큰을 유지한다', role => {
         expect(decodeToken(token({ sub: 'member@profile.test', role, exp: 9999999999 }))?.role).toBe(role);
@@ -25,5 +26,9 @@ describe('인증 경계', () => {
         expect(projectServerIdentity({ username: 'admin@devmozip.demo', role: 'USER' }).role).toBe('free');
         expect(projectServerIdentity({ username: 'premium@devmozip.demo', role: 'USER' }).role).toBe('free');
         expect(projectServerIdentity({ username: 'admin@devmozip.demo', role: 'ADMIN' }).role).toBe('admin');
+        expect(projectServerIdentity({ username: 'admin@devmozip.demo', role: 'PREMIUM' })).toMatchObject({ id: 'demo-user', role: 'premium' });
+    });
+    it('서버 PREMIUM 역할을 프리미엄 회원으로 표시한다', () => {
+        expect(projectServerIdentity({ username: 'premium@devmozip.demo', role: 'PREMIUM' })).toMatchObject({ id: 'demo-premium', role: 'premium' });
     });
 });

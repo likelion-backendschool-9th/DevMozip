@@ -17,7 +17,7 @@ const icons = [UserRound, Heart, Bookmark, Settings];
  * Mock 모드에서는 본인 프로필에 표시하고, 팔로우 목록에는 표시하지 않는다.
  */
 export function AccountLayout({ children }: { children: ReactNode }) {
-    const { user: current, mode } = useAuth();
+    const { user: current } = useAuth();
     const own = useOwnProfile();
     const pathname = usePathname();
     const { userId } = useParams<{ userId?: string }>();
@@ -26,7 +26,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
 
     // 사이드바는 로그인한 사용자의 탐색 메뉴이며, 조회 대상의 수정 권한과는 별개다.
     const profilePage = !!userId && pathname === `/users/${userId}`;
-    const showProfileMenu = profilePage && !!current && (mode === 'server' || current.id === userId);
+    const showProfileMenu = profilePage && !!current && true;
     if (userId && !showProfileMenu) return children;
 
     if (!current)
@@ -47,7 +47,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
             <aside className={[styles.scope, 'account-aside'].join(' ')} data-open={menuOpen}>
                 <div className={[styles.scope, 'account-aside-heading'].join(' ')}>
                     <span>MY WORKSPACE</span>
-                    <strong>{mode === 'server' ? own.profile?.nickname || current.email : current.nickname}</strong>
+                    <strong>{own.profile?.nickname || current.email}</strong>
                     <small>개인 계정 관리</small>
                 </div>
                 <button
@@ -67,7 +67,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
                                 onClick={() => setMenuOpen(false)}
                                 key={item.key}
                                 end
-                                href={item.key === 'profile' ? (mode === 'server' ? (own.profile && pathname === `/users/${own.profile.tag}` ? `/users/${own.profile.tag}` : '/profile/me') : `/users/${current.id}`) : item.path}
+                                href={item.key === 'profile' ? (own.profile && pathname === `/users/${own.profile.tag}` ? `/users/${own.profile.tag}` : '/profile/me') : item.path}
                             >
                                 <Icon size={17} />
                                 <span>{item.label}</span>

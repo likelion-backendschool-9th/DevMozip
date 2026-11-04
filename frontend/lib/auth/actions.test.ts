@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn(), redirect: vi.fn((path: string) => { throw new Error(`redirect:${path}`); }) }));
-vi.mock('./env', () => ({ authMode: () => 'server' }));
 vi.mock('./backend', () => ({ backendFetch: doubles.fetch, readErrorMessage: async () => '인증 실패' }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }) }));
 vi.mock('next/navigation', () => ({ redirect: doubles.redirect }));
@@ -21,9 +20,10 @@ describe('인증 서버 액션', () => {
         expect(await loginAction(new FormData())).toEqual({ error: '인증 실패' });
         expect(doubles.set).not.toHaveBeenCalled();
     });
-    it('로그아웃 성공 후 같은 옵션으로 두 쿠키를 만료시킨다', async () => {
+    it('로그아웃 성공 후 같은 옵션으로 두 쿠키를 만료시키고 이동은 호출한 화면에 맡긴다', async () => {
         doubles.fetch.mockResolvedValue(new Response(null, { status: 204 }));
-        await expect(logoutAction()).rejects.toThrow('redirect:/');
+        expect(await logoutAction()).toBeNull();
+        expect(doubles.redirect).not.toHaveBeenCalled();
         expect(doubles.fetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({ body: JSON.stringify({ refreshToken: 'refresh' }) }));
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));

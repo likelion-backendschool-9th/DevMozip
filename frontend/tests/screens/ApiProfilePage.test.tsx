@@ -12,7 +12,7 @@ const render = (element: React.ReactNode) => renderToStaticMarkup(element);
 afterEach(() => resetLocalStores());
 describe('API 프로필 화면', () => {
     it('서버 프로필에서도 원래 사이드바 메뉴를 유지한다', () => {
-        resetLocalStores(); syncServerSession({ mode: 'server', identity: { username: 'member@profile.test', role: 'USER' } });
+        resetLocalStores(); syncServerSession({ identity: { username: 'member@profile.test', role: 'USER' } });
         const html = render(<MemoryRouter initialEntries={['/users/api-developer']}><Routes><Route path="/users/:userId" element={<AccountLayout><span>본문</span></AccountLayout>} /></Routes></MemoryRouter>);
         for (const label of ['MY WORKSPACE', '내 프로필', '좋아요한 글', '내 북마크함', '개인정보 및 계정 설정', '본문']) expect(html).toContain(label);
         expect(html).toContain('href="/profile/me"');
@@ -62,7 +62,7 @@ describe('API 프로필 화면', () => {
         expect(html.includes('다시 시도</button>')).toBe(code !== 404);
     });
     it('서버 모드는 Mock에 없는 태그도 조회 화면으로 진입한다', () => {
-        resetLocalStores(); syncServerSession({ mode: 'server', identity: null });
+        resetLocalStores(); syncServerSession({ identity: null });
         const html = render(<MemoryRouter initialEntries={['/users/api-developer']}><Routes><Route path="/users/:userId" element={<ProfilePage />} /></Routes></MemoryRouter>);
         expect(html).toContain('프로필 정보를 불러오고 있어요');
         expect(html).not.toContain('초기화된 Mock');

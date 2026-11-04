@@ -38,9 +38,4 @@ describe('본인 프로필 BFF', () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json([{ id: 7, name: '개발자', internal: true }]));
         expect(await (await jobs()).json()).toEqual([{ id: 7, name: '개발자' }]);
     });
-    it('Mock 모드는 별도의 저장 API를 호출하지 않는다', async () => {
-        vi.stubEnv('AUTH_MODE', 'mock');
-        expect((await put({})).status).toBe(404);
-        expect(backendFetch).not.toHaveBeenCalled();
-    });
 });

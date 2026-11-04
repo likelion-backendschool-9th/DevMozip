@@ -48,9 +48,9 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 
 임시 USER 기본 이메일은 member@devmozip.demo, ADMIN은 admin@devmozip.demo다. 비밀번호는 서버 ~/DevMozip/.env의 AUTH_USER_PASSWORD, AUTH_ADMIN_PASSWORD에 생성된 값이다. 본인 서버 터미널에서만 확인하고 채팅·Git·공개 문서에 붙이지 않는다. 기존 Mock 공용 비밀번호와 브라우저 가입 계정은 운영 로그인에 사용할 수 없다.
 
-로그아웃은 현재 상단 ‘데모 계정 전환’ 창의 ‘로그아웃 상태로 전환’ 버튼으로 실행할 수 있다. 운영에서는 데모 역할 전환이 차단된다. 로그인 유지 체크박스와 관계없이 현재 운영 쿠키 정책을 사용한다.
+로그아웃은 헤더 프로필 옆의 로그아웃 버튼으로 실행한다. 다른 계정으로 바꾸려면 로그아웃 후 다시 로그인한다. 로그인 상태는 운영 쿠키 정책(액세스·리프레시 HttpOnly 쿠키)을 따른다.
 
-업무 데이터는 계속 Mock이다. JWT+BFF 인증을 도입했지만 실제 회원가입·프로젝트·SNS·메시지·결제 API나 사용자 DB는 구현하지 않았다. premium은 Mock 구독 상태이며 실제 서버 역할은 USER/ADMIN이다.
+업무 데이터는 계속 Mock이다. JWT+BFF 인증을 도입했지만 실제 회원가입·프로젝트·SNS·메시지·결제 API나 사용자 DB는 구현하지 않았다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
 
 .env, 기존 PostgreSQL 볼륨, JWT_SECRET과 DB 비밀번호를 임의로 초기화하지 않는다. DB_PASSWORD 환경변수만 바꿔도 기존 DB 사용자의 비밀번호가 변경되는 것은 아니다. 비밀값 교체는 영향 범위를 확인하고 진행한다.
 

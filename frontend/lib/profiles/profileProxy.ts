@@ -1,11 +1,9 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
-import { authMode } from '@/lib/auth/env';
 import { backendFetch } from '@/lib/auth/backend';
 const headers = { 'Cache-Control': 'no-store' };
 export const profileError = (status: number, message: string) => NextResponse.json({ message }, { status, headers });
 export function profileRequestGuard(request?: Request) {
-    if (authMode() === 'mock') return profileError(404, '데모 모드에서는 서버 프로필 수정을 사용하지 않습니다.');
     if (request && request.headers.get('origin') !== new URL(request.url).origin) return profileError(403, '같은 사이트에서 요청해 주세요.');
     return null;
 }

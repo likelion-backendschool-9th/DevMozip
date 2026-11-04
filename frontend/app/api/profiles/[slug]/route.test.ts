@@ -15,11 +15,6 @@ describe('프로필 BFF', () => {
         expect(await response.json()).toEqual(apiProfileFixture);
         expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/api-developer');
     });
-    it('Mock 모드는 백엔드를 호출하지 않는다', async () => {
-        vi.stubEnv('AUTH_MODE', 'mock');
-        expect((await call()).status).toBe(404);
-        expect(backendFetch).not.toHaveBeenCalled();
-    });
     it.each(['../auth/me', '//example.com', 'bad?tag', ''])('잘못된 태그 %s를 전달하지 않는다', async slug => {
         expect((await call(slug)).status).toBe(400);
         expect(backendFetch).not.toHaveBeenCalled();

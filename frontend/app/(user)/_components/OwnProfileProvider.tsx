@@ -7,8 +7,8 @@ type OwnState = { profile: ProfileDetail | null; loading: boolean; error: string
 const OwnProfileContext = createContext<OwnState>({ profile: null, loading: false, error: '', retry: () => {}, update: () => {} });
 export const useOwnProfile = () => useContext(OwnProfileContext);
 export function OwnProfileProvider({ children }: { children: ReactNode }) {
-    const { mode, user } = useAuth();
-    const email = mode === 'server' ? user?.email : undefined;
+    const { user } = useAuth();
+    const email = user?.email;
     const [state, setState] = useState<{ email?: string; profile: ProfileDetail | null; loading: boolean; error: string }>({ profile: null, loading: false, error: '' });
     const [attempt, setAttempt] = useState(0);
     useEffect(() => {

@@ -10,7 +10,7 @@ import MatchingPage from '@/app/ai/matching/page';
 import HomePage from '@/app/page';
 import ProjectNotificationsPage from '@/app/notifications/page';
 import { FollowSettings } from '@/app/(user)/users/[userId]/_components/FollowSettings';
-import { SESSION_KEY } from '@/lib/account/authService';
+import { signIn } from '@/tests/helpers/session';
 import { HOME_KEY,freshHomeState } from '@/lib/matching/homeService';
 import { PROFILE_KEY,applyProfileAction,freshProfileState } from '@/lib/profiles/profileService';
 import { demoAccounts } from '@/mocks/auth';
@@ -20,7 +20,7 @@ import type { HomeState } from '@/types/home';
 import type { ProfileState } from '@/types/profile';
 const now=new Date('2026-10-30T12:00:00+09:00');
 function matched(user=demoAccounts[0]){const state=freshHomeState();const result=sendMatchingMessage(newMatchingConversation(now),'추천해 주세요',{description:'React 일정 관리 웹 서비스를 만들고 싶어요.',fields:['웹'],interests:['생산성'],stacks:['React'],roles:[{name:'프론트엔드',count:2}],career:'경력 무관',duration:'3개월'},state.matching,user,developers,projects,now);state.matching=result.matching;state.chat={conversations:{[user.id]:[result.conversation]},active:{[user.id]:result.conversation.id}};return state;}
-function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));if(userId)data.set(SESSION_KEY,JSON.stringify({version:1,userId}));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
+function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 describe('팔로우·추천 화면 렌더링',()=>{
  it('팔로잉 검색에 프로필·협업 상태·알림 설정을 표시한다',()=>{const html=page('/users/demo-user/follows?q=유나','demo-user');expect(html).toContain('이유나');expect(html).not.toContain('박민준');expect(html).toContain('/users/yuna');expect(html).toContain('협업 가능');expect(html).toContain('언팔로우');expect(html).toContain('이유나 알림 설정');});
