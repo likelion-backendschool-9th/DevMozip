@@ -19,6 +19,7 @@ ERD는 수정하지 않았다.
   "jobCategory": { "id": 2, "name": "백엔드 개발자" },
   "summary": "함께 성장할 팀을 찾습니다.",
   "career": 18,
+  "contactHours": "평일 19:00~22:00 · 주말 협의",
   "profileImage": null,
   "bannerImage": null,
   "collaborationStatus": null,
@@ -32,7 +33,7 @@ ERD는 수정하지 않았다.
 실제 PostgreSQL에도 career 컬럼을 별도 적용해야 하며, 이 작업에서 운영 스키마를 변경하지 않는다. 이미지 필드는 저장된 경로를 반환한다.
 이메일·비밀번호 해시·카카오 ID·결제 정보는 응답 DTO에 포함하지 않는다.
 직군은 현재 ERD의 단일 `job_category_id` 관계를 따른다.
-가입일·협업 가능 시간·소개 본문·관심 분야·팔로우 수·PRO 표시는 이 API의 응답에 포함하지 않는다.
+가입일·소개 본문·관심 분야·팔로우 수·PRO 표시는 이 API의 응답에 포함하지 않는다.
 포트폴리오·게시글·활동·리뷰는 별도 API 범위다.
 
 ## 미존재 및 비공개 처리
@@ -101,3 +102,6 @@ cd backend
 - 보호 경로 비로그인 요청: 401.
 - 총 7개 HTTP 통합 검사를 제공한다. 테스트 종료 시 임시 서버와 메모리 DB를 정리한다.
 - 운영 PostgreSQL·Redis 및 프론트엔드 연동은 이 검사에 포함하지 않는다.
+
+연락 가능 시간은 contactHours로 응답한다. 최대 100자 자유 입력이며 미등록이면 NULL이다.
+저장 정책과 검증은 docs/profile-contact-hours.md를 참고한다.

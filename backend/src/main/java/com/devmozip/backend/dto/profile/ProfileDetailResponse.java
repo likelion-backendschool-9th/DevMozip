@@ -14,14 +14,15 @@ public record ProfileDetailResponse(
         String profileImage,
         String bannerImage,
         String collaborationStatus,
-        BigDecimal trustScore
+        BigDecimal trustScore,
+        String contactHours
 ) {
     public static ProfileDetailResponse from(Member user, JobCategory job) {
         return new ProfileDetailResponse(
                 user.getId(), user.getTag(), user.getNickname(),
                 new JobCategoryResponse(job.getId(), job.getName()),
                 user.getSummary(), user.getCareer(), user.getProfileImage(), user.getBannerImage(),
-                user.getCollaborationStatus() == null ? null : user.getCollaborationStatus().name(), user.getTrustScore());
+                user.getCollaborationStatus() == null ? null : user.getCollaborationStatus().name(), user.getTrustScore(), user.getContactHours());
     }
 
     public record JobCategoryResponse(Long id, String name) {}

@@ -44,6 +44,11 @@ public class ProfileUpdateService {
         member.setJobCategoryId(input.jobCategoryId());
         member.setSummary(input.summary());
         member.setCareer(input.career());
+        // 새 필드가 없는 기존 클라이언트는 저장된 연락 시간을 지우지 않는다.
+        // 명시적인 빈 문자열은 연락 시간 삭제를 의미한다.
+        if (input.contactHours() != null) {
+            member.setContactHours(input.contactHours().isEmpty() ? null : input.contactHours());
+        }
         member.setCollaborationStatus(input.collaborationStatus() == null ? null
                 : Member.CollaborationStatus.valueOf(input.collaborationStatus()));
         return ProfileDetailResponse.from(member, job);

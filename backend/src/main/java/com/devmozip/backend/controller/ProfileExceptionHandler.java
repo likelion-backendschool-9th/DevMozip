@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = {ProfileController.class, ProfileUpdateController.class})
+@RestControllerAdvice(assignableTypes = {ProfileController.class, ProfileUpdateController.class, ProfileImageController.class, ProfileImageFileController.class})
 public class ProfileExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ProblemDetail handle(ResponseStatusException exception) {
@@ -21,6 +21,9 @@ public class ProfileExceptionHandler {
             case 409 -> "PROFILE_CONFLICT";
             case 401 -> "AUTHENTICATION_REQUIRED";
             case 403 -> "PROFILE_FORBIDDEN";
+            case 413 -> "PROFILE_IMAGE_TOO_LARGE";
+            case 415 -> "PROFILE_IMAGE_UNSUPPORTED";
+            case 503 -> "PROFILE_IMAGE_STORAGE_UNAVAILABLE";
             default -> "PROFILE_INVALID_REQUEST";
         };
         return problem(exception.getStatusCode().value(), exception.getReason(), code);
@@ -29,6 +32,11 @@ public class ProfileExceptionHandler {
     @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
     public ProblemDetail invalidInput(Exception exception) {
         return problem(400, "프로필 입력 값을 확인해 주세요.", "PROFILE_INVALID_REQUEST");
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ProblemDetail tooLarge(org.springframework.web.multipart.MaxUploadSizeExceededException exception) {
+        return problem(413, "이미지는 각각 256KB 이하여야 합니다.", "PROFILE_IMAGE_TOO_LARGE");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

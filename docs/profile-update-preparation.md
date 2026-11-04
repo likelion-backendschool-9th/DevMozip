@@ -93,3 +93,22 @@ ProfileUpdateIntegrationTest: 기존 JWT 검증 필터 → Controller → Servic
 
 ./gradlew build --no-daemon 성공. 전체 85개 테스트 통과(수정 통합 19개, 입력 검증 37개 포함).
 프론트 npm run build 성공. 실제 PostgreSQL 및 인증 담당 브랜치 전체 병합 후 검증은 남아 있다.
+
+## 제공된 로컬 설정 검토 (2026-11-04)
+
+사용자가 제공한 backend_resources/application-local.yml을 병합 예정 설정으로 검토했다.
+비밀 값은 문서에 복사하지 않고, 원본 설정과 초기 데이터 파일도 저장소에 추가하지 않았다.
+
+- H2 메모리 DB와 H2 Console을 사용한다.
+- ddl-auto=update이며 JPA 초기화 후 classpath*:*_data.sql을 실행한다.
+- 현재 브랜치는 H2가 testRuntimeOnly여서 일반 로컬 실행 시에는 병합 예정 빌드의 runtimeOnly H2 설정도 필요하다.
+- 현재 브랜치의 임시 인증에는 bootstrap 비밀번호 환경 설정이 필요하다. 제공된 local 파일만으로 실제 회원 인증 코드까지 대체되지는 않는다.
+- application-local.yml은 local 프로필을 명시적으로 활성화해야 사용된다. 공통 application.yaml 설정과 인증 코드도 같이 확인한다.
+- 같은 폴더 members_data.sql의 사용자 INSERT에는 job_category_id가 없으며 job_categories 초기 데이터도 없다.
+  현재 공개 조회는 직군 ID/직군이 없으면 404이므로, 실제 공개 프로필을 검증하려면 직군 초기 데이터와 회원 연결이 필요하다.
+  임의 직군을 자동 배정하거나 회원 조회 정책을 몰래 바꾸지 않았다.
+- 현재 수정 DTO는 실제 존재하는 직군 ID를 필수로 요구한다. 직군 ID가 준비되어야 수정 성공 검증이 가능하다.
+- *.yml은 현재 Git ignore 대상이다. 개인 설정을 강제로 커밋하지 않으며, 팀에서 관리할 설정인지 병합 시 확정한다.
+
+이 검토에서는 제공된 설정으로 서버를 실행하거나 실제 DB에 연결하지 않았다.
+기존 H2 테스트 85개 통과 기록과 제공 파일을 적용한 로컬 실행 검증은 구분한다.

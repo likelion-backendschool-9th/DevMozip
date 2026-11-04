@@ -33,3 +33,7 @@ out/
 # Deployment configuration is source-controlled; secrets and certificates are not.
 !.github/workflows/*.yml
 certs/
+
+# Local profile image uploads
+backend/uploads/
+/uploads/

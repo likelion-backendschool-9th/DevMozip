@@ -30,6 +30,8 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
+	// WebP 실제 디코딩 검증을 위한 ImageIO 플러그인
+	runtimeOnly 'com.twelvemonkeys.imageio:imageio-webp:3.15.0'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'

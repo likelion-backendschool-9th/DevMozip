@@ -33,3 +33,9 @@ management:
   endpoint:
     health:
       show-details: never
+
+# 로컬 개발용 이미지 저장. 업로드 파일은 Git 관리 대상이 아니다.
+profile:
+  images:
+    directory: ${PROFILE_IMAGE_DIRECTORY:./uploads/profile-images}
+    public-base-url: ${PROFILE_IMAGE_PUBLIC_BASE_URL:http://localhost:8080}

@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
         "DELETE FROM users",
         "DELETE FROM job_categories",
         "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자')",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, summary, profile_image, banner_image, collaboration_status, trust_score, career) VALUES (1, 1, 'profile-http-active', '통합 테스트 개발자', 'ACTIVE', '같이 개발해요', '/profile.png', '/banner.png', 'AVAILABLE', 36.50, 18)",
+        "INSERT INTO users (id, job_category_id, tag, nickname, status, summary, profile_image, banner_image, collaboration_status, trust_score, career, contact_hours) VALUES (1, 1, 'profile-http-active', '통합 테스트 개발자', 'ACTIVE', '같이 개발해요', '/profile.png', '/banner.png', 'AVAILABLE', 36.50, 18, '평일 19:00~22:00')",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (2, 1, 'profile-http-locked', '잠금 테스트', 'WARNED', 36.50)",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (3, 1, 'profile-http-suspended', '제재 테스트', 'SUSPENDED', 36.50)",
         "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (4, 1, 'profile-http-minimal', '기본 테스트', 'ACTIVE', 36.50)",
@@ -72,6 +72,7 @@ class ProfileHttpIntegrationTest {
         assertEquals("백엔드 개발자", json.get("jobCategory").get("name").asString());
         assertEquals("같이 개발해요", json.get("summary").asString());
         assertEquals(18, json.get("career").asInt());
+        assertEquals("평일 19:00~22:00", json.get("contactHours").asString());
         assertEquals("/profile.png", json.get("profileImage").asString());
         assertEquals("/banner.png", json.get("bannerImage").asString());
         assertEquals("AVAILABLE", json.get("collaborationStatus").asString());
@@ -79,7 +80,7 @@ class ProfileHttpIntegrationTest {
         Set<String> fields = new HashSet<>();
         json.propertyNames().forEach(fields::add);
         assertEquals(Set.of("id", "tag", "nickname", "jobCategory", "summary", "profileImage",
-                "bannerImage", "collaborationStatus", "trustScore", "career"), fields);
+                "bannerImage", "collaborationStatus", "trustScore", "career", "contactHours"), fields);
     }
 
     @Test
@@ -87,7 +88,7 @@ class ProfileHttpIntegrationTest {
         var response = get("/api/v1/users/profile-http-minimal");
         assertEquals(200, response.statusCode());
         var json = mapper.readTree(response.body());
-        for (String field : Set.of("summary", "profileImage", "bannerImage", "collaborationStatus", "career")) {
+        for (String field : Set.of("summary", "profileImage", "bannerImage", "collaborationStatus", "career", "contactHours")) {
             assertTrue(json.get(field).isNull(), field);
         }
     }

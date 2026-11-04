@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Sql(statements = {
         "DELETE FROM users", "DELETE FROM job_categories",
         "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자'), (2, '프론트엔드 개발자')",
-        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, summary, career, trust_score, profile_image, password_hash) VALUES (1,1,'owner@profile.test','원래닉네임','owner-tag','ACTIVE','USER','원래 소개',12,38.50,'/keep.png','unchanged-hash')",
+        "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, summary, career, trust_score, profile_image, password_hash, contact_hours) VALUES (1,1,'owner@profile.test','원래닉네임','owner-tag','ACTIVE','USER','원래 소개',12,38.50,'/keep.png','unchanged-hash','기존 연락 시간')",
         "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, career, trust_score) VALUES (2,1,'other@profile.test','OtherName','other-tag','ACTIVE','USER',24,36.50)",
         "INSERT INTO users (id, job_category_id, email, nickname, tag, status, role, career, trust_score) VALUES (3,1,'suspended@profile.test','정지회원','suspended-tag','SUSPENDED','USER',0,36.50)"
 })
@@ -64,6 +64,7 @@ class ProfileUpdateIntegrationTest {
         assertEquals("updated-tag", saved.getTag());
         assertEquals(2L, saved.getJobCategoryId());
         assertEquals(18, saved.getCareer());
+        assertEquals("기존 연락 시간", saved.getContactHours());
         assertEquals("수정 소개", saved.getSummary());
         assertEquals("RESTING", saved.getCollaborationStatus().name());
         assertEquals("USER", saved.getRole().name());
@@ -72,6 +73,45 @@ class ProfileUpdateIntegrationTest {
         assertEquals("OtherName", members.findById(2L).orElseThrow().getNickname());
         mvc.perform(get("/api/v1/users/updated-tag")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.career").value(18));
+    }
+
+    @Test
+    void savesContactHoursAndReturnsThemOnPublicRead() throws Exception {
+        var body = valid(); body.put("contactHours", "  평일 19:00~22:00 · 주말 협의  ");
+        mvc.perform(put("/api/v1/users/me/profile").header("Authorization", token("owner@profile.test"))
+                .contentType("application/json").content(mapper.writeValueAsString(body)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.contactHours").value("평일 19:00~22:00 · 주말 협의"));
+        assertEquals("평일 19:00~22:00 · 주말 협의", members.findById(1L).orElseThrow().getContactHours());
+        assertNull(members.findById(2L).orElseThrow().getContactHours());
+        mvc.perform(get("/api/v1/users/updated-tag")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.contactHours").value("평일 19:00~22:00 · 주말 협의"));
+    }
+
+    @Test
+    void nullContactHoursPreservesCurrentValue() throws Exception {
+        var body = valid(); body.put("contactHours", null);
+        perform(body, "owner@profile.test", 200);
+        assertEquals("기존 연락 시간", members.findById(1L).orElseThrow().getContactHours());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void explicitBlankClearsContactHours(String contact) throws Exception {
+        var body = valid(); body.put("contactHours", contact);
+        perform(body, "owner@profile.test", 200);
+        assertNull(members.findById(1L).orElseThrow().getContactHours());
+        mvc.perform(get("/api/v1/users/updated-tag")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.contactHours").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
+    void acceptsOneHundredCharactersAndRejectsOneHundredOne() throws Exception {
+        var body = valid(); body.put("contactHours", "가".repeat(101));
+        perform(body, "owner@profile.test", 400);
+        assertUnchanged();
+        body.put("contactHours", "가".repeat(100));
+        perform(body, "owner@profile.test", 200);
+        assertEquals("가".repeat(100), members.findById(1L).orElseThrow().getContactHours());
     }
 
     @Test
@@ -119,7 +159,7 @@ class ProfileUpdateIntegrationTest {
     void databaseConstraintFailureRollsBackAllChangedFields() throws Exception {
         jdbc.execute("ALTER TABLE users ADD CONSTRAINT profile_summary_test CHECK (summary IS NULL OR summary <> 'db-rejected')");
         try {
-            var body = valid(); body.put("summary", "db-rejected");
+            var body = valid(); body.put("summary", "db-rejected"); body.put("contactHours", "저장되지 않을 값");
             perform(body, "owner@profile.test", 409);
             assertUnchanged();
             assertEquals("원래 소개", members.findById(1L).orElseThrow().getSummary());
@@ -194,6 +234,7 @@ class ProfileUpdateIntegrationTest {
         assertEquals("원래닉네임", owner.getNickname());
         assertEquals("owner-tag", owner.getTag());
         assertEquals(12, owner.getCareer());
+        assertEquals("기존 연락 시간", owner.getContactHours());
         assertEquals(1L, owner.getJobCategoryId());
     }
 }

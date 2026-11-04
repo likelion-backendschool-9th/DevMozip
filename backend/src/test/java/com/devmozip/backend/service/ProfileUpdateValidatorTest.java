@@ -23,7 +23,7 @@ class ProfileUpdateValidatorTest {
 
     @Test
     void normalizesTextAndRetainsExplicitEmptySummary() {
-        var input = new ProfileUpdateRequest("  개발자  ", "  Dev_25  ", 1L, "  ", 18, "AVAILABLE");
+        var input = new ProfileUpdateRequest("  개발자  ", "  Dev_25  ", 1L, "  ", 18, "AVAILABLE", null);
         var valid = validator.validate(input);
         assertEquals("개발자", valid.nickname());
         assertEquals("Dev_25", valid.tag());
@@ -100,6 +100,6 @@ class ProfileUpdateValidatorTest {
     }
 
     private ProfileUpdateRequest request(String nickname, String tag, Long jobId, String summary, Integer career, String status) {
-        return new ProfileUpdateRequest(nickname, tag, jobId, summary, career, status);
+        return new ProfileUpdateRequest(nickname, tag, jobId, summary, career, status, null);
     }
 }

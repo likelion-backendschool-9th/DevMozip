@@ -3,6 +3,7 @@ package com.devmozip.backend.entity;
 import java.math.BigDecimal;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@DynamicUpdate
 @Table(name = "users")
 @Getter
 @Setter
@@ -120,6 +122,10 @@ public class Member {
     @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
+    // 연락 가능 시간. 자유 입력, 최대 100자, 미등록은 NULL.
+    @Column(name = "contact_hours", length = 100)
+    private String contactHours;
+
     // 경력 (개월 수, 신입이거나 입력하지 않으면 비어 있을 수 있다)
     @Column(name = "career", nullable = true)
     private Integer career;
@@ -129,7 +135,7 @@ public class Member {
                   String nickname, String tag, MemberRole role, MemberStatus status,
                   String externalLinks, BigDecimal trustScore, String paymentMethods,
                   CollaborationStatus collaborationStatus, String profileImage,
-                  String bannerImage, String summary, Integer career) {
+                  String bannerImage, String summary, Integer career, String contactHours) {
         this.jobCategoryId = jobCategoryId;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -146,5 +152,6 @@ public class Member {
         this.bannerImage = bannerImage;
         this.summary = summary;
         this.career = career;
+        this.contactHours = contactHours;
     }
 }

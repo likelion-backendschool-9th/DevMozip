@@ -28,11 +28,15 @@ public record ProfileUpdateRequest(
         Integer career,
 
         @Pattern(regexp = "AVAILABLE|RESTING|BUSY|OPEN_TO_OFFERS|UNAVAILABLE", message = "올바른 협업 가능 상태를 선택해 주세요.")
-        String collaborationStatus
+        String collaborationStatus,
+
+        @Size(max = 100, message = "연락 가능 시간은 100자 이내로 입력해 주세요.")
+        String contactHours
 ) {
     public ProfileUpdateRequest {
         nickname = nickname == null ? null : nickname.strip();
         tag = tag == null ? null : tag.strip();
         summary = summary == null ? null : summary.strip();
+        contactHours = contactHours == null ? null : contactHours.strip();
     }
 }
