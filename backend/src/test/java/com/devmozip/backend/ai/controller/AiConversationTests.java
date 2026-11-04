@@ -163,7 +163,8 @@ class AiConversationTests {
 		jdbc.execute("CREATE TABLE deletion_blocker (conversation_id BIGINT REFERENCES ai_conversations(id))");
 		try {
 			jdbc.update("INSERT INTO deletion_blocker(conversation_id) VALUES (?)", id);
-			mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isServiceUnavailable());
+			mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isInternalServerError())
+				.andExpect(jsonPath("$.status").value(500));
 			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations WHERE id=?", Integer.class, id));
 			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE id=?", Integer.class, mid));
 			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_recommendation_requests WHERE id=31", Integer.class));

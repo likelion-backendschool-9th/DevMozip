@@ -2,6 +2,18 @@
 
 마지막 갱신: 2026-11-04. 새 채팅은 [루트 작업 규칙](../AGENTS.md), [AI 작업 규칙](ai-development.md), [기능 명세](ai-matching.md), [API 명세](ai-api-spec.md)와 이 문서를 읽고 실제 Git/코드를 다시 확인한다. 이 문서는 현재 구현을 기준으로 이전 반복 기록을 정리한 것이다.
 
+## 2026-11-04 develop 기준 CI 실패 수정 (최신 검증)
+
+- 범위: CI/CD test 실패 원인을 확인하고 AI 테스트·API 명세만 현재 develop 계약에 맞췄다. 공통 인증·예외 처리·CI 워크플로·다른 도메인 코드는 수정하지 않았다. 비로그인 대화 생성 허용은 이번 수정에 포함하지 않았다.
+- 실제 PR CI 실행 `41773756725`는 백엔드 130개 중 `foreignKeyConflictRollsBackAllChildDeletes` 하나가 실패했다. AI 테스트가 예전 DB 오류 503을 기대했지만 공통 `GlobalExceptionHandler`는 500을 반환한다.
+- 변경: `backend/src/test/java/com/devmozip/backend/ai/controller/AiConversationTests.java`의 기대 상태를 500으로 맞추고 오류 본문 status=500을 확인한다. FK 충돌 후 대화·메시지·추천 요청·추천 결과 보존 검증은 유지했다. `docs/ai-api-spec.md`의 DB 오류 계약도 500으로 정정했다.
+- 최신 develop `a7af1c3`을 fetch했고, `/tmp/devmozip-develop-ci-56s7s6i0`에 최신 develop과 현재 AI 변경을 충돌 없이 적용해 검증했다. 현재 feature 브랜치에 develop 병합 커밋은 생성하지 않았다.
+- 현재 브랜치 backend `./gradlew test --no-daemon --rerun-tasks`: 성공, 19개 중 18개 통과·1개 스킵·실패 0. 최신 develop 통합본의 같은 명령: 성공, 130개 중 129개 통과·1개 스킵·실패 0. 스킵은 Docker가 필요한 `BackendApplicationTests.contextLoads`이며 실제 PostgreSQL Testcontainers 검증을 로컬 성공으로 보고하지 않는다.
+- 현재 브랜치 frontend `npm run build`: 샌드박스에서는 TypeScript `--showConfig` 파싱 실패, 제한 밖에서 재실행하여 성공했다. 프론트 기능/설정 수정은 필요하지 않았다. 따라서 아래의 프론트 빌드 실패 기록은 이전 실행 결과다.
+- 최신 develop 통합본: `npm ci`, `npm run typecheck`, `npm test` 성공(44개 파일·499개 테스트). `npm run build`도 성공했다.
+- 배포 검사: `bash -n deploy/blue-green.sh deploy/setup-host.sh`, `python3 scripts/test_blue_green.py` 성공(4개). Compose config 검사는 이 WSL 환경에 Docker 통합이 없어 실행 실패했다. 실제 GitHub CI 재실행·배포는 하지 않았다.
+- 현재 수정의 커밋·푸시는 하지 않았다. 실제 로그인 사용자 연결·비로그인 대화 정책·실제 팀 DB 검증은 별도 작업으로 남는다.
+
 ## 2026-11-04 사용자 식별 테스트 import 수정
 
 - `backend/src/test/java/com/devmozip/backend/ai/CurrentUserConfigurationTests.java`에 `security.ai.CurrentUserConfiguration`, `security.ai.CurrentUserProvider` import 2개만 추가했다. 테스트 로직·기능·공통 코드는 변경하지 않았다.
@@ -53,7 +65,7 @@
 | DELETE `/api/v1/ai/conversations/{id}` | 소유권 확인 후 연관 데이터 물리 삭제, 204 |
 | POST `/api/v1/ai/conversations/{id}/messages` | 공백이 아닌 content를 USER 메시지로 저장, conversation_id 연결·대화 수정 시각 갱신, 201 |
 
-- 타인 대화와 미존재 대화는 동일한 404, 입력/ID 형식 오류는 400이다. 공통 ErrorResponse를 Controller에서 재사용하고 공통 인증 401·DB 오류 503 처리는 기존 코드를 유지한다.
+- 타인 대화와 미존재 대화는 동일한 404, 입력/ID 형식 오류는 400이다. 공통 ErrorResponse를 Controller에서 재사용하고 공통 인증 401·DB 오류 500 처리는 develop의 기존 코드를 유지한다.
 - `owned()`가 현재 사용자 ID와 대화 ID를 함께 조회한다. 메시지 저장·삭제는 대화 행에 비관적 쓰기 잠금을 사용한다.
 - 삭제는 추천 결과 → 추천 요청 → 메시지 → 대화 순으로 하나의 트랜잭션에서 실행한다. 대화 FK뿐 아니라 메시지 FK로 연결된 추천 요청도 포함한다. `ai_usages`는 삭제/차감/복원하지 않는다. FK 충돌 시 전체를 롤백한다.
 - `type`, `status`는 엔티티에서 제거했다. 메시지 역할은 USER/ASSISTANT지만 저장 API는 USER만 생성한다. 기존 저장 ASSISTANT 메시지는 조회할 수 있다.
