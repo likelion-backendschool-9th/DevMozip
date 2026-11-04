@@ -14,7 +14,7 @@ type Result = { status: 'loading' } | { status: 'ready'; profile: ProfileDetail 
 export function ProfileApiResult({ result, onRetry, onEdit }: { result: Result; onRetry: () => void; onEdit?: () => void }) {
     if (result.status === 'loading') return <section className="planned-card" role="status" aria-live="polite">프로필 정보를 불러오고 있어요…</section>;
     if (result.status === 'ready') return <><ApiProfileHeader key={`${result.profile.id}:${result.profile.profileImage}:${result.profile.bannerImage}`} profile={result.profile} onEdit={onEdit} />
-        <ApiProfileTabs nickname={result.profile.nickname} /></>;
+        <ApiProfileTabs nickname={result.profile.nickname} slug={result.profile.tag} canEdit={!!onEdit} /></>;
     const missing = result.code === 404;
     const denied = result.code === 401 || result.code === 403;
     return <section className="planned-card" role="alert">

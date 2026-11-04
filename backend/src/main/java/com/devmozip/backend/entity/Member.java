@@ -126,6 +126,18 @@ public class Member {
     @Column(name = "contact_hours", length = 100)
     private String contactHours;
 
+    // 상세 자기소개는 상단 한 줄 소개(summary)와 별도로 관리한다.
+    @Column(name = "introduction", columnDefinition = "text")
+    private String introduction;
+
+    @Column(name = "introduction_format", length = 10)
+    private String introductionFormat;
+
+    public void updateIntroduction(String introduction, String introductionFormat) {
+        this.introduction = introduction;
+        this.introductionFormat = introductionFormat;
+    }
+
     public void updateProfile(String nickname, String tag, Long jobCategoryId, String summary,
                               Integer career, CollaborationStatus collaborationStatus) {
         this.nickname = nickname;
