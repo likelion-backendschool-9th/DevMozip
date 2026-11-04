@@ -43,6 +43,8 @@ public class Project extends BaseEntity {
 	private boolean isPublic;
 	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 30)
 	private ProjectStatus status;
+	@Column(name = "view_count", nullable = false, columnDefinition = "bigint default 0")
+	private long viewCount;
 	@Column(name = "recruitment_start", nullable = false)
 	private LocalDate recruitmentStart;
 	@Column(name = "recruitment_end", nullable = false)
@@ -77,6 +79,8 @@ public class Project extends BaseEntity {
 		this.developmentEnd = developmentEnd;
 		this.status = ProjectStatus.RECRUITING;
 	}
+
+	public void recordView() { viewCount++; }
 
 	public int getTotalCapacity() {
 		return 1 + recruitmentSlots.stream().mapToInt(ProjectRecruitmentSlot::capacity).sum();
