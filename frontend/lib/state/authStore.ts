@@ -1,11 +1,10 @@
-import { logoutAction } from '@/lib/auth/actions';
+import { checkAvailabilityAction, logoutAction, signupAction } from '@/lib/auth/actions';
 import { projectServerIdentity } from '@/lib/account/serverIdentity';
 import type { SessionSnapshot } from '@/types/session';
 import { createLocalStore, derived, useStore } from '@/lib/localStore';
 import { loadProfiles } from '@/lib/profiles/profileService';
 import { canViewAccount } from '@/lib/profiles/privacyService';
 import { applyAdministration, effectiveUser, isSuspended, loadAdministration, saveAdministration } from '@/lib/administration/administrationService';
-import { loadAccounts, emailAvailable } from '@/lib/account/authService';
 import { applyAccountArea, loadAccountArea, onboardingComplete, saveAccountArea } from '@/lib/account/accountAreaService';
 import { onboardingErrors } from '@/lib/account/onboardingService';
 import { demoAccounts } from '@/mocks/auth';
@@ -16,17 +15,16 @@ import type { AuthUser, SignupInput } from '@/types/auth';
 
 type PreferenceAction = Exclude<AccountAreaAction, { type: 'onboarding-complete' } | { type: 'password-confirmed' }>;
 
-// 백엔드 로그인 세션 · 이전에 가입한 Mock 계정 · 관리자 제재 · 계정 설정 · 프로필에서 바꾼 닉네임.
+// 백엔드 로그인 세션 · 관리자 제재 · 계정 설정 · 프로필에서 바꾼 닉네임.
 // 로그인 상태는 BFF(/api/auth/session)가 백엔드에서 확인한 값만 쓴다. ClientReady가 화면마다 동기화한다.
 const serverSessionStore = createLocalStore<SessionSnapshot>(() => ({ identity: null }));
 export function syncServerSession(snapshot: SessionSnapshot) { serverSessionStore.set(snapshot); }
 
-const accountsStore = createLocalStore(loadAccounts);
 const administrationStore = createLocalStore(loadAdministration);
 const accountAreaStore = createLocalStore(loadAccountArea);
 const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.fromEntries(Object.values(loadProfiles().profiles).map(p => [p.id, p.nickname])));
 
-export const authSources = [serverSessionStore, ...prototypeSources, accountsStore, administrationStore, accountAreaStore, profileNamesStore];
+export const authSources = [serverSessionStore, ...prototypeSources, administrationStore, accountAreaStore, profileNamesStore];
 
 /**
  * 백엔드가 확인한 로그인 계정에 브라우저 데모 상태(구독 데모·관리자 데모 제재)를 화면 표시용으로만 반영한다.
@@ -44,7 +42,7 @@ const currentUser = derived(authSources, (): AuthUser | null => {
     return user ? { ...user, nickname: profileNamesStore.get()[user.id] || user.nickname } : null;
 });
 
-const publicUsers = derived(authSources, () => [...demoAccounts, ...accountsStore.get().map(a => a.user)].map(u => ({ ...effectiveUser(u, administrationStore.get()), nickname: profileNamesStore.get()[u.id] || u.nickname })));
+const publicUsers = derived(authSources, () => demoAccounts.map(u => ({ ...effectiveUser(u, administrationStore.get()), nickname: profileNamesStore.get()[u.id] || u.nickname })));
 
 export const getUser = currentUser.get;
 export const getPublicUsers = publicUsers.get;
@@ -92,11 +90,13 @@ function logout() {
     void logoutAction().then(result => { if (result?.error) { serverSessionStore.set(previous); notify(result.error); } }).catch(() => { serverSessionStore.set(previous); notify('로그아웃을 완료하지 못했습니다.'); });
 }
 
-// 회원가입·비밀번호 변경 API는 아직 백엔드에 없다.
-const signup: (input: SignupInput) => Promise<void> = async () => {
-    throw new Error('실제 회원가입은 아직 제공하지 않습니다. 등록된 계정으로 로그인해 주세요.');
-};
+/** 백엔드에 가입하고 바로 로그인한다. 실패하면 화면에 보여줄 문구로 예외를 던진다 */
+async function signup(input: SignupInput) {
+    const result = await signupAction(input);
+    if (result?.error) throw new Error(result.error);
+}
 
+// 비밀번호 변경 API는 아직 백엔드에 없다.
 const confirmPasswordChange: (input: PasswordChangeInput) => Promise<void> = async () => {
     throw new Error('실제 비밀번호 변경은 아직 제공하지 않습니다.');
 };
@@ -132,8 +132,7 @@ const auth = derived(authSources, () => {
         administer,
         signup,
         logout,
-        checkEmail: (email: string) => emailAvailable(email, accountsStore.get()),
-        checkNickname: (nickname: string) => !getPublicUsers().some(u => u.nickname.toLowerCase() === nickname.trim().toLowerCase()),
+        checkAvailability: checkAvailabilityAction,
     };
 });
 

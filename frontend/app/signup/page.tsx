@@ -13,7 +13,7 @@ import type { SignupErrors, SignupInput } from '@/types/auth';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 function SignupForm() {
-    const { signup, checkEmail, checkNickname } = useAuth();
+    const { signup, checkAvailability } = useAuth();
     const { notify } = usePrototype();
     const navigate = useNavigate();
     const [form, setForm] = useState<SignupInput>(() => structuredClone(emptySignup));
@@ -21,6 +21,7 @@ function SignupForm() {
     const [checkedEmail, setCheckedEmail] = useState('');
     const [checkedNickname, setCheckedNickname] = useState('');
     const [busy, setBusy] = useState(false);
+    const [checking, setChecking] = useState<'email' | 'nickname' | null>(null);
     const [failure, setFailure] = useState('');
     const edit = <K extends keyof SignupInput>(key: K, value: SignupInput[K]) => {
         setForm(prev => ({ ...prev, [key]: value }));
@@ -29,7 +30,7 @@ function SignupForm() {
         if (key === 'email') setCheckedEmail('');
         if (key === 'nickname') setCheckedNickname('');
     };
-    const duplicate = (field: 'email' | 'nickname') => {
+    const duplicate = async (field: 'email' | 'nickname') => {
         const value = form[field];
         if (!(field === 'email' ? validEmail(value) : validNickname(value))) {
             setErrors(prev => ({
@@ -41,8 +42,19 @@ function SignupForm() {
             }));
             return;
         }
-        const available = field === 'email' ? checkEmail(value) : checkNickname(value);
-        setErrors(prev => ({ ...prev, [field]: available ? undefined : '이미 사용 중입니다.' }));
+        let available = false;
+        let message = '이미 사용 중입니다.';
+        setChecking(field);
+        try {
+            const result = await checkAvailability(field, value);
+            if ('error' in result) message = result.error;
+            else available = result.available;
+        } catch {
+            message = '중복 확인을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+        } finally {
+            setChecking(null);
+        }
+        setErrors(prev => ({ ...prev, [field]: available ? undefined : message }));
         if (available) {
             if (field === 'email') setCheckedEmail(normalizeEmail(value));
             else setCheckedNickname(value.trim());
@@ -62,7 +74,7 @@ function SignupForm() {
         try {
             await signup(form);
             setForm(structuredClone(emptySignup));
-            notify('Mock 회원가입이 완료되었습니다. 프로필 온보딩을 시작해 주세요.');
+            notify('회원가입이 완료되었습니다. 프로필 온보딩을 시작해 주세요.');
             navigate('/onboarding');
         } catch (err) {
             setFailure(err instanceof Error ? err.message : '회원가입하지 못했습니다.');
@@ -78,9 +90,6 @@ function SignupForm() {
         );
     return (
         <form className={[styles.scope, 'auth-form signup-form'].join(' ')} onSubmit={submit} noValidate>
-            <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                발표용 가상 이메일과 비밀번호만 입력해 주세요. 실제 개인정보를 입력하지 마세요.
-            </p>
             <label htmlFor="signup-email">이메일</label>
             <div className={[styles.scope, 'check-field'].join(' ')}>
                 <Input
@@ -91,18 +100,18 @@ function SignupForm() {
                     onChange={e => edit('email', e.target.value)}
                     maxLength={254}
                     placeholder="you@example.com"
-                    disabled={busy}
+                    disabled={busy || checking === 'email'}
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? 'signup-email-error' : undefined}
                 />
-                <Button type="button" variant="secondary" disabled={busy} onClick={() => duplicate('email')}>
+                <Button type="button" variant="secondary" disabled={busy || checking !== null} onClick={() => duplicate('email')}>
                     중복 확인
                 </Button>
             </div>
             {err('email')}
             {checkedEmail && (
                 <p className={[styles.scope, 'check-success'].join(' ')} role="status">
-                    사용 가능한 이메일입니다. (Mock 확인)
+                    사용 가능한 이메일입니다.
                 </p>
             )}
             <div className={[styles.scope, 'auth-two-columns'].join(' ')}>
@@ -146,17 +155,17 @@ function SignupForm() {
                     onChange={e => edit('nickname', e.target.value)}
                     placeholder="함께 부를 이름, 2~20자"
                     autoComplete="nickname"
-                    disabled={busy}
+                    disabled={busy || checking === 'nickname'}
                     aria-invalid={!!errors.nickname}
                 />
-                <Button type="button" variant="secondary" onClick={() => duplicate('nickname')} disabled={busy}>
+                <Button type="button" variant="secondary" onClick={() => duplicate('nickname')} disabled={busy || checking !== null}>
                     중복 확인
                 </Button>
             </div>
             {err('nickname')}
             {checkedNickname && (
                 <p className={[styles.scope, 'check-success'].join(' ')} role="status">
-                    사용 가능한 닉네임입니다. (Mock 확인)
+                    사용 가능한 닉네임입니다.
                 </p>
             )}
             <div className={[styles.scope, 'auth-two-columns'].join(' ')}>
@@ -260,7 +269,7 @@ function SignupForm() {
                     {failure}
                 </p>
             )}
-            <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')} disabled={busy}>
+            <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')} disabled={busy || checking !== null}>
                 {busy ? '가입 정보를 저장하고 있어요…' : '회원가입'}
             </Button>
             <p className={[styles.scope, 'auth-switch'].join(' ')}>

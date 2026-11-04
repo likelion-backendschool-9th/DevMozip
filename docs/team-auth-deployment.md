@@ -13,7 +13,7 @@
 
 ## 계정과 인증
 
-로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬 H2(local 프로필)에서는 `members_data.sql`이 시작 시 넣는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 브라우저 localStorage에 남은 Mock 가입 계정(salt + SHA-256 데모 해시)은 BCrypt로 변환할 수 없어 서버 계정으로 이관하지 않으며 로그인에 쓸 수 없다.
+로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬 H2(local 프로필)에서는 `members_data.sql`이 시작 시 넣는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 회원가입은 직군·기술 스택·관심 분야를 job_categories·skills·interests 테이블에서 이름으로 찾으므로 이 세 테이블에 초기 데이터가 있어야 한다. 로컬 H2에서는 `job_categories_data.sql`·`skills_data.sql`·`interests_data.sql`이 시작 시 넣는다. `*.sql`은 git에 올리지 않으므로 팀원에게 따로 공유하고, 서버 DB에는 별도로 넣는다.
 
 | 구분 | 동작 |
 |---|---|
@@ -22,17 +22,19 @@
 | 로그인 상태 | 액세스·리프레시 HttpOnly 쿠키 |
 | 권한 근거 | JWT 서명을 백엔드가 검증한 GET /api/v1/users/me 응답 (USER·PREMIUM·ADMIN) |
 | 계정 전환 | 헤더 로그아웃 후 다른 계정으로 로그인 |
-| 가입·비밀번호 변경 | 미제공 안내 |
+| 회원가입 | POST /api/v1/auth/signup으로 users·user_skills·user_interests에 저장한 뒤 POST /api/v1/auth/login으로 바로 로그인 |
+| 이메일·닉네임 중복 확인 | GET /api/v1/auth/check-email, /check-nickname으로 users 테이블 조회. 제출할 때도 서버가 다시 확인 |
+| 비밀번호 변경 | 미제공 안내 |
 
 토큰은 localStorage나 API JSON 응답을 통해 브라우저 JavaScript에 전달하지 않는다. 브라우저는 같은 출처의 BFF와 서버 액션만 호출한다.
 
-프로필 표시는 아직 Mock 데이터를 쓴다. 로그인한 이메일이 데모 이메일과 같으면 해당 Mock 프로필을 재사용한다. 화면 역할은 서버 역할을 따른다(USER→일반, PREMIUM→프리미엄, ADMIN→관리자). 브라우저의 구독 데모·관리자 데모 제재는 화면 표시에만 반영하며 이것으로 관리자 역할을 얻을 수는 없다. proxy의 /admin 접근 판단과 백엔드 인가는 토큰 역할만 사용한다.
+프로필 표시는 아직 Mock 데이터를 쓴다. 로그인한 이메일이 데모 이메일과 같으면 해당 Mock 프로필을 재사용하고, 새로 가입한 계정을 포함한 그 밖의 이메일은 첫 번째 데모 프로필을 표시한다. 화면 역할은 서버 역할을 따른다(USER→일반, PREMIUM→프리미엄, ADMIN→관리자). 브라우저의 구독 데모·관리자 데모 제재는 화면 표시에만 반영하며 이것으로 관리자 역할을 얻을 수는 없다. proxy의 /admin 접근 판단과 백엔드 인가는 토큰 역할만 사용한다.
 
 ## 아직 Mock인 기능
 
 프로젝트·게시글·포트폴리오·메시지·결제·구독·신고·관리자 도메인은 계속 브라우저 기반 데모다. 실제 데이터 저장·공유·업무 API 인가는 이번 구현에 포함하지 않는다. 관리자 화면의 데모 관리도 실제 서버 회원을 변경하지 않는다. 인증 도입만으로 업무 서비스가 운영 가능한 상태가 되는 것은 아니다.
 
-실제 회원가입·비밀번호 변경 API는 아직 없다.
+실제 비밀번호 변경 API는 아직 없다.
 
 ## 토큰 동작과 제한
 

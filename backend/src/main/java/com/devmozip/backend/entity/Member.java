@@ -9,17 +9,22 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "users")
+// 이미 있는 users 테이블에도 제약이 추가되도록 @Column(unique)가 아니라 여기에 둔다.
+@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
@@ -53,11 +58,12 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 직군 ID (FK) - 직군 엔티티가 생기면 연관관계로 바꾼다.
-    @Column(name = "job_category_id")
-    private Long jobCategoryId;
+    // 직군 ID (FK)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_category_id")
+    private JobCategory jobCategory;
 
-    // 이메일
+    // 이메일 (카카오 가입 회원은 비어 있을 수 있어 not null은 걸지 않는다)
     @Column(name = "email", length = 255)
     private String email;
 
@@ -118,17 +124,21 @@ public class Member {
     @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
-    // 경력 (개월 수, 신입이거나 입력하지 않으면 비어 있을 수 있다)
-    @Column(name = "career", nullable = true)
-    private Integer career;
+    // 경력 (가입 화면에서 선택한 문구를 그대로 저장한다. 예: 3년 차)
+    @Column(name = "career", length = 30)
+    private String career;
+
+    // 연락 가능 시간
+    @Column(name = "contact_hours", length = 100)
+    private String contactHours;
 
     @Builder
-    public Member(Long jobCategoryId, String email, String passwordHash, String kakaoId,
+    public Member(JobCategory jobCategory, String email, String passwordHash, String kakaoId,
                   String nickname, String tag, MemberRole role, MemberStatus status,
                   String externalLinks, BigDecimal trustScore, String paymentMethods,
                   CollaborationStatus collaborationStatus, String profileImage,
-                  String bannerImage, String summary, Integer career) {
-        this.jobCategoryId = jobCategoryId;
+                  String bannerImage, String summary, String career, String contactHours) {
+        this.jobCategory = jobCategory;
         this.email = email;
         this.passwordHash = passwordHash;
         this.kakaoId = kakaoId;
@@ -144,5 +154,16 @@ public class Member {
         this.bannerImage = bannerImage;
         this.summary = summary;
         this.career = career;
+        this.contactHours = contactHours;
+    }
+
+    // 협업 가능 상태와 연락 가능 시간을 바꾼다. null로 받은 값은 그대로 둔다.
+    public void updateAvailability(CollaborationStatus collaborationStatus, String contactHours) {
+        if (collaborationStatus != null) {
+            this.collaborationStatus = collaborationStatus;
+        }
+        if (contactHours != null) {
+            this.contactHours = contactHours;
+        }
     }
 }

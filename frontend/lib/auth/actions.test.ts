@@ -3,10 +3,37 @@ const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn(), 
 vi.mock('./backend', () => ({ backendFetch: doubles.fetch, readErrorMessage: async () => '인증 실패' }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }) }));
 vi.mock('next/navigation', () => ({ redirect: doubles.redirect }));
-import { loginAction, logoutAction } from './actions';
+import { checkAvailabilityAction, loginAction, logoutAction, signupAction } from './actions';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from './cookies';
+const signupInput = { email: ' New@Devmozip.Demo ', password: 'Devmozip123', confirmPassword: 'Devmozip123', nickname: ' 새회원 ', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'], available: true };
 beforeEach(() => { vi.clearAllMocks(); doubles.get.mockReturnValue({ value: 'refresh' }); });
 describe('인증 서버 액션', () => {
+    it('로그인은 이메일을 소문자로 맞춰 /api/v1/auth/login을 호출한다', async () => {
+        doubles.fetch.mockResolvedValue(new Response('{}', { status: 401 }));
+        const form = new FormData(); form.set('username', ' Member@Devmozip.Demo '); form.set('password', 'input');
+        await loginAction(form);
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/login', expect.objectContaining({ body: JSON.stringify({ username: 'member@devmozip.demo', password: 'input' }) }));
+    });
+    it('회원가입 성공시 바로 로그인해 쿠키를 쓰고 이동은 호출한 화면에 맡긴다', async () => {
+        const access = `h.${Buffer.from(JSON.stringify({ sub: 'new@devmozip.demo', role: 'USER', exp: 9999999999 })).toString('base64url')}.s`;
+        doubles.fetch.mockResolvedValueOnce(Response.json({ id: 1 }, { status: 201 })).mockResolvedValueOnce(Response.json({ accessToken: access, refreshToken: 'refresh' }));
+        expect(await signupAction(signupInput)).toBeNull();
+        expect(doubles.fetch).toHaveBeenNthCalledWith(1, '/api/v1/auth/signup', expect.objectContaining({ body: JSON.stringify({ ...signupInput, email: 'new@devmozip.demo', nickname: '새회원' }) }));
+        expect(doubles.fetch).toHaveBeenNthCalledWith(2, '/api/v1/auth/login', expect.objectContaining({ body: JSON.stringify({ username: 'new@devmozip.demo', password: 'Devmozip123' }) }));
+        expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, access, expect.objectContaining({ httpOnly: true }));
+        expect(doubles.redirect).not.toHaveBeenCalled();
+    });
+    it('회원가입이 거절되면 로그인을 호출하지 않고 쿠키도 쓰지 않는다', async () => {
+        doubles.fetch.mockResolvedValue(new Response('{}', { status: 409 }));
+        expect(await signupAction(signupInput)).toEqual({ error: '인증 실패' });
+        expect(doubles.fetch).toHaveBeenCalledTimes(1);
+        expect(doubles.set).not.toHaveBeenCalled();
+    });
+    it('가입 후 로그인에 실패하면 다시 가입하지 않도록 로그인 화면으로 안내한다', async () => {
+        doubles.fetch.mockResolvedValueOnce(Response.json({ id: 1 }, { status: 201 })).mockResolvedValueOnce(new Response('{}', { status: 503 }));
+        expect(await signupAction(signupInput)).toEqual({ error: '회원가입은 완료했지만 로그인하지 못했습니다. 로그인 화면에서 다시 시도해 주세요.' });
+        expect(doubles.set).not.toHaveBeenCalled();
+    });
     it('로그인 성공시에만 두 HttpOnly 쿠키를 쓰고 내부 경로로 이동한다', async () => {
         const access = `h.${Buffer.from(JSON.stringify({ sub: 'user', role: 'USER', exp: 9999999999 })).toString('base64url')}.s`;
         doubles.fetch.mockResolvedValue(Response.json({ accessToken: access, refreshToken: 'refresh' }));
@@ -20,11 +47,29 @@ describe('인증 서버 액션', () => {
         expect(await loginAction(new FormData())).toEqual({ error: '인증 실패' });
         expect(doubles.set).not.toHaveBeenCalled();
     });
+    it('이메일 중복 확인은 소문자로 맞춰 백엔드에 묻는다', async () => {
+        doubles.fetch.mockResolvedValue(Response.json({ available: false }));
+        expect(await checkAvailabilityAction('email', ' New@Devmozip.Demo ')).toEqual({ available: false });
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/check-email?email=new%40devmozip.demo');
+    });
+    it('닉네임 중복 확인은 공백을 빼고 인코딩해 백엔드에 묻는다', async () => {
+        doubles.fetch.mockResolvedValue(Response.json({ available: true }));
+        expect(await checkAvailabilityAction('nickname', ' 새 회원 ')).toEqual({ available: true });
+        expect(doubles.fetch).toHaveBeenCalledWith(`/api/v1/auth/check-nickname?nickname=${encodeURIComponent('새 회원')}`);
+    });
+    it('중복 확인에 실패하면 사용 가능으로 답하지 않고 오류를 돌려준다', async () => {
+        doubles.fetch.mockResolvedValueOnce(new Response('{}', { status: 500 }));
+        expect(await checkAvailabilityAction('email', 'a@b.co')).toEqual({ error: '인증 실패' });
+        doubles.fetch.mockRejectedValueOnce(new Error('down'));
+        expect(await checkAvailabilityAction('email', 'a@b.co')).toEqual({ error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+        doubles.fetch.mockResolvedValueOnce(Response.json({}));
+        expect(await checkAvailabilityAction('email', 'a@b.co')).toEqual({ error: '중복 확인 응답을 확인할 수 없습니다.' });
+    });
     it('로그아웃 성공 후 같은 옵션으로 두 쿠키를 만료시키고 이동은 호출한 화면에 맡긴다', async () => {
         doubles.fetch.mockResolvedValue(new Response(null, { status: 204 }));
         expect(await logoutAction()).toBeNull();
         expect(doubles.redirect).not.toHaveBeenCalled();
-        expect(doubles.fetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({ body: JSON.stringify({ refreshToken: 'refresh' }) }));
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/logout', expect.objectContaining({ body: JSON.stringify({ refreshToken: 'refresh' }) }));
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
     });

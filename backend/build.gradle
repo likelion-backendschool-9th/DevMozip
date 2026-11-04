@@ -25,6 +25,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	// 헬스체크(/actuator/health) - 프론트 /api/health와 블루그린 배포가 사용한다
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 요청 값 검증 (@Valid)
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
