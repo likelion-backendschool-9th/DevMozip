@@ -1,7 +1,7 @@
 package com.devmozip.backend.ai.controller;
 
-import com.devmozip.backend.auth.JwtProvider;
-import com.devmozip.backend.auth.RefreshTokenStore;
+import com.devmozip.backend.security.jwt.JwtProvider;
+import com.devmozip.backend.security.jwt.RefreshTokenStore;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

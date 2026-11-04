@@ -1,6 +1,6 @@
-package com.devmozip.backend.ai.repository;
+package com.devmozip.backend.repository;
 
-import com.devmozip.backend.ai.entity.AiConversation;
+import com.devmozip.backend.entity.AiConversation;
 
 import jakarta.persistence.LockModeType;
 import java.util.List;

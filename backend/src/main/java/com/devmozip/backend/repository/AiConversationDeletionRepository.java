@@ -1,4 +1,4 @@
-package com.devmozip.backend.ai.repository;
+package com.devmozip.backend.repository;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;

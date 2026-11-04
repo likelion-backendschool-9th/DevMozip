@@ -1,6 +1,41 @@
 # AI 추천 개발 진행 현황
 
-마지막 갱신: 2026-11-03. 새 채팅은 [루트 작업 규칙](../AGENTS.md), [AI 작업 규칙](../backend/src/main/java/com/devmozip/backend/ai/AGENTS.md), [기능 명세](ai-matching.md), [API 명세](ai-api-spec.md)와 이 문서를 읽고 실제 Git/코드를 다시 확인한다. 이 문서는 현재 구현을 기준으로 이전 반복 기록을 정리한 것이다.
+마지막 갱신: 2026-11-04. 새 채팅은 [루트 작업 규칙](../AGENTS.md), [AI 작업 규칙](ai-development.md), [기능 명세](ai-matching.md), [API 명세](ai-api-spec.md)와 이 문서를 읽고 실제 Git/코드를 다시 확인한다. 이 문서는 현재 구현을 기준으로 이전 반복 기록을 정리한 것이다.
+
+## 2026-11-04 사용자 식별 테스트 import 수정
+
+- `backend/src/test/java/com/devmozip/backend/ai/CurrentUserConfigurationTests.java`에 `security.ai.CurrentUserConfiguration`, `security.ai.CurrentUserProvider` import 2개만 추가했다. 테스트 로직·기능·공통 코드는 변경하지 않았다.
+- backend `./gradlew test --no-daemon`: 테스트 컴파일 통과. 사용자 식별 설정 테스트 3개 통과. 전체 19개 중 17개 통과·1개 실패·1개 스킵. 기존 FK 충돌 테스트의 503 기대/500 응답 불일치는 미수정 상태다.
+- frontend `npm run build`: 컴파일 후 기존 TypeScript `--showConfig` 파싱 오류로 실패. 생성된 next-env.d.ts는 실행 전 상태로 보존했다. `git diff --check` 통과. 커밋·푸시는 하지 않았다.
+
+## 2026-11-04 저장 후 AI 서비스 분리 재적용
+
+- 저장된 `service/AiConversationService.java`가 이전 패키지의 로직 포함 클래스로 바뀌어 있어, 현재 DTO를 참조하는 메서드 5개의 인터페이스로 수정했다. 기존 구현체의 로직은 유지하고 `CurrentUserProvider` import만 실제 `security.ai` 경로로 수정했다. 컨트롤러와 다른 도메인은 변경하지 않았다.
+- backend `./gradlew test --no-daemon`: 첫 실행은 구현체의 이전 사용자 식별 import로 컴파일 실패. import 수정 후 재실행에서 main 컴파일 통과, compileTestJava는 기존 CurrentUserConfigurationTests의 이동된 CurrentUserConfiguration/CurrentUserProvider import 누락으로 실패했다. 이번에는 서비스 수정만 요청되어 해당 테스트는 수정하지 않았으며 테스트 실행 단계에 도달하지 못했다.
+- frontend `npm run build`: 기존 TypeScript `--showConfig` 파싱 오류로 실패. 생성된 next-env.d.ts는 실행 전 상태로 보존했다. 기능 로직 변경·커밋·푸시는 하지 않았다.
+
+## 2026-11-04 AI 작업 규칙 문서 이동
+
+- 사용자 요청에 따라 `security/ai/AGENTS.md`를 `docs/ai-development.md`로 이동했다. AI 전용 안내로 보존하고 사용자 식별 경로를 `security/ai`로 갱신했다. 이 문서 상단의 AI 작업 규칙 링크도 변경했다.
+- 공통 AGENTS.md·다른 팀원 파일·Java 코드·설정은 수정하지 않았다. 아래 AGENTS.md 경로 언급은 이전 작업 기록이다.
+- 검증: 문서 링크 및 `git diff --check` 확인. 문서만 변경하여 새 기능 테스트와 백엔드 테스트는 실행하지 않았다. frontend에서 `npm run build` 실행: 컴파일 후 기존 TypeScript `--showConfig` 파싱 오류로 실패. 생성된 next-env.d.ts는 실행 전 상태로 보존했다.
+
+## 2026-11-04 AI 컨트롤러 import 재확인
+
+- 이번 변경: `controller/AiConversationController.java`에서 이전 `auth.ErrorResponse`를 `dto.common.ErrorResponse`로 수정하고 누락된 `dto.ai.CreateMessageRequest` import를 추가했다. 공통 ErrorResponse·인증·예외 처리·기능 로직은 수정하지 않았다. 사용자 식별 클래스 3개와 AGENTS.md 이동은 제안만 했고 실행하지 않았다.
+- backend `./gradlew test --no-daemon`: 컴파일 통과, 19개 중 17개 통과·1개 실패·1개 스킵. 기존 FK 충돌 테스트의 503 기대/500 응답 불일치는 남아 있다.
+- frontend `npm run build`: 컴파일 후 기존 TypeScript `--showConfig` 파싱 오류로 실패. 생성된 next-env.d.ts는 실행 전 내용으로 보존했다. 후속 기능·이동·커밋·푸시는 하지 않았다.
+
+## 2026-11-04 경로 정리 (아래 이전 기록보다 우선)
+
+- 사용자 요청: develop 병합 후 사용자가 이동한 AI 파일의 중복 폴더와 package/import만 최소 수정. 현재 feature 브랜치에서 검증했으며 develop 병합·커밋·푸시는 하지 않았다.
+- 변경 파일: `controller/AiConversationController.java`, `service/AiConversationService.java`, `service/impl/AiConversationServiceImpl.java`, `repository/AiConversationRepository.java`, `repository/AiMessageRepository.java`, `repository/AiConversationDeletionRepository.java`, `entity/AiConversation.java`, `entity/AiMessage.java`의 package/import를 실제 공통 계층 경로에 맞췄다. `dto/dto/ai`의 DTO 5개는 `dto/ai`로 이동하고 package/import를 수정했다. 기준 소스 루트는 `backend/src/main/java/com/devmozip/backend`다.
+- `ai/CurrentUserConfiguration.java`, `ai/DevelopmentCurrentUserProvider.java`, `ai/CurrentUserConfigurationTests.java`의 Repository import와 `ai/controller/AiConversationTests.java`의 JWT/RefreshTokenStore import도 현재 위치로 수정했다. AI Controller의 ErrorResponse는 `dto/common`을 참조한다. 테스트 파일 경로·패키지는 유지했다.
+- `ai/AGENTS.md`의 배치 안내를 최신 사용자 요청에 맞췄다. 업무 로직·인증 정책·공통 코드·DB 설정은 변경하지 않았다. 프론트 빌드가 생성한 `next-env.d.ts` 변경은 실행 전 상태로 복원했다.
+- 검증: 전체 Java 파일의 package와 실제 경로 일치, 중복 정규 클래스명 없음, `git diff --check` 통과. backend에서 `./gradlew test --no-daemon` 실행: compileJava/compileTestJava 통과, 19개 중 17개 통과·1개 실패·1개 스킵. 최초 시도는 Gradle 캐시 쓰기 제한으로 실패했고 권한 승인 후 재실행했다.
+- 실패: `AiConversationTests.foreignKeyConflictRollsBackAllChildDeletes`가 503을 기대하나 현재 병합된 공통 예외 처리는 500을 반환한다. `BackendApplicationTests.contextLoads`는 스킵됐다. 응답 정책·테스트 기대값은 경로 정리 범위 밖이므로 변경하지 않았다.
+- frontend에서 `npm run build` 실행: 컴파일 후 `Could not parse output from TypeScript's --showConfig.`로 실패. 프론트 수정·추가 테스트는 하지 않았다.
+- 미완료/다음 작업: 공통 DB 오류 응답 계약과 AI 테스트 기대값 조율, 프론트 빌드 오류 해결, 실제 로그인 사용자와 AI 사용자 식별 연결 검증은 별도 요청 시 진행한다. 아래 H2/임시 인증/경로 관련 내용은 병합 전 기록이며 현재 설정 근거로 사용하지 않는다.
 
 ## 1단계 상태
 

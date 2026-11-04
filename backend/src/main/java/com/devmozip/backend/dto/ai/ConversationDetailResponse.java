@@ -1,4 +1,4 @@
-package com.devmozip.backend.ai.dto;
+package com.devmozip.backend.dto.ai;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import java.time.LocalDateTime;

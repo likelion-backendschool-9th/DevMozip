@@ -1,6 +1,6 @@
-package com.devmozip.backend.ai.dto;
+package com.devmozip.backend.dto.ai;
 
-import com.devmozip.backend.ai.entity.AiConversation;
+import com.devmozip.backend.entity.AiConversation;
 import java.time.LocalDateTime;
 
 public record ConversationResponse(long id, String title, LocalDateTime createdAt, LocalDateTime updatedAt) {

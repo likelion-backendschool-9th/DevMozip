@@ -1,6 +1,10 @@
 package com.devmozip.backend.ai;
 
-import com.devmozip.backend.ai.repository.AiConversationRepository;
+import com.devmozip.backend.security.ai.CurrentUserProvider;
+
+import com.devmozip.backend.security.ai.CurrentUserConfiguration;
+
+import com.devmozip.backend.repository.AiConversationRepository;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;

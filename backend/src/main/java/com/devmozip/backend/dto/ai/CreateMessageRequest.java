@@ -1,3 +1,3 @@
-package com.devmozip.backend.ai.dto;
+package com.devmozip.backend.dto.ai;
 
 public record CreateMessageRequest(String content) {}

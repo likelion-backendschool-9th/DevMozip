@@ -1,6 +1,6 @@
-package com.devmozip.backend.ai.dto;
+package com.devmozip.backend.dto.ai;
 
-import com.devmozip.backend.ai.entity.AiMessage;
+import com.devmozip.backend.entity.AiMessage;
 import java.time.LocalDateTime;
 
 public record MessageResponse(long id, AiMessage.Role role, String content, LocalDateTime createdAt) {

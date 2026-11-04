@@ -1,6 +1,6 @@
-package com.devmozip.backend.ai;
+package com.devmozip.backend.security.ai;
 
-import com.devmozip.backend.ai.repository.AiConversationRepository;
+import com.devmozip.backend.repository.AiConversationRepository;
 
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 

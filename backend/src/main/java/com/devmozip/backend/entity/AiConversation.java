@@ -1,4 +1,4 @@
-package com.devmozip.backend.ai.entity;
+package com.devmozip.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

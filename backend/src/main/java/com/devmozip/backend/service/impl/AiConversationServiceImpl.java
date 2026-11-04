@@ -1,24 +1,24 @@
-package com.devmozip.backend.ai.service.impl;
+package com.devmozip.backend.service.impl;
 
-import com.devmozip.backend.ai.service.AiConversationService;
+import com.devmozip.backend.service.AiConversationService;
 
-import com.devmozip.backend.ai.entity.AiConversation;
-import com.devmozip.backend.ai.entity.AiMessage;
-import com.devmozip.backend.ai.repository.AiConversationRepository;
-import com.devmozip.backend.ai.repository.AiMessageRepository;
-import com.devmozip.backend.ai.repository.AiConversationDeletionRepository;
-import com.devmozip.backend.ai.CurrentUserProvider;
+import com.devmozip.backend.entity.AiConversation;
+import com.devmozip.backend.entity.AiMessage;
+import com.devmozip.backend.repository.AiConversationRepository;
+import com.devmozip.backend.repository.AiMessageRepository;
+import com.devmozip.backend.repository.AiConversationDeletionRepository;
+import com.devmozip.backend.security.ai.CurrentUserProvider;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.devmozip.backend.ai.dto.CreateConversationRequest;
-import com.devmozip.backend.ai.dto.CreateMessageRequest;
-import com.devmozip.backend.ai.dto.ConversationResponse;
-import com.devmozip.backend.ai.dto.ConversationDetailResponse;
-import com.devmozip.backend.ai.dto.MessageResponse;
+import com.devmozip.backend.dto.ai.CreateConversationRequest;
+import com.devmozip.backend.dto.ai.CreateMessageRequest;
+import com.devmozip.backend.dto.ai.ConversationResponse;
+import com.devmozip.backend.dto.ai.ConversationDetailResponse;
+import com.devmozip.backend.dto.ai.MessageResponse;
 
 @Service
 @Transactional(readOnly = true)
