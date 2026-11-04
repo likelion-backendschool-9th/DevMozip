@@ -4,14 +4,16 @@ import Link from 'next/link';
 import { fetchProfileDetail, ProfileRequestError } from '@/lib/profiles/profileDetail';
 import type { ProfileDetail } from '@/types/profileDetail';
 import { ApiProfileTabs } from './ApiProfileTabs';
+import { ApiProfileEditor } from './ApiProfileEditor';
+import { useOwnProfile } from '../../../_components/OwnProfileProvider';
 import { ApiProfileHeader } from './ApiProfileHeader';
 import styles from '../page.module.css';
 
 type Result = { status: 'loading' } | { status: 'ready'; profile: ProfileDetail } | { status: 'error'; code: number };
 
-export function ProfileApiResult({ result, onRetry }: { result: Result; onRetry: () => void }) {
+export function ProfileApiResult({ result, onRetry, onEdit }: { result: Result; onRetry: () => void; onEdit?: () => void }) {
     if (result.status === 'loading') return <section className="planned-card" role="status" aria-live="polite">프로필 정보를 불러오고 있어요…</section>;
-    if (result.status === 'ready') return <><ApiProfileHeader key={`${result.profile.id}:${result.profile.profileImage}:${result.profile.bannerImage}`} profile={result.profile} />
+    if (result.status === 'ready') return <><ApiProfileHeader key={`${result.profile.id}:${result.profile.profileImage}:${result.profile.bannerImage}`} profile={result.profile} onEdit={onEdit} />
         <ApiProfileTabs nickname={result.profile.nickname} /></>;
     const missing = result.code === 404;
     const denied = result.code === 401 || result.code === 403;
@@ -26,6 +28,8 @@ export function ProfileApiResult({ result, onRetry }: { result: Result; onRetry:
 export function ApiProfileContent({ slug }: { slug: string }) {
     const [result, setResult] = useState<Result>({ status: 'loading' });
     const [attempt, setAttempt] = useState(0);
+    const [editing, setEditing] = useState(false);
+    const own = useOwnProfile();
     useEffect(() => {
         const controller = new AbortController();
         void fetchProfileDetail(slug, controller.signal).then(profile => {
@@ -37,6 +41,7 @@ export function ApiProfileContent({ slug }: { slug: string }) {
     }, [slug, attempt]);
     return <div className={`${styles.scope} container profile-page`}>
         <div className={`${styles.scope} profile-breadcrumb`}><Link href="/">DevMozip</Link><span>/</span>개발자 프로필</div>
-        <ProfileApiResult result={result} onRetry={() => { setResult({ status: 'loading' }); setAttempt(value => value + 1); }} />
+        {editing && result.status === 'ready' && own.profile?.id === result.profile.id && <ApiProfileEditor profile={result.profile} onClose={() => setEditing(false)} onSaved={profile => setResult({ status: 'ready', profile })} />}
+        <ProfileApiResult result={result} onEdit={result.status === 'ready' && own.profile?.id === result.profile.id ? () => setEditing(true) : undefined} onRetry={() => { setResult({ status: 'loading' }); setAttempt(value => value + 1); }} />
     </div>;
 }

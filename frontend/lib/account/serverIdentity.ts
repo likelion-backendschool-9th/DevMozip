@@ -6,5 +6,5 @@ import type { ServerIdentity } from '@/types/session';
 export function projectServerIdentity(identity: ServerIdentity): AuthUser {
     const template = demoAccounts.find(user => user.email === identity.username) ?? demoAccounts[0];
     return { ...template, id: identity.role === 'ADMIN' ? 'demo-admin' : template.role === 'admin' ? 'demo-user' : template.id,
-        email: identity.username, role: identity.role === 'ADMIN' ? 'admin' : 'free', onboardingCompleted: true };
+        email: identity.username, role: identity.role === 'ADMIN' ? 'admin' : identity.role === 'PREMIUM' ? 'premium' : 'free', onboardingCompleted: true };
 }

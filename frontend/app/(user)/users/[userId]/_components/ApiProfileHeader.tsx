@@ -7,7 +7,7 @@ import { starColor } from '@/lib/profiles/profileService';
 import type { ProfileDetail } from '@/types/profileDetail';
 import styles from './ProfileHeader.module.css';
 
-export function ApiProfileHeader({ profile }: { profile: ProfileDetail }) {
+export function ApiProfileHeader({ profile, onEdit }: { profile: ProfileDetail; onEdit?: () => void }) {
     const [avatarFailed, setAvatarFailed] = useState(false);
     const [bannerFailed, setBannerFailed] = useState(false);
     const avatar = profileImageUrl(profile.profileImage);
@@ -22,7 +22,7 @@ export function ApiProfileHeader({ profile }: { profile: ProfileDetail }) {
         <div className={scope('profile-identity')}>
             <ProfileAvatar name={profile.nickname} color="lavender" image={!avatarFailed ? avatar : undefined} onImageError={() => setAvatarFailed(true)} />
             <div className={scope('profile-top-actions')}>
-                <button className="button secondary" disabled title="프로필 수정은 아직 연결되지 않았습니다."><Pencil size={14} />프로필 수정</button>
+                <button className="button secondary" disabled={!onEdit} onClick={onEdit} title={onEdit ? undefined : "본인 프로필에서 수정할 수 있어요."}><Pencil size={14} />프로필 수정</button>
             </div>
             <div className={scope('profile-heading')}>
                 <h1>{profile.nickname}</h1><span>@{profile.tag}</span>
@@ -34,13 +34,13 @@ export function ApiProfileHeader({ profile }: { profile: ProfileDetail }) {
             <p className={scope('profile-bio')}>{profile.summary?.trim() || '한 줄 소개가 없습니다.'}</p>
             <div className={scope('profile-meta')}>
                 <span><CalendarDays size={13} />가입일 · 조회 연결 전</span>
-                <span><Clock3 size={13} />연락 가능 시간 · 조회 연결 전</span>
+                <span><Clock3 size={13} />{profile.contactHours || '연락 가능 시간 미입력'}</span>
             </div>
             <div className={scope('profile-social')}>
                 <button disabled title="팔로워 조회 연결 전">팔로워 <b>—</b></button>
                 <button disabled title="팔로잉 조회 연결 전">팔로잉 <b>—</b></button>
-                <div className={scope('trust-temperature')} style={{ color: starColor(profile.trustScore) }}>
-                    <Star size={17} fill="currentColor" /><strong>{profile.trustScore.toFixed(1)}°C</strong><span>신뢰 온도</span>
+                <div className={scope('trust-temperature')} style={{ color: starColor(profile.trustScore ?? 36.5) }}>
+                    <Star size={17} fill="currentColor" /><strong>{profile.trustScore === null ? '—' : `${profile.trustScore.toFixed(1)}°C`}</strong><span>신뢰 온도</span>
                 </div>
             </div>
         </div>

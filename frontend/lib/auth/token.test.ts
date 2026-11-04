@@ -10,6 +10,9 @@ describe('인증 경계', () => {
         expect(decodeToken(token({ sub: 'user', role: 'SUPER', exp: 9999999999 }))).toBeNull();
         expect(isExpired(decodeToken(token({ sub: 'user', role: 'USER', exp: 9999999999 })))).toBe(false);
     });
+    it.each(['PREMIUM', 'OWNER'])('실제 회원 역할 %s의 로그인 토큰을 유지한다', role => {
+        expect(decodeToken(token({ sub: 'member@profile.test', role, exp: 9999999999 }))?.role).toBe(role);
+    });
     it('외부 리다이렉트 및 역슬래시 우회를 거절한다', () => {
         for (const path of ['//evil.test', '/\\evil.test', 'https://evil.test', '/ /evil', null]) expect(safeNext(path)).toBe('/');
         expect(safeNext('/messages?userId=demo-user')).toBe('/messages?userId=demo-user');

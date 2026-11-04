@@ -10,19 +10,21 @@ export function parseProfileDetail(value: unknown): ProfileDetail {
     const job = p.jobCategory as Record<string, unknown> | null;
     if (!identifier(p.id) || typeof p.tag !== 'string' || !validProfileSlug(p.tag)
         || typeof p.nickname !== 'string' || !p.nickname.trim()
-        || !job || !identifier(job.id) || !nullableText(job.name)
+        || !job || !(job.id === null || identifier(job.id)) || !nullableText(job.name)
         || !nullableText(p.summary) || !nullableText(p.profileImage) || !nullableText(p.bannerImage)
         || !nullableText(p.collaborationStatus)
         || !(p.career === null || (typeof p.career === 'number' && Number.isSafeInteger(p.career) && p.career >= 0))
-        || typeof p.trustScore !== 'number' || !Number.isFinite(p.trustScore)) {
+        || !(p.trustScore === null || (typeof p.trustScore === 'number' && Number.isFinite(p.trustScore)))
+        || !(p.contactHours === undefined || nullableText(p.contactHours))) {
         throw new Error('잘못된 프로필 응답');
     }
     // 알 수 없는 추가 필드(이메일 등)는 브라우저 응답에 전달하지 않는다.
     return { id: p.id as number, tag: p.tag, nickname: p.nickname,
-        jobCategory: { id: job.id as number, name: job.name as string | null },
+        jobCategory: { id: job.id as number | null, name: job.name as string | null },
         summary: p.summary as string | null, career: p.career as number | null,
         profileImage: p.profileImage as string | null, bannerImage: p.bannerImage as string | null,
-        collaborationStatus: p.collaborationStatus as string | null, trustScore: p.trustScore };
+        collaborationStatus: p.collaborationStatus as string | null, trustScore: p.trustScore as number | null,
+        ...(p.contactHours !== undefined ? { contactHours: p.contactHours as string | null } : {}) };
 }
 
 export function formatCareer(months: number | null): string {
@@ -35,6 +37,9 @@ export function formatCareer(months: number | null): string {
 
 export function collaborationLabel(status: string | null): string {
     if (status === 'AVAILABLE') return '협업 가능';
+    if (status === 'BUSY') return '현재 협업 어려움';
+    if (status === 'OPEN_TO_OFFERS') return '제안 검토 가능';
+    if (status === 'RESTING') return '쉬는 중';
     if (status === 'UNAVAILABLE') return '현재 협업 쉬는 중';
     return '협업 상태 미등록';
 }

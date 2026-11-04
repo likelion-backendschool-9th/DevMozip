@@ -28,7 +28,7 @@ export function AppLayout({ children }: {
     const { reset: resetHome, resetAll: resetAllHome } = useHome();
     const { reset: resetProfiles, state: followState } = useProfiles();
     const { reset: resetProjects, state: projectState } = useProjects();
-    const { user, logout, resetAdministration, administration, resetAccountArea, accountUser, needsOnboarding } = useAuth();
+    const { mode, user, logout, resetAdministration, administration, resetAccountArea, accountUser, needsOnboarding } = useAuth();
     const [resetOpen, setResetOpen] = useState(false);
     const [demoOpen, setDemoOpen] = useState(false);
     const navigate = useNavigate();
@@ -81,7 +81,8 @@ export function AppLayout({ children }: {
                                 </Link>
                                 <Link
                                     className={[styles.scope, styles.profileLink, "icon-button header-profile-link"].join(" ")}
-                                    href={`/users/${user.id}`}
+                                    href={mode === 'server' ? '/profile/me' : `/users/${user.id}`}
+
                                     aria-label="내 프로필로 이동"
                                     title={`${user.nickname}님의 프로필`}
                                 >
