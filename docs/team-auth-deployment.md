@@ -13,7 +13,7 @@
 
 ## 계정과 인증
 
-로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬 H2(local 프로필)에서는 `members_data.sql`이 시작 시 넣는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 회원가입은 직군·기술 스택·관심 분야를 job_categories·skills·interests 테이블에서 이름으로 찾으므로 이 세 테이블에 초기 데이터가 있어야 한다. 로컬 H2에서는 `job_categories_data.sql`·`skills_data.sql`·`interests_data.sql`이 시작 시 넣는다. `*.sql`은 git에 올리지 않으므로 팀원에게 따로 공유하고, 서버 DB에는 별도로 넣는다.
+로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬 H2(local 프로필)에서는 `members_data.sql`이 시작 시 넣는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 회원가입은 직군·기술 스택·관심 분야를 users 테이블의 job_categories·skills·interests 칼럼(PostgreSQL JSONB)에 저장한다. 허용 값은 백엔드 entity/enums의 enum으로 검증하고, 가입 화면은 GET /api/v1/auth/signup/options로 같은 목록을 받는다. 회원정보 수정 API도 같은 enum으로 검증해야 한다. 매칭·검색·프로젝트 등 Mock 화면의 선택지는 frontend/mocks에 있다.
 
 | 구분 | 동작 |
 |---|---|
@@ -22,7 +22,7 @@
 | 로그인 상태 | 액세스·리프레시 HttpOnly 쿠키 |
 | 권한 근거 | JWT 서명을 백엔드가 검증한 GET /api/v1/users/me 응답 (USER·PREMIUM·ADMIN) |
 | 계정 전환 | 헤더 로그아웃 후 다른 계정으로 로그인 |
-| 회원가입 | POST /api/v1/auth/signup으로 users·user_skills·user_interests에 저장한 뒤 POST /api/v1/auth/login으로 바로 로그인 |
+| 회원가입 | POST /api/v1/auth/signup으로 users에 저장한 뒤 POST /api/v1/auth/login으로 바로 로그인 |
 | 이메일·닉네임 중복 확인 | GET /api/v1/auth/check-email, /check-nickname으로 users 테이블 조회. 제출할 때도 서버가 다시 확인 |
 | 비밀번호 변경 | 미제공 안내 |
 

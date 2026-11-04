@@ -7,6 +7,7 @@
 | 도메인 | Method | URL | 기능 | 인증 필요 | 요청 | 응답 | 프리미엄 |
 |---|---|---|---|---|---|---|---|
 | Auth | POST | /auth/login | 로그인 | 아니오 | email, password | user, session | 아니오 |
+| Auth | GET | /auth/signup/options | 회원가입 선택지(직군·기술 스택·관심 분야) | 아니오 | 없음 | jobCategories, skills, interests | 아니오 |
 | Auth | GET | /auth/check-email | 이메일 중복 확인 (남용 방지 정책 필요) | 아니오 | email | available | 아니오 |
 | Auth | GET | /auth/check-nickname | 닉네임 중복 확인 (남용 방지 정책 필요) | 아니오 | nickname | available | 아니오 |
 | Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, stacks, interests, available | id, email, nickname | 아니오 |

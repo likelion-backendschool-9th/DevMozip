@@ -180,7 +180,7 @@ function OnboardingForm({ user }: { user: AuthUser }) {
                             />
                             <TagChoices
                                 label="관심 개발 분야 (복수 선택)"
-                                options={interestOptions.slice(1)}
+                                options={interestOptions}
                                 values={draft.interests}
                                 onChange={interests => edit({ interests })}
                             />
@@ -243,7 +243,7 @@ function OnboardingForm({ user }: { user: AuthUser }) {
                             </fieldset>
                             <TagChoices
                                 label="관심 프로젝트 분야 (복수 선택 · 필수)"
-                                options={interestOptions.slice(1)}
+                                options={interestOptions}
                                 values={draft.projectInterests}
                                 onChange={projectInterests => edit({ projectInterests })}
                             />

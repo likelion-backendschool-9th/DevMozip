@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.devmozip.backend.dto.auth.LoginRequest;
 import com.devmozip.backend.dto.auth.LoginResponse;
 import com.devmozip.backend.dto.auth.RefreshTokenRequest;
+import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.service.AuthService;
@@ -37,6 +38,12 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public SignupResponse signup(@Valid @RequestBody SignupRequest request){
         return memberService.signup(request);
+    }
+
+    /** 회원가입 화면의 직군·기술 스택·관심 분야 선택지 */
+    @GetMapping("/signup/options")
+    public SignupOptionsResponse signupOptions(){
+        return memberService.getSignupOptions();
     }
 
     /** 회원가입 화면의 이메일 중복 확인 */

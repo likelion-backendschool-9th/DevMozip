@@ -2,7 +2,6 @@ package com.devmozip.backend.service;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -13,25 +12,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
-import com.devmozip.backend.entity.Interest;
-import com.devmozip.backend.entity.JobCategory;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
-import com.devmozip.backend.entity.Skill;
-import com.devmozip.backend.entity.UserInterest;
-import com.devmozip.backend.entity.UserSkill;
-import com.devmozip.backend.repository.InterestRepository;
-import com.devmozip.backend.repository.JobCategoryRepository;
+import com.devmozip.backend.entity.enums.Interest;
+import com.devmozip.backend.entity.enums.JobCategory;
+import com.devmozip.backend.entity.enums.Skill;
 import com.devmozip.backend.repository.MemberRepository;
-import com.devmozip.backend.repository.SkillRepository;
-import com.devmozip.backend.repository.UserInterestRepository;
-import com.devmozip.backend.repository.UserSkillRepository;
 
 @Service
 public class MemberService {
@@ -43,33 +36,18 @@ public class MemberService {
     private static final String DUPLICATE_EMAIL_MESSAGE = "이미 가입된 이메일입니다.";
 
     private final MemberRepository memberRepository;
-    private final JobCategoryRepository jobCategoryRepository;
-    private final SkillRepository skillRepository;
-    private final InterestRepository interestRepository;
-    private final UserSkillRepository userSkillRepository;
-    private final UserInterestRepository userInterestRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository,
-                         JobCategoryRepository jobCategoryRepository,
-                         SkillRepository skillRepository,
-                         InterestRepository interestRepository,
-                         UserSkillRepository userSkillRepository,
-                         UserInterestRepository userInterestRepository,
-                         PasswordEncoder passwordEncoder) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
-        this.jobCategoryRepository = jobCategoryRepository;
-        this.skillRepository = skillRepository;
-        this.interestRepository = interestRepository;
-        this.userSkillRepository = userSkillRepository;
-        this.userInterestRepository = userInterestRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    /** 회원과 기술 스택·관심 분야를 한 트랜잭션으로 저장한다. 하나라도 실패하면 가입 전체를 되돌린다. */
+    /** 회원을 저장한다. 직군·기술 스택·관심 분야는 화면에서 고른 값을 users 칼럼에 그대로 담는다. */
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         checkPassword(request);
+        checkOptions(request);
 
         String email = normalizeEmail(request.email());
         if (memberRepository.existsByEmail(email)) {
@@ -81,20 +59,7 @@ public class MemberService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         }
 
-        // 화면은 직군·기술 스택·관심 분야를 이름으로 보내므로 이름으로 찾는다.
-        JobCategory jobCategory = jobCategoryRepository.findByName(request.job())
-                .orElseThrow(() -> badRequest("선택할 수 없는 개발 직군입니다."));
-        List<Skill> skills = skillRepository.findAllByNameIn(request.stacks());
-        if (skills.size() != new HashSet<>(request.stacks()).size()) {
-            throw badRequest("선택할 수 없는 기술 스택이 포함되어 있습니다.");
-        }
-        List<Interest> interests = interestRepository.findAllByNameIn(request.interests());
-        if (interests.size() != new HashSet<>(request.interests()).size()) {
-            throw badRequest("선택할 수 없는 관심 분야가 포함되어 있습니다.");
-        }
-
         Member member = saveMember(Member.builder()
-                .jobCategory(jobCategory)
                 .email(email)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .nickname(nickname)
@@ -103,16 +68,17 @@ public class MemberService {
                 .trustScore(INITIAL_TRUST_SCORE)
                 .collaborationStatus(request.available() ? CollaborationStatus.AVAILABLE : CollaborationStatus.UNAVAILABLE)
                 .career(request.career())
+                .jobCategories(List.of(request.job().trim()))
+                .skills(distinct(request.stacks()))
+                .interests(distinct(request.interests()))
                 .build());
 
-        userSkillRepository.saveAll(skills.stream()
-                .map(skill -> UserSkill.builder().member(member).skill(skill).build())
-                .toList());
-        userInterestRepository.saveAll(interests.stream()
-                .map(interest -> UserInterest.builder().member(member).interest(interest).build())
-                .toList());
-
         return new SignupResponse(member.getId(), member.getEmail(), member.getNickname());
+    }
+
+    /** 회원가입 화면의 선택지. 가입 때 검증하는 enum과 같은 목록을 돌려준다. */
+    public SignupOptionsResponse getSignupOptions() {
+        return new SignupOptionsResponse(JobCategory.labels(), Skill.labels(), Interest.labels());
     }
 
     /** 아직 가입되지 않은 이메일인지 DB에서 확인한다. */
@@ -140,8 +106,24 @@ public class MemberService {
         return new AvailabilityResponse(member.getCollaborationStatus(), member.getContactHours());
     }
 
+    private List<String> distinct(List<String> values) {
+        return values.stream().map(String::trim).distinct().toList();
+    }
+
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void checkOptions(SignupRequest request) {
+        if (!JobCategory.contains(request.job().trim())) {
+            throw badRequest("선택할 수 없는 개발 직군입니다.");
+        }
+        if (!distinct(request.stacks()).stream().allMatch(Skill::contains)) {
+            throw badRequest("선택할 수 없는 기술 스택이 포함되어 있습니다.");
+        }
+        if (!distinct(request.interests()).stream().allMatch(Interest::contains)) {
+            throw badRequest("선택할 수 없는 관심 분야가 포함되어 있습니다.");
+        }
     }
 
     private void checkPassword(SignupRequest request) {

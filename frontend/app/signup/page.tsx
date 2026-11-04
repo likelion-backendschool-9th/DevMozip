@@ -1,15 +1,15 @@
 'use client';
 import { AuthShell } from '@/app/_components/AuthShell';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useNavigation as useNavigate } from '@/lib/navigation';
 import { useAuth } from '@/lib/state/authStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
-import { emptySignup, jobOptions, careerOptions } from '@/mocks/auth';
-import { stackOptions, interestOptions } from '@/mocks/home';
+import { emptySignup, careerOptions } from '@/mocks/auth';
+import { signupOptionsAction } from '@/lib/auth/actions';
 import { validEmail, validNickname, validateSignup, normalizeEmail } from '@/lib/account/authService';
-import type { SignupErrors, SignupInput } from '@/types/auth';
+import type { SignupErrors, SignupInput, SignupOptions } from '@/types/auth';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 function SignupForm() {
@@ -23,7 +23,25 @@ function SignupForm() {
     const [busy, setBusy] = useState(false);
     const [checking, setChecking] = useState<'email' | 'nickname' | null>(null);
     const [failure, setFailure] = useState('');
-    const edit = <K extends keyof SignupInput>(key: K, value: SignupInput[K]) => {
+    const [options, setOptions] = useState<SignupOptions | null>(null);
+    const [optionsError, setOptionsError] = useState('');
+    const [optionsAttempt, setOptionsAttempt] = useState(0);
+    useEffect(() => {
+        let active = true;
+        signupOptionsAction()
+            .then(result => {
+                if (!active) return;
+                if ('error' in result) setOptionsError(result.error);
+                else setOptions(result);
+            })
+            .catch(() => {
+                if (active) setOptionsError('선택 항목을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            });
+        return () => {
+            active = false;
+        };
+    }, [optionsAttempt]);
+    const edit =<K extends keyof SignupInput>(key: K, value: SignupInput[K]) => {
         setForm(prev => ({ ...prev, [key]: value }));
         setErrors(prev => ({ ...prev, [key]: undefined, checks: undefined }));
         setFailure('');
@@ -168,6 +186,21 @@ function SignupForm() {
                     사용 가능한 닉네임입니다.
                 </p>
             )}
+            {optionsError && (
+                <div role="alert">
+                    <p className={[styles.scope, 'form-error'].join(' ')}>{optionsError}</p>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                            setOptionsError('');
+                            setOptionsAttempt(attempt => attempt + 1);
+                        }}
+                    >
+                        다시 불러오기
+                    </Button>
+                </div>
+            )}
             <div className={[styles.scope, 'auth-two-columns'].join(' ')}>
                 <div>
                     <label htmlFor="signup-job">개발 직군</label>
@@ -180,7 +213,7 @@ function SignupForm() {
                         aria-invalid={!!errors.job}
                     >
                         <option value="">직군 선택</option>
-                        {jobOptions.map(j => (
+                        {options?.jobCategories.map(j => (
                             <option key={j}>{j}</option>
                         ))}
                     </select>
@@ -209,7 +242,7 @@ function SignupForm() {
                     기술 스택 <span>하나 이상 선택</span>
                 </legend>
                 <div className={[styles.scope, 'chips'].join(' ')}>
-                    {stackOptions.map(s => (
+                    {options?.skills.map(s => (
                         <button
                             type="button"
                             key={s}
@@ -233,7 +266,7 @@ function SignupForm() {
                     관심 분야 <span>하나 이상 선택</span>
                 </legend>
                 <div className={[styles.scope, 'chips'].join(' ')}>
-                    {interestOptions.slice(1).map(s => (
+                    {options?.interests.map(s => (
                         <button
                             type="button"
                             key={s}
@@ -269,7 +302,7 @@ function SignupForm() {
                     {failure}
                 </p>
             )}
-            <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')} disabled={busy || checking !== null}>
+            <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')} disabled={busy || checking !== null || !options}>
                 {busy ? '가입 정보를 저장하고 있어요…' : '회원가입'}
             </Button>
             <p className={[styles.scope, 'auth-switch'].join(' ')}>

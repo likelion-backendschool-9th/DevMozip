@@ -29,44 +29,20 @@ import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
-import com.devmozip.backend.entity.Interest;
-import com.devmozip.backend.entity.JobCategory;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
-import com.devmozip.backend.entity.Skill;
-import com.devmozip.backend.entity.UserInterest;
-import com.devmozip.backend.entity.UserSkill;
-import com.devmozip.backend.repository.InterestRepository;
-import com.devmozip.backend.repository.JobCategoryRepository;
 import com.devmozip.backend.repository.MemberRepository;
-import com.devmozip.backend.repository.SkillRepository;
-import com.devmozip.backend.repository.UserInterestRepository;
-import com.devmozip.backend.repository.UserSkillRepository;
 
 /** 가입 규칙과 저장 값을 DB 없이 확인한다. */
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
     private static final String PASSWORD = "Devmozip123";
-    private static final JobCategory JOB = JobCategory.builder().name("백엔드 개발자").build();
-    private static final Skill JAVA = Skill.builder().name("Java").build();
-    private static final Skill REACT = Skill.builder().name("React").build();
-    private static final Interest AI = Interest.builder().name("AI").build();
 
     @Mock
     private MemberRepository memberRepository;
-    @Mock
-    private JobCategoryRepository jobCategoryRepository;
-    @Mock
-    private SkillRepository skillRepository;
-    @Mock
-    private InterestRepository interestRepository;
-    @Mock
-    private UserSkillRepository userSkillRepository;
-    @Mock
-    private UserInterestRepository userInterestRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
     @InjectMocks
@@ -74,50 +50,32 @@ class MemberServiceTest {
 
     @Captor
     private ArgumentCaptor<Member> memberCaptor;
-    @Captor
-    private ArgumentCaptor<List<UserSkill>> userSkillsCaptor;
-    @Captor
-    private ArgumentCaptor<List<UserInterest>> userInterestsCaptor;
 
     private static SignupRequest request(String password, String confirmPassword, List<String> stacks, boolean available) {
         return new SignupRequest("New@Devmozip.Demo ", password, confirmPassword, " 새회원 ", "백엔드 개발자", "3년 차",
                 stacks, List.of("AI"), available);
     }
 
-    private void lookupsSucceed(List<String> stacks, List<Skill> skills) {
-        when(jobCategoryRepository.findByName("백엔드 개발자")).thenReturn(Optional.of(JOB));
-        when(skillRepository.findAllByNameIn(stacks)).thenReturn(skills);
-        when(interestRepository.findAllByNameIn(List.of("AI"))).thenReturn(List.of(AI));
-    }
-
     @Test
-    void 회원과_기술_스택_관심_분야를_저장한다() {
-        List<String> stacks = List.of("Java", "React");
-        lookupsSucceed(stacks, List.of(JAVA, REACT));
+    void 회원과_직군_기술_스택_관심_분야를_칼럼에_저장한다() {
         when(passwordEncoder.encode(PASSWORD)).thenReturn("hash");
         when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
 
-        SignupResponse response = memberService.signup(request(PASSWORD, PASSWORD, stacks, true));
+        SignupResponse response = memberService.signup(request(PASSWORD, PASSWORD, List.of("Java", "React"), true));
 
         verify(memberRepository).save(memberCaptor.capture());
         Member member = memberCaptor.getValue();
         assertThat(member.getEmail()).isEqualTo("new@devmozip.demo");
         assertThat(member.getPasswordHash()).isEqualTo("hash");
         assertThat(member.getNickname()).isEqualTo("새회원");
-        assertThat(member.getJobCategory()).isSameAs(JOB);
+        assertThat(member.getJobCategories()).containsExactly("백엔드 개발자");
+        assertThat(member.getSkills()).containsExactly("Java", "React");
+        assertThat(member.getInterests()).containsExactly("AI");
         assertThat(member.getCareer()).isEqualTo("3년 차");
         assertThat(member.getRole()).isEqualTo(MemberRole.USER);
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
         assertThat(member.getTrustScore()).isEqualByComparingTo(new BigDecimal("36.5"));
         assertThat(member.getCollaborationStatus()).isEqualTo(CollaborationStatus.AVAILABLE);
-
-        verify(userSkillRepository).saveAll(userSkillsCaptor.capture());
-        assertThat(userSkillsCaptor.getValue()).extracting(UserSkill::getSkill).containsExactly(JAVA, REACT);
-        assertThat(userSkillsCaptor.getValue()).extracting(UserSkill::getMember).containsOnly(member);
-
-        verify(userInterestRepository).saveAll(userInterestsCaptor.capture());
-        assertThat(userInterestsCaptor.getValue()).extracting(UserInterest::getInterest).containsExactly(AI);
-        assertThat(userInterestsCaptor.getValue()).extracting(UserInterest::getMember).containsOnly(member);
 
         assertThat(response.email()).isEqualTo("new@devmozip.demo");
         assertThat(response.nickname()).isEqualTo("새회원");
@@ -125,11 +83,9 @@ class MemberServiceTest {
 
     @Test
     void 협업_가능을_선택하지_않으면_UNAVAILABLE로_저장한다() {
-        List<String> stacks = List.of("Java");
-        lookupsSucceed(stacks, List.of(JAVA));
         when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
 
-        memberService.signup(request(PASSWORD, PASSWORD, stacks, false));
+        memberService.signup(request(PASSWORD, PASSWORD, List.of("Java"), false));
 
         verify(memberRepository).save(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getCollaborationStatus()).isEqualTo(CollaborationStatus.UNAVAILABLE);
@@ -137,14 +93,12 @@ class MemberServiceTest {
 
     @Test
     void 같은_기술_스택을_두_번_보내도_한_번만_저장한다() {
-        List<String> stacks = List.of("Java", "Java");
-        lookupsSucceed(stacks, List.of(JAVA));
         when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
 
-        memberService.signup(request(PASSWORD, PASSWORD, stacks, true));
+        memberService.signup(request(PASSWORD, PASSWORD, List.of("Java", " Java "), true));
 
-        verify(userSkillRepository).saveAll(userSkillsCaptor.capture());
-        assertThat(userSkillsCaptor.getValue()).extracting(UserSkill::getSkill).containsExactly(JAVA);
+        verify(memberRepository).save(memberCaptor.capture());
+        assertThat(memberCaptor.getValue().getSkills()).containsExactly("Java");
     }
 
     @Test
@@ -258,35 +212,48 @@ class MemberServiceTest {
                         e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
-    @Test
-    void 없는_직군이면_400() {
-        when(jobCategoryRepository.findByName("백엔드 개발자")).thenReturn(Optional.empty());
-
-        assertStatus(request(PASSWORD, PASSWORD, List.of("Java"), true), HttpStatus.BAD_REQUEST);
-
-        verify(memberRepository, never()).save(any());
+    private static SignupRequest requestWith(String job, List<String> stacks, List<String> interests) {
+        return new SignupRequest("new@devmozip.demo", PASSWORD, PASSWORD, "새회원", job, "3년 차", stacks, interests, true);
     }
 
     @Test
-    void 없는_기술_스택이_있으면_400() {
-        List<String> stacks = List.of("Java", "없는 기술");
-        when(jobCategoryRepository.findByName("백엔드 개발자")).thenReturn(Optional.of(JOB));
-        when(skillRepository.findAllByNameIn(stacks)).thenReturn(List.of(JAVA));
+    void 선택지로_돌려준_값은_모두_가입에_쓸_수_있다() {
+        when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
+        var options = memberService.getSignupOptions();
 
-        assertStatus(request(PASSWORD, PASSWORD, stacks, true), HttpStatus.BAD_REQUEST);
+        memberService.signup(requestWith(options.jobCategories().get(0), options.skills(), options.interests()));
 
-        verify(memberRepository, never()).save(any());
+        verify(memberRepository).save(memberCaptor.capture());
+        assertThat(memberCaptor.getValue().getSkills()).containsExactlyElementsOf(options.skills());
+        assertThat(memberCaptor.getValue().getInterests()).containsExactlyElementsOf(options.interests());
+    }
+
+    @Test
+    void 목록에_없는_직군이면_400() {
+        assertStatus(requestWith("없는 직군", List.of("Java"), List.of("AI")), HttpStatus.BAD_REQUEST);
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void 목록에_없는_기술_스택이_있으면_400() {
+        assertStatus(requestWith("백엔드 개발자", List.of("Java", "COBOL"), List.of("AI")), HttpStatus.BAD_REQUEST);
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void 목록에_없는_관심_분야가_있으면_400() {
+        assertStatus(requestWith("백엔드 개발자", List.of("Java"), List.of("전체 분야")), HttpStatus.BAD_REQUEST);
+
+        verifyNoInteractions(memberRepository);
     }
 
     @Test
     void 동시_가입으로_unique_제약에_걸리면_409() {
-        List<String> stacks = List.of("Java");
-        lookupsSucceed(stacks, List.of(JAVA));
         when(memberRepository.save(any(Member.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        assertStatus(request(PASSWORD, PASSWORD, stacks, true), HttpStatus.CONFLICT);
-
-        verify(userSkillRepository, never()).saveAll(any());
+        assertStatus(request(PASSWORD, PASSWORD, List.of("Java"), true), HttpStatus.CONFLICT);
     }
 
     private void assertStatus(SignupRequest request, HttpStatus status) {

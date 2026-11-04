@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -21,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.devmozip.backend.config.SecurityConfig;
 import com.devmozip.backend.dto.auth.LoginRequest;
 import com.devmozip.backend.dto.auth.LoginResponse;
+import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.repository.MemberRepository;
 import com.devmozip.backend.security.handler.JsonAccessDeniedHandler;
@@ -78,6 +81,18 @@ class AuthControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(authService).logout("refresh");
+    }
+
+    @Test
+    void 토큰_없이_회원가입_선택지를_돌려준다() throws Exception {
+        when(memberService.getSignupOptions()).thenReturn(
+                new SignupOptionsResponse(List.of("백엔드 개발자"), List.of("Java"), List.of("AI")));
+
+        mvc.perform(get("/api/v1/auth/signup/options"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobCategories[0]").value("백엔드 개발자"))
+                .andExpect(jsonPath("$.skills[0]").value("Java"))
+                .andExpect(jsonPath("$.interests[0]").value("AI"));
     }
 
     @Test

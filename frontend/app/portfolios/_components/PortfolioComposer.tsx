@@ -14,7 +14,7 @@ import {portfolioErrors} from '@/lib/profiles/profileService';
 import {PortfolioCoverEditor} from './PortfolioCoverEditor';
 import {createMockId} from '@/lib/utils/createMockId';
 import {emptyPortfolio} from '@/mocks/profile';
-import {stackOptions} from '@/mocks/home';
+import { stackOptions } from '@/mocks/home';
 import {portfolioEditorPolicy,portfolioDragInstructions,portfolioFieldOptions} from '@/mocks/portfolioEditor';
 import {PortfolioContent} from '@/app/portfolios/_components/PortfolioContent';
 import {ProfileTagEditor} from '@/components/profile/ProfileTagEditor';

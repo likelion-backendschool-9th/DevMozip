@@ -3,7 +3,7 @@ const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn(), 
 vi.mock('./backend', () => ({ backendFetch: doubles.fetch, readErrorMessage: async () => '인증 실패' }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }) }));
 vi.mock('next/navigation', () => ({ redirect: doubles.redirect }));
-import { checkAvailabilityAction, loginAction, logoutAction, signupAction } from './actions';
+import { checkAvailabilityAction, loginAction, logoutAction, signupAction, signupOptionsAction } from './actions';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from './cookies';
 const signupInput = { email: ' New@Devmozip.Demo ', password: 'Devmozip123', confirmPassword: 'Devmozip123', nickname: ' 새회원 ', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'], available: true };
 beforeEach(() => { vi.clearAllMocks(); doubles.get.mockReturnValue({ value: 'refresh' }); });
@@ -46,6 +46,16 @@ describe('인증 서버 액션', () => {
         doubles.fetch.mockResolvedValue(new Response('{}', { status: 401 }));
         expect(await loginAction(new FormData())).toEqual({ error: '인증 실패' });
         expect(doubles.set).not.toHaveBeenCalled();
+    });
+    it('가입 선택지는 백엔드에서 받고 실패하면 오류를 돌려준다', async () => {
+        const options = { jobCategories: ['백엔드 개발자'], skills: ['Java'], interests: ['AI'] };
+        doubles.fetch.mockResolvedValueOnce(Response.json(options));
+        expect(await signupOptionsAction()).toEqual(options);
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/signup/options');
+        doubles.fetch.mockResolvedValueOnce(new Response('{}', { status: 500 }));
+        expect(await signupOptionsAction()).toHaveProperty('error');
+        doubles.fetch.mockRejectedValueOnce(new Error('down'));
+        expect(await signupOptionsAction()).toHaveProperty('error');
     });
     it('이메일 중복 확인은 소문자로 맞춰 백엔드에 묻는다', async () => {
         doubles.fetch.mockResolvedValue(Response.json({ available: false }));

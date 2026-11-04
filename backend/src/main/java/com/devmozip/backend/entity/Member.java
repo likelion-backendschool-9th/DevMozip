@@ -1,6 +1,7 @@
 package com.devmozip.backend.entity;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -9,12 +10,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -57,11 +55,6 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // 직군 ID (FK)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_category_id")
-    private JobCategory jobCategory;
 
     // 이메일 (카카오 가입 회원은 비어 있을 수 있어 not null은 걸지 않는다)
     @Column(name = "email", length = 255)
@@ -132,13 +125,28 @@ public class Member {
     @Column(name = "contact_hours", length = 100)
     private String contactHours;
 
+    // 개발 직군 (허용 값은 entity.enums에서 관리하고 고른 문구를 저장한다)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "job_categories")
+    private List<String> jobCategories;
+
+    // 기술 스택
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "skills")
+    private List<String> skills;
+
+    // 관심 분야
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "interests")
+    private List<String> interests;
+
     @Builder
-    public Member(JobCategory jobCategory, String email, String passwordHash, String kakaoId,
+    public Member(String email, String passwordHash, String kakaoId,
                   String nickname, String tag, MemberRole role, MemberStatus status,
                   String externalLinks, BigDecimal trustScore, String paymentMethods,
                   CollaborationStatus collaborationStatus, String profileImage,
-                  String bannerImage, String summary, String career, String contactHours) {
-        this.jobCategory = jobCategory;
+                  String bannerImage, String summary, String career, String contactHours,
+                  List<String> jobCategories, List<String> skills, List<String> interests) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.kakaoId = kakaoId;
@@ -155,6 +163,9 @@ public class Member {
         this.summary = summary;
         this.career = career;
         this.contactHours = contactHours;
+        this.jobCategories = jobCategories;
+        this.skills = skills;
+        this.interests = interests;
     }
 
     // 협업 가능 상태와 연락 가능 시간을 바꾼다. null로 받은 값은 그대로 둔다.

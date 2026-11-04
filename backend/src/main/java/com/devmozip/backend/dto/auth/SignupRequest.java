@@ -29,6 +29,7 @@ public record SignupRequest(
         String nickname,
 
         @NotBlank(message = "개발 직군을 선택해 주세요.")
+        @Size(max = 50, message = "개발 직군을 선택해 주세요.")
         String job,
 
         @NotBlank(message = "경력을 선택해 주세요.")
@@ -36,10 +37,12 @@ public record SignupRequest(
         String career,
 
         @NotEmpty(message = "기술 스택을 하나 이상 선택해 주세요.")
-        List<@NotBlank(message = "기술 스택을 하나 이상 선택해 주세요.") String> stacks,
+        @Size(max = 30, message = "기술 스택은 30개까지 선택할 수 있습니다.")
+        List<@NotBlank(message = "기술 스택을 하나 이상 선택해 주세요.") @Size(max = 50, message = "기술 스택을 다시 선택해 주세요.") String> stacks,
 
         @NotEmpty(message = "관심 분야를 하나 이상 선택해 주세요.")
-        List<@NotBlank(message = "관심 분야를 하나 이상 선택해 주세요.") String> interests,
+        @Size(max = 30, message = "관심 분야는 30개까지 선택할 수 있습니다.")
+        List<@NotBlank(message = "관심 분야를 하나 이상 선택해 주세요.") @Size(max = 50, message = "관심 분야를 다시 선택해 주세요.") String> interests,
 
         @NotNull(message = "협업 가능 여부를 선택해 주세요.")
         Boolean available

@@ -2,7 +2,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { normalizeEmail } from '@/lib/account/authService';
-import type { SignupInput } from '@/types/auth';
+import type { SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
 import { ACCESS_COOKIE, REFRESH_COOKIE, cookieOptions, REFRESH_MAX_AGE } from './cookies';
 import { decodeToken } from './token';
@@ -31,6 +31,15 @@ export async function loginAction(form: FormData): Promise<{ error: string } | n
     const failure = await startSession(normalizeEmail(String(form.get('username') ?? '')), String(form.get('password') ?? ''));
     if (failure) return failure;
     redirect(safeNext(form.get('next')));
+}
+
+// 가입 화면의 직군·기술 스택·관심 분야 선택지. 기준은 백엔드 enum이다.
+export async function signupOptionsAction(): Promise<SignupOptions | { error: string }> {
+    const failure = { error: '선택 항목을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+    try {
+        const response = await backendFetch('/api/v1/auth/signup/options');
+        return response.ok ? await response.json() : failure;
+    } catch { return failure; }
 }
 
 // 가입 직후 바로 로그인한다. 화면 이동은 호출한 쪽(가입 폼)이 맡는다.
