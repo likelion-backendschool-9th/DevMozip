@@ -1,5 +1,5 @@
 import {demoCollaborationReviews} from '@/mocks/reviewDemos';
-import {demoAccounts} from '@/mocks/auth';
+import { demoAccounts, careerOptions, jobOptions } from '@/mocks/auth';
 import {portfolioBlockErrors,preparePortfolioBlocks,validPortfolioBlocks} from './portfolioBlocks';
 import {portfolioMediaErrors} from './portfolioMedia';
 import {upgradePortfolioMock} from './portfolioMockMigration';
@@ -16,7 +16,6 @@ import { safeExternalUrl } from '@/lib/utils/externalUrl';
 export { safeExternalUrl } from '@/lib/utils/externalUrl';
 import { createMockId } from '@/lib/utils/createMockId';
 import { collaborations, initialProfileState, profileFromAccount, reviewKeywords } from '@/mocks/profile';
-import { careerOptions, jobOptions } from '@/mocks/auth';
 import { interestOptions, stackOptions } from '@/mocks/home';
 import type { AuthUser, AccountRole } from '@/types/auth';
 import type { CollaborationReview, PortfolioInput, ProfileAction, ProfileState, Collaboration } from '@/types/profile';

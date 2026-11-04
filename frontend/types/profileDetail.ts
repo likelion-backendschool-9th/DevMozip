@@ -1,11 +1,11 @@
-// GET /api/v1/users/{slug}: 공개 프로필 상단 응답. career 단위는 개월.
+// GET /api/v1/users/{slug}: 공개 프로필 상단 응답. career는 선택한 경력 문구.
 export interface ProfileDetail {
     id: number;
     tag: string;
     nickname: string;
-    jobCategory: { id: number | null; name: string | null };
+    jobCategories: string[];
     summary: string | null;
-    career: number | null;
+    career: string | null;
     profileImage: string | null;
     bannerImage: string | null;
     collaborationStatus: string | null;
@@ -16,9 +16,9 @@ export interface ProfileDetail {
 export interface ProfileUpdateInput {
     nickname: string;
     tag: string;
-    jobCategoryId: number;
+    jobCategories: string[];
     summary: string;
-    career: number | null;
+    career: string | null;
     collaborationStatus: string | null;
     contactHours: string;
 }

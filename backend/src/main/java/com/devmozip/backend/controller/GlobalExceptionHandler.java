@@ -13,6 +13,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -88,6 +90,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException e, HttpServletRequest request) {
         return toResponse(HttpStatus.BAD_REQUEST, "요청 본문의 형식이 올바르지 않습니다.", request);
+    }
+
+    /** 요청 값 검증(@Valid) 실패. 프론트엔드가 그대로 보여줄 수 있도록 첫 번째 안내 문구를 내려보낸다 */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e, HttpServletRequest request) {
+        String message = e.getBindingResult().getAllErrors().stream()
+                .map(ObjectError::getDefaultMessage)
+                .findFirst()
+                .orElse(defaultMessage(HttpStatus.BAD_REQUEST));
+        return toResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     /**

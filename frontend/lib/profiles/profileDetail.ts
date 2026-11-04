@@ -7,32 +7,27 @@ const identifier = (value: unknown) => typeof value === 'number' && Number.isSaf
 export function parseProfileDetail(value: unknown): ProfileDetail {
     if (!value || typeof value !== 'object') throw new Error('잘못된 프로필 응답');
     const p = value as Record<string, unknown>;
-    const job = p.jobCategory as Record<string, unknown> | null;
     if (!identifier(p.id) || typeof p.tag !== 'string' || !validProfileSlug(p.tag)
         || typeof p.nickname !== 'string' || !p.nickname.trim()
-        || !job || !(job.id === null || identifier(job.id)) || !nullableText(job.name)
+        || !Array.isArray(p.jobCategories) || !p.jobCategories.every(job => typeof job === 'string')
         || !nullableText(p.summary) || !nullableText(p.profileImage) || !nullableText(p.bannerImage)
         || !nullableText(p.collaborationStatus)
-        || !(p.career === null || (typeof p.career === 'number' && Number.isSafeInteger(p.career) && p.career >= 0))
+        || !nullableText(p.career)
         || !(p.trustScore === null || (typeof p.trustScore === 'number' && Number.isFinite(p.trustScore)))
         || !(p.contactHours === undefined || nullableText(p.contactHours))) {
         throw new Error('잘못된 프로필 응답');
     }
     // 알 수 없는 추가 필드(이메일 등)는 브라우저 응답에 전달하지 않는다.
     return { id: p.id as number, tag: p.tag, nickname: p.nickname,
-        jobCategory: { id: job.id as number | null, name: job.name as string | null },
-        summary: p.summary as string | null, career: p.career as number | null,
+        jobCategories: p.jobCategories as string[],
+        summary: p.summary as string | null, career: p.career as string | null,
         profileImage: p.profileImage as string | null, bannerImage: p.bannerImage as string | null,
         collaborationStatus: p.collaborationStatus as string | null, trustScore: p.trustScore as number | null,
         ...(p.contactHours !== undefined ? { contactHours: p.contactHours as string | null } : {}) };
 }
 
-export function formatCareer(months: number | null): string {
-    if (months === null) return '경력 미입력';
-    if (months === 0) return '신입';
-    const years = Math.floor(months / 12);
-    const rest = months % 12;
-    return [years ? `${years}년` : '', rest ? `${rest}개월` : ''].filter(Boolean).join(' ');
+export function formatCareer(career: string | null): string {
+    return career || '경력 미입력';
 }
 
 export function collaborationLabel(status: string | null): string {

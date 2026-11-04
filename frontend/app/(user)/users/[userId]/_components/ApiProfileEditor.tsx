@@ -7,6 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfileImageEditor } from './ProfileImageEditor';
 import { notify } from '@/lib/state/prototypeStore';
 import { changeOwnImage, fetchJobCategories, saveOwnProfile } from '@/lib/profiles/profileUpdate';
+import { careerOptions } from '@/mocks/auth';
 import { useOwnProfile } from '../../../_components/OwnProfileProvider';
 import type { ProfileDetail, ProfileImageKind } from '@/types/profileDetail';
 import styles from './ProfileEditor.module.css';
@@ -18,11 +19,11 @@ export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: Profi
     const [nickname, setNickname] = useState(profile.nickname);
     const [tag, setTag] = useState(profile.tag);
     const [summary, setSummary] = useState(profile.summary || '');
-    const [career, setCareer] = useState(profile.career === null ? '' : String(profile.career));
-    const [jobId, setJobId] = useState(profile.jobCategory.id === null ? '' : String(profile.jobCategory.id));
+    const [career, setCareer] = useState(profile.career || '');
+    const [job, setJob] = useState(profile.jobCategories[0] || '');
     const [contact, setContact] = useState(profile.contactHours || '');
     const [collaboration, setCollaboration] = useState(profile.collaborationStatus || '');
-    const [jobs, setJobs] = useState<{ id: number; name: string }[]>([]);
+    const [jobs, setJobs] = useState<string[]>([]);
     const [jobsError, setJobsError] = useState('');
     const [attempt, setAttempt] = useState(0);
     const [error, setError] = useState('');
@@ -51,13 +52,11 @@ export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: Profi
             event.preventDefault();
             if (busy) return;
             setError('');
-            if (!/^\d+$/.test(career) && career !== '') { setError('경력은 0 이상의 개월 수로 입력해 주세요.'); return; }
-            if (!Number.isSafeInteger(Number(career)) || Number(career) > 2147483647) { setError('경력 개월 수를 확인해 주세요.'); return; }
-            if (!jobId || !jobs.some(job => String(job.id) === jobId)) { setError('직군을 선택해 주세요.'); return; }
+            if (!jobs.includes(job)) { setError('직군을 선택해 주세요.'); return; }
             setSaving(true);
             try {
-                const saved = await saveOwnProfile({ nickname, tag, jobCategoryId: Number(jobId), summary,
-                    career: career === '' ? null : Number(career), contactHours: contact, collaborationStatus: collaboration || null });
+                const saved = await saveOwnProfile({ nickname, tag, jobCategories: [job], summary,
+                    career: career || null, contactHours: contact, collaborationStatus: collaboration || null });
                 own.update(saved); onSaved(saved); onClose(); notify('프로필을 저장했어요.');
                 if (pathname.startsWith('/users/') && saved.tag !== profile.tag) router.replace(`/users/${encodeURIComponent(saved.tag)}`);
             } catch (error) { setError(error instanceof Error ? error.message : '저장하지 못했어요.'); }
@@ -76,10 +75,9 @@ export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: Profi
                 <p className="auth-hint">닉네임 2~20자 · 태그 2~30자, 영문·숫자·밑줄·하이픈. @ 없이 입력해 주세요.</p>
                 <label>한 줄 소개<Input maxLength={150} value={summary} onChange={e => setSummary(e.target.value)} /></label>
                 <div className="auth-two-columns">
-                    <label>직군<select required className="form-input" value={jobId} onChange={e => setJobId(e.target.value)}><option value="">직군 선택</option>{jobs.map(job => <option key={job.id} value={job.id}>{job.name}</option>)}</select></label>
-                    <label>경력(개월 수)<Input inputMode="numeric" pattern="[0-9]*" value={career} onChange={e => setCareer(e.target.value)} placeholder="예: 18" /></label>
+                    <label>직군<select required className="form-input" value={job} onChange={e => setJob(e.target.value)}><option value="">직군 선택</option>{jobs.map(option => <option key={option}>{option}</option>)}</select></label>
+                    <label>경력<select className="form-input" value={career} onChange={e => setCareer(e.target.value)}><option value="">경력 선택</option>{[...new Set([...careerOptions, ...(career ? [career] : [])])].map(option => <option key={option}>{option}</option>)}</select></label>
                 </div>
-                <p className="auth-hint">경력 0은 신입, 빈칸은 미입력이에요.</p>
                 {jobsError && <p role="alert" className="form-error">{jobsError} <button type="button" onClick={() => setAttempt(v => v + 1)}>다시 시도</button></p>}
                 {!jobsError && jobs.length === 0 && <p role="status">선택할 직군이 없거나 목록을 불러오는 중이에요.</p>}
                 <label>연락 가능 시간<Input maxLength={100} value={contact} onChange={e => setContact(e.target.value)} /></label>

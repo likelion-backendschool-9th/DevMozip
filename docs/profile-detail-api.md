@@ -16,9 +16,9 @@ ERD는 수정하지 않았다.
   "id": 1,
   "tag": "dev-tag",
   "nickname": "개발자",
-  "jobCategory": { "id": 2, "name": "백엔드 개발자" },
+  "jobCategories": ["백엔드 개발자"],
   "summary": "함께 성장할 팀을 찾습니다.",
-  "career": 18,
+  "career": "2년 차",
   "contactHours": "평일 19:00~22:00 · 주말 협의",
   "profileImage": null,
   "bannerImage": null,
@@ -28,11 +28,11 @@ ERD는 수정하지 않았다.
 ```
 
 `summary`, 사진·배너, 협업 상태는 NULL을 허용한다.
-`career`는 users.career(INT)에 저장된 개월 수를 반환하며 18은 18개월, 0은 신입, NULL은 미입력이다.
+`career`는 users.career(VARCHAR(30))에 저장된 경력 문구를 반환하며 NULL은 미입력이다.
 경력 표시 문구 변환은 프론트에서 수행한다. 경력 저장·수정 및 음수 입력 검증은 이번 조회 API 범위에 포함하지 않는다.
 실제 PostgreSQL에도 career 컬럼을 별도 적용해야 하며, 이 작업에서 운영 스키마를 변경하지 않는다. 이미지 필드는 저장된 경로를 반환한다.
 이메일·비밀번호 해시·카카오 ID·결제 정보는 응답 DTO에 포함하지 않는다.
-직군은 현재 ERD의 단일 `job_category_id` 관계를 따른다.
+직군은 users.job_categories(JSONB)의 문자열 배열이며 허용 값은 백엔드 enum이 기준이다.
 가입일·소개 본문·관심 분야·팔로우 수·PRO 표시는 이 API의 응답에 포함하지 않는다.
 포트폴리오·게시글·활동·리뷰는 별도 API 범위다.
 
@@ -94,7 +94,7 @@ cd backend
 
 - 실제 Spring Boot 서버를 127.0.0.1 임의 포트로 구동한다.
 - 독립적인 H2 메모리 DB에 직군·ACTIVE·WARNED·SUSPENDED 테스트 사용자를 넣는다.
-- 경력 18개월·0개월·NULL이 실제 DB 조회 후 JSON에서도 구분되는지 확인한다.
+- 경력 문구와 NULL이 실제 DB 조회 후 JSON에서도 구분되는지 확인한다.
 - Java HttpClient로 HTTP 요청하며 Controller·Service·Repository를 대역으로 바꾸지 않는다.
 - ACTIVE 사용자: 200, 저장한 프로필·직군·신뢰 온도와 공개 응답 필드 일치.
 - 선택 정보가 NULL인 ACTIVE 사용자: 200, NULL 유지.

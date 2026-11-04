@@ -20,13 +20,14 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	runtimeOnly 'com.twelvemonkeys.imageio:imageio-webp:3.15.0'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	// 리프레시 토큰 저장소 (local 프로필은 메모리 저장소를 쓴다)
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	// 헬스체크(/actuator/health) - 프론트 /api/health와 블루그린 배포가 사용한다
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 요청 값 검증 (@Valid)
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'

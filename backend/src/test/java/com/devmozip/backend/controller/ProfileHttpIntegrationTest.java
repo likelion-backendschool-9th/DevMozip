@@ -26,13 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql(statements = {
         "DELETE FROM users",
-        "DELETE FROM job_categories",
-        "INSERT INTO job_categories (id, name) VALUES (1, '백엔드 개발자')",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, summary, profile_image, banner_image, collaboration_status, trust_score, career, contact_hours) VALUES (1, 1, 'profile-http-active', '통합 테스트 개발자', 'ACTIVE', '같이 개발해요', '/profile.png', '/banner.png', 'AVAILABLE', 36.50, 18, '평일 19:00~22:00')",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (2, 1, 'profile-http-locked', '잠금 테스트', 'WARNED', 36.50)",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (3, 1, 'profile-http-suspended', '제재 테스트', 'SUSPENDED', 36.50)",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score) VALUES (4, 1, 'profile-http-minimal', '기본 테스트', 'ACTIVE', 36.50)",
-        "INSERT INTO users (id, job_category_id, tag, nickname, status, trust_score, career) VALUES (5, 1, 'profile-http-junior', '신입 테스트', 'ACTIVE', 36.50, 0)"
+        "INSERT INTO users (id, job_categories, tag, nickname, status, summary, profile_image, banner_image, collaboration_status, trust_score, career, contact_hours) VALUES (1, '[\"백엔드 개발자\"]' FORMAT JSON, 'profile-http-active', '통합 테스트 개발자', 'ACTIVE', '같이 개발해요', '/profile.png', '/banner.png', 'AVAILABLE', 36.50, '2년 차', '평일 19:00~22:00')",
+        "INSERT INTO users (id, job_categories, tag, nickname, status, trust_score) VALUES (2, '[\"백엔드 개발자\"]' FORMAT JSON, 'profile-http-locked', '잠금 테스트', 'WARNED', 36.50)",
+        "INSERT INTO users (id, job_categories, tag, nickname, status, trust_score) VALUES (3, '[\"백엔드 개발자\"]' FORMAT JSON, 'profile-http-suspended', '제재 테스트', 'SUSPENDED', 36.50)",
+        "INSERT INTO users (id, job_categories, tag, nickname, status, trust_score) VALUES (4, '[\"백엔드 개발자\"]' FORMAT JSON, 'profile-http-minimal', '기본 테스트', 'ACTIVE', 36.50)",
+        "INSERT INTO users (id, job_categories, tag, nickname, status, trust_score, career) VALUES (5, '[\"백엔드 개발자\"]' FORMAT JSON, 'profile-http-junior', '신입 테스트', 'ACTIVE', 36.50, '신입 / 학습 중')"
 })
 class ProfileHttpIntegrationTest {
     @LocalServerPort
@@ -68,10 +66,9 @@ class ProfileHttpIntegrationTest {
         assertEquals(1L, json.get("id").asLong());
         assertEquals("profile-http-active", json.get("tag").asString());
         assertEquals("통합 테스트 개발자", json.get("nickname").asString());
-        assertEquals(1L, json.get("jobCategory").get("id").asLong());
-        assertEquals("백엔드 개발자", json.get("jobCategory").get("name").asString());
+        assertEquals("백엔드 개발자", json.get("jobCategories").get(0).asString());
         assertEquals("같이 개발해요", json.get("summary").asString());
-        assertEquals(18, json.get("career").asInt());
+        assertEquals("2년 차", json.get("career").asString());
         assertEquals("평일 19:00~22:00", json.get("contactHours").asString());
         assertEquals("/profile.png", json.get("profileImage").asString());
         assertEquals("/banner.png", json.get("bannerImage").asString());
@@ -79,7 +76,7 @@ class ProfileHttpIntegrationTest {
         assertEquals(0, new BigDecimal("36.50").compareTo(json.get("trustScore").decimalValue()));
         Set<String> fields = new HashSet<>();
         json.propertyNames().forEach(fields::add);
-        assertEquals(Set.of("id", "tag", "nickname", "jobCategory", "summary", "profileImage",
+        assertEquals(Set.of("id", "tag", "nickname", "jobCategories", "summary", "profileImage",
                 "bannerImage", "collaborationStatus", "trustScore", "career", "contactHours"), fields);
     }
 
@@ -94,12 +91,11 @@ class ProfileHttpIntegrationTest {
     }
 
     @Test
-    void zeroCareerIsReturnedAsZeroInsteadOfNull() throws Exception {
+    void careerTextIsReturnedAsStored() throws Exception {
         var response = get("/api/v1/users/profile-http-junior");
         assertEquals(200, response.statusCode());
         var career = mapper.readTree(response.body()).get("career");
-        assertFalse(career.isNull());
-        assertEquals(0, career.asInt());
+        assertEquals("신입 / 학습 중", career.asString());
     }
 
     @ParameterizedTest

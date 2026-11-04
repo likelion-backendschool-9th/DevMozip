@@ -23,7 +23,7 @@ public class ProfileUpdateController {
     }
 
     @GetMapping("/job-categories")
-    public java.util.List<ProfileDetailResponse.JobCategoryResponse> jobs(Authentication authentication) {
+    public java.util.List<String> jobs(Authentication authentication) {
         return profiles.jobCategories(email(authentication));
     }
 

@@ -29,21 +29,21 @@ Member 상태는 ACTIVE/WARNED/SUSPENDED이며, 기존 공개 조회 정책대�
 {
   "nickname": "개발자",
   "tag": "developer-tag",
-  "jobCategoryId": 1,
+  "jobCategories": ["백엔드 개발자"],
   "summary": "함께 개발해요",
-  "career": 18,
+  "career": "2년 차",
   "collaborationStatus": "AVAILABLE"
 }
 ```
 
 - nickname: 앞뒤 공백 제거, 한글 완성형·영문·숫자·공백·밑줄 2~20자, 필수.
 - tag: 앞뒤 공백 제거, 영문·숫자·밑줄·하이픈 2~30자, 필수. me는 대소문자와 무관하게 예약어.
-- jobCategoryId: 양수·필수, 실제 직군 존재 검증.
+- jobCategories: 필수, 백엔드 enum에 있는 직군만 허용.
 - summary: 앞뒤 공백 제거, 최대 150자. NULL/누락/빈 문자열로 비울 수 있다.
-- career: 개월 수. 0=신입, NULL/누락=미입력. 음수 거부.
+- career: 경력 문구, 30자 이내. NULL/누락=미입력.
 - collaborationStatus: AVAILABLE/RESTING/BUSY/OPEN_TO_OFFERS/UNAVAILABLE 또는 NULL. 누락/NULL은 비운다.
 
-전체 수정 PUT 계약이다. nickname/tag/jobCategoryId가 빠지면 400, 선택 항목 누락은 기존 값 유지가 아니라 비우기다.
+전체 수정 PUT 계약이다. nickname/tag/jobCategories가 빠지면 400, 선택 항목 누락은 기존 값 유지가 아니라 비우기다.
 협업 상태를 기본 수정에 포함했다. 추후 별도 availability API를 도입하면 같은 필드 정책으로 맞춰야 한다.
 요청의 사용자 ID/이메일은 수정 대상을 선택하는 데 쓰지 않는다.
 권한·계정 상태·비밀번호·신뢰 온도·사진·배너·외부 링크는 수정하지 않는다.
@@ -104,7 +104,7 @@ ProfileUpdateIntegrationTest: 기존 JWT 검증 필터 → Controller → Servic
 - 현재 브랜치는 H2가 testRuntimeOnly여서 일반 로컬 실행 시에는 병합 예정 빌드의 runtimeOnly H2 설정도 필요하다.
 - 현재 브랜치의 임시 인증에는 bootstrap 비밀번호 환경 설정이 필요하다. 제공된 local 파일만으로 실제 회원 인증 코드까지 대체되지는 않는다.
 - application-local.yml은 local 프로필을 명시적으로 활성화해야 사용된다. 공통 application.yaml 설정과 인증 코드도 같이 확인한다.
-- 같은 폴더 members_data.sql의 사용자 INSERT에는 job_category_id가 없으며 job_categories 초기 데이터도 없다.
+- 같은 폴더 members_data.sql의 사용자 INSERT에는 job_categories 값이 없다.
   현재 공개 조회는 직군 ID/직군이 없으면 404이므로, 실제 공개 프로필을 검증하려면 직군 초기 데이터와 회원 연결이 필요하다.
   임의 직군을 자동 배정하거나 회원 조회 정책을 몰래 바꾸지 않았다.
 - 현재 수정 DTO는 실제 존재하는 직군 ID를 필수로 요구한다. 직군 ID가 준비되어야 수정 성공 검증이 가능하다.
