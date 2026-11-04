@@ -5,7 +5,7 @@ import { MemoryRouter,Route,Routes } from '@/tests/helpers/RouterFixture';
 import { AppLayout } from '@/app/_components/AppLayout';
 import ProjectManagePage from '@/app/projects/[projectId]/manage/page';
 import ProjectDetailPage from '@/app/projects/[projectId]/page';
-import ProfilePage from '@/app/(user)/users/[userId]/page';
+import ProfilePage from '@/app/(user)/users/[userId]/_components/PrototypeProfilePage';
 import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
 import ProjectNotificationsPage from '@/app/notifications/page';
 import { signIn } from '@/tests/helpers/session';

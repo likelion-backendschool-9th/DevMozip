@@ -20,7 +20,7 @@ import com.devmozip.backend.security.jwt.InvalidTokenException;
 import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.security.jwt.RefreshTokenStore;
 
-@Service 
+@Service
 public class AuthService {
 
     private AuthenticationManager authenticationManager;
@@ -40,10 +40,10 @@ public class AuthService {
         this.refreshTokenStore = refreshTokenStore;
         this.memberRepository = memberRepository;
     }
- 
+
     public LoginResponse login(LoginRequest loginRequest){
 
-        UsernamePasswordAuthenticationToken authenticationToken 
+        UsernamePasswordAuthenticationToken authenticationToken
             = new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password());
 
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);

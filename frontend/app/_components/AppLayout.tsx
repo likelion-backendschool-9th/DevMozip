@@ -74,7 +74,7 @@ export function AppLayout({ children }: {
                                 </Link>
                                 <Link
                                     className={[styles.scope, styles.profileLink, "icon-button header-profile-link"].join(" ")}
-                                    href={`/users/${user.id}`}
+                                    href="/profile/me"
                                     aria-label="내 프로필로 이동"
                                     title={`${user.nickname}님의 프로필`}
                                 >

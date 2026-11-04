@@ -16,12 +16,12 @@ import com.devmozip.backend.service.AuthService;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService service;
-    
+
     public AuthController(AuthService service) {
         this.service = service;
     }
 
-    @PostMapping("/login")    
+    @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest loginRequest){
         LoginResponse tokenResponse = service.login(loginRequest);
         return tokenResponse;
