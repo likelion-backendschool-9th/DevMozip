@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
+import { addChatStack, buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 import { initialMatchingState } from '@/mocks/matching';
 import { developers, projects } from '@/mocks/home';
@@ -62,7 +62,29 @@ describe('로컬 사용자 메시지 저장', () => {
     });
 
     it('조건 입력 오류를 처리하고 기존 저장 검증을 보존한다', () => {
-        expect(() => sendMatchingMessage(newMatchingConversation(now), '메시지', { ...ready(), stacks: ['없는기술'] }, now)).toThrow('선택 조건');
+        expect(() => sendMatchingMessage(newMatchingConversation(now), '메시지', { ...ready(), stacks: [' '] }, now)).toThrow('선택 조건');
+    });
+
+    it('기술 직접 입력의 표기·중복·길이·개수 제한을 적용한다', () => {
+        expect(addChatStack([], ' java ')).toEqual(['Java']);
+        expect(addChatStack(['Java'], ' Vue ')).toEqual(['Java', 'Vue']);
+        expect(() => addChatStack(['Java'], 'java')).toThrow('이미 추가');
+        expect(() => addChatStack(['Vue'], ' Vue ')).toThrow('이미 추가');
+        for (const value of ['', ' ', 'x'.repeat(51)]) expect(() => addChatStack([], value)).toThrow('1~50자');
+        const full = Array.from({ length: 30 }, (_, i) => `기술${i}`);
+        expect(() => addChatStack(full, 'Docker')).toThrow('최대 30개');
+        expect(addChatStack(full.slice(0, 29), 'x'.repeat(50))).toHaveLength(30);
+    });
+
+    it('직접 입력한 기술을 메시지 저장과 재복원에서 보존하고 잘못된 값은 거절한다', () => {
+        const requirements = { ...ready(), stacks: addChatStack(['Java'], 'Vue') };
+        const conversation = sendMatchingMessage(newMatchingConversation(now), '직접 입력 기술', requirements, now);
+        const restored = parseMatchingChat(JSON.parse(JSON.stringify({ conversations: { member: [conversation] }, active: { member: conversation.id } })));
+        expect(restored.conversations.member[0].requirements.stacks).toEqual(['Java', 'Vue']);
+        expect(restored.conversations.member[0].messages[0].requirements?.stacks).toEqual(['Java', 'Vue']);
+        for (const stacks of [['x'.repeat(51)], Array.from({ length: 31 }, (_, i) => `기술${i}`)]) {
+            expect(() => sendMatchingMessage(conversation, '잘못된 기술', { ...requirements, stacks }, now)).toThrow('선택 조건');
+        }
     });
 });
 
