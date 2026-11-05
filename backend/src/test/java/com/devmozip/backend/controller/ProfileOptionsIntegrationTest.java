@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "INSERT INTO users (id,email,nickname,tag,status,role) VALUES (3,'warned@profile.test','경고회원','warned-user','WARNED','USER')",
         "INSERT INTO users (id,email,nickname,tag,status,role) VALUES (4,'suspended@profile.test','정지회원','suspended-user','SUSPENDED','USER')"
 })
-class ProfileTagsIntegrationTest {
+class ProfileOptionsIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;
     @Autowired JdbcTemplate jdbc;
@@ -52,26 +52,26 @@ class ProfileTagsIntegrationTest {
     @Test
     void existingSignupValuesArePublicWithoutPrivateFieldsAndNullIsEmpty() throws Exception {
         var member = members.findById(1L).orElseThrow();
-        member.updateProfileTags(List.of("Java", "React"), List.of("AI"));
+        member.updateProfileOptions(List.of("Java", "React"), List.of("AI"));
         members.saveAndFlush(member);
-        mvc.perform(get("/api/v1/users/tags-user/tags")).andExpect(status().isOk())
+        mvc.perform(get("/api/v1/users/tags-user/options")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.skills[0]").value("Java")).andExpect(jsonPath("$.interests[0]").value("AI"))
                 .andExpect(jsonPath("$.email").doesNotExist()).andExpect(jsonPath("$.id").doesNotExist());
-        mvc.perform(get("/api/v1/users/other-user/tags")).andExpect(status().isOk())
+        mvc.perform(get("/api/v1/users/other-user/options")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.skills").isEmpty()).andExpect(jsonPath("$.interests").isEmpty());
     }
     @Test
     void updatePersistsNormalizedValuesAndDoesNotModifyOtherFieldsOrMembers() throws Exception {
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("tags@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("tags@profile.test"))
                         .contentType("application/json").content(body(List.of(" Java ", "Java", "React"), List.of("AI", "AI"))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.skills.length()").value(2));
-        mvc.perform(get("/api/v1/users/tags-user/tags")).andExpect(jsonPath("$.skills[1]").value("React"))
+        mvc.perform(get("/api/v1/users/tags-user/options")).andExpect(jsonPath("$.skills[1]").value("React"))
                 .andExpect(jsonPath("$.interests.length()").value(1));
         assertEquals(List.of("Java", "React"), members.findById(1L).orElseThrow().getSkills());
         assertNull(members.findById(2L).orElseThrow().getSkills());
         assertEquals("유지할 소개", jdbc.queryForObject("SELECT summary FROM users WHERE id=1", String.class));
         assertEquals("3년 차", jdbc.queryForObject("SELECT career FROM users WHERE id=1", String.class));
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("tags@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("tags@profile.test"))
                 .contentType("application/json").content(body(List.of(), List.of())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.skills").isEmpty());
         assertEquals(List.of(), members.findById(1L).orElseThrow().getSkills());
@@ -79,41 +79,41 @@ class ProfileTagsIntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {"missing", "warned-user", "suspended-user"})
     void unavailablePublicProfilesReturn404(String slug) throws Exception {
-        mvc.perform(get("/api/v1/users/" + slug + "/tags")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/users/" + slug + "/options")).andExpect(status().isNotFound());
     }
     @Test
     void privateRouteIsNotMatchedByPublicWildcardAndOnlyOwnerCanUpdate() throws Exception {
-        mvc.perform(get("/api/v1/users/me/tags")).andExpect(status().isUnauthorized());
-        mvc.perform(put("/api/v1/users/me/tags").contentType("application/json").content(body(List.of(), List.of())))
+        mvc.perform(get("/api/v1/users/me/options")).andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/v1/users/me/options").contentType("application/json").content(body(List.of(), List.of())))
                 .andExpect(status().isUnauthorized());
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("tags@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("tags@profile.test"))
                         .contentType("application/json").content("{\"skills\":[\"Java\"],\"interests\":[],\"id\":2,\"email\":\"other@profile.test\"}"))
                 .andExpect(status().isOk());
         assertNull(members.findById(2L).orElseThrow().getSkills());
     }
     @Test
     void warnedOwnerCanEditButSuspendedAndMissingOwnersCannot() throws Exception {
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("warned@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("warned@profile.test"))
                 .contentType("application/json").content(body(List.of("Java"), List.of())))
                 .andExpect(status().isOk());
-        mvc.perform(get("/api/v1/users/me/tags").header("Authorization", token("warned@profile.test")))
+        mvc.perform(get("/api/v1/users/me/options").header("Authorization", token("warned@profile.test")))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.skills[0]").value("Java"));
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("suspended@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("suspended@profile.test"))
                 .contentType("application/json").content(body(List.of(), List.of()))).andExpect(status().isForbidden());
-        mvc.perform(get("/api/v1/users/me/tags").header("Authorization", token("missing@profile.test")))
+        mvc.perform(get("/api/v1/users/me/options").header("Authorization", token("missing@profile.test")))
                 .andExpect(status().isNotFound());
     }
     @ParameterizedTest
     @ValueSource(strings = {"{}", "{\"skills\":null,\"interests\":[]}", "{\"skills\":[],\"interests\":null}",
             "{\"skills\":[\"Unknown\"],\"interests\":[]}", "{\"skills\":[],\"interests\":[\"unknown\"]}", "{\"skills\":[\" \"],\"interests\":[]}"})
     void invalidValuesNeverOverwriteData(String json) throws Exception {
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("tags@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("tags@profile.test"))
                 .contentType("application/json").content(json)).andExpect(status().isBadRequest());
         assertNull(members.findById(1L).orElseThrow().getSkills());
     }
     @Test
     void tooManyValuesAreRejected() throws Exception {
-        mvc.perform(put("/api/v1/users/me/tags").header("Authorization", token("tags@profile.test"))
+        mvc.perform(put("/api/v1/users/me/options").header("Authorization", token("tags@profile.test"))
                 .contentType("application/json").content(body(java.util.Collections.nCopies(31, "Java"), List.of())))
                 .andExpect(status().isBadRequest());
     }

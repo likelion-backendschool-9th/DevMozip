@@ -148,7 +148,7 @@ public class Member {
     @Column(name = "introduction_format", length = 10)
     private String introductionFormat;
 
-    public void updateProfileTags(List<String> skills, List<String> interests) {
+    public void updateProfileOptions(List<String> skills, List<String> interests) {
         this.skills = List.copyOf(skills);
         this.interests = List.copyOf(interests);
     }

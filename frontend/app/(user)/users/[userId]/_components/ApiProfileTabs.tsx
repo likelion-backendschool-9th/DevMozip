@@ -1,7 +1,7 @@
 'use client';
 import { profileTabs } from '@/mocks/profile';
 import { useQueryState } from '@/lib/navigation';
-import { ApiProfileTags } from './ApiProfileTags';
+import { ApiProfileOptions } from './ApiProfileOptions';
 import { ApiProfileIntroduction } from './ApiProfileIntroduction';
 import { Card } from '@/components/common/Card';
 import styles from '../page.module.css';
@@ -41,7 +41,7 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                         {slug ? <ApiProfileIntroduction key={slug} nickname={nickname} slug={slug} canEdit={canEdit} /> : <><div className={`${aboutStyles.title} tab-section-title`}><div><span className={aboutStyles.eyebrow}>ABOUT ME</span><h2>반가워요, {nickname}입니다.</h2></div></div><p>자기소개 조회 연결 전</p></>}
                     </Card>
                     <Card className={`${aboutStyles.sidebar} profile-section`}>
-                        {slug && <ApiProfileTags key={slug} slug={slug} canEdit={canEdit} />}
+                        {slug && <ApiProfileOptions key={slug} slug={slug} canEdit={canEdit} />}
                         {['외부 링크'].map(label => <section key={label} className={aboutStyles.group} aria-label={label}>
                             <div className={aboutStyles.groupHeading}><h2>{label}</h2></div><p className={aboutStyles.empty}>조회 연결 전</p>
                         </section>)}

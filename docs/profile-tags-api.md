@@ -14,9 +14,9 @@
 
 | 메서드 | 경로 | 접근 |
 | --- | --- | --- |
-| GET | `/api/v1/users/{slug}/tags` | 비로그인 가능, ACTIVE 계정만 공개 |
-| GET | `/api/v1/users/me/tags` | 인증된 본인, ACTIVE·WARNED |
-| PUT | `/api/v1/users/me/tags` | 인증된 본인, ACTIVE·WARNED |
+| GET | `/api/v1/users/{slug}/options` | 비로그인 가능, ACTIVE 계정만 공개 |
+| GET | `/api/v1/users/me/options` | 인증된 본인, ACTIVE·WARNED |
+| PUT | `/api/v1/users/me/options` | 인증된 본인, ACTIVE·WARNED |
 
 요청·응답 형태:
 
@@ -26,11 +26,11 @@
 
 응답에는 이 두 목록만 포함한다. 이메일·권한·비밀번호는 반환하지 않는다. 소유자는 `Authentication.getName()`의 이메일로 기존 `MemberRepository.findByEmail()`을 호출해 결정한다. 본문의 ID·이메일로 소유자를 지정할 수 없다. 기존 인증 확인 API `/api/v1/users/me`는 변경하지 않는다.
 
-공개 미존재·비공개 상태 계정은 동일한 404, 미인증은 401, 수정 불가 상태는 403, 유효하지 않은 선택 값은 400이다. 자기소개와 동일한 상태 정책을 따른다. `/me/tags` 인증 규칙은 공개 경로 규칙보다 먼저 선언한다.
+공개 미존재·비공개 상태 계정은 동일한 404, 미인증은 401, 수정 불가 상태는 403, 유효하지 않은 선택 값은 400이다. 자기소개와 동일한 상태 정책을 따른다. `/me/options` 인증 규칙은 공개 경로 규칙보다 먼저 선언한다.
 
 ## 프론트 연결
 
-- BFF: `/api/profiles/{slug}/tags`, `/api/profiles/me/tags`.
+- BFF: `/api/profiles/{slug}/options`, `/api/profiles/me/options`.
 - 기존 `backendFetch`의 인증 쿠키 처리 및 오류 응답 정제를 재사용한다. 요청·응답의 필드를 제한하며 조회는 no-store다. 수정은 같은 출처의 JSON 요청만 허용한다.
 - 본인 확인이 완료된 화면에서만 수정 버튼을 표시한다. 공개 프로필은 읽기 전용이다.
 - 기술 스택·관심 분야의 수정 버튼은 두 목록을 함께 편집하는 모달을 연다. 기존 `ProfileTagEditor`의 선택 UI를 재사용하되 직접 입력은 숨긴다. 기존 Mock 화면의 직접 입력 동작은 유지한다.
@@ -45,3 +45,7 @@
 - 새 H2/JPA/MockMvc 통합 테스트 14개: 기존 저장 값 공개 조회, NULL 정규화, 저장 후 재조회, 전체 해제, 중복·공백 정리, 다른 회원·기본 필드 보존, 인증 경로 우선순위, 계정 상태, enum 미등록 값·누락·NULL·개수 제한 검증.
 - 프론트 신규 테스트 18개: 공개·본인 통신 구분, BFF 필드 제한·출처 검사·오류 전달, 잘못된 응답 거절, 직접 입력 UI 분리.
 - 실제 PostgreSQL, 브라우저 수동 조작 및 운영 환경 검증은 미실행.
+
+## 명칭 구분
+
+사용자 아이디인 `Member.tag`와 구분하기 위해 백엔드 DTO·Service·Controller·통합 테스트는 `ProfileOptionsRequest`, `ProfileOptionsResponse`, `ProfileOptionsService`, `ProfileOptionsController`, `ProfileOptionsIntegrationTest`로 명명한다. 저장 필드는 기존 skills/interests이며 사용자 아이디의 필수 입력 정책은 변경하지 않는다. 백엔드 API 및 프론트 BFF·호출 경로도 `/options`로 통일한다. 응답은 선택지 전체가 아닌 해당 회원이 저장한 skills/interests이며, 허용 선택지 전체는 기존 회원가입 options API에서 가져온다.

@@ -5,13 +5,13 @@ import { Button } from '@/components/common/Button';
 import { ProfileTagEditor } from '@/components/profile/ProfileTagEditor';
 import { signupOptionsAction } from '@/lib/auth/actions';
 import { notify } from '@/lib/state/prototypeStore';
-import { parseProfileTags, saveProfileTags } from '@/lib/profiles/profileTagsApi';
-import type { ProfileTagsDetail } from '@/types/profileTags';
+import { parseProfileOptions, saveProfileOptions } from '@/lib/profiles/profileOptionsApi';
+import type { ProfileOptionsDetail } from '@/types/profileOptions';
 import styles from './ProfileEditor.module.css';
 
 type Options = { skills: string[]; interests: string[] };
-export function ApiProfileTagsEditor({ initial, onClose, onSaved }: {
-    initial: ProfileTagsDetail; onClose: () => void; onSaved: (value: ProfileTagsDetail) => void;
+export function ApiProfileOptionsEditor({ initial, onClose, onSaved }: {
+    initial: ProfileOptionsDetail; onClose: () => void; onSaved: (value: ProfileOptionsDetail) => void;
 }) {
     const [value, setValue] = useState(initial);
     const [options, setOptions] = useState<Options | null>(null);
@@ -25,7 +25,7 @@ export function ApiProfileTagsEditor({ initial, onClose, onSaved }: {
         void signupOptionsAction().then(result => {
             if (!active) return;
             if ('error' in result) setOptionsError(result.error);
-            else setOptions(parseProfileTags(result));
+            else setOptions(parseProfileOptions(result));
         }).catch(() => { if (active) setOptionsError('선택 목록을 불러오지 못했어요.'); });
         return () => { active = false; };
     }, [attempt]);
@@ -35,7 +35,7 @@ export function ApiProfileTagsEditor({ initial, onClose, onSaved }: {
             if (busy || !options) return;
             setBusy(true); setError('');
             try {
-                const saved = await saveProfileTags(value);
+                const saved = await saveProfileOptions(value);
                 onSaved(saved); onClose(); notify('기술 스택과 관심 분야를 저장했어요.');
             } catch (error) { setError(error instanceof Error ? error.message : '저장하지 못했어요.'); }
             finally { setBusy(false); }

@@ -1,8 +1,8 @@
 package com.devmozip.backend.controller;
 
-import com.devmozip.backend.dto.profile.ProfileTagsRequest;
-import com.devmozip.backend.dto.profile.ProfileTagsResponse;
-import com.devmozip.backend.service.ProfileTagsService;
+import com.devmozip.backend.dto.profile.ProfileOptionsRequest;
+import com.devmozip.backend.dto.profile.ProfileOptionsResponse;
+import com.devmozip.backend.service.ProfileOptionsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,21 +13,21 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class ProfileTagsController {
-    private final ProfileTagsService service;
+public class ProfileOptionsController {
+    private final ProfileOptionsService service;
 
-    @GetMapping("/{slug}/tags")
-    public ProfileTagsResponse publicTags(@PathVariable String slug) {
+    @GetMapping("/{slug}/options")
+    public ProfileOptionsResponse publicOptions(@PathVariable String slug) {
         return service.findPublic(slug);
     }
 
-    @GetMapping("/me/tags")
-    public ProfileTagsResponse ownTags(Authentication authentication) {
+    @GetMapping("/me/options")
+    public ProfileOptionsResponse ownOptions(Authentication authentication) {
         return service.findOwn(email(authentication));
     }
 
-    @PutMapping("/me/tags")
-    public ProfileTagsResponse update(Authentication authentication, @Valid @RequestBody ProfileTagsRequest request) {
+    @PutMapping("/me/options")
+    public ProfileOptionsResponse update(Authentication authentication, @Valid @RequestBody ProfileOptionsRequest request) {
         return service.update(email(authentication), request);
     }
 

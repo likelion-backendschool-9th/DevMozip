@@ -1,4 +1,4 @@
-export interface ProfileTagsDetail {
+export interface ProfileOptionsDetail {
     skills: string[];
     interests: string[];
 }

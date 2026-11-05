@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth/backend', () => ({ backendFetch: vi.fn() }));
 import { backendFetch } from '@/lib/auth/backend';
 import { GET, PUT } from './route';
-import { GET as publicGet } from '../../[slug]/tags/route';
-const url = 'http://localhost/api/profiles/me/tags';
+import { GET as publicGet } from '../../[slug]/options/route';
+const url = 'http://localhost/api/profiles/me/options';
 const put = (body: unknown, origin = 'http://localhost') => PUT(new Request(url, { method: 'PUT', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }));
 beforeEach(() => vi.mocked(backendFetch).mockReset());
 describe('프로필 선택 정보 BFF', () => {
@@ -12,12 +12,12 @@ describe('프로필 선택 정보 BFF', () => {
         const result = await publicGet(new Request('http://localhost'), { params: Promise.resolve({ slug: 'member-tag' }) });
         expect(await result.json()).toEqual({ skills: ['Java'], interests: ['AI'] });
         expect(result.headers.get('cache-control')).toBe('no-store');
-        expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/member-tag/tags', {});
+        expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/member-tag/options', {});
     });
     it('본인 조회 경로를 사용한다', async () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json({ skills: [], interests: [] }));
         expect((await GET()).status).toBe(200);
-        expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/me/tags', {});
+        expect(backendFetch).toHaveBeenCalledWith('/api/v1/users/me/options', {});
     });
     it('수정할 두 목록만 전달하고 명시적 삭제를 허용한다', async () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json({ skills: [], interests: [] }));
