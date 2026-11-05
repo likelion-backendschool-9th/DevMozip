@@ -58,3 +58,5 @@ application-*.properties
 
 ### SQL ###
 *.sql
+# 비밀값 없는 프로젝트 통합 테스트 스키마 fixture
+!src/test/resources/project/lifecycle-applications.sql
