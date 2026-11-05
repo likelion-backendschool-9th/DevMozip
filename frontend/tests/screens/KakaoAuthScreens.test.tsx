@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import LoginPage from '@/app/login/page';
 import SignupPage from '@/app/signup/page';
 import AccountSettingsPage from '@/app/(user)/settings/privacy/page';
+import { AccountPasswordForm, passwordCopy } from '@/app/(user)/settings/privacy/_components/AccountPasswordForm';
 import { resetLocalStores } from '@/lib/localStore';
 import { syncServerSession } from '@/lib/state/authStore';
 import { fixture } from '@/tests/helpers/RouterFixture';
@@ -69,5 +70,52 @@ describe('개인정보 설정 화면', () => {
         syncServerSession({ identity: { username: 'member@devmozip.demo', role: 'USER' } });
         expect(render('/settings/privacy?kakao=linked', <AccountSettingsPage />)).toContain('카카오 계정을 연동했습니다.');
         expect(render('/settings/privacy?kakao=unlink-blocked', <AccountSettingsPage />)).toContain('비밀번호를 설정했는지');
+    });
+    it('머리말에 체험 안내가 없다', () => {
+        syncServerSession({ identity: { username: 'member@devmozip.demo', role: 'USER' } });
+        const html = render('/settings/privacy', <AccountSettingsPage />);
+        expect(html).toContain('실제 개인정보·결제 정보는 입력하지 마세요.');
+        expect(html).not.toContain('체험');
+    });
+    it('예전에 저장된 데모 확인 시각을 표시하지 않는다', () => {
+        const saved = JSON.stringify({ version: 1, accounts: { 'demo-user': { kakaoLinked: false, isPrivate: false, passwordConfirmedAt: '2026-01-01T00:00:00.000Z' } } });
+        vi.stubGlobal('localStorage', { getItem: () => saved, setItem: () => {} });
+        resetLocalStores();
+        syncServerSession({ identity: { username: 'member@devmozip.demo', role: 'USER' } });
+        expect(render('/settings/privacy', <AccountSettingsPage />)).not.toContain('최근 데모 확인');
+    });
+});
+
+describe('비밀번호 폼', () => {
+    const form = (firstPassword: boolean) => renderToStaticMarkup(
+        <AccountPasswordForm
+            firstPassword={firstPassword}
+            value={{ currentPassword: '', newPassword: '', confirmPassword: '' }}
+            error=""
+            success=""
+            busy={false}
+            onChange={() => {}}
+            onSubmit={() => {}}
+        />,
+    );
+    it('비밀번호가 있는 회원은 현재 비밀번호를 입력하고 재설정 링크를 볼 수 있다', () => {
+        const html = form(false);
+        expect(html).toContain('현재 비밀번호');
+        expect(html).toContain('새 비밀번호 확인');
+        expect(html).toContain('href="/forgot-password"');
+        expect(html).toContain('모든 기기에서 로그아웃');
+        expect(html).toMatch(/<button[^>]*>비밀번호 변경<\/button>/);
+    });
+    it('비밀번호 없는 카카오 회원은 현재 비밀번호 없이 첫 비밀번호를 정한다', () => {
+        const html = form(true);
+        expect(html).not.toContain('현재 비밀번호');
+        expect(html).not.toContain('forgot-password');
+        expect(html).toContain('새 비밀번호 확인');
+        expect(html).toMatch(/<button[^>]*>비밀번호 설정<\/button>/);
+    });
+    it('어떤 문구에도 데모 안내가 남아 있지 않다', () => {
+        expect(JSON.stringify(passwordCopy)).not.toMatch(/데모|체험/);
+        expect(form(false)).not.toMatch(/데모|체험/);
+        expect(form(true)).not.toMatch(/데모|체험/);
     });
 });

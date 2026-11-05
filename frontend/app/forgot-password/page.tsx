@@ -1,85 +1,44 @@
 'use client';
 import { AuthShell } from '@/app/_components/AuthShell';
-import styles from './page.module.css';
-import { useState } from 'react';
-import Link from 'next/link';
-import { validEmail } from '@/lib/account/authService';
-import { Input } from '@/components/common/Input';
-import { Button } from '@/components/common/Button';
-function PasswordRecoveryForm() {
-    const [email, setEmail] = useState('');
-    const [error, setError] = useState('');
-    const [done, setDone] = useState(false);
-    return done ? (
-        <div className={[styles.scope, 'recovery-done'].join(' ')} role="status">
-            <strong>비밀번호 찾기 요청을 확인했습니다.</strong>
-            <p>
-                실제 이메일은 발송하지 않았습니다. 이 화면은 복구 요청 흐름을 보여주는 데모이며, 비밀번호는 변경되지
-                않습니다.
-            </p>
-            <Link className={[styles.scope, 'button'].join(' ')} href="/login">
-                로그인으로 돌아가기
-            </Link>
-            <Button
-                variant="secondary"
-                onClick={() => {
-                    setDone(false);
-                    setEmail('');
-                }}
-            >
-                다시 입력
-            </Button>
-        </div>
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { readResetToken } from '@/lib/auth/passwordReset';
+import { PasswordResetForm } from './_components/PasswordResetForm';
+import { PasswordResetRequestForm } from './_components/PasswordResetRequestForm';
+
+const subscribe = () => () => {};
+const shell = { eyebrow: 'ACCOUNT RECOVERY', title: '비밀번호를 잊으셨나요?', description: '가입한 이메일로 비밀번호 재설정 링크를 보내 드립니다.' };
+
+// 읽은 즉시 주소에서 지워 방문 기록과 화면 공유에 남지 않게 한다.
+const removeTokenFromUrl = () => window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+// 브라우저에서만 마운트되므로 첫 렌더링에서 fragment를 읽어도 서버 결과와 어긋나지 않는다.
+function PasswordRecovery() {
+    const [token, setToken] = useState(() => readResetToken(window.location.hash));
+    useEffect(() => {
+        if (readResetToken(window.location.hash)) removeTokenFromUrl();
+        // 이 화면을 연 탭에 링크를 붙여 넣으면 fragment만 바뀌어 문서를 다시 불러오지 않는다.
+        const onHashChange = () => {
+            const found = readResetToken(window.location.hash);
+            if (!found) return;
+            removeTokenFromUrl();
+            setToken(found);
+        };
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+    }, []);
+    return token ? (
+        <AuthShell {...shell} title="새 비밀번호를 설정하세요" description="앞으로 로그인에 사용할 비밀번호를 입력해 주세요.">
+            <PasswordResetForm key={token} token={token} onRestart={() => setToken(null)} />
+        </AuthShell>
     ) : (
-        <form
-            className={[styles.scope, 'auth-form'].join(' ')}
-            noValidate
-            onSubmit={e => {
-                e.preventDefault();
-                if (!validEmail(email)) {
-                    setError('올바른 이메일 주소를 입력해 주세요.');
-                    return;
-                }
-                setDone(true);
-            }}
-        >
-            <label htmlFor="recovery-email">가입한 이메일</label>
-            <Input
-                id="recovery-email"
-                type="email"
-                autoComplete="email"
-                maxLength={254}
-                value={email}
-                onChange={e => {
-                    setEmail(e.target.value);
-                    setError('');
-                }}
-                placeholder="you@example.com"
-                aria-invalid={!!error}
-            />
-            {error && (
-                <p className={[styles.scope, 'form-error'].join(' ')} role="alert">
-                    {error}
-                </p>
-            )}
-            <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')}>
-                복구 안내 확인
-            </Button>
-            <p className={[styles.scope, 'auth-switch'].join(' ')}>
-                <Link href="/login">로그인으로 돌아가기</Link>
-            </p>
-        </form>
+        <AuthShell {...shell}>
+            <PasswordResetRequestForm />
+        </AuthShell>
     );
 }
 
 export default function PasswordRecoveryPage() {
-    return (
-        <AuthShell
-            eyebrow="ACCOUNT RECOVERY"
-            title="비밀번호를 잊으셨나요?"
-            description="가입한 이메일을 입력해 복구 안내를 확인하세요."
-        >
-            <PasswordRecoveryForm />
-        </AuthShell>
-    );
+    const mounted = useSyncExternalStore(subscribe, () => true, () => false);
+    // 토큰을 읽기 전에는 잘못된 폼이 보였다가 바뀌지 않도록 폼을 비워 둔다.
+    return mounted ? <PasswordRecovery /> : <AuthShell {...shell}>{null}</AuthShell>;
 }

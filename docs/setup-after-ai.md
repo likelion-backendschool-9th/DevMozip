@@ -38,6 +38,27 @@ spring:
 
 값이 없으면 카카오 API만 503으로 응답하고 다른 기능은 그대로 동작한다. 서비스 주소에 HOSTNAME을 쓰지 않는다. Git Bash가 PC 이름으로 export해 파일 값을 덮어쓴다. 프론트엔드는 카카오 값을 쓰지 않으므로 `frontend/.env*`에 넣지 않는다.
 
+선택 비밀번호 재설정 메일:
+
+MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM을 넣는다. 형식은 `.env.example`을 따른다. Gmail은 2단계 인증을 켠 계정에서 [앱 비밀번호](https://myaccount.google.com/apppasswords)를 발급해 MAIL_PASSWORD에 공백 없이 넣고, MAIL_FROM을 MAIL_USERNAME과 같게 둔다. 구글 계정 비밀번호를 바꾸면 앱 비밀번호도 폐기되므로 다시 발급한다.
+
+| 실행 방식 | 값을 읽는 위치 | 값이 없을 때 |
+|---|---|---|
+| `docker compose` | 루트 `.env` | 재설정 요청만 503 |
+| `./gradlew bootRun` (local 프로필) | 루트 `.env.local` | 메일 대신 링크를 백엔드 콘솔에 출력. 서비스 주소 기본값은 `http://localhost:3000` |
+
+`compose.yaml`은 Git 제외 파일이므로 compose로 실행하는 사람은 각자 backend의 environment에 아래 다섯 줄을 추가한 뒤 `docker compose up -d --force-recreate --no-deps backend`로 다시 만든다.
+
+```yaml
+MAIL_HOST: ${MAIL_HOST:-}
+MAIL_PORT: ${MAIL_PORT:-587}
+MAIL_USERNAME: ${MAIL_USERNAME:-}
+MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+MAIL_FROM: ${MAIL_FROM:-}
+```
+
+계약과 동작은 [비밀번호 재설정·변경 API](password-reset-api.md)를 참조한다.
+
 선택 로컬 HTTPS:
 
 - Windows: `choco install mkcert`, macOS: `brew install mkcert`, Ubuntu: `sudo apt install mkcert`.
@@ -101,13 +122,13 @@ chmod 600 ~/DevMozip/.env
 
 경로는 워크플로의 `cd ~/DevMozip`과 정확히 같아야 한다. 비공개 저장소라면 호스트의 git 읽기 인증도 별도로 준비한다.
 
-.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다. 카카오 로그인을 쓰려면 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME도 채우고 운영 Redirect URI를 카카오 콘솔에 등록한다. 값이 없으면 카카오 기능만 꺼진다.
+.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다. 카카오 로그인을 쓰려면 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME도 채우고 운영 Redirect URI를 카카오 콘솔에 등록한다. 값이 없으면 카카오 기능만 꺼진다. 비밀번호 재설정 메일을 쓰려면 MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM과 DOMAINNAME을 채운다. DOMAINNAME은 메일 링크의 주소가 되므로 운영 주소여야 한다. 값이 없으면 재설정 요청만 503이다.
 
 ```bash
 docker compose -f compose.prod.yaml --profile blue --profile green config --quiet
 ```
 
-필수 변수 누락 시 명령이 실패해야 한다. config 출력 전체에는 비밀값이 포함될 수 있어 공유하지 않는다. 운영은 nginx의 127.0.0.1:TEAM_PORT:80만 공개하며 DB·Redis·백엔드·프론트 포트는 외부에 열지 않는다. 호스트 nginx가 Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto=https, X-Forwarded-Host를 전달해야 한다. 운영 쿠키는 Secure이므로 HTTPS로 접속한다. DB 스키마/업무 테이블을 만들거나 변경하지 않는다.
+필수 변수 누락 시 명령이 실패해야 한다. config 출력 전체에는 비밀값이 포함될 수 있어 공유하지 않는다. 운영은 nginx의 127.0.0.1:TEAM_PORT:80만 공개하며 DB·Redis·백엔드·프론트 포트는 외부에 열지 않는다. 호스트 nginx가 Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto=https, X-Forwarded-Host를 전달해야 한다. X-Real-IP는 비밀번호 재설정 요청의 IP 제한에도 쓰이므로 클라이언트가 보낸 값을 그대로 넘기지 말고 실제 접속 IP로 덮어써야 한다. 운영 쿠키는 Secure이므로 HTTPS로 접속한다. DB 스키마/업무 테이블을 만들거나 변경하지 않는다.
 
 ## 4. 첫 배포와 확인
 
