@@ -1,6 +1,7 @@
 'use client';
 import { profileTabs } from '@/mocks/profile';
 import { useQueryState } from '@/lib/navigation';
+import { ApiProfileLinks } from './ApiProfileLinks';
 import { ApiProfileOptions } from './ApiProfileOptions';
 import { ApiProfileIntroduction } from './ApiProfileIntroduction';
 import { Card } from '@/components/common/Card';
@@ -34,7 +35,7 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                 }}>{item.label}</button>)}
         </div>
         <section className={scope('profile-tab-panel')} role="tabpanel" id={`profile-panel-${tab}`} aria-labelledby={`profile-tab-${tab}`} tabIndex={0}>
-            <p className="text-muted">{tab === 'about' ? '외부 링크는 아직 조회 API에 연결되지 않았습니다.' : '이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.'}</p>
+            {tab !== 'about' && <p className="text-muted">이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.</p>}
             {tab === 'about' ? <div className={aboutStyles.wrapper}>
                 <div className={`${aboutStyles.layout} about-grid`}>
                     <Card className={`${aboutStyles.introduction} profile-section about-intro`}>
@@ -42,9 +43,7 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                     </Card>
                     <Card className={`${aboutStyles.sidebar} profile-section`}>
                         {slug && <ApiProfileOptions key={slug} slug={slug} canEdit={canEdit} />}
-                        {['외부 링크'].map(label => <section key={label} className={aboutStyles.group} aria-label={label}>
-                            <div className={aboutStyles.groupHeading}><h2>{label}</h2></div><p className={aboutStyles.empty}>조회 연결 전</p>
-                        </section>)}
+                        {slug && <ApiProfileLinks key={slug} slug={slug} canEdit={canEdit} />}
                     </Card>
                 </div>
             </div> : <Card className="profile-section">
