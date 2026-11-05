@@ -18,6 +18,11 @@ services:
     environment:
       # bootRun의 local(H2) 기본값 대신 compose의 PostgreSQL을 쓴다
       SPRING_PROFILES_ACTIVE: default
+      # .env의 DOMAINNAME은 운영 주소이므로 로컬에서는 고정한다
+      DOMAINNAME: http://localhost:3000
+      # .env의 DB_HOST:DB_PORT(원격 DB)로 접속하고, 없으면 compose의 postgres를 쓴다
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
     command: [sh, ./gradlew, bootRun, --no-daemon]
   postgres:
     ports: ['127.0.0.1:${DB_PORT:-5432}:5432']
