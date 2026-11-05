@@ -50,11 +50,8 @@ class AiConversationTests {
 	}
 
 	@BeforeEach void reset() {
-		jdbc.update("DELETE FROM ai_recommendations");
-		jdbc.update("DELETE FROM ai_recommendation_requests");
 		jdbc.update("DELETE FROM ai_messages");
 		jdbc.update("DELETE FROM ai_conversations");
-		jdbc.update("DELETE FROM ai_usages");
 		jdbc.update("DELETE FROM users");
 		jdbc.update("INSERT INTO users(id) VALUES (101), (202)");
 	}
@@ -143,23 +140,32 @@ class AiConversationTests {
 			.content("{\"content\":\"hello\",\"role\":\"ASSISTANT\",\"userId\":202}"))
 			.andExpect(status().isCreated()).andExpect(jsonPath("$.role").value("USER"));
 	}
-	@Test void hardDeleteRemovesAllChildrenWithoutRestoringUsageOrTouchingOthers() throws Exception {
-		long id = create("delete"), mid = message(id, "request");
+	@Test void deleteRemovesOnlyOwnedConversationAndItsMessagesWithoutRecommendationTables() throws Exception {
+		long id = create("delete"), mid = message(id, "first");
+		message(id, "second");
+		long retained = create("retain");
+		long retainedMessage = message(retained, "retain");
 		otherConversation(9001);
-		jdbc.update("INSERT INTO ai_recommendation_requests(id,ai_conversation_id,ai_message_id) VALUES (11,?,?),(12,?,NULL),(13,NULL,?),(14,9001,NULL)", id, mid, id, mid);
-		jdbc.update("INSERT INTO ai_recommendations(id,recommended_request_id) VALUES (21,11),(22,12),(23,13),(24,14)");
-		jdbc.update("INSERT INTO ai_usages(id,user_id,usage_month,used_count) VALUES (1,101,'2026-11',7)");
+		jdbc.update("INSERT INTO ai_messages(conversation_id,role,content,created_at) VALUES (9001,'USER','other',CURRENT_TIMESTAMP)");
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables "
+			+ "WHERE table_name IN ('AI_RECOMMENDATIONS','AI_RECOMMENDATION_REQUESTS','AI_USAGES')", Integer.class));
 		mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isNoContent());
-		for (String table : new String[]{"ai_conversations", "ai_recommendation_requests", "ai_recommendations"}) {
-			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class));
-		}
-		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
-		assertEquals(7, jdbc.queryForObject("SELECT used_count FROM ai_usages WHERE id=1", Integer.class));
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations WHERE id=?", Integer.class, id));
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
+		assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations", Integer.class));
+		assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE id=?", Integer.class, retainedMessage));
+		mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isNotFound());
+		mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isNotFound());
+	}
+	@Test void emptyConversationCanBeDeletedAndAnonymousDeletionIsRejected() throws Exception {
+		long id = create("empty");
+		mvc.perform(delete(BASE + "/" + id)).andExpect(status().isUnauthorized());
+		mvc.perform(authenticated(get(BASE + "/" + id))).andExpect(status().isOk());
+		mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isNoContent());
 	}
 	@Test void foreignKeyConflictRollsBackAllChildDeletes() throws Exception {
 		long id = create("rollback"), mid = message(id, "retain");
-		jdbc.update("INSERT INTO ai_recommendation_requests(id,ai_conversation_id,ai_message_id) VALUES (31,?,?)", id, mid);
-		jdbc.update("INSERT INTO ai_recommendations(id,recommended_request_id) VALUES (41,31)");
 		jdbc.execute("CREATE TABLE deletion_blocker (conversation_id BIGINT REFERENCES ai_conversations(id))");
 		try {
 			jdbc.update("INSERT INTO deletion_blocker(conversation_id) VALUES (?)", id);
@@ -167,8 +173,6 @@ class AiConversationTests {
 				.andExpect(jsonPath("$.status").value(500));
 			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations WHERE id=?", Integer.class, id));
 			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE id=?", Integer.class, mid));
-			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_recommendation_requests WHERE id=31", Integer.class));
-			assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_recommendations WHERE id=41", Integer.class));
 		} finally {
 			jdbc.execute("DROP TABLE deletion_blocker");
 		}
