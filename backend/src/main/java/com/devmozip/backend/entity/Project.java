@@ -78,6 +78,31 @@ public class Project extends BaseEntity {
 		this.status = ProjectStatus.RECRUITING;
 	}
 
+	public void update(String title, String summary, String description, String goal, String imageUrl,
+		boolean isPublic, List<ProjectRecruitmentSlot> slots, List<String> techStacks, List<String> interests,
+		LocalDate recruitmentStart, LocalDate recruitmentEnd, LocalDate developmentStart, LocalDate developmentEnd,
+		LocalDateTime now) {
+		this.title = title;
+		this.summary = summary;
+		this.description = description;
+		this.goal = goal;
+		this.imageUrl = imageUrl;
+		this.isPublic = isPublic;
+		this.recruitmentSlots = List.copyOf(slots);
+		this.techStacks = List.copyOf(techStacks);
+		this.interests = List.copyOf(interests);
+		this.recruitmentStart = recruitmentStart;
+		this.recruitmentEnd = recruitmentEnd;
+		this.developmentStart = developmentStart;
+		this.developmentEnd = developmentEnd;
+		touch(now);
+	}
+
+	public void softDelete(LocalDateTime now) {
+		deletedAt = now;
+		touch(now);
+	}
+
 	public int getTotalCapacity() {
 		return 1 + recruitmentSlots.stream().mapToInt(ProjectRecruitmentSlot::capacity).sum();
 	}

@@ -4,6 +4,7 @@ import java.net.URI;
 import com.devmozip.backend.dto.project.CreateProjectRequest;
 import com.devmozip.backend.dto.project.ProjectOptionsResponse;
 import com.devmozip.backend.dto.project.ProjectResponse;
+import com.devmozip.backend.dto.project.UpdateProjectRequest;
 import com.devmozip.backend.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,17 @@ public class ProjectController {
 	public ResponseEntity<ProjectResponse> create(@Valid @RequestBody CreateProjectRequest request) {
 		ProjectResponse response = service.create(request);
 		return ResponseEntity.created(URI.create("/api/v1/projects/" + response.id())).body(response);
+	}
+
+	@PutMapping("/{id}")
+	public ProjectResponse update(@PathVariable long id, @Valid @RequestBody UpdateProjectRequest request) {
+		return service.update(id, request);
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> delete(@PathVariable long id) {
+		service.delete(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/options")
