@@ -1,4 +1,4 @@
-package com.devmozip.backend.dto.ai;
+package com.devmozip.backend.utils;
 
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;

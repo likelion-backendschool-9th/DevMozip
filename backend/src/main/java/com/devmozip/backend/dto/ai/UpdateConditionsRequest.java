@@ -1,7 +1,10 @@
 package com.devmozip.backend.dto.ai;
 
 import com.devmozip.backend.entity.enums.Interest;
+import com.devmozip.backend.entity.enums.RequiredCareer;
 import com.devmozip.backend.entity.enums.Skill;
+import com.devmozip.backend.utils.StrictIntegerDeserializer;
+import com.devmozip.backend.utils.StrictStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.HashSet;
@@ -13,7 +16,7 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 public record UpdateConditionsRequest(
 	@JsonDeserialize(contentUsing = StrictStringDeserializer.class) List<String> interests,
 	@JsonDeserialize(contentUsing = StrictStringDeserializer.class) List<String> stacks,
-	List<RecruitmentRoleCondition> roles, RequiredCareer career,
+	List<RecruitmentRoleConditionDto> roles, RequiredCareer career,
 	@JsonDeserialize(using = StrictIntegerDeserializer.class) Integer durationMonths) {
 	// AI 조건에서만 통합한다. 회원·프로젝트의 공통 Interest enum은 변경하지 않는다.
 	private static final List<String> INTEREST_OPTIONS = Stream.concat(Interest.labels().stream(),
@@ -31,7 +34,7 @@ public record UpdateConditionsRequest(
 		if (roles == null) roles = List.of();
 		if (roles.size() > 12) throw new IllegalArgumentException("모집 직군은 12개 이하로 입력해 주세요.");
 		var names = new HashSet<String>();
-		for (RecruitmentRoleCondition role : roles) {
+		for (RecruitmentRoleConditionDto role : roles) {
 			if (role == null || !names.add(role.name())) {
 				throw new IllegalArgumentException("모집 직군은 중복 없이 입력해 주세요.");
 			}

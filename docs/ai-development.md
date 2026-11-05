@@ -12,6 +12,7 @@ AI 관련 파일에만 적용하는 개발 안내다. 자동 적용되는 AGENTS
 - Repository는 JPA를 우선 사용한다. 엔티티가 있는 테이블은 JpaRepository를, 다른 팀 엔티티가 없거나 삭제 전용인 기존 테이블은 JPA 네이티브 쿼리를 사용한다. 개발용 users 존재 확인은 AiConversationRepository.existsUserById에 두며 별도 AiUserRepository를 만들지 않는다. AI 업무 코드에 JdbcTemplate를 혼용하거나 이를 위해 타 팀 엔티티를 만들지 않는다.
 - DTO는 `dto` 안에 타입별 public record/class를 각각 별도 Java 파일로 작성한다. 요청·응답 DTO를 하나의 래퍼 클래스 안에 중첩하거나 묶지 않는다. 별도 request/response 하위 폴더는 필요할 때만 추가한다.
 - DTO는 `com.devmozip.backend.dto.ai`, 엔티티는 `com.devmozip.backend.entity`에 둔다. 사용자 식별 클래스는 `security/ai`에 함께 두고 `identity`, `exception` 폴더를 따로 만들지 않는다. 사용자 식별 교체 지점은 `CurrentUserProvider`다.
+- 2026-11-05 PR 리뷰 반영: 추천 요구 경력 enum `RequiredCareer`는 `entity/enums`에 둔다. JSON 타입 역직렬화 클래스 `StrictIntegerDeserializer`, `StrictStringDeserializer`는 `utils`에 각각 두며 현재 AI DTO의 애너테이션에서만 적용한다. 직군 이름·인원을 전달하는 요청 원소는 `dto/ai/RecruitmentRoleConditionDto`다. 이 배치 변경은 회원의 실제 경력 필드·공통 enum·API JSON 계약 변경을 뜻하지 않는다.
 - 앞으로 폴더·파일·추상화는 현재 요구에 꼭 필요한 경우에만 추가한다. 인증 교체는 기존 인터페이스로 유지하며, 미래 기능을 이유로 구조를 미리 나누지 않는다.
 - AI 전용 예외 클래스·예외 처리 파일은 별도로 만들지 않는다. 단순 검증·미존재 처리는 표준 예외와 해당 Controller의 로컬 처리로 해결하고 기존 공통 오류 응답·인증·DB 예외 처리를 재사용한다.
 - AI 엔티티·DTO의 생성/수정 시각은 LocalDateTime을 사용한다. 공통 BaseEntity는 팀 합의 전 별도로 추가하지 않는다.

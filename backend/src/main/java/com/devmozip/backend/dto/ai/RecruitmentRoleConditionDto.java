@@ -1,11 +1,13 @@
 package com.devmozip.backend.dto.ai;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.devmozip.backend.utils.StrictIntegerDeserializer;
+import com.devmozip.backend.utils.StrictStringDeserializer;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
-public record RecruitmentRoleCondition(@JsonDeserialize(using = StrictStringDeserializer.class) String name,
+public record RecruitmentRoleConditionDto(@JsonDeserialize(using = StrictStringDeserializer.class) String name,
 	@JsonDeserialize(using = StrictIntegerDeserializer.class) Integer count) {
-	public RecruitmentRoleCondition {
+	public RecruitmentRoleConditionDto {
 		if (name == null || name.isBlank() || name.strip().length() > 30) {
 			throw new IllegalArgumentException("모집 직군은 1~30자로 입력해 주세요.");
 		}

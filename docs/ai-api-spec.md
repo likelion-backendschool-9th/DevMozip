@@ -57,6 +57,8 @@
 
 `PUT /api/v1/ai/conversations/{id}/conditions`, 인증 필수, 본인 대화만 수정한다. 2026-11-05 최신 사용자 요청으로 프로젝트 분야를 `interests`로 통합했다. 별도 `fields` 입력은 제거하고 직군은 화면의 선택·직접 입력을 모두 허용한다.
 
+PR 리뷰에 따라 요구 경력 enum은 `entity/enums/RequiredCareer`, 직군·인원 요청 원소는 `dto/ai/RecruitmentRoleConditionDto`, 정수/문자열 JSON 역직렬화 클래스는 `utils/StrictIntegerDeserializer`·`StrictStringDeserializer`에 둔다. 패키지·타입 이름만 정리하며 아래 JSON 키·선택지·검증·응답은 유지한다. 역직렬화 처리는 AI 요청 애너테이션에서만 적용하고 전역 Jackson 설정은 바꾸지 않는다.
+
 ```json
 {
   "interests": ["생산성", "웹", "AI / 머신러닝"],

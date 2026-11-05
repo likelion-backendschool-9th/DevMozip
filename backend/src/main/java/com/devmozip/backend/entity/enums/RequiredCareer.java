@@ -1,4 +1,4 @@
-package com.devmozip.backend.dto.ai;
+package com.devmozip.backend.entity.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
