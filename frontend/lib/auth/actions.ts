@@ -1,6 +1,5 @@
 'use server';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { normalizeEmail } from '@/lib/account/authService';
 import type { SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
@@ -44,8 +43,6 @@ export async function loginAction(
                 ? '/'
                 : target,
     };
-}
-
 }
 
 // 가입 화면의 직군·기술 스택·관심 분야 선택지. 기준은 백엔드 enum이다.
