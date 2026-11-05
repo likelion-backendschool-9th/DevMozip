@@ -1,13 +1,13 @@
-import type { ProfileDetail } from '@/types/profileDetail';
+import type { ProfileDetail, OwnProfileDetail } from '@/types/profileDetail';
 
 export const validProfileSlug = (slug: string) => /^[A-Za-z0-9_-]{1,100}$/.test(slug);
 const nullableText = (value: unknown) => value === null || typeof value === 'string';
 const identifier = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 
-export function parseProfileDetail(value: unknown): ProfileDetail {
+function readProfileDetail(value: unknown, allowUnsetTag: boolean): OwnProfileDetail {
     if (!value || typeof value !== 'object') throw new Error('잘못된 프로필 응답');
     const p = value as Record<string, unknown>;
-    if (!identifier(p.id) || typeof p.tag !== 'string' || !validProfileSlug(p.tag)
+    if (!identifier(p.id) || !(typeof p.tag === 'string' && validProfileSlug(p.tag) || allowUnsetTag && p.tag === null)
         || typeof p.nickname !== 'string' || !p.nickname.trim()
         || !Array.isArray(p.jobCategories) || !p.jobCategories.every(job => typeof job === 'string')
         || !nullableText(p.summary) || !nullableText(p.profileImage) || !nullableText(p.bannerImage)
@@ -18,12 +18,19 @@ export function parseProfileDetail(value: unknown): ProfileDetail {
         throw new Error('잘못된 프로필 응답');
     }
     // 알 수 없는 추가 필드(이메일 등)는 브라우저 응답에 전달하지 않는다.
-    return { id: p.id as number, tag: p.tag, nickname: p.nickname,
+    return { id: p.id as number, tag: p.tag as string | null, nickname: p.nickname,
         jobCategories: p.jobCategories as string[],
         summary: p.summary as string | null, career: p.career as string | null,
         profileImage: p.profileImage as string | null, bannerImage: p.bannerImage as string | null,
         collaborationStatus: p.collaborationStatus as string | null, trustScore: p.trustScore as number | null,
         ...(p.contactHours !== undefined ? { contactHours: p.contactHours as string | null } : {}) };
+}
+
+export function parseProfileDetail(value: unknown): ProfileDetail {
+    return readProfileDetail(value, false) as ProfileDetail;
+}
+export function parseOwnProfileDetail(value: unknown): OwnProfileDetail {
+    return readProfileDetail(value, true);
 }
 
 export function formatCareer(career: string | null): string {

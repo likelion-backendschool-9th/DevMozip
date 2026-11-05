@@ -1,5 +1,5 @@
-import { parseProfileDetail } from './profileDetail';
-import type { ProfileDetail, ProfileUpdateInput, ProfileImageKind, ProfileImageResult } from '@/types/profileDetail';
+import { parseProfileDetail, parseOwnProfileDetail } from './profileDetail';
+import type { ProfileDetail, OwnProfileDetail, ProfileUpdateInput, ProfileImageKind, ProfileImageResult } from '@/types/profileDetail';
 
 export class ProfileSaveError extends Error {
     constructor(public status: number, message: string) { super(message); }
@@ -12,8 +12,8 @@ async function request(path: string, init: RequestInit = {}) {
     }
     return response.json();
 }
-export async function fetchOwnProfile(signal?: AbortSignal): Promise<ProfileDetail> {
-    return parseProfileDetail(await request('/api/profiles/me/profile', { signal }));
+export async function fetchOwnProfile(signal?: AbortSignal): Promise<OwnProfileDetail> {
+    return parseOwnProfileDetail(await request('/api/profiles/me/profile', { signal }));
 }
 export async function saveOwnProfile(input: ProfileUpdateInput): Promise<ProfileDetail> {
     return parseProfileDetail(await request('/api/profiles/me/profile', {

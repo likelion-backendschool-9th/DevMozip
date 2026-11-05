@@ -42,8 +42,8 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                         {slug ? <ApiProfileIntroduction key={slug} nickname={nickname} slug={slug} canEdit={canEdit} /> : <><div className={`${aboutStyles.title} tab-section-title`}><div><span className={aboutStyles.eyebrow}>ABOUT ME</span><h2>반가워요, {nickname}입니다.</h2></div></div><p>자기소개 조회 연결 전</p></>}
                     </Card>
                     <Card className={`${aboutStyles.sidebar} profile-section`}>
-                        {slug && <ApiProfileOptions key={slug} slug={slug} canEdit={canEdit} />}
-                        {slug && <ApiProfileLinks key={slug} slug={slug} canEdit={canEdit} />}
+                        {slug && <ApiProfileOptions key={`options:${slug}`} slug={slug} canEdit={canEdit} />}
+                        {slug && <ApiProfileLinks key={`links:${slug}`} slug={slug} canEdit={canEdit} />}
                     </Card>
                 </div>
             </div> : <Card className="profile-section">

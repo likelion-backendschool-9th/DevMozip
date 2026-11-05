@@ -71,3 +71,15 @@ describe('API 프로필 화면', () => {
         expect(html).not.toContain('초기화된 Mock');
     });
 });
+
+
+it('사용자 아이디 미설정 본인도 프로필과 편집 창을 열 수 있다', () => {
+    const profile = { ...apiProfileFixture, tag: null };
+    const html = render(<ProfileApiResult result={{ status: 'ready', profile }} onRetry={() => {}} onEdit={() => {}} />);
+    expect(html).toContain('사용자 아이디 미설정'); expect(html).toContain('프로필 수정');
+    expect(html).toContain('자기소개를 불러오고 있어요'); expect(html).toContain('외부 링크를 불러오는 중');
+    expect(html).not.toContain('@null'); expect(html).not.toContain('/users/null');
+    const form = render(<ApiProfileEditor profile={profile} onClose={() => {}} onSaved={() => {}} />);
+    expect(form).toContain('사용자 아이디를 설정하면 공개 프로필 주소가 만들어져요.');
+    expect(form).not.toContain('value="null"');
+});

@@ -392,3 +392,18 @@ erDiagram
 - 자동 병합된 Member의 최신 카카오·비밀번호 관련 변경과 외부 링크 갱신 메서드, options·links 인증 경로를 함께 확인했다. 실제 카카오 API 연결은 수행하지 않았다.
 - frontend npm test 647개 및 npm run build 통과. backend 최초 실행은 도구 환경의 DEBUG 변수로 HTTP 요청 로그가 켜져 로그 보안 테스트 1개가 실패했다. 제품 코드는 변경하지 않고 env -u DEBUG ./gradlew test로 재실행하여 총 358개 중 342개 통과·16개 건너뜀·실패/오류 0을 확인했다.
 - 실제 PostgreSQL 및 이번 병합의 브라우저 수동 검증은 미실행. 병합 충돌 해결 커밋 97222c7을 원격 외부 링크 브랜치에 반영했다.
+
+## 프로필 소개 탭 중복 key 수정
+
+- 사용자 화면의 React 중복 key 오류 원인은 ApiProfileTabs에서 같은 Card의 형제인 ApiProfileOptions·ApiProfileLinks에 동일한 slug key를 지정한 것이었다. API 미연결·북마크 기능과는 별개다.
+- 각 key를 options:slug, links:slug로 구분해 사용자 변경 시 재마운트 동작을 유지했다. 데이터·API 경로·레이아웃은 변경하지 않았다.
+- frontend npm test 647개와 npm run build 통과. 이번 수정의 브라우저 콘솔 수동 검증은 미실행. 백엔드 코드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 아직 커밋·푸시하지 않았다.
+
+## 신규 가입자 내 프로필 BFF 502 보완
+
+- 사용자 보고에 따라 확인한 결과, 현재 가입 Service는 tag를 저장하지 않고 본인 조회는 tag=null로 200을 반환한다. 공개 프로필용 파서는 tag를 필수로 요구해 BFF에서 502를 만들었다. 일회용 로컬 H2 계정으로 backend 200/tag=NULL → BFF 502를 실제 재현했다. 사용자 팀원의 환경도 같은 원인인지는 해당 환경의 백엔드 응답 확인이 필요하다.
+- OwnProfileDetail·parseOwnProfileDetail을 분리해 본인 GET에만 명시적 tag=null을 허용했다. 본인 Provider·헤더·수정 폼·사이드바·소개 탭 연결을 보완해 최초 아이디 설정이 가능하다. 공개 응답 및 수정 시 유효 아이디 필수 검증, 인증·DB·회원가입 생성 정책은 유지했다. 임시 내부 키를 공개 사용자 주소로 사용하지 않는다.
+- BFF 접속 실패와 응답 형식 오류 메시지를 구분했다. 기존 중복 key 수정도 함께 미커밋 상태로 유지한다.
+- 변경 파일: types/profileDetail, profileDetail/profileUpdate/profileProxy, 본인 profile BFF, OwnProfileProvider·AccountLayout, ApiProfileContent/Header/Editor와 관련 파서·BFF·화면 테스트, profile-edit-integration 문서.
+- 검증: frontend npm test 651개·npm run build 통과. 로컬 HTTP: tag=NULL 본인 BFF 200, 최초 아이디 설정 PUT 200, 공개 BFF GET 200, 빈 아이디 거절 400, 재조회 값 유지 확인. 백엔드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 실제 PostgreSQL·브라우저 수동 UI 검증은 미실행.
+- 아직 커밋·푸시는 하지 않았다. 프론트는 기존 5173 포트와 backend 18080 연결로 복구했다.
