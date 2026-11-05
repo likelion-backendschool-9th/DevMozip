@@ -2,15 +2,15 @@
 import { loginAction } from '@/lib/auth/actions';
 import { useSearchParams } from 'next/navigation';
 import { AuthShell } from '@/app/_components/AuthShell';
+import { KakaoNotice } from '@/app/_components/KakaoNotice';
+import { KakaoStartButton } from '@/app/_components/KakaoStartButton';
 import styles from './page.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
-import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { validEmail } from '@/lib/account/authService';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
-import { Modal } from '@/components/common/Modal';
 function LoginForm() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
@@ -18,7 +18,6 @@ function LoginForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
-    const [kakao, setKakao] = useState(false);
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -44,6 +43,7 @@ function LoginForm() {
                     현재 {user.nickname} 계정으로 로그인되어 있습니다. 다른 계정으로 전환할 수 있어요.
                 </div>
             )}
+            <KakaoNotice />
             <form className={[styles.scope, 'auth-form'].join(' ')} onSubmit={submit} noValidate>
                 <label htmlFor="login-email">이메일</label>
                 <Input
@@ -94,21 +94,12 @@ function LoginForm() {
                     {busy ? '로그인 중…' : '로그인'}
                 </Button>
             </form>
-            <Button type="button" className={[styles.scope, 'kakao-button'].join(' ')} onClick={() => setKakao(true)}>
-                <MessageCircle size={17} />
+            <KakaoStartButton intent="login" next={searchParams.get('next') ?? '/'}>
                 카카오로 시작하기
-            </Button>
+            </KakaoStartButton>
             <p className={[styles.scope, 'auth-switch'].join(' ')}>
                 아직 DevMozip 회원이 아니신가요? <Link href="/signup">회원가입</Link>
             </p>
-            {kakao && (
-                <Modal title="카카오 로그인 데모 안내" onClose={() => setKakao(false)}>
-                    <p>
-                        카카오 OAuth는 연결하지 않았습니다. 이메일과 비밀번호로 로그인해 주세요.
-                    </p>
-                    <Button onClick={() => setKakao(false)}>확인</Button>
-                </Modal>
-            )}
         </>
     );
 }

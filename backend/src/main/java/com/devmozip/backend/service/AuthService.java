@@ -5,8 +5,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -14,6 +13,8 @@ import java.util.List;
 
 import com.devmozip.backend.dto.auth.LoginRequest;
 import com.devmozip.backend.dto.auth.LoginResponse;
+import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
 import com.devmozip.backend.repository.MemberRepository;
 import com.devmozip.backend.security.jwt.InvalidTokenException;
@@ -25,18 +26,15 @@ public class AuthService {
 
     private AuthenticationManager authenticationManager;
     private JwtProvider jwtProvider;
-    private UserDetailsService userDetailsService;
     private RefreshTokenStore refreshTokenStore;
     private MemberRepository memberRepository;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtProvider jwtProvider,
-                       UserDetailsService userDetailsService,
                        RefreshTokenStore refreshTokenStore,
                        MemberRepository memberRepository){
         this.authenticationManager = authenticationManager;
         this.jwtProvider = jwtProvider;
-        this.userDetailsService = userDetailsService;
         this.refreshTokenStore = refreshTokenStore;
         this.memberRepository = memberRepository;
     }
@@ -56,6 +54,17 @@ public class AuthService {
         // 비밀번호가 맞은 뒤에 정지 여부를 확인한다. (비밀번호가 틀리면 위에서 401로 끝나므로 정지 여부가 드러나지 않는다)
         checkNotSuspended(username);
         String role = toRole(authenticate.getAuthorities());
+
+        return issueTokens(username, role);
+    }
+
+    /** 카카오 인증처럼 비밀번호 확인 없이 본인임을 확인한 회원에게 토큰을 발급한다. */
+    public LoginResponse issueTokens(Member member){
+        checkNotSuspended(member.getEmail());
+        return issueTokens(member.getEmail(), roleOf(member));
+    }
+
+    private LoginResponse issueTokens(String username, String role){
 
         // 1. 액세스 토큰: 짧게(30분). 요청마다 Authorization 헤더에 실린다.
         String accessToken = jwtProvider.createAccessToken(username, role);
@@ -94,12 +103,13 @@ public class AuthService {
             throw e;
         }
 
-        // 4. 리프레시 토큰에는 역할이 없으므로 사용자 정보를 다시 읽어 역할을 알아낸다.
+        // 4. 리프레시 토큰에는 역할이 없으므로 회원 정보를 다시 읽어 역할을 알아낸다.
         //    (그 사이 권한이 바뀌었어도 새 액세스 토큰에는 최신 역할이 담긴다)
-        UserDetails user = userDetailsService.loadUserByUsername(username);
-        String role = toRole(user.getAuthorities());
+        //    비밀번호 없는 카카오 회원도 재발급받아야 하므로 이메일 로그인용 UserDetailsService를 거치지 않는다.
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다: " + username));
 
-        String accessToken = jwtProvider.createAccessToken(username, role);
+        String accessToken = jwtProvider.createAccessToken(username, roleOf(member));
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -125,6 +135,11 @@ public class AuthService {
         if (suspended) {
             throw new LockedException("정지된 계정입니다: " + email);
         }
+    }
+
+    /** 회원의 역할 이름. 역할이 비어 있으면 이메일 로그인과 같이 USER로 본다. */
+    private String roleOf(Member member){
+        return (member.getRole() != null ? member.getRole() : MemberRole.USER).name();
     }
 
     /**

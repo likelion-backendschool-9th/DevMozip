@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.devmozip.backend.config.SecurityConfig;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.repository.MemberRepository;
 import com.devmozip.backend.security.handler.JsonAccessDeniedHandler;
@@ -112,6 +113,52 @@ class MemberControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(memberService, never()).updateAvailability(any(), any());
+    }
+
+    @Test
+    void 토큰의_주인_기준으로_비밀번호를_설정한다() throws Exception {
+        mvc.perform(patch("/api/v1/users/me/password").header("Authorization", "Bearer " + TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"newPassword\":\"Devmozip123\",\"confirmPassword\":\"Devmozip123\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(memberService).setPassword("premium@devmozip.demo", new PasswordSetRequest("Devmozip123", "Devmozip123"));
+    }
+
+    @Test
+    void 토큰_없이_비밀번호를_설정하면_401() throws Exception {
+        mvc.perform(patch("/api/v1/users/me/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"newPassword\":\"Devmozip123\",\"confirmPassword\":\"Devmozip123\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verify(memberService, never()).setPassword(any(), any());
+    }
+
+    @Test
+    void 비밀번호_규칙에_맞지_않으면_400과_안내_문구를_돌려준다() throws Exception {
+        for (String body : new String[] {
+                "{\"newPassword\":\"short\",\"confirmPassword\":\"short\"}",
+                "{\"newPassword\":\"onlyletters\",\"confirmPassword\":\"onlyletters\"}",
+                "{\"confirmPassword\":\"Devmozip123\"}"
+        }) {
+            mvc.perform(patch("/api/v1/users/me/password").header("Authorization", "Bearer " + TOKEN)
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("영문과 숫자를 포함해 8~64자로 입력해 주세요."));
+        }
+
+        verify(memberService, never()).setPassword(any(), any());
+    }
+
+    @Test
+    void 비밀번호_확인이_없으면_400() throws Exception {
+        mvc.perform(patch("/api/v1/users/me/password").header("Authorization", "Bearer " + TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"newPassword\":\"Devmozip123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."));
+
+        verify(memberService, never()).setPassword(any(), any());
     }
 
     @Test

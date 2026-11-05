@@ -1,6 +1,7 @@
 package com.devmozip.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +32,7 @@ import com.devmozip.backend.security.handler.JsonAuthenticationEntryPoint;
 import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.security.jwt.SuspendedMemberStore;
 import com.devmozip.backend.service.AuthService;
+import com.devmozip.backend.service.KakaoAuthService;
 import com.devmozip.backend.service.MemberService;
 
 /** 요청·응답 DTO(record)가 JSON과 그대로 오가는지 확인한다. */
@@ -50,6 +52,8 @@ class AuthControllerTest {
     private AuthService authService;
     @MockitoBean
     private MemberService memberService;
+    @MockitoBean
+    private KakaoAuthService kakaoAuthService;
     @MockitoBean
     private JwtProvider jwtProvider;
     @MockitoBean
@@ -129,6 +133,47 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.email").value("new@devmozip.demo"))
                 .andExpect(jsonPath("$.nickname").value("새회원"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void 이메일_가입_응답에는_토큰이_없다() throws Exception {
+        when(memberService.signup(any())).thenReturn(new SignupResponse(1L, "new@devmozip.demo", "새회원"));
+
+        mvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(SIGNUP_BODY))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist());
+
+        verify(kakaoAuthService, never()).signup(any());
+    }
+
+    @Test
+    void 가입_토큰이_있으면_같은_주소에서_비밀번호_없이_카카오_가입으로_처리한다() throws Exception {
+        when(kakaoAuthService.signup(any())).thenReturn(
+                new SignupResponse(1L, "new@devmozip.demo", "새회원", "access", "refresh", "Bearer"));
+        String body = """
+                {"email":"new@devmozip.demo","nickname":"새회원","job":"백엔드 개발자","career":"3년 차",
+                 "stacks":["Java"],"interests":["AI"],"available":true,"kakaoSignupToken":"signup-token"}""";
+
+        mvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.accessToken").value("access"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+
+        verify(memberService, never()).signup(any());
+    }
+
+    @Test
+    void 비어_있는_가입_토큰은_이메일_가입으로_처리한다() throws Exception {
+        when(memberService.signup(any())).thenReturn(new SignupResponse(1L, "new@devmozip.demo", "새회원"));
+        String body = SIGNUP_BODY.replace("\"available\":true", "\"available\":true,\"kakaoSignupToken\":\" \"");
+
+        mvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated());
+
+        verify(kakaoAuthService, never()).signup(any());
     }
 
     @Test

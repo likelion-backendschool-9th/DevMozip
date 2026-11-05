@@ -9,7 +9,7 @@ Next.js 마이그레이션 기준. 모든 화면은 프론트엔드 Context와 �
 | `devmozip:prototype:v1` | 안내 표시 설정 | 공통 안내 |
 | `devmozip:auth:v1` | 계정 ID 세션 | 로그인 유지 시 localStorage, 해제 시 sessionStorage |
 | `devmozip:profiles:v1` | `profiles`, `portfolios`, `posts`, `reposts`, `reviews`, `following`, `followPreferences`, `followNotices`, `social`, `socialNotices` | 프로필·SNS·검색·추천 |
-| `devmozip:account-area:v1` | 계정별 `kakaoLinked`, `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
+| `devmozip:account-area:v1` | 계정별 `kakaoLinked`(기존 저장값 호환용, 화면 표시에 쓰지 않음), `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
 | `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수 |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |
