@@ -24,6 +24,6 @@ export function ClientReady({ children }: { children: ReactNode }) {
         window.addEventListener('focus', sync);
         return () => { active = false; window.removeEventListener('focus', sync); };
     }, [pathname]);
-    if (!mounted || !ready) return <div className="client-loading" role="status">DevMozip 데모 데이터를 준비하고 있어요…</div>;
+    if (!mounted || !ready) return <div className="client-loading" role="status">DevMozip 화면을 준비하고 있어요…</div>;
     return <>{error && <p role="alert">인증 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>}{children}</>;
 }

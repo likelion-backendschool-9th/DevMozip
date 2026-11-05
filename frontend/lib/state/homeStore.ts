@@ -14,7 +14,7 @@ import type { ChatRequirements, MatchingConversation } from '@/types/matchingCha
 type ChatResult = { ok: boolean; error?: string };
 
 // 메인 추천 입력 · AI 추천 대화 기록 · 월별 추천 사용량.
-const homeStore = createLocalStore(loadHomeState);
+const homeStore = createLocalStore(loadHomeState, true);
 
 // 월 경계와 탭 복귀 시 현재 한국 시각의 한도를 다시 표시합니다. 처음 구독할 때 시계를 시작합니다.
 const clockStore = createLocalStore(() => new Date());

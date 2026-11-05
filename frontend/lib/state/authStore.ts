@@ -1,3 +1,4 @@
+import { visibleSeeds } from '@/lib/demo/mockVisibility';
 import { checkAvailabilityAction, logoutAction, signupAction } from '@/lib/auth/actions';
 import { projectServerIdentity } from '@/lib/account/serverIdentity';
 import type { SessionSnapshot } from '@/types/session';
@@ -20,9 +21,9 @@ type PreferenceAction = Exclude<AccountAreaAction, { type: 'onboarding-complete'
 const serverSessionStore = createLocalStore<SessionSnapshot>(() => ({ identity: null }));
 export function syncServerSession(snapshot: SessionSnapshot) { serverSessionStore.set(snapshot); }
 
-const administrationStore = createLocalStore(loadAdministration);
-const accountAreaStore = createLocalStore(loadAccountArea);
-const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.fromEntries(Object.values(loadProfiles().profiles).map(p => [p.id, p.nickname])));
+const administrationStore = createLocalStore(loadAdministration, true);
+const accountAreaStore = createLocalStore(loadAccountArea, true);
+const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.fromEntries(Object.values(loadProfiles().profiles).map(p => [p.id, p.nickname])), true);
 
 export const authSources = [serverSessionStore, ...prototypeSources, administrationStore, accountAreaStore, profileNamesStore];
 
@@ -42,7 +43,7 @@ const currentUser = derived(authSources, (): AuthUser | null => {
     return user ? { ...user, nickname: profileNamesStore.get()[user.id] || user.nickname } : null;
 });
 
-const publicUsers = derived(authSources, () => demoAccounts.map(u => ({ ...effectiveUser(u, administrationStore.get()), nickname: profileNamesStore.get()[u.id] || u.nickname })));
+const publicUsers = derived(authSources, () => visibleSeeds(demoAccounts).map(u => ({ ...effectiveUser(u, administrationStore.get()), nickname: profileNamesStore.get()[u.id] || u.nickname })));
 
 export const getUser = currentUser.get;
 export const getPublicUsers = publicUsers.get;

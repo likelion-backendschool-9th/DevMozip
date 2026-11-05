@@ -4,6 +4,10 @@
 
 운영 주소: https://devmozip.newlecture.com · [자동 배포·운영 안내](docs/deployment-operations.md)
 
+## Mock 데이터 켜기·끄기
+
+상단의 ‘Mock 데이터 끄기’는 기존 페이지·검색 필터·탭·버튼·폼을 유지하고 샘플 콘텐츠만 비웁니다. OFF에서 직접 작성한 데이터는 별도 저장하며 다시 켜면 원래 데모 상태가 복원됩니다. 실제 API 모드로 전환하는 기능은 아닙니다. [동작 범위·검증 결과](docs/mock-visibility.md)를 참고하세요.
+
 ## 실행
 
 검증 환경은 Node.js 24.22.1입니다. Next.js 요구사항은 Node.js 20.9 이상이며 Node.js 22.12 이상 사용을 권장합니다.

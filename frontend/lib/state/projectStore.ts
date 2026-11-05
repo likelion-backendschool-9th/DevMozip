@@ -21,7 +21,7 @@ interface Result {
 const projectStore = createLocalStore(() => {
     const loaded = loadRecruitmentState();
     return syncProjectState(loaded, loaded.simulationDate ? new Date(loaded.simulationDate) : new Date(), getProfileState());
-});
+}, true);
 
 export const projectSources = [...profileSources, projectStore];
 
