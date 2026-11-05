@@ -80,3 +80,23 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS view_count BIGINT NOT NULL DEFAULT
 - 프론트 코드는 그대로 유지했으며 빌드가 변경한 next-env.d.ts 경로는 기존 상태로 되돌렸다.
 - 미완료: #48 지원 중 목록·지원 상태 최종 연결, 실제 회원/구독과 프로젝트 사용자 ID 결합, 프론트 API 연결, 공용 DB 및 최신 ERDCloud 대조. 실제 브라우저 연동 테스트는 수행하지 않았다.
 - 커밋·푸시·PR·이슈 상태 변경은 수행하지 않았다. #44 PR은 열린 상태였으므로 #45 로컬 브랜치는 #44 구현을 기반으로 만들었다.
+
+
+## #45 팀 PostgreSQL 재검증 — 2026-11-05
+
+#44 후속 PR의 최신 develop 기반 f925f0a에서 별도 검증했다. 제품 조회 코드는 수정하지 않았다. 추가 파일은 `ProjectQueryTeamDatabaseIntegrationTest.java`이며 #44의 프로젝트 전용 JPA 설정을 재사용한다. 기본 테스트에서는 PROJECT_TEAM_DB_TEST opt-in이 없으면 스킵한다.
+
+- 실제 팀 DB 테스트 3개 통과: 기존 공개 데이터의 최신/인기/마감순 결과와 직접 SQL 결과 일치, JSONB 분야 OR·기술 AND·직군/상태 필터·페이지/빈 결과, 비공개 익명 접근 거절·주최자 조회·조회수 증가·관리/내 목록·논리 삭제 제외.
+- 기존 생성/조회 통합 테스트 25개 통과(실패·스킵 0). 독립 PostgreSQL Testcontainers 테스트이며 팀 DB 테스트와 구분한다.
+- frontend `npm run build -- --webpack` 성공(TypeScript 포함). 이번에는 프론트 제품 변경 없음. 생성 next-env.d.ts는 이전 내용으로 복원.
+- 검증은 팀 DB에서 프로젝트 엔티티만 validate하고 임시 생성/변경을 트랜잭션 롤백한다. 기존 기본 프로젝트의 상세는 호출하지 않아 조회수를 변경하지 않는다. 사후 프로젝트 8개·멤버 21개·조회수 합계 2215·임시 공고 0개 확인.
+- standalone 서비스/JPA/JDBC 연결 검증이며 실제 포트 HTTP·JWT 인증·실제 회원 권한·프론트 API 왕복은 검증하지 않았다. 개발용 주최자 101을 사용하며 실제 계정 연결이 아니다.
+
+남은 사항:
+
+1. 실제 인증 회원 ID 공급과 전체 서버 엔티티 테이블 준비.
+2. 프론트 목록·상세·내 프로젝트·관리 조회의 API 연결. 현재 화면은 Mock이다.
+3. APPLYING 지원 중 목록은 여전히 501. DB에 project_applications가 있어도 엔티티/Repository/조회 어댑터가 없어 #48에서 연결해야 한다.
+4. JSONB 인덱스·대량 데이터 성능 검증과 실제 브라우저 통합은 미실행.
+
+이번 범위에서 프론트 연결 코드·#48 기능·커밋·푸시·PR은 추가하지 않았다.
