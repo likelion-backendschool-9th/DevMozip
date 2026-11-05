@@ -92,8 +92,8 @@ function logout() {
 }
 
 /** 백엔드에 가입하고 바로 로그인한다. 실패하면 화면에 보여줄 문구로 예외를 던진다 */
-async function signup(input: SignupInput) {
-    const result = await signupAction(input);
+async function signup(input: SignupInput, options?: { kakao?: boolean }) {
+    const result = await signupAction(input, options);
     if (result?.error) throw new Error(result.error);
 }
 

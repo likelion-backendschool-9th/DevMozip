@@ -29,6 +29,8 @@ import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.PasswordSetRequest;
+import com.devmozip.backend.dto.member.SocialAccountsResponse;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
@@ -53,7 +55,96 @@ class MemberServiceTest {
 
     private static SignupRequest request(String password, String confirmPassword, List<String> stacks, boolean available) {
         return new SignupRequest("New@Devmozip.Demo ", password, confirmPassword, " 새회원 ", "백엔드 개발자", "3년 차",
-                stacks, List.of("AI"), available);
+                stacks, List.of("AI"), available, null);
+    }
+
+    private static SignupRequest kakaoRequest(String password, String confirmPassword) {
+        return new SignupRequest("New@Devmozip.Demo ", password, confirmPassword, " 새회원 ", "백엔드 개발자", "3년 차",
+                List.of("Java"), List.of("AI"), true, "signup-token");
+    }
+
+    private void assertKakaoStatus(SignupRequest request, HttpStatus status, String message) {
+        assertThatThrownBy(() -> memberService.signupWithKakao("123456789", request))
+                .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+                    assertThat(e.getStatusCode()).isEqualTo(status);
+                    assertThat(e.getReason()).isEqualTo(message);
+                });
+    }
+
+    @Test
+    void 카카오_가입은_비밀번호_없이_카카오_회원번호를_저장한다() {
+        when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
+
+        Member member = memberService.signupWithKakao("123456789", kakaoRequest(null, null));
+
+        assertThat(member.getKakaoId()).isEqualTo("123456789");
+        assertThat(member.getPasswordHash()).isNull();
+        assertThat(member.getEmail()).isEqualTo("new@devmozip.demo");
+        assertThat(member.getNickname()).isEqualTo("새회원");
+        assertThat(member.getJobCategories()).containsExactly("백엔드 개발자");
+        assertThat(member.getSkills()).containsExactly("Java");
+        assertThat(member.getInterests()).containsExactly("AI");
+        assertThat(member.getRole()).isEqualTo(MemberRole.USER);
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+        assertThat(member.getTrustScore()).isEqualByComparingTo(new BigDecimal("36.5"));
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void 카카오_가입에_비밀번호를_보내면_400() {
+        assertKakaoStatus(kakaoRequest(PASSWORD, PASSWORD), HttpStatus.BAD_REQUEST, "카카오 가입에는 비밀번호를 보내지 않습니다.");
+        assertKakaoStatus(kakaoRequest(null, PASSWORD), HttpStatus.BAD_REQUEST, "카카오 가입에는 비밀번호를 보내지 않습니다.");
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void 이미_등록된_카카오_계정으로_가입하면_409() {
+        when(memberRepository.findByKakaoId("123456789")).thenReturn(Optional.of(Member.builder().build()));
+
+        assertKakaoStatus(kakaoRequest(null, null), HttpStatus.CONFLICT, "이미 등록된 회원입니다.");
+
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void 카카오_가입의_이메일이_겹치면_자동_연결하지_않고_연동을_안내한다() {
+        when(memberRepository.existsByEmail("new@devmozip.demo")).thenReturn(true);
+
+        assertKakaoStatus(kakaoRequest(null, null), HttpStatus.CONFLICT,
+                "이미 가입된 이메일입니다. 기존 계정으로 로그인한 뒤 개인정보 설정에서 카카오를 연동해 주세요.");
+
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void 카카오_가입의_닉네임이_겹치면_409() {
+        when(memberRepository.existsByNicknameIgnoreCase("새회원")).thenReturn(true);
+
+        assertKakaoStatus(kakaoRequest(null, null), HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void 카카오_가입이_동시에_일어나_unique_제약에_걸리면_409() {
+        when(memberRepository.save(any(Member.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        assertKakaoStatus(kakaoRequest(null, null), HttpStatus.CONFLICT, "이미 등록된 회원이거나 사용 중인 이메일입니다.");
+    }
+
+    @Test
+    void 이메일_가입에_비밀번호가_없으면_400() {
+        assertStatus(request(null, null, List.of("Java"), true), HttpStatus.BAD_REQUEST);
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void 이메일_가입에_비밀번호_확인이_없으면_400() {
+        assertStatus(request(PASSWORD, null, List.of("Java"), true), HttpStatus.BAD_REQUEST);
+
+        verifyNoInteractions(memberRepository);
     }
 
     @Test
@@ -151,6 +242,172 @@ class MemberServiceTest {
         assertThat(memberService.isNicknameAvailable("새회원")).isTrue();
     }
 
+    private static final String MEMBER_EMAIL = "member@devmozip.test";
+
+    private static Member account(String passwordHash, String kakaoId) {
+        return Member.builder().email(MEMBER_EMAIL).passwordHash(passwordHash).kakaoId(kakaoId).build();
+    }
+
+    private void lookupReturns(Member member) {
+        when(memberRepository.findByEmail(MEMBER_EMAIL)).thenReturn(Optional.of(member));
+    }
+
+    private void lockedLookupReturns(Member member) {
+        when(memberRepository.findForAccountUpdateByEmail(MEMBER_EMAIL)).thenReturn(Optional.of(member));
+    }
+
+    private void assertAccountStatus(Runnable call, HttpStatus status, String message) {
+        assertThatThrownBy(call::run)
+                .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+                    assertThat(e.getStatusCode()).isEqualTo(status);
+                    assertThat(e.getReason()).isEqualTo(message);
+                });
+    }
+
+    @Test
+    void 연동_상태와_비밀번호_설정_여부를_돌려준다() {
+        lookupReturns(account(null, "123456789"));
+
+        assertThat(memberService.getSocialAccounts(MEMBER_EMAIL)).isEqualTo(new SocialAccountsResponse(true, false));
+    }
+
+    @Test
+    void 없는_회원의_연동_상태를_조회하면_404() {
+        when(memberRepository.findByEmail(MEMBER_EMAIL)).thenReturn(Optional.empty());
+
+        assertAccountStatus(() -> memberService.getSocialAccounts(MEMBER_EMAIL), HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다.");
+    }
+
+    @Test
+    void 이미_연동한_회원은_연동할_수_없다() {
+        lookupReturns(account("hash", "123456789"));
+
+        assertAccountStatus(() -> memberService.checkKakaoLinkable(MEMBER_EMAIL), HttpStatus.CONFLICT, "이미 카카오 계정이 연동되어 있습니다.");
+    }
+
+    @Test
+    void 카카오_회원번호를_회원에_저장한다() {
+        Member member = account("hash", null);
+        lockedLookupReturns(member);
+
+        memberService.linkKakao(MEMBER_EMAIL, "123456789");
+
+        assertThat(member.getKakaoId()).isEqualTo("123456789");
+        verify(memberRepository).saveAndFlush(member);
+    }
+
+    @Test
+    void 다른_회원이_쓰는_카카오_계정을_연동하면_409() {
+        Member member = account("hash", null);
+        lockedLookupReturns(member);
+        when(memberRepository.findByKakaoId("123456789")).thenReturn(Optional.of(account("other", "123456789")));
+
+        assertAccountStatus(() -> memberService.linkKakao(MEMBER_EMAIL, "123456789"), HttpStatus.CONFLICT, "이미 다른 회원에 연동된 카카오 계정입니다.");
+
+        assertThat(member.getKakaoId()).isNull();
+        verify(memberRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void 동시_연동으로_unique_제약에_걸리면_409() {
+        lockedLookupReturns(account("hash", null));
+        when(memberRepository.saveAndFlush(any(Member.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        assertAccountStatus(() -> memberService.linkKakao(MEMBER_EMAIL, "123456789"), HttpStatus.CONFLICT, "이미 다른 회원에 연동된 카카오 계정입니다.");
+    }
+
+    @Test
+    void 해제할_수_있으면_연동된_회원번호를_돌려준다() {
+        lookupReturns(account("hash", "123456789"));
+
+        assertThat(memberService.getUnlinkableKakaoId(MEMBER_EMAIL)).isEqualTo("123456789");
+    }
+
+    @Test
+    void 비밀번호가_없으면_해제할_수_없다() {
+        lookupReturns(account(null, "123456789"));
+
+        assertAccountStatus(() -> memberService.getUnlinkableKakaoId(MEMBER_EMAIL), HttpStatus.CONFLICT, "비밀번호를 먼저 설정해야 카카오 연동을 해제할 수 있습니다.");
+    }
+
+    @Test
+    void 연동하지_않았으면_해제할_수_없다() {
+        lookupReturns(account("hash", null));
+
+        assertAccountStatus(() -> memberService.getUnlinkableKakaoId(MEMBER_EMAIL), HttpStatus.CONFLICT, "연동된 카카오 계정이 없습니다.");
+    }
+
+    @Test
+    void 해제하면_kakao_id를_비운다() {
+        Member member = account("hash", "123456789");
+        lockedLookupReturns(member);
+
+        memberService.unlinkKakao(MEMBER_EMAIL);
+
+        assertThat(member.getKakaoId()).isNull();
+    }
+
+    @Test
+    void 비밀번호_없는_회원은_마지막_단계에서도_해제되지_않는다() {
+        Member member = account(null, "123456789");
+        lockedLookupReturns(member);
+
+        assertAccountStatus(() -> memberService.unlinkKakao(MEMBER_EMAIL), HttpStatus.CONFLICT, "비밀번호를 먼저 설정해야 카카오 연동을 해제할 수 있습니다.");
+
+        assertThat(member.getKakaoId()).isEqualTo("123456789");
+    }
+
+    @Test
+    void 카카오_회원의_첫_비밀번호를_해시로_저장한다() {
+        Member member = account(null, "123456789");
+        lockedLookupReturns(member);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("hash");
+
+        memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD));
+
+        assertThat(member.getPasswordHash()).isEqualTo("hash");
+    }
+
+    @Test
+    void 이미_비밀번호가_있으면_설정할_수_없다() {
+        Member member = account("old-hash", "123456789");
+        lockedLookupReturns(member);
+
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD)),
+                HttpStatus.CONFLICT, "이미 비밀번호가 설정된 계정입니다.");
+
+        assertThat(member.getPasswordHash()).isEqualTo("old-hash");
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void 카카오를_연동하지_않았으면_비밀번호를_설정할_수_없다() {
+        lockedLookupReturns(account(null, null));
+
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD)),
+                HttpStatus.CONFLICT, "비밀번호를 설정할 수 없는 계정입니다.");
+
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void 새_비밀번호_확인이_다르면_400() {
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, "Different123")),
+                HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다.");
+
+        verifyNoInteractions(memberRepository);
+    }
+
+    @Test
+    void 새_비밀번호가_72바이트를_넘으면_400() {
+        String password = "가".repeat(30) + "a1";
+
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(password, password)),
+                HttpStatus.BAD_REQUEST, "비밀번호가 너무 깁니다. 한글을 줄이거나 더 짧게 입력해 주세요.");
+
+        verifyNoInteractions(memberRepository);
+    }
+
     private Member memberWithAvailability() {
         return Member.builder()
                 .email("new@devmozip.demo")
@@ -213,7 +470,7 @@ class MemberServiceTest {
     }
 
     private static SignupRequest requestWith(String job, List<String> stacks, List<String> interests) {
-        return new SignupRequest("new@devmozip.demo", PASSWORD, PASSWORD, "새회원", job, "3년 차", stacks, interests, true);
+        return new SignupRequest("new@devmozip.demo", PASSWORD, PASSWORD, "새회원", job, "3년 차", stacks, interests, true, null);
     }
 
     @Test

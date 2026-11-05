@@ -1,14 +1,18 @@
 'use client';
 import { AuthShell } from '@/app/_components/AuthShell';
+import { KakaoNotice } from '@/app/_components/KakaoNotice';
+import { KakaoStartButton } from '@/app/_components/KakaoStartButton';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useNavigation as useNavigate } from '@/lib/navigation';
 import { useAuth } from '@/lib/state/authStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { emptySignup, careerOptions } from '@/mocks/auth';
 import { signupOptionsAction } from '@/lib/auth/actions';
-import { validEmail, validNickname, validateSignup, normalizeEmail } from '@/lib/account/authService';
+import { KAKAO_DUPLICATE_EMAIL_MESSAGE } from '@/lib/auth/kakao';
+import { validEmail, validNickname, validateKakaoSignup, validateSignup, normalizeEmail } from '@/lib/account/authService';
 import type { SignupErrors, SignupInput, SignupOptions } from '@/types/auth';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
@@ -16,6 +20,8 @@ function SignupForm() {
     const { signup, checkAvailability } = useAuth();
     const { notify } = usePrototype();
     const navigate = useNavigate();
+    // 카카오 인증을 마치고 돌아온 가입. 비밀번호를 받지 않는다.
+    const kakaoMode = useSearchParams().get('kakao') === 'signup';
     const [form, setForm] = useState<SignupInput>(() => structuredClone(emptySignup));
     const [errors, setErrors] = useState<SignupErrors>({});
     const [checkedEmail, setCheckedEmail] = useState('');
@@ -61,7 +67,7 @@ function SignupForm() {
             return;
         }
         let available = false;
-        let message = '이미 사용 중입니다.';
+        let message = kakaoMode && field === 'email' ? KAKAO_DUPLICATE_EMAIL_MESSAGE : '이미 사용 중입니다.';
         setChecking(field);
         try {
             const result = await checkAvailability(field, value);
@@ -83,14 +89,14 @@ function SignupForm() {
     };
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const next = validateSignup(form);
+        const next = kakaoMode ? validateKakaoSignup(form) : validateSignup(form);
         if (checkedEmail !== normalizeEmail(form.email) || checkedNickname !== form.nickname.trim())
             next.checks = '이메일과 닉네임 중복 확인을 완료해 주세요.';
         setErrors(next);
         if (Object.keys(next).length) return;
         setBusy(true);
         try {
-            await signup(form);
+            await signup(form, kakaoMode ? { kakao: true } : undefined);
             setForm(structuredClone(emptySignup));
             notify('회원가입이 완료되었습니다. 프로필 온보딩을 시작해 주세요.');
             navigate('/onboarding');
@@ -108,6 +114,7 @@ function SignupForm() {
         );
     return (
         <form className={[styles.scope, 'auth-form signup-form'].join(' ')} onSubmit={submit} noValidate>
+            <KakaoNotice />
             <label htmlFor="signup-email">이메일</label>
             <div className={[styles.scope, 'check-field'].join(' ')}>
                 <Input
@@ -132,38 +139,40 @@ function SignupForm() {
                     사용 가능한 이메일입니다.
                 </p>
             )}
-            <div className={[styles.scope, 'auth-two-columns'].join(' ')}>
-                <div>
-                    <label htmlFor="signup-password">비밀번호</label>
-                    <Input
-                        id="signup-password"
-                        type="password"
-                        autoComplete="new-password"
-                        value={form.password}
-                        maxLength={64}
-                        onChange={e => edit('password', e.target.value)}
-                        placeholder="영문·숫자 포함 8~64자"
-                        disabled={busy}
-                        aria-invalid={!!errors.password}
-                    />
-                    {err('password')}
+            {!kakaoMode && (
+                <div className={[styles.scope, 'auth-two-columns'].join(' ')}>
+                    <div>
+                        <label htmlFor="signup-password">비밀번호</label>
+                        <Input
+                            id="signup-password"
+                            type="password"
+                            autoComplete="new-password"
+                            value={form.password}
+                            maxLength={64}
+                            onChange={e => edit('password', e.target.value)}
+                            placeholder="영문·숫자 포함 8~64자"
+                            disabled={busy}
+                            aria-invalid={!!errors.password}
+                        />
+                        {err('password')}
+                    </div>
+                    <div>
+                        <label htmlFor="signup-confirm">비밀번호 확인</label>
+                        <Input
+                            id="signup-confirm"
+                            type="password"
+                            autoComplete="new-password"
+                            value={form.confirmPassword}
+                            maxLength={64}
+                            onChange={e => edit('confirmPassword', e.target.value)}
+                            placeholder="한 번 더 입력해 주세요"
+                            disabled={busy}
+                            aria-invalid={!!errors.confirmPassword}
+                        />
+                        {err('confirmPassword')}
+                    </div>
                 </div>
-                <div>
-                    <label htmlFor="signup-confirm">비밀번호 확인</label>
-                    <Input
-                        id="signup-confirm"
-                        type="password"
-                        autoComplete="new-password"
-                        value={form.confirmPassword}
-                        maxLength={64}
-                        onChange={e => edit('confirmPassword', e.target.value)}
-                        placeholder="한 번 더 입력해 주세요"
-                        disabled={busy}
-                        aria-invalid={!!errors.confirmPassword}
-                    />
-                    {err('confirmPassword')}
-                </div>
-            </div>
+            )}
             <label htmlFor="signup-nickname">닉네임</label>
             <div className={[styles.scope, 'check-field'].join(' ')}>
                 <Input
@@ -305,6 +314,13 @@ function SignupForm() {
             <Button type="submit" className={[styles.scope, 'auth-submit'].join(' ')} disabled={busy || checking !== null || !options}>
                 {busy ? '가입 정보를 저장하고 있어요…' : '회원가입'}
             </Button>
+            {kakaoMode ? (
+                <p className={[styles.scope, 'auth-switch'].join(' ')}>
+                    카카오 인증이 만료되었나요? <Link href="/signup">처음부터 가입하기</Link>
+                </p>
+            ) : (
+                <KakaoStartButton intent="signup">카카오로 가입하기</KakaoStartButton>
+            )}
             <p className={[styles.scope, 'auth-switch'].join(' ')}>
                 이미 계정이 있으신가요? <Link href="/login">로그인</Link>
             </p>
