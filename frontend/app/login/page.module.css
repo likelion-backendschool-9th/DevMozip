@@ -5,8 +5,6 @@
 @layer devmozip-auth{:where(.scope):global(.auth-options){display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:5px}}
 @layer devmozip-auth{:where(.scope):global(.auth-options>a){font-size:14px;color:#91859f}}
 @layer devmozip-auth{:where(.scope):global(.auth-submit){width:100%;margin-top:12px;font-size:15px}}
-@layer devmozip-auth{:where(.scope):global(.kakao-button){background:#fee500!important;color:#292419;width:100%;margin-top:12px;font-size:14px}}
-@layer devmozip-auth{:where(.scope):global(.kakao-button:hover){background:#f4dc00!important}}
 @layer devmozip-auth{:where(.scope):global(.auth-switch){font-size:14px;text-align:center;color:var(--muted);margin:22px 0}}
 @layer devmozip-auth{:where(.scope):global(.auth-switch a){font-weight:650;color:var(--purple);margin-left:5px}}
 @layer devmozip-auth{:where(.scope):global(.auth-form .check-field){display:flex;gap:8px}}

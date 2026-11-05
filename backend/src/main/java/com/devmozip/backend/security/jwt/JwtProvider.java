@@ -21,6 +21,10 @@ public class JwtProvider {
     private static final String TOKEN_TYPE = "type";
     private static final String ACCESS = "access";
     private static final String REFRESH = "refresh";
+    private static final String KAKAO_SIGNUP = "kakao_signup";
+
+    // 카카오 인증을 마친 뒤 가입 폼을 작성할 시간 (30분)
+    private static final long KAKAO_SIGNUP_TOKEN_EXPIRATION = 30 * 60 * 1000L;
 
     private final JwtProperties jwtProperties;
     private SecretKey secretKey;
@@ -71,8 +75,26 @@ public class JwtProvider {
                 .compact();
     }
 
+    // 카카오 가입 토큰 생성: 가입 폼을 제출할 때 카카오 회원번호를 위조 없이 확인하기 위해 쓴다
+    public String createKakaoSignupToken(String kakaoId) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .subject(kakaoId)                   // 카카오 회원번호
+                .claim(TOKEN_TYPE, KAKAO_SIGNUP)    // 가입에만 쓰는 토큰임을 표시
+                .issuedAt(new java.util.Date(now))
+                .expiration(new java.util.Date(now + KAKAO_SIGNUP_TOKEN_EXPIRATION))
+                .signWith(secretKey)
+                .compact();
+    }
+
     // 토큰에서 사용자 아이디(Subject) 추출
     public String getUsername(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    // 카카오 가입 토큰에서 카카오 회원번호 추출
+    public String getKakaoId(String token) {
         return parseClaims(token).getSubject();
     }
 
@@ -89,6 +111,11 @@ public class JwtProvider {
     // 리프레시 토큰 검증: 서명·만료가 유효하고 type이 refresh인지 (액세스 토큰은 false)
     public boolean validateRefreshToken(String token) {
         return validateToken(token, REFRESH);
+    }
+
+    // 카카오 가입 토큰 검증: 서명·만료가 유효하고 type이 kakao_signup인지
+    public boolean validateKakaoSignupToken(String token) {
+        return validateToken(token, KAKAO_SIGNUP);
     }
 
     // 토큰 유효성 검증

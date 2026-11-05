@@ -23,7 +23,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @org.hibernate.annotations.DynamicUpdate
 // 이미 있는 users 테이블에도 제약이 추가되도록 @Column(unique)가 아니라 여기에 둔다.
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "kakao_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
@@ -65,7 +68,7 @@ public class Member {
     @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
-    // 카카오 계정 ID
+    // 카카오 회원번호 (카카오 API의 id. 토큰은 저장하지 않는다)
     @Column(name = "kakao_id", length = 100)
     private String kakaoId;
 
@@ -173,6 +176,9 @@ public class Member {
     public void updateContactHours(String contactHours) { this.contactHours = contactHours; }
     public void changeProfileImage(String url) { this.profileImage = url; }
     public void changeBannerImage(String url) { this.bannerImage = url; }
+    public void linkKakao(String kakaoId) { this.kakaoId = kakaoId; }
+    public void unlinkKakao() { this.kakaoId = null; }
+    public void changePasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
     @Builder
     public Member(String email, String passwordHash, String kakaoId,

@@ -1,5 +1,6 @@
 # compose·서버 공통 기본 설정. 비밀값은 넣지 않고 환경변수(루트 .env → compose)로 받는다.
 # 로컬에서 H2로 실행할 때는 application-local.yml(커밋하지 않음)을 만들고 local 프로필로 실행한다.
+# 로컬의 카카오 값은 application-local.yml에 spring.config.import: optional:file:../.env.local[.properties]를 넣어 읽는다.
 spring:
   application:
     name: backend
@@ -27,6 +28,14 @@ jwt:
   secret: ${JWT_SECRET:}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
+
+# 카카오 로그인. 값이 없어도 서버는 뜬다.
+kakao:
+  rest-api-key: ${KAKAO_REST_API:}
+  client-secret: ${KAKAO_CLIENT_SECRET:}
+  # DOMAINNAME/KAKAO_REDIRECT_URI가 카카오 콘솔에 등록한 Redirect URI와 정확히 같아야 한다
+  domain-name: ${DOMAINNAME:}
+  redirect-path: ${KAKAO_REDIRECT_URI:}
 
 management:
   endpoints:

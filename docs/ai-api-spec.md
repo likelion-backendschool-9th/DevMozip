@@ -1,126 +1,259 @@
-# AI API 명세: 확정 범위와 TODO
+# AI API 명세
 
-기준일: 2026-11-03. 1단계 대화 CRUD·사용자 메시지 저장 API를 구현했으며 나머지 AI 업무 API는 미구현이다. 팀 H2 스키마·실행 설정과의 통합은 미완료다. 사용자 제공 공통 지침과 후속 URL/API 표를 반영했다. HTTP 메서드와 경로는 아래 표를 기준으로 하며, 제공되지 않은 JSON 필드·스키마는 TODO다. 논리 구조는 호출 가능한 요청/응답 예제가 아니다.
+기준일: 2026-11-05. **서버 대화·메시지 API 5개와 실사용자 인증 연결 구현 완료. 2026-11-05 프론트 로그인 필수 전환을 반영했다. 프론트 AI API 연결·실제 PostgreSQL 통합 검증은 미완료**다. 이전 브라우저 로그인 왕복 검증은 당시 guest 허용 정책 기준이며 이번 검증과 구분한다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
 
-## 확정된 공통 계약
+## 공통 계약
 
-- 기본 경로: `/api/v1/ai`.
-- 직접 선택한 조건은 PUT으로 전체 교체한다.
-- 자연어에서 추출한 조건 변경은 기존 조건과 병합한다.
-- 한 번의 추천 실행으로 개발자·유사 프로젝트 결과를 함께 생성한다. 점수는 백엔드에서 계산한다.
-- 요청자 ID는 Spring Security 인증 정보에서 가져온다. 본문·쿼리로 요청자 신원을 지정하지 않는다.
-- 비로그인 추천 실행은 HTTP 401 Unauthorized다.
-- 로그인 전 메시지 입력·조건 선택은 가능하지만 DB 저장과 실제 추천 실행은 로그인 후 진행한다.
+- 서버 기본 경로 `/api/v1/ai`, 화면 `/ai/matching`.
+- 아래 서버 영속 API는 인증을 요구한다. 프론트 대화 화면도 로그인 필수이며 비로그인 대화·메시지·조건 저장과 익명 서버 저장 API를 제공하지 않는다.
+- 사용자 ID는 인증 정보에서 얻고 모든 대화 접근에 소유권을 검증한다. 실사용자 식별 방식과 남은 BFF 계약은 아래 인증 절을 따른다.
+- 현재 응답은 DTO 객체/배열이며 별도 `data` envelope를 쓰지 않는다. 입력 JSON 필드는 아래 1단계 표에 명시된 항목이다.
+- 1단계 시각은 오프셋 없는 LocalDateTime ISO-8601(예: `2026-11-04T15:00:00`). 앱/DB 기준 시간대는 미확정이다.
 
-## 화면 경로와 API 목록
+### 추가 제공 API 표 반영 (2026-11-04)
 
-화면 URL은 `/ai/matching`이다. 현재 `frontend/app/ai/matching/page.tsx`가 이 경로를 제공하며 사용자 명세와 일치한다. 앞선 문서의 `/matching` 설명은 현재 코드와 맞지 않아 정정했다. 화면 URL과 백엔드 API 기본 경로 `/api/v1/ai`는 서로 다른 역할이다.
+사용자 제공 표의 화면 경로 `/ai/matching` 및 10개 API 항목을 기존 명세와 대조했다. 대화 5개·조건 PUT·추천 실행/조회·상세 분석·사용량 조회 구성은 기존 명세와 일치한다. 메시지의 자연어 분석·추가 질문은 5단계 목표이며 현재 1단계는 USER 저장만 한다. 표 제공은 후속 단계 구현 지시가 아니다.
 
-| 기능 | Method | API URL | 동작·차감 |
-|---|---|---|---|
-| AI 대화 생성 | POST | `/api/v1/ai/conversations` | 새 대화 생성, 추천 횟수 미차감 |
-| AI 대화 목록 조회 | GET | `/api/v1/ai/conversations` | 이전 대화 목록 조회, 미차감 |
-| AI 대화 상세 조회 | GET | `/api/v1/ai/conversations/{id}` | 대화 및 조건 조회, 미차감 |
-| AI 대화 삭제 | DELETE | `/api/v1/ai/conversations/{id}` | 본인 대화만 삭제, 미차감 |
-| AI 메시지 전송 | POST | `/api/v1/ai/conversations/{id}/messages` | 자연어 요구사항 분석·기존 조건 병합·추가 질문, 미차감 |
-| 추천 조건 수정 | PUT | `/api/v1/ai/conversations/{id}/conditions` | 직접 선택한 조건 전체 교체, 미차감 |
-| AI 추천 실행 | POST | `/api/v1/ai/conversations/{id}/recommendations` | 직군·기술 스택·경험 등을 기반으로 적합도를 계산하고 개발자·프로젝트 결과 저장, 신규 생성 성공 시 1회 차감 |
-| 추천 결과 조회 | GET | `/api/v1/ai/conversations/{id}/recommendations` | 저장된 개발자·프로젝트 결과 조회, 미차감 |
-| 프리미엄 상세 분석 | POST | `/api/v1/ai/recommendations/{id}/detailed-analysis` | 기존 추천에 대한 프리미엄 전용 추가 분석, 미차감 |
-| 월별 AI 추천 사용량 조회 | GET | `/api/v1/ai/usage` | 무료 월 15회·프리미엄 월 100회 기준 사용량 조회, 조회 자체는 미차감 |
+- 무료 월 추천 한도는 최신 표에 따라 **5회**, 프리미엄은 **100회**로 반영한다. '조건으로 추천 받기' 실행 후 신규 결과 생성 성공 시 1회 차감하고 일반 대화·조건 변경은 미차감이다. 실제 제한 기능은 7단계 미구현이다.
+- 표의 `detailed-analysi`는 기존 확정 경로 `detailed-analysis`에서 마지막 `s`가 빠진 표기로 기록한다. 기존 확정 경로 `/api/v1/ai/recommendations/{id}/detailed-analysis`를 유지하며 별도 API를 추가하지 않는다.
+- 표는 기능·메서드·경로를 제공하지만 DTO·오류·초안 인계·BFF 전달 계약 전체를 확정하지는 않는다. 미확정 항목은 아래에 유지한다.
 
-`conversations/{id}` 하위의 `{id}`는 대화 식별자, `recommendations/{id}`의 `{id}`는 추천 식별자다. ID 자료형·형식과 추천 식별자가 결과 묶음/개별 결과 중 무엇을 가리키는지는 TODO다. 상세 분석 경로는 사용자가 오타임을 확인하여 `detailed-analysis`로 확정했다.
+## 1단계 구현 API
 
-## 요청·응답의 논리 구조
-
-현재 승인된 1단계는 대화 생성·목록·상세(메시지 포함)·삭제와 사용자 메시지 저장의 5개 API다. 위 표의 메시지 분석·조건 병합·추가 질문은 후속 전체 기능 명세이며 1단계에서는 실행하지 않는다. Gemini 호출 및 임시 ASSISTANT 메시지 자동 생성도 하지 않는다. 대화는 생성 시간 역순, 메시지는 생성 시간과 ID 기준으로 정렬한다. 사용자 추가 설계에 따라 대화 type/status는 사용하지 않고, 삭제 시 메시지·추천 요청·추천 결과는 물리 삭제하되 월 사용량은 유지한다.
-
-| API 작업 | 요청 | 응답 | 미확정 세부 사항 |
-|---|---|---|---|
-| 대화 생성 | 생성에 필요한 입력 여부 TODO | 생성한 대화 표현 | 제목·초기 조건·익명 초안 전달 여부, ID 및 생성 시각 필드 |
-| 대화 목록 | 조회 조건 TODO | 이전 대화 목록 | 정렬·페이지네이션·요약 필드 |
-| 대화 상세 | 경로의 대화 ID | 대화·조건 | 메시지 포함 구조와 추천 결과 포함 여부 |
-| 대화 삭제 | 경로의 대화 ID | 삭제 처리 결과 표현 TODO | 성공 상태, 연관 메시지·결과·사용량 보존/삭제 정책 |
-| 메시지 전송 | 대화 ID와 자연어 메시지 | 요구사항 분석·병합 결과와 필요한 추가 질문 | 메시지 JSON 키·길이, 분석 실패·추가 질문 형식 |
-| 조건 수정 | 대화 ID와 선택 조건 전체 | 교체된 조건 표현 TODO | 조건 스키마와 검증 규칙 |
-| 추천 실행 | 대화 ID, 추가 본문 필요 여부 TODO | 개발자·프로젝트 결과와 백엔드 계산 점수 | 동기/비동기 처리, 저장 결과 ID·스냅샷·응답 필드 |
-| 추천 결과 조회 | 대화 ID | 저장된 개발자·프로젝트 결과 | 최신 결과만/이력 전체 여부, 추천 없을 때 응답 |
-| 상세 분석 | 추천 ID, 추가 본문 필요 여부 TODO | 상세 포트폴리오 기반 추가 분석 | 대상 범위·결과 구조·재분석 정책 |
-| 사용량 조회 | 인증 주체, 조회 월 지정 가능 여부 TODO | 월별 추천 사용량 | 사용/한도/잔여 횟수·월의 JSON 키·자료형·시간대 |
-
-본문 구조가 미확정인 항목은 빈 본문으로 확정한 것이 아니다. 생성·조회·분석 API가 정의되어도 구현 단계는 별도 요청에 따른다.
-
-## JSON 필드와 오류 계약의 의미
-
-요청 JSON 필드는 클라이언트가 보내는 데이터의 이름·자료형·필수 여부다. 응답 JSON 필드는 서버가 돌려주는 데이터의 이름과 구조다. 예를 들어 메시지 본문을 `content`라는 키로 받을지, 추천 목록을 `developers`와 `projects`로 나눌지 등을 정하는 일이다. 이 이름들은 설명용 예시이며 확정된 DTO가 아니다.
-
-오류 계약은 잘못된 입력·권한 부족·한도 초과·서버 장애 등에 어떤 HTTP 상태, 오류 코드, 메시지와 본문 구조를 반환할지 정하는 약속이다. 비로그인 추천 실행의 401은 확정되었지만 다른 상태·코드·필드 형식은 아직 TODO다. API URL 확정과 별도로 각 구현 단계에서 필요한 데이터 계약을 구체화한다.
-
-## 요청·응답 구조에서 미확정인 항목
-
-- 조건: 허용 키, 값의 자료형, 필수·선택 항목, 문자열 길이, 배열 상한, enum, null/빈 값/누락 키 처리.
-- PUT 전체 교체: 빠진 선택 필드의 초기화 방식과 필수 필드 누락 오류. 기존 값을 유지하는 부분 병합으로 구현하지 않는다.
-- 자연어: 원문·변경분·병합 결과를 어떻게 표현할지, 삭제·충돌·추출 실패 처리, 기존 조건 버전 관리.
-- 추천 요청: 경로의 대화 ID에 연결된 조건 선택·스냅샷 시점, 추가 본문 필요 여부, 동기/비동기 처리, 재시도·멱등성 키.
-- 추천 응답: 결과 ID, 대상 ID·노출 필드, 점수 자료형·범위, 근거 제공 범위, 정렬·결과 개수, 두 결과 그룹의 빈 결과 처리, 사용량 포함 여부.
-- 상세 분석: 분석 대상과 재분석·캐시 정책, 비공개 포트폴리오 원문·파생 분석의 노출 범위.
-- 공통: JSON 키 이름, 성공 HTTP 상태, 응답 envelope, 페이지네이션, 날짜 형식, 오류 코드·오류 스키마.
-
-위 목록은 전체 AI 기능의 설계 TODO다. 아래 1단계 구현 계약에서 구체화한 생성·조회·삭제·메시지 DTO/HTTP 항목은 해당 계약을 따른다. 나머지는 실제 ERD·도메인 계약과 사용자 확인 없이 확정하지 않는다. 무료 15회·프리미엄 100회 및 차감 규칙은 [기능 명세](ai-matching.md)에 따른다.
-
-## 인증과 접근 권한
-
-추천 버튼에서 로그인으로 이동시키는 프론트 처리는 편의 기능이다. 서버는 별도로 인증을 검증하고 비로그인 추천 실행을 401로 거절해야 한다. 프리미엄 여부도 브라우저의 데모 상태가 아닌 서버에서 확인해야 한다. 대화·추천 식별자를 사용하는 경우 타인 데이터 접근을 막는 소유권 검증이 필요하며, 관리자 예외와 거절 상태 코드는 TODO다.
-
-서버에 저장된 대화의 생성·목록·상세·삭제·메시지·조건·추천 결과와 개인 사용량은 인증 주체를 기준으로 처리한다. 대화 삭제는 본인 대화만 가능하며 대화·추천 접근에도 소유권을 검증한다. 상세 분석은 로그인 및 프리미엄 자격을 확인한다. 로그인 전 입력 UI와 로그인 후 영속 API를 구분하며, 기존 `{id}/messages`를 익명 공개하는 것으로 해석하지 않는다. 비로그인 자연어 분석이 필요할 때의 비저장 처리 방식은 TODO다.
-
-현재 `auth/SecurityConfig.java`는 인증 API·헬스체크 등의 허용 경로를 제외하고 인증을 요구하며 JWT 필터가 서명·만료·역할을 확인한다. `Authentication`의 principal은 username 문자열이고 실제 사용자 DB ID가 아니다. 임시 계정은 `InMemoryUserDetailsManager`로 제공된다. 이 구조를 실제 사용자 ID 및 구독 상태에 연결하는 계약은 TODO다.
-
-기존 인증 기본 경로는 `/api/auth`이고 인증 BFF는 [팀 안내](team-auth-deployment.md)를 따른다. 신규 AI 기본 경로를 이유로 기존 인증 경로를 변경하지 않는다. 프론트에서 Spring AI API까지의 BFF/프록시 전달 계약은 TODO다.
-
-현재 `JsonAuthenticationEntryPoint`는 JSON 401 오류를 반환한다. 1단계 API의 익명 요청/사용자 식별 실패 401은 H2 기반 통합 테스트로 검증했고 운영 임시 식별 거부는 설정 테스트로 검증했다. 실제 운영 검증은 하지 않았다. 프리미엄 권한 부족·한도 초과·검증 오류·데이터 없음·AI 장애의 상태 코드와 오류 본문은 TODO이며 기존 인증 오류를 근거 없이 전체 AI 오류 계약으로 확정하지 않는다.
-
-## 기존 문서와의 관계
-
-[api-plan.md](api-plan.md)의 `/matching/...` URL은 과거 미구현 후보이며 이 AI API의 확정 경로가 아니다. 기존 프론트 Mock 타입·필드·점수식도 서버 DTO 계약으로 확정하지 않는다. ERD·DDL과 실제 엔티티 대조를 마친 후 요청된 단계에 필요한 계약만 구체화한다.
-
-## 1단계 구현 계약
-
-아래는 이번 구현의 DTO·HTTP 계약이다. 매핑의 테이블/컬럼은 사용자 ERD를 반영했다. [이전 PostgreSQL DDL 초안](sql/ai-conversations-proposal.sql)은 참고용이며 팀의 H2 확정 스키마가 아니다. 실제 팀 스키마를 확인하거나 적용한 결과는 아니다. 추천·조건 수정·분석·사용량 API는 구현하지 않는다.
-
-| API | 요청 | 정상 응답 |
+| Method·URL | 요청 | 성공 응답 |
 |---|---|---|
-| POST `/api/v1/ai/conversations` | 본문 없음 또는 `{}` 또는 `{"title":"팀원 찾기"}`. title은 null 허용, 최대 255자 | 201, Location 헤더, 대화 요약 객체 |
-| GET `/api/v1/ai/conversations` | 본문 없음 | 200, 내 대화 요약 배열. createdAt DESC, id DESC. 페이지네이션은 이번 단계 미구현 |
-| GET `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 200, 대화 상세 및 messages 배열. 메시지는 createdAt ASC, id ASC |
-| DELETE `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 204, 본문 없음. 추천 결과→추천 요청→메시지→대화 순으로 삭제, 월 사용량 유지 |
-| POST `/api/v1/ai/conversations/{id}/messages` | `{"content":"백엔드 개발자를 찾고 있어요"}`. content는 필수이며 공백만 입력 불가 | 201, 저장한 USER 메시지 객체. AI 응답 생성 없음 |
+| POST `/api/v1/ai/conversations` | 본문 없음, `{}` 또는 `{"title":"팀원 찾기"}`. title null 허용·최대 255자 | 201, `Location: /api/v1/ai/conversations/{id}`, 대화 요약 |
+| GET `/api/v1/ai/conversations` | 본문 없음 | 200, 내 대화 요약 배열. `createdAt DESC, id DESC`. 페이지네이션 없음 |
+| GET `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 200, 상세. 메시지 `createdAt ASC, id ASC` |
+| DELETE `/api/v1/ai/conversations/{id}` | 양수 BIGINT 대화 ID | 204, 본문 없음 |
+| POST `/api/v1/ai/conversations/{id}/messages` | `{"content":"백엔드 개발자를 찾고 있어요"}`. content 필수·공백만 입력 불가 | 201, 저장한 USER 메시지. AI 응답 없음 |
 
-대화 요약은 `id`(정수), `title`(문자열 또는 null), `createdAt`·`updatedAt`(시간대/오프셋 없는 LocalDateTime ISO-8601)이다. 상세는 요약 필드에 `currentConditions`(JSON 값 또는 null), `messages`(배열)를 추가한다. 조건은 이번 단계에서 변경하지 않는다. 메시지 객체는 `id`(정수), `role`(USER/ASSISTANT), `content`(문자열), `createdAt`(시간대/오프셋 없는 LocalDateTime ISO-8601)이다. 저장 API는 역할을 USER로 정하고 요청자의 role·userId·conversationId를 신뢰하지 않는다. 실제 관계는 경로의 본인 대화와 연결한다.
+### 응답 필드
 
-사용자 ID는 모든 Service 진입점에서 `CurrentUserProvider`로 얻는다. 잘못된 ID 형식·0 이하 ID, 너무 긴 제목·빈 메시지는 400, 없는 대화와 타인 대화는 동일한 404다. 소유 여부를 응답 차이로 노출하지 않는다. 기본/운영 환경의 사용자 식별 미준비·개발 사용자 설정 누락/해당 users 행 없음은 기존 인증 예외 처리로 401을 반환한다. 기존 SecurityConfig의 로그인 요구도 유지한다.
+| 응답 | 필드 |
+|---|---|
+| 대화 요약 `ConversationResponse` | `id`: 정수, `title`: 문자열/null, `createdAt`, `updatedAt`: 시각 |
+| 대화 상세 `ConversationDetailResponse` | 요약 필드 + `currentConditions`: JSON 값/null, `messages`: 메시지 배열 |
+| 메시지 `MessageResponse` | `id`: 정수, `role`: USER/ASSISTANT, `content`: 문자열, `createdAt`: 시각 |
 
-오류 본문은 기존 `ErrorResponse` 구조를 재사용한다: `status`(정수), `error`(HTTP 이유), `message`(안내), `path`(요청 경로), `timestamp`(시각). JSON 파싱 오류는 기존 400 처리를, DB 접근 오류는 develop의 공통 예외 처리에 따라 500으로 반환한다. 예상하지 못한 FK 충돌도 500으로 반환하고 트랜잭션 전체를 롤백한다. 이는 충돌을 무시하거나 실제 FK가 검증되었다는 뜻이 아니다.
+`currentConditions`는 엔티티 내부에서 JSON 문자열로 보관하고 상세 응답에서 JSON 값으로 직렬화한다. 1단계는 기존 조건을 조회만 하며 생성/메시지 요청으로 조건을 저장하지 않는다. 저장 API는 role을 USER로 정하고 경로의 본인 대화에 연결한다. 사용자 ID·메시지 ID·생성 시각은 서버가 정하며 요청의 임의 식별자·역할로 바꿀 수 없다. 서버 메시지 길이 상한은 현재 구현에 별도 정의가 없고 프론트 Mock의 1,500자를 서버 계약으로 간주하지 않는다.
 
-## 개발 사용자 식별과 인증 교체 지점
+### 오류·삭제
 
-- `CurrentUserProvider#getCurrentUserId()`가 인증과 AI 업무 코드 사이의 교체 지점이다. 패키지는 `com.devmozip.backend.ai`다.
-- `dev` 또는 `test` 프로필 + `ai.current-user.development-enabled=true` 두 조건을 모두 만족해야 고정 ID 구현을 활성화한다. `prod` 또는 `production`이 함께 활성화되면 고정 ID 구현을 사용하지 않는다. 기본 환경도 요청을 거부한다.
-- dev 설정은 `application-dev.yaml`에서 `AI_DEV_USER_ENABLED`, `AI_DEV_USER_ID` 환경변수를 읽는다. ID 기본값은 없으며 users 테이블에 실제 행이 있어야 한다. 실행 시 테스트 사용자를 자동 INSERT하지 않는다.
-- 임시 모드는 모든 인증된 요청을 설정된 한 사용자로 취급한다. 실제 다중 사용자 환경에서 사용하면 안 된다. 기존 보안 필터를 우회하지 않으므로 현재 인증의 유효한 로그인 토큰도 필요하다.
-- 인증 팀이 사용자 ID를 제공하면 실서비스용 `CurrentUserProvider` 빈을 등록하고 이 임시 설정을 제거/비활성화한다. 기본 빈은 `ConditionalOnMissingBean`으로 교체 가능하다. AI Controller/Service에 username 변환이나 Spring Security 의존성을 추가할 필요가 없다.
-- 배포 환경에는 dev/test 프로필 및 임시 사용자 옵션을 설정하지 않는다. 기존 compose·JWT·BFF·보안 설정은 수정하지 않았다.
+| 상태 | 현재 처리 |
+|---|---|
+| 400 | 잘못된 JSON/ID 형식, 0 이하 ID, 255자 초과 제목, null/빈/공백 메시지 |
+| 401 | 비로그인·미인증, 인증 이메일에 해당하는 users 행 부재, 개발 ID 설정 누락·해당 users 행 부재 |
+| 404 | 미존재 대화 또는 다른 사용자 소유 대화. 응답을 동일하게 처리 |
+| 500 | 공통 DB 접근 오류·예상하지 못한 FK 충돌. 삭제 트랜잭션 전체 롤백 |
 
-1단계 입력 오류와 미존재/타인 대화 오류는 표준 Java 예외를 사용하고 AiConversationController의 로컬 ExceptionHandler가 위 ErrorResponse 형식으로 변환한다. 별도 AI 예외 클래스·예외 처리 파일은 두지 않는다. 공통 인증/DB 오류 처리는 기존 코드를 그대로 사용한다.
+오류는 기존 `ErrorResponse`의 `status`, `error`, `message`, `path`, `timestamp`를 재사용한다. 정지 계정 등 기존 인증 체계의 별도 거절 정책은 그대로 따른다.
 
-AI 시간 필드는 사용자 요청으로 LocalDateTime으로 통일했다. 예: `2026-11-03T15:00:00`이며 Z/UTC 오프셋을 포함하지 않는다. Service는 서버 로컬 시각의 LocalDateTime.now()를 사용한다. DDL 초안은 TIMESTAMP WITHOUT TIME ZONE 및 LOCALTIMESTAMP 기본값으로 변경했으며 실제 DB는 변경하지 않았다. 운영 애플리케이션·DB의 기준 시간대는 팀 합의 후 일치시켜야 하며 한국 시간/UTC 중 하나로 확정한 것은 아니다.
+삭제는 **해당 대화의 메시지 → 본인 대화** 순서로 한 트랜잭션에서 처리한다. 사용자 최신 요청에 따라 1단계의 추천 요청·결과 테이블 참조를 제거했다. `ai_recommendations`, `ai_recommendation_requests`, `ai_usages`가 없는 H2에서도 삭제할 수 있고 다른 대화·메시지는 유지한다. 추천 이력·월 사용량을 조회/삭제/복원하지 않으며, 추천 기능 도입 후 필요한 FK·삭제 정책은 해당 단계에서 별도 확정한다.
 
-AI Service는 `service/AiConversationService` 인터페이스와 `service/impl/AiConversationServiceImpl` 구현체로 분리했다. Controller는 인터페이스를 주입받는다. Repository는 JPA 기반이며 대화/메시지는 JpaRepository, users 존재 확인은 AiConversationRepository의 nativeQuery, 추천 연관 삭제는 EntityManager 네이티브 쿼리로 처리한다. 별도 User/추천 엔티티를 추가하지 않는다.
+## 인증 연결과 남은 프론트 계약
 
-사용자 요청에 따라 별도 AiUserRepository를 제거했다. 개발용 users 행 존재 확인은 AiConversationRepository.existsUserById의 nativeQuery로 통합했으며 대화 존재 확인인 JpaRepository.existsById와 구분한다. 개발 Provider와 설정은 동일 Repository를 사용한다. CreateConversationRequest의 요청 필드는 title 하나이며 userId·id·createdAt·updatedAt은 서버에서 결정한다. DTO와 API 본문 필드는 이번 통합에서 변경하지 않았다.
+현재 `config/SecurityConfig.java`는 users 기반 이메일 로그인을 제공하고 JWT principal은 이메일 문자열이다. AI는 `security.ai.CurrentUserProvider#getCurrentUserId()`로 users PK를 얻으며 `AuthenticatedCurrentUserProvider`가 검증된 인증 정보의 이메일을 기존 `MemberRepository.findByEmail`로 조회한다. 공통 JWT 필터·로그인·사용자 엔티티는 변경하지 않았다. 이전 문서의 `auth/SecurityConfig`·인메모리 계정 설명은 현재 코드와 달라 정정했다.
 
-## 팀 H2 방침과 API 검증 범위
+- `dev`/`test` 프로필 + `ai.current-user.development-enabled=true`일 때만 개발용 고정 ID를 사용한다. `prod`/`production`이 함께 활성화되면 고정 ID 대신 실사용자 인증을 적용한다. 개발 ID는 실제 users에 존재해야 하고 자동 INSERT하지 않는다.
+- `application-dev.yaml`은 `AI_DEV_USER_ENABLED`, `AI_DEV_USER_ID`를 읽는다. 모든 인증 요청을 한 ID로 취급하는 임시 방식이므로 실제 A/B 사용자 분리 검증용이 아니다.
+- 기본/local/운영 환경과 dev/test opt-in이 꺼진 환경은 실사용자 어댑터를 사용한다. 익명·미인증·삭제된 사용자는 401, 정지된 사용자는 403이다. 운영 프로필에서는 개발 옵션을 켜도 고정 ID를 사용하지 않는다. `ConditionalOnMissingBean` 교체 지점은 유지하며 Controller/Service 입력에 요청자 ID를 추가하지 않는다.
+- 브라우저는 HttpOnly 인증 쿠키를 사용한다. AI API용 BFF/프록시의 토큰 전달·갱신 계약은 미완료이며 [팀 인증 안내](team-auth-deployment.md)와 맞춰야 한다.
+- guest 초안 이어받기는 2026-11-05 로그인 필수 정책으로 제거했다. 로그인 계정의 서버 초안 동기화 API는 확정되지 않았다. 기존 생성/메시지 API에는 로컬 ID·멱등성 키·원래 작성 시각·조건 일괄 전송 필드가 없다. 저장 시점·재시도·부분 실패·중복 저장 계약을 먼저 정한다.
 
-팀은 H2를 사용하기로 했으나 적용 환경/저장 방식/공통 스키마·초기화 계약은 TODO다. 현재 기본 datasource는 PostgreSQL이며 H2 의존성은 testRuntimeOnly다. application-dev.yaml의 고정 사용자 설정은 H2 연결 설정이 아니다. 기본 실행 설정·의존성·compose 변경은 별도 팀 조율 대상이며 이번 문서 작업에서 수정하지 않았다.
+## 1단계 로컬 초안 계약 — 서버 API 호출 없음
 
-1단계 테스트는 H2 PostgreSQL 호환 모드와 테스트 전용 schema.sql로 수행한다. users 및 추천/사용량 fixture는 검증용 최소 정의로 팀 운영 스키마와 다를 수 있다. 따라서 API/권한/삭제 롤백의 테스트 결과와 실제 팀 H2 서버 기동·Postman 연동 완료를 구분해야 한다. DB 선택 변경으로 URL·DTO·소유권·하드 삭제·사용량 유지 정책은 바뀌지 않는다.
+- 로그인 계정만 추천 전까지 대화·조건·전송 전 입력문을 `devmozip:home:v1`에 보관한다. `MatchingConversation.draft`는 브라우저 전용이며 서버 DTO에 추가하지 않았다. 기존 계정별 대화는 복원한다.
+- 메인에 로그인 필수·입력 미저장 안내를 표시한다. 비로그인 입력은 컴포넌트 메모리에서만 유지하고 추천 시작 시 저장·길이 검증 없이 `/login?next=%2Fai%2Fmatching`으로 이동한다. 로그인 후 대화 화면에서 새로 입력한다.
+- `/ai/matching`은 보호 경로다. 클라이언트도 비로그인 대화·조건 UI를 숨기고 로그인으로 연결하며 상태 변경 함수는 로그아웃 후 저장을 거절한다. 기존 로그인·쿠키·백엔드 인증 계약은 유지한다.
+- guest 초안 인계 기능은 제거했다. 기존 guest 저장 데이터는 일괄 삭제하지 않지만 노출·인계하지 않는다. 메인 입력의 브라우저 전용 선택 필드 `inputOwner`로 소유 계정을 구분한다. 과거 소유자 없는 메인 입력은 복원하지 않는다.
+- 로그인 메시지 전송은 USER만 추가한다. 자동 답변·자연어 분석·추천·사용량 차감은 실행하지 않는다. 과거 계정별 Mock 결과의 조회 호환과 추천 준비 중 안내를 유지한다.
+- 로컬 소유 키는 실제 로그인 이메일별로 구분하며, 이메일이 일치하는 기존 데모 계정은 이전 ID 키를 유지한다. 공통 Mock 프로필 ID가 같은 일반 계정도 대화는 섞이지 않게 했다. 이는 브라우저 저장 분리일 뿐 서버의 users PK·소유권 검증을 대체하지 않는다.
+- 로그인 직후 서버에 전송하지 않는다. 최초 추천 시 대화·USER 메시지·조건 전송, 로컬/서버 ID 연결·원래 시각·부분 실패·중복 재시도·원자성은 4단계 후속 계약으로 남긴다. 이번에 동기화 API나 조건 PUT을 구현하지 않았다.
+
+## 현재 매핑과 ERD 확인 항목
+
+| 테이블 | 현재 엔티티 필드·관계 |
+|---|---|
+| `ai_conversations` | `id` BIGINT IDENTITY, `user_id` 필수 숫자, `title` 최대 255자/null, `current_conditions` JSON/null, `created_at`, `updated_at` 필수. type/status 없음 |
+| `ai_messages` | `id` BIGINT IDENTITY, `conversation_id` 필수 ManyToOne, `role` USER/ASSISTANT, `content` TEXT 필수, `created_at` 필수. updated_at 없음 |
+
+이 표는 코드 매핑이며 실제 DB DDL 확인 결과가 아니다. `user_id`는 JPA 연관 엔티티가 아닌 숫자다. 아래 제공 ERD와 대조했으며 실제 DB의 제약·적용 상태는 별도 확인이 필요하다. [PostgreSQL 검토 초안](sql/ai-conversations-proposal.sql)과 `backend/src/test/resources/ai/schema.sql`은 각각 참고용/격리 테스트용이다.
+
+### 제공 ERD 판독 내용 (2026-11-04)
+
+출처는 이번 대화에 첨부된 ERD 이미지들과 추가 API 표다. 다른 채팅에서도 참고하도록 읽을 수 있는 AI 테이블 5개를 전사했다. 추가 이미지에서 보이는 users의 AI 관련 항목은 아래에 따로 대조했다. 잘린 외부 테이블·관계선은 추정하지 않았다. 아래는 **설계도에 표시된 컬럼·타입**이며 실제 DB 조회 결과나 후속 단계 구현 승인이 아니다.
+
+| 테이블 | ERD 컬럼·표시 타입 |
+|---|---|
+| `ai_conversations` | `id` BIGINT (PK), `user_id` BIGINT, `title` VARCHAR(255), `created_at` DATETIME, `current_conditions` JSONB, `updated_at` DATETIME |
+| `ai_messages` | `id` BIGINT (PK), `conversation_id` BIGINT, `role` VARCHAR(20), `content` TEXT, `created_at` DATETIME |
+| `ai_recommendation_requests` | `id` BIGINT (PK), `ai_conversation_id` BIGINT, `ai_message_id` BIGINT, `conditions` JSONB, `analysis_level` VARCHAR(20), `status` ENUM, `created_at` DATETIME, `completed_at` DATETIME |
+| `ai_recommendations` | `id` BIGINT (PK), `recommended_request_id` BIGINT, `recommended_project_id` BIGINT, `recommended_user_id` BIGINT, `match_score` DECIMAL(5,2), `basic_reason` TEXT, `detailed_reason` TEXT, `rank` INT, `created_at` DATETIME |
+| `ai_usages` | `id` BIGINT (PK), `user_id` BIGINT, `usage_month` CHAR(7), `used_count` INT, `created_at` DATETIME, `updated_at` DATETIME |
+
+AI 내부의 참조 컬럼은 메시지 → 대화(`conversation_id`), 추천 요청 → 대화/메시지(`ai_conversation_id`/`ai_message_id`), 추천 결과 → 요청(`recommended_request_id`)이다. `recommended_request_id`는 추천 결과의 설계 참조 컬럼이며 현재 1단계 삭제 쿼리에서는 사용하지 않는다. 추가 이미지에서 대화·추천 결과·사용량의 사용자 참조와 users.id를 확인했다. 프로젝트 테이블의 정의·실제 FK 제약은 별도 ERD/DDL로 확인한다.
+
+| 대조 항목 | 확인 결과·남은 확인 |
+|---|---|
+| 대화·메시지 컬럼 | 현재 엔티티의 컬럼명과 일치. 대화 type/status, 메시지 updated_at은 ERD에도 없음 |
+| 조건 저장 타입 | ERD는 `current_conditions`·`conditions` 모두 JSONB. 현재 대화 엔티티는 `@JdbcTypeCode(SqlTypes.JSON)`이며 PostgreSQL 실제 컬럼 타입을 조회한 것은 아님. 이 애너테이션 이름만으로 json 컬럼 사용이나 불일치를 단정하지 않음 |
+| 시각 | ERD의 DATETIME은 표시 타입. 현재 Java는 LocalDateTime, PostgreSQL 초안은 TIMESTAMP WITHOUT TIME ZONE. PostgreSQL 적용 DDL·시간대 확인 필요 |
+| 삭제 쿼리 | 현재 쿼리는 ai_messages.conversation_id만 사용. H2 fixture는 사용자·대화·메시지만 포함. 실제 PostgreSQL FK/삭제 제약·추가 참조는 미검증 |
+| 추천 요청/결과 | 엔티티·저장 API 미구현. `analysis_level` 허용 값·`status` ENUM 값·초기 상태·`completed_at` 설정 시점은 사진에 없음 |
+| 사용량 | 엔티티·API 미구현. 추가 이미지의 `usage_month`는 CHAR(7)로 확인되어 이전 VARCHAR(7) 판독을 정정함. 1단계 H2 fixture에는 사용량 테이블을 만들지 않으며 실제 DB와의 일치는 해당 단계에서 확인 |
+
+사진만으로 NULL 허용, 기본값, ID 자동 생성, UNIQUE/CHECK/인덱스, ON DELETE 정책은 확인할 수 없다. 아래의 추가 사용자 정리로 확정 정책과 권장 제약을 보완했으며 **DB에 적용되었는지는 별도 확인**해야 한다. 추천 요청 `conditions`는 요청 시점의 변경 불가 스냅샷으로 확정하고, `analysis_level`의 허용 값·구체적 용도는 미확정으로 유지한다.
+
+### 5개 테이블 설계 정책·권장 제약 (2026-11-04 추가 정리)
+
+사용자가 제공한 컬럼·제약·관계 정리를 반영했다. **확정 정책은 구현이 지켜야 할 동작**, **권장은 구현 시 검토할 DB 제약**, **미확정은 추가 결정 사항**이다. 어느 항목도 실제 DDL 적용·검증 완료를 뜻하지 않는다. ERD의 표시 내용과 현재 구현 상태는 앞 절에 별도로 유지한다.
+
+시간 컬럼의 설계 표기는 사용자 요청에 따라 모두 **DATETIME**으로 통일한다. Java의 LocalDateTime 및 현재 API 시각 형식은 유지한다. 이는 설계 문서 표기이며 PostgreSQL에 `DATETIME`이라는 SQL 타입을 그대로 적용한다는 의미가 아니다. 실제 DB별 타입·DDL은 구현 단계에서 확인하고 이번에는 기존 SQL을 변경하지 않는다.
+
+#### ai_conversations — 대화
+
+| 컬럼 | 설계 타입 | 정책·제약 구분 |
+|---|---|---|
+| `id` | BIGINT | PK, 자동 생성 권장 |
+| `user_id` | BIGINT | users 참조, 로그인 사용자 서버 대화는 NOT NULL |
+| `title` | VARCHAR(255) | 최종 NULL 허용 정책 미확정. 현재 1단계 API는 NULL 허용 |
+| `current_conditions` | JSONB | NOT NULL·기본값 `'{}'::jsonb` 권장. 현재 구현의 NULL 허용과 구분 |
+| `created_at` | DATETIME | NOT NULL 권장 |
+| `updated_at` | DATETIME | NOT NULL 권장 |
+
+확정: type/status를 사용하지 않고 한 대화에서 개발자·프로젝트를 함께 추천한다. 1단계 대화 삭제 시 해당 메시지만 함께 삭제하며 추천 요청·결과는 건드리지 않는다. 비로그인 메인 입력은 저장·인계하지 않고, 대화 이용과 서버 저장은 로그인 이후에만 허용한다. 실제 저장 시점은 별도 계약이며 로그인 사용자도 추천 전 로컬 처리하는 흐름을 유지한다. 실제 인증 사용자 연결 전 임시 사용자는 개발 환경에서만 사용하고 운영에 적용하지 않는다. 현재 dev/test opt-in 설정은 개발·테스트 전용이다.
+
+#### ai_messages — 메시지
+
+| 컬럼 | 설계 타입 | 정책·제약 구분 |
+|---|---|---|
+| `id` | BIGINT | PK, 자동 생성 권장 |
+| `conversation_id` | BIGINT | 대화 참조, NOT NULL |
+| `role` | VARCHAR(20) | NOT NULL, USER/ASSISTANT |
+| `content` | TEXT | NOT NULL |
+| `created_at` | DATETIME | 추가 권장 항목. 제공 ERD·현재 엔티티·API에는 이미 존재 |
+
+대화와 메시지는 1:N이며 대화 삭제 시 함께 삭제한다. `CHECK (role IN ('USER', 'ASSISTANT'))`는 권장 DB 제약이다. 현재 엔티티는 Java Enum을 사용하고 H2 fixture에는 CHECK가 있으나 실제 팀 DB 적용은 미확인이다. `call_logs`는 제거 권장 이력이 있으나 최종 삭제 여부는 미확정이다. 제공 이미지·현재 엔티티·참고 SQL에는 없어, 실제 DDL 확인 없이 존재·삭제 완료를 단정하거나 새로 추가하지 않는다.
+
+#### ai_recommendation_requests — 추천 실행 이력
+
+| 컬럼 | 설계 타입 | 정책·제약 구분 |
+|---|---|---|
+| `id` | BIGINT | PK, 자동 생성 권장 |
+| `ai_conversation_id` | BIGINT | 대화 참조, NOT NULL |
+| `ai_message_id` | BIGINT | 메시지 참조, NULL 허용 |
+| `conditions` | JSONB | NOT NULL, 요청 당시 조건의 변경 불가 스냅샷 |
+| `analysis_level` | VARCHAR(20) | 허용 값 미확정 |
+| `status` | VARCHAR(20) 또는 ENUM | 물리 타입·허용 값 미확정. 기존 이미지에는 ENUM 표시 |
+| `created_at` | DATETIME | NOT NULL 권장 |
+| `completed_at` | DATETIME | NULL 허용. 완료/실패 시 기록 시점은 별도 결정 |
+
+확정: 한 대화에서 여러 요청을 만들 수 있고 로그인 사용자만 실행한다. 조건 버튼 실행 시 연결 메시지가 없을 수 있다. 메시지를 연결하면 동일 대화 소속인지 검증한다. 실패 요청은 미차감하며 동일 요청의 중복 실행·차감을 막는다. 스냅샷은 대화의 current_conditions를 수정해도 변경하지 않는다.
+
+`PENDING`·`COMPLETED`·`FAILED`는 **검토 예시**이며 확정 Enum이 아니다. 이전 첨부의 SUCCESS와도 임의로 통합하지 않는다. 별도 멱등성 키·UNIQUE의 키 범위·보존 기간은 4단계부터 설계하며 지금 컬럼이나 API 필드를 확정하지 않는다.
+
+#### ai_recommendations — 추천 결과
+
+| 컬럼 | 설계 타입 | 정책·제약 구분 |
+|---|---|---|
+| `id` | BIGINT | PK, 자동 생성 권장 |
+| `recommended_request_id` | BIGINT | 추천 요청 참조, NOT NULL |
+| `recommended_user_id` | BIGINT | 사용자 참조, NULL 허용. 프로젝트 FK와 정확히 하나만 값 존재 |
+| `recommended_project_id` | BIGINT | 프로젝트 참조, NULL 허용. 사용자 FK와 정확히 하나만 값 존재 |
+| `match_score` | DECIMAL(5,2) | 백엔드 계산, 0~100 범위 |
+| `basic_reason` | TEXT | 기본 사유. NULL 허용·길이 제한 세부 정책은 미확정 |
+| `detailed_reason` | TEXT | NULL 허용, 프리미엄 상세 분석 시 생성·저장, 무료 응답에서 제외 |
+| `rank` | INT | 양수 제약 권장. 개발자/프로젝트 각각 순위인지 미확정 |
+| `created_at` | DATETIME | NOT NULL 권장 |
+
+`recommendation_type`은 사용하지 않는다. 사용자·프로젝트의 참조 PK는 기존 엔티티/DDL로 확인한다. 현재 users.id는 Member에 있으나 프로젝트 PK·삭제 정책은 미확인이다. 다음은 확정된 두 대상 중 하나·점수 범위 정책을 보장하기 위한 **권장 CHECK 표현**이며 적용된 DDL이 아니다.
+
+```sql
+CHECK (
+    (recommended_user_id IS NOT NULL AND recommended_project_id IS NULL)
+    OR
+    (recommended_user_id IS NULL AND recommended_project_id IS NOT NULL)
+),
+CHECK (match_score BETWEEN 0 AND 100)
+```
+
+점수 등 별도로 NOT NULL을 명시하지 않은 필드의 NULL 허용은 실제 계약에서 정한다. 위 범위 CHECK만으로 NULL을 차단한다고 간주하지 않는다.
+
+#### ai_usages — 월별 사용량
+
+| 컬럼 | 설계 타입 | 정책·제약 구분 |
+|---|---|---|
+| `id` | BIGINT | PK, 자동 생성 권장 |
+| `user_id` | BIGINT | users 참조, NOT NULL |
+| `usage_month` | CHAR(7) | NOT NULL, YYYY-MM |
+| `used_count` | INT | NOT NULL, 기본값 0 |
+| `created_at` | DATETIME | NOT NULL 권장 |
+| `updated_at` | DATETIME | NOT NULL 권장 |
+
+무료 월 5회·프리미엄 월 100회, 한국 시간의 월 집계, 성공한 신규 추천만 1회 차감한다. 대화·메시지·조건 변경·추천 결과 재조회·상세 분석/재조회는 미차감이다. 대화 삭제 후에도 사용량을 유지하고 동시 요청·재시도에 의한 중복 차감을 방지한다. 사용자·월별 유일성 및 음수 금지의 DB 구현 제약은 아래와 같이 정리하되 **실제 적용 여부는 미확인**이다.
+
+```sql
+UNIQUE (user_id, usage_month),
+CHECK (used_count >= 0)
+```
+
+#### 관계·삭제 정책
+
+| 부모 → 자식 | 관계 | 확정 정책 / 권장·미확정 |
+|---|---|---|
+| users → ai_conversations | 1:N | 사용자 탈퇴 시 보존/삭제 정책 미확정 |
+| ai_conversations → ai_messages | 1:N | 대화 삭제 시 함께 삭제(CASCADE 정책) |
+| ai_conversations → ai_recommendation_requests | 1:N | 1단계 삭제 대상에서 제외. 추천 기능 도입 시 FK·삭제 정책 별도 확정 |
+| ai_messages → ai_recommendation_requests | 1:N, 연결 선택 | 개별 메시지 삭제 시 SET NULL 권장, 최종 FK 설정 미확정 |
+| ai_recommendation_requests → ai_recommendations | 1:N | 후속 추천 단계의 설계 관계. 1단계 삭제 대상에서 제외 |
+| users → ai_usages | 1:N | 사용자 탈퇴 시 보존/삭제 정책 미확정 |
+| 추천 대상 users/projects → ai_recommendations | 대상별 1:N | 추천 대상 삭제 시 FK 처리 미확정 |
+
+**메시지 동반 삭제와 DB의 ON DELETE CASCADE 적용 여부를 구분한다.** 현재 서비스는 메시지 → 대화 순서로 직접 삭제하고 트랜잭션으로 원자성을 보장한다. DB CASCADE는 확인·적용하지 않았으며 JPA cascade나 실제 DDL을 변경하지 않았다. 사용자 최신 요청으로 이전 추천 요청·결과 동반 삭제 정책을 1단계에서 제외했다. 메시지 SET NULL은 후속 설계 권장일 뿐 현재 적용하지 않으며 개별 메시지 삭제 API는 없다. 미래에 추천 FK가 생기면 보존/삭제와 FK 처리를 함께 확정해야 한다. 월 사용량은 대화 삭제 경로와 분리한다.
+
+### 추가 users ERD와 AI 데이터 계약
+
+아래는 당시 브랜치의 users 대조 기록이다. 사용자는 2026-11-05 다른 브랜치에서 차이를 해결했다고 확인했으며 이번 작업에서는 제외한다. users는 다른 팀원 담당이므로 아래는 AI 추천에 필요한 데이터 계약의 차이만 기록한다. 이 문서 작업에서 Member·인증·사용자 DDL은 수정하지 않는다.
+
+| AI 관련 항목 | 추가 ERD | 현재 `Member` 및 확인 사항 |
+|---|---|---|
+| 사용자 식별 | `id` BIGINT, `email` VARCHAR(255) | 필드 존재. JWT 이메일 → users PK의 AI Provider 연결 완료. 실제 PostgreSQL 통합 검증은 별도 |
+| 역할·상태 | `role`·`status` VARCHAR(20), `collaboration_status` ENUM | Java Enum 존재. ERD의 허용 값은 보이지 않으므로 값 계약 확인 필요 |
+| 신뢰 온도 | `trust_score` DECIMAL(5,2) | BigDecimal precision=5, scale=2로 매핑. 추천 반영 방식은 3단계에서 결정 |
+| 경력(개월 수) | `career` VARCHAR(20) | **현재 Integer와 타입 불일치**. 저장 형식·변환 규칙·최신 팀 계약 확인 필요 |
+| 개발 직군 | `job_categories` JSONB | **현재 `job_category_id` Long과 구조 불일치**. 복수 직군 JSON 구조·코드 기준·실제 DB 확인 필요 |
+| 기술·관심 | `skills`·`interests` JSONB | **현재 Member에 필드 없음**. 추천 입력 원천·JSON 구조·실제 DB/담당자 계약 필요 |
+| 소개·연락 | `summary` TEXT, `introduction` TEXT, `introduction_format` Type 표시, `contact_hours` VARCHAR(100) | summary만 현재 매핑. 나머지 필드 없음. introduction_format의 구체 타입·열람 범위는 미확정 |
+
+추천에서 비밀번호 해시·결제 수단·카카오 식별자 등을 후보 정보로 사용하거나 AI에 전달하지 않는다. 공개 필드의 실제 공개/열람 정책은 ERD만으로 확정하지 않는다. 부족한 필드나 불일치를 해결하기 위해 다른 팀원 엔티티를 임의로 추가·수정하지 않는다.
+
+### 추가 API 계약의 필요 범위
+
+ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응답·인증·오류 계약이다. 제공받은 API 표의 경로·기능은 위에 반영했으며 현재 문서에 1단계 API 5개의 구체 명세가 있다. 같은 목록을 다시 작성할 필요는 없다. 팀에 상세 DTO·오류·인증 계약이 있다면 대조 기준으로 활용한다.
+
+과거 guest 인계·로그인 왕복 브라우저 검증 기록은 당시 정책 기준이다. 2026-11-05부터 guest 인계를 제거했으며 이번 정책의 검증 결과는 진행 문서 마지막 기록을 따른다. AI API BFF 인증 전달 계약과 실제 PostgreSQL 통합 검증은 남아 있다. 서버 최초 전송은 추천 실행 시점의 4단계 후속 계약으로 유보했으며 중복/부분 실패 처리도 그때 확정한다. 조건 DTO·Enum·추천 응답·상세 분석·사용량의 세부 API 계약은 2~7단계 중 해당 단계 요청 시 정한다. ERD의 컬럼명을 API JSON 키로 그대로 확정하거나 API 미구현 항목을 완료로 표시하지 않는다.
+
+## 후속 API 개요 — 미구현
+
+메서드·경로와 대략적인 역할만 기록한다. 아래 본문·성공 상태·오류 코드·응답 구조는 각 단계 요청 후 구체화하며 지금 호출 가능한 계약으로 사용하지 않는다.
+
+| 단계 | Method·URL | 역할·남은 계약 |
+|---|---|---|
+| 2 | PUT `/api/v1/ai/conversations/{id}/conditions` | 선택 조건 전체 교체. DTO 키·DB 코드·필수/선택·빈 값 검증 필요 |
+| 3 | 외부 API 추가 없음 | 후보 조회·점수 계산 엔진만 구현하는 단계 |
+| 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 실제 추천 실행·요청/결과 저장. 대화 연결 필수, 메시지 연결 선택·동일 대화 검증, 중복 요청 식별 설계 |
+| 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 저장 결과 조회. 최신/특정 과거 요청 선택 계약은 미확정. 재계산 없음 |
+| 5 | 기존 메시지 API 확장 방향, 세부 계약 미확정 | 자연어 분석·조건 병합·추가 질문·ASSISTANT 저장. 1단계의 저장 전용 동작과 구분 |
+| 6 | POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 추천 결과의 개발자 상세 분석. 서버 프리미엄·소유권·포트폴리오 열람권 확인 |
+| 7 | GET `/api/v1/ai/usage` | 한국 시간 현재 월의 사용/한도/잔여 횟수. JSON 키·한도 오류 계약 미확정 |
+
+4단계 결과는 `recommended_user_id`/`recommended_project_id` 중 정확히 하나, `match_score`·`basic_reason`·`rank`, 초기 `detailed_reason` null 방향이다. `recommendation_type`은 추가하지 않는다. 실제 DDL과의 일치는 해당 단계에서 확인한다. 첨부의 논리 관계 `conversation_id/message_id`를 현재 물리 컬럼명과 혼동하지 않는다.
+
+사용량 차감은 7단계에서 완성한다. 메시지·조건 변경·조회·상세 분석은 미차감이며, 성공한 신규 추천만 1회다. 4단계에서는 추후 중복 차감 방지를 위해 요청 식별을 설계한다. [이전 전역 API 초안](api-plan.md)의 `/matching/...` URL·Mock 점수식·응답 후보는 이 명세를 대체하지 않는다.
+
+### 메인 입력의 대화 전환 (2026-11-05 갱신)
+
+- 로그인 계정의 메인 작성 중 입력은 소유 계정이 일치할 때 새로고침 시 복원한다. 추천 시작 시 새 로컬 대화와 메인 설명 초기화를 한 번에 저장하며, 저장 성공 후에만 대화 화면으로 이동한다. 실패하면 입력·기존 대화를 유지하고 재시도한다.
+- 제출 중 버튼 잠금과 최신 메인 입력 확인으로 연속 제출을 막는다. 같은 문장을 새로 작성해 별도 대화를 만드는 것은 허용한다. 기존 중복 기록은 자동 삭제/병합하지 않으며 목록에서 직접 삭제한다.
+- 이전 추천 대화 열기도 로그인이 필요하며 guest 초안 인계는 제거했다. 서버 API·추천 실행·사용량 정책 변경은 없다.

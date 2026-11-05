@@ -29,6 +29,14 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 로그인 시 이메일로 회원 조회
     Optional<Member> findByEmail(String email);
 
+    // 카카오 로그인 시 카카오 회원번호로 회원 조회
+    Optional<Member> findByKakaoId(String kakaoId);
+
+    // 비밀번호 설정·카카오 연동 변경처럼 상태를 확인한 뒤 바꾸는 작업이 겹치지 않도록 잠근다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Member m where m.email = :email")
+    Optional<Member> findForAccountUpdateByEmail(@Param("email") String email);
+
     // 회원가입 시 이메일 중복 확인
     boolean existsByEmail(String email);
 
