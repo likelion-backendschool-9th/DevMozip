@@ -34,6 +34,7 @@ out/
 
 # Deployment configuration is source-controlled; secrets and certificates are not.
 !.github/workflows/*.yml
+!/compose.prod.yaml
 certs/
 
 # Local profile image uploads
