@@ -1,0 +1,67 @@
+package com.devmozip.backend.repository;
+
+import java.text.Normalizer;
+import java.time.LocalDate;
+import java.util.*;
+import com.devmozip.backend.dto.project.MyProjectsTab;
+import com.devmozip.backend.dto.project.ProjectSearchRequest;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+/** JSONB 필터와 페이지 집계는 DB에서 처리하며 공고 전체를 메모리로 가져오지 않는다. */
+@Repository
+public class ProjectQueryRepository {
+	private final NamedParameterJdbcTemplate jdbc;
+	public ProjectQueryRepository(NamedParameterJdbcTemplate jdbc) { this.jdbc = jdbc; }
+	public record Row(long id, long memberCount, String myRole) {}
+	public record Result(List<Row> rows, long total) {}
+
+	public Result search(ProjectSearchRequest request, LocalDate today, Long userId, MyProjectsTab tab) {
+		StringBuilder where = new StringBuilder(" WHERE p.deleted_at IS NULL");
+		MapSqlParameterSource params = new MapSqlParameterSource("today", today);
+		if (userId == null) where.append(" AND p.is_public = true");
+		else {
+			params.addValue("userId", userId);
+			where.append(" AND EXISTS (SELECT 1 FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')");
+			if (tab == MyProjectsTab.HOSTED) where.append(" AND p.host_member_id=:userId");
+			if (tab == MyProjectsTab.PARTICIPATING) where.append(" AND p.host_member_id<>:userId AND p.status<>'COMPLETED'");
+			if (tab == MyProjectsTab.COMPLETED) where.append(" AND p.status='COMPLETED'");
+		}
+		if (request.query() != null && !request.query().isBlank()) {
+			String escaped = normalize(request.query()).replace("!", "!!").replace("%", "!%").replace("_", "!_");
+			params.addValue("query", "%" + escaped + "%");
+			where.append(" AND (lower(p.title) LIKE :query ESCAPE '!' OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.tech_stacks) t(value) WHERE lower(t.value) LIKE :query ESCAPE '!'))");
+		}
+		if (request.jobRole() != null) {
+			params.addValue("jobRole", request.jobRole().name());
+			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE s.value->>'roleCode'=:jobRole)");
+		}
+		if (request.status() != null) { params.addValue("status", request.status().name()); where.append(" AND p.status=:status"); }
+		if (request.interests() != null && !request.interests().isEmpty()) {
+			params.addValue("interests", request.interests().stream().map(this::normalize).toList());
+			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.interests) i(value) WHERE lower(i.value) IN (:interests))");
+		}
+		if (request.techStacks() != null) {
+			for (int i=0; i<request.techStacks().size(); i++) {
+				String key = "stack" + i;
+				params.addValue(key, normalize(request.techStacks().get(i)));
+				where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.tech_stacks) t(value) WHERE lower(t.value)=:").append(key).append(")");
+			}
+		}
+		if (request.effectiveSort() == ProjectSearchRequest.Sort.DEADLINE)
+			where.append(" AND p.status='RECRUITING' AND p.recruitment_end>=:today");
+		String order = switch (request.effectiveSort()) {
+			case LATEST -> "p.created_at DESC, p.id DESC";
+			case DEADLINE -> "p.recruitment_end ASC, p.created_at DESC, p.id DESC";
+			case POPULAR -> "p.view_count DESC, p.created_at DESC, p.id DESC";
+		};
+		Long total = jdbc.queryForObject("SELECT count(*) FROM projects p" + where, params, Long.class);
+		params.addValue("limit", request.effectiveSize()).addValue("offset", (long)request.effectivePage()*request.effectiveSize());
+		String role = userId == null ? "NULL" : "(SELECT mine.role FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')";
+		String sql = "SELECT p.id, (SELECT count(*) FROM project_members m WHERE m.project_id=p.id AND m.status='ACTIVE') AS member_count, "
+			+ role + " AS my_role FROM projects p" + where + " ORDER BY " + order + " LIMIT :limit OFFSET :offset";
+		return new Result(jdbc.query(sql, params, (rs, row) -> new Row(rs.getLong("id"), rs.getLong("member_count"), rs.getString("my_role"))), total == null ? 0 : total);
+	}
+	private String normalize(String value) { return Normalizer.normalize(value, Normalizer.Form.NFKC).strip().toLowerCase(Locale.ROOT); }
+}

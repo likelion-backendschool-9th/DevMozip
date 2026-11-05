@@ -1,3 +1,4 @@
+import { mockDataEnabled } from '@/lib/demo/mockVisibility';
 import { createLocalStore, derived, useStore } from '@/lib/localStore';
 import { moderateProfile, type ModerationAction } from '@/lib/profiles/moderationService';
 import { allProfiles, applyProfileAction, loadProfiles, saveProfiles } from '@/lib/profiles/profileService';
@@ -6,7 +7,7 @@ import { notify } from '@/lib/state/prototypeStore';
 import type { Collaboration, ProfileAction, ProfileState } from '@/types/profile';
 
 // 프로필 · 포트폴리오 · 글 · 댓글 · 리뷰 · 팔로우.
-const profileStore = createLocalStore(loadProfiles);
+const profileStore = createLocalStore(loadProfiles, true);
 
 export const profileSources = [...authSources, profileStore];
 
@@ -24,7 +25,13 @@ export function profileAct(action: ProfileAction, history?: Collaboration[], now
     try {
         if (action.type === 'review') throw new Error('프로젝트 리뷰 요청 링크에서 작성해 주세요.');
         const user = getUser();
-        const current = getProfileState();
+        let current = getProfileState();
+        if (!mockDataEnabled() && user && !current.profiles[user.id]) {
+            current = {...current, profiles: {...current.profiles, [user.id]: {
+                id:user.id,nickname:user.email.split('@')[0],handle:user.id,job:'',career:'',bio:'',introduction:'',
+                joinedAt:'',github:'',blog:'',contact:'',available:true,stacks:[],interests:[],color:'lavender',
+            }}};
+        }
         const next = applyProfileAction(current, user?.id || null, action, now, history, getAdministration().keywords);
         if (action.type === 'social-view' && JSON.stringify(next) === JSON.stringify(current)) return true;
         const saved = commit(next);

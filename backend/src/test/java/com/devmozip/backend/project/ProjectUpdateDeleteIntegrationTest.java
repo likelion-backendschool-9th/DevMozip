@@ -166,6 +166,27 @@ class ProjectUpdateDeleteIntegrationTest {
 			remove().andExpect(status().isInternalServerError());assertNull(projects.findById(id).orElseThrow().getDeletedAt());
 		} finally { jdbc.execute("ALTER TABLE projects DROP CONSTRAINT update_test_guard");jdbc.execute("ALTER TABLE projects DROP CONSTRAINT delete_test_guard"); }
 	}
+	@Test void updateAndQueryIntegrationPreservesViewCountAndNewFields() throws Exception {
+		mvc.perform(get(BASE+"/"+id)).andExpect(status().isOk()).andExpect(jsonPath("$.project.viewCount").value(1));
+		var body=input();body.put("title","통합 수정 공고");body.put("techStacks",List.of("Svelte"));
+		update(body).andExpect(status().isOk()).andExpect(jsonPath("$.viewCount").value(1));
+		mvc.perform(get(BASE).param("query","Svelte")).andExpect(status().isOk())
+			.andExpect(jsonPath("$.items[0].title").value("통합 수정 공고"));
+		mvc.perform(get(BASE+"/"+id)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.project.viewCount").value(2)).andExpect(jsonPath("$.project.techStacks[0]").value("Svelte"));
+	}
+
+	@Test void deletedProjectIsHiddenFromEveryQueryButMembersRemain() throws Exception {
+		remove().andExpect(status().isNoContent());
+		mvc.perform(get(BASE)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
+		mvc.perform(get(BASE+"/"+id)).andExpect(status().isNotFound());
+		mvc.perform(get("/api/v1/me/projects").header("Authorization",token()))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
+		mvc.perform(get(BASE+"/"+id+"/manage").header("Authorization",token())).andExpect(status().isNotFound());
+		assertTrue(projects.findById(id).isPresent());
+		assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM project_members WHERE project_id=?",Integer.class,id));
+	}
+
 	@Test void concurrentUpdateAndDeleteNeverResurrectDeletedProject() throws Exception {
 		try(var executor=Executors.newFixedThreadPool(2)) {
 			var body=mapper.writeValueAsString(input());

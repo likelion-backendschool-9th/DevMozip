@@ -5,7 +5,6 @@ import { analyzeMatching,buildMatchingResult,matchingUsage,parseMatchingState } 
 import type { ChatRequirements,MatchingChatState,MatchingConversation,MatchingMessage } from '@/types/matchingChat';
 import type { MatchingState,MatchingResult } from '@/types/matching';
 import type { Developer,Project } from '@/types/home';
-import type { AuthUser } from '@/types/auth';
 const unique=(items:string[])=>[...new Set(items)];
 const id=createMockId;
 export function newMatchingConversation(now=new Date()):MatchingConversation{return {id:id(),title:'새 대화',createdAt:now.toISOString(),updatedAt:now.toISOString(),requirements:structuredClone(emptyChatRequirements),messages:[]};}
@@ -35,20 +34,18 @@ export function buildChatResult(r:ChatRequirements,candidates:(Developer&{availa
  const similar=projects.map(p=>{const tech=p.stacks.filter(s=>r.stacks.includes(s));const fields=fieldHits(p.stacks,p.title+' '+p.summary+' '+p.field);const interests=r.interests.includes(p.field);const roles=r.roles.filter(v=>p.roles.some(role=>roleMatches(v.name,role)));return {...p,score:Math.min(98,25+Math.min(28,tech.length*9)+Math.min(20,fields.length*10)+(interests?15:0)+Math.min(10,roles.length*5)),reasons:[`분야 ${fields.join(', ')||'직접 일치 없음'} · 관심 ${interests?p.field:'직접 일치 없음'}`,`일치 기술 ${tech.join(', ')||'없음'} · 모집 직군 ${roles.map(v=>v.name).join(', ')||'직접 일치 없음'}`]};}).sort((a,b)=>b.score-a.score||b.createdAt.localeCompare(a.createdAt)).slice(0,3);
  return {...base,analysis:{...base.analysis,stacks:r.stacks,interests:r.interests,role:r.roles.map(v=>v.name).join(' / '),missing:[]},developers:developers.slice(0,6),projects:similar};
 }
-export function sendMatchingMessage(conversation:MatchingConversation,text:string,requirements:ChatRequirements,matching:MatchingState,user:AuthUser|null,candidates:(Developer&{available?:boolean;jobs?:string[]})[],projects:Project[],now=new Date()){
+export function sendMatchingMessage(conversation:MatchingConversation,text:string,requirements:ChatRequirements,now=new Date()):MatchingConversation{
  if(!text.trim()||text.length>1500)throw new Error('메시지를 1~1,500자로 입력해 주세요.');
- const next=structuredClone(conversation);const r=inferChatRequirements(requirements,text);validateChatRequirements(r);const missing=missingChatRequirements(r);const at=now.toISOString();const message:MatchingMessage={id:id(),role:'user',text:text.trim(),createdAt:at,requirements:structuredClone(r)};let updated=matching;
- const response:MatchingMessage={id:id(),role:'assistant',text:'',createdAt:at};
- if(missing.length)response.text=`조금 더 알려주세요: ${missing.map(k=>chatRequirementLabels[k]).join(' · ')}. 아래 조건에서 선택하거나 메시지로 답해 주세요. 추가 질문에는 횟수를 사용하지 않습니다.`;
- else if(!user)response.text='조건이 준비되었습니다. 로그인 후 추천 받기를 눌러 주세요. 로그인 전에는 사용량을 차감하지 않습니다.';
- else if(conversation.messages.some(m=>m.result)&&!/추천|동료.*찾|개발자.*찾/.test(text))response.text='조건과 대화를 기록했습니다. 추천 결과를 새로 만들려면 조건으로 추천 받기를 눌러 주세요. 이 메시지는 횟수를 사용하지 않습니다.';
- else {const usage=matchingUsage(matching,user,now);if(!usage.remaining)response.text='이번 달 추천 횟수를 모두 사용했습니다. 다음 달 새 한도가 적용됩니다. 무료 회원은 프리미엄으로 업그레이드할 수 있어요.';
- else {const source=candidates.filter(d=>d.id!==user.id);if(!source.length&&!projects.length)throw new Error('추천할 Mock 데이터가 없습니다.');response.result=buildChatResult(r,source,projects);response.requirements=structuredClone(r);response.text=`${r.fields.join(' · ')} 분야에서 ${r.roles.map(v=>v.name+' '+v.count+'명').join(', ')} 조건을 비교했습니다. 추천 1회를 사용했습니다. 적합도는 Mock 규칙으로 계산한 데모 점수입니다.`;updated=structuredClone(matching);updated.usage[user.id]={...(updated.usage[user.id]||{}),[usage.month]:usage.used+1};}}
- next.requirements=r;next.updatedAt=at;if(!next.messages.length)next.title=text.trim().slice(0,32);next.messages.push(message,response);return {conversation:next,matching:updated};
+ validateChatRequirements(requirements);
+ const next=structuredClone(conversation);const at=now.toISOString();
+ if(!next.messages.length)next.title=text.trim().slice(0,32);
+ next.requirements=structuredClone(requirements);next.updatedAt=at;next.draft='';
+ next.messages.push({id:id(),role:'user',text:text.trim(),createdAt:at,requirements:structuredClone(requirements)});
+ return next;
 }
 function validRequirements(v:unknown):v is ChatRequirements{if(!v||typeof v!=='object')return false;const r=v as ChatRequirements;if(typeof r.description!=='string'||typeof r.career!=='string'||typeof r.duration!=='string'||!['fields','interests','stacks'].every(k=>Array.isArray(r[k as 'fields'])&&r[k as 'fields'].every(x=>typeof x==='string'))||!Array.isArray(r.roles)||!r.roles.every(x=>x&&typeof x.name==='string'&&Number.isInteger(x.count)&&x.count>=1&&x.count<=20))return false;try{validateChatRequirements(r);return true;}catch{return false;}}
 export function parseMatchingChat(value:unknown):MatchingChatState{
  const out=structuredClone(initialMatchingChat);if(!value||typeof value!=='object')return out;const raw=value as MatchingChatState;
- if(raw.conversations&&typeof raw.conversations==='object'&&!Array.isArray(raw.conversations))for(const [owner,items] of Object.entries(raw.conversations)){if(!Array.isArray(items))continue;out.conversations[owner]=items.filter(c=>c&&typeof c.id==='string'&&typeof c.title==='string'&&[c.createdAt,c.updatedAt].every(d=>typeof d==='string'&&Number.isFinite(Date.parse(d)))&&validRequirements(c.requirements)&&Array.isArray(c.messages)&&c.messages.every(m=>m&&typeof m.id==='string'&&['user','assistant'].includes(m.role)&&typeof m.text==='string'&&typeof m.createdAt==='string'&&Number.isFinite(Date.parse(m.createdAt))&&(!m.requirements||validRequirements(m.requirements))&&(!m.result||!!parseMatchingState({last:{check:{inputKey:'chat',createdAt:m.createdAt,result:m.result}}}).last.check)));}
+ if(raw.conversations&&typeof raw.conversations==='object'&&!Array.isArray(raw.conversations))for(const [owner,items] of Object.entries(raw.conversations)){if(!Array.isArray(items))continue;out.conversations[owner]=items.filter(c=>c&&typeof c.id==='string'&&typeof c.title==='string'&&[c.createdAt,c.updatedAt].every(d=>typeof d==='string'&&Number.isFinite(Date.parse(d)))&&(c.draft===undefined||typeof c.draft==='string'&&c.draft.length<=1500)&&validRequirements(c.requirements)&&Array.isArray(c.messages)&&c.messages.every(m=>m&&typeof m.id==='string'&&['user','assistant'].includes(m.role)&&typeof m.text==='string'&&typeof m.createdAt==='string'&&Number.isFinite(Date.parse(m.createdAt))&&(!m.requirements||validRequirements(m.requirements))&&(!m.result||!!parseMatchingState({last:{check:{inputKey:'chat',createdAt:m.createdAt,result:m.result}}}).last.check)));}
  if(raw.active&&typeof raw.active==='object')for(const [owner,active] of Object.entries(raw.active))if(typeof active==='string'&&out.conversations[owner]?.some(c=>c.id===active))out.active[owner]=active;return out;
 }
