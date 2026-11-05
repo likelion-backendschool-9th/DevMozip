@@ -1,37 +1,113 @@
-import { describe,expect,it,vi } from 'vitest';
-import { buildChatResult,inferChatRequirements,missingChatRequirements,newMatchingConversation,parseMatchingChat,sendMatchingMessage } from '@/lib/matching/matchingChatService';
+import { describe, expect, it, vi } from 'vitest';
+import { buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 import { initialMatchingState } from '@/mocks/matching';
-import { developers,projects } from '@/mocks/home';
+import { developers, projects } from '@/mocks/home';
 import { demoAccounts } from '@/mocks/auth';
-import { matchingUsage,consumeMatching } from '@/lib/matching/matchingService';
-import { freshHomeState,parseHomeState } from '@/lib/matching/homeService';
+import { consumeMatching } from '@/lib/matching/matchingService';
+import { freshHomeState, parseHomeState } from '@/lib/matching/homeService';
 import type { ChatRequirements } from '@/types/matchingChat';
-const now=new Date('2026-10-30T12:00:00+09:00');const member=demoAccounts[0];
-const ready=():ChatRequirements=>({description:'팀의 일정을 관리하는 웹 프로젝트입니다.',fields:['웹'],interests:['생산성'],stacks:['React','TypeScript'],roles:[{name:'프론트엔드',count:2},{name:'백엔드',count:1}],career:'경력 무관',duration:'3개월'});
-const send=(text='추천해 주세요',r=ready(),state=structuredClone(initialMatchingState),c=newMatchingConversation(now),user:typeof member|null=member,date=now)=>sendMatchingMessage(c,text,r,state,user,developers,projects,date);
-describe('대화형 추천 정보 수집',()=>{
- it('여러 분야/직군과 직군별 인원·경력·기간을 추출한다',()=>{const r=inferChatRequirements(emptyChatRequirements,'React 웹과 모바일 일정 앱, 프론트엔드 2명과 백엔드 1명, 경력 무관, 3개월을 생각합니다.');expect(r.fields).toEqual(['웹','모바일']);expect(r.roles).toEqual([{name:'프론트엔드',count:2},{name:'백엔드',count:1}]);expect(r.stacks).toContain('React');expect(r.interests).toContain('생산성');expect(r.career).toBe('경력 무관');expect(r.duration).toBe('3개월');expect(missingChatRequirements(r)).toEqual([]);});
- it('부족 정보 질문/짧은 일반 메시지는 횟수를 차감하지 않는다',()=>{const x=send('함께 만들 동료를 구하고 있습니다.',structuredClone(emptyChatRequirements));expect(x.conversation.messages[1].text).toContain('조금 더 알려주세요');expect(x.matching).toEqual(initialMatchingState);expect(x.conversation.messages[1].result).toBeUndefined();});
- it('추가 응답에서 누락 조건이 채워지면 첫 결과를 생성한다',()=>{const a=send('React 웹 일정 서비스를 만들려고 합니다.',structuredClone(emptyChatRequirements));const b=send('프론트엔드 2명, 백엔드 1명, 경력 무관, 3개월',a.conversation.requirements,a.matching,a.conversation);expect(b.conversation.messages).toHaveLength(4);expect(b.conversation.messages[3].result).toBeDefined();expect(matchingUsage(b.matching,member,now).used).toBe(1);});
- it('직접 입력한 기타 분야/직군을 유지한다',()=>{const r={...ready(),fields:['웹','디지털 헬스케어'],roles:[{name:'임베디드',count:2}]};const x=send('추천해 주세요',r);expect(x.conversation.requirements).toMatchObject({fields:r.fields,roles:r.roles});expect(parseMatchingChat({conversations:{a:[x.conversation]},active:{a:x.conversation.id}}).conversations.a).toHaveLength(1);});
- it('없는 필수 값과 잘못된 인원은 결과를 만들지 않는다',()=>{for(const r of [{...ready(),roles:[]},{...ready(),roles:[{name:'백엔드',count:0}]},{...ready(),career:''},{...ready(),duration:''}])expect(send('추천해 주세요',r).conversation.messages[1].result).toBeUndefined();});
- it('잘못된 기술/기간/너무 긴 입력은 상태를 바꾸지 않는다',()=>{const s=structuredClone(initialMatchingState);expect(()=>send('추천', {...ready(),stacks:['없는기술']},s)).toThrow('선택 조건');expect(()=>send('추천', {...ready(),duration:'99개월'},s)).toThrow('기간');expect(()=>send('x'.repeat(1501),ready(),s)).toThrow('메시지');expect(s).toEqual(initialMatchingState);});
- it('이전 선택 조건을 후속 대화에서 누적하고 인원 변경을 반영한다',()=>{const r=inferChatRequirements(ready(),'백엔드 3명과 모바일 개발자 2명으로 변경하고 6개월을 진행합니다.');expect(r.roles.find(v=>v.name==='백엔드')?.count).toBe(3);expect(r.roles.find(v=>v.name==='프론트엔드')?.count).toBe(2);expect(r.duration).toBe('6개월');});
-});
-describe('다중 조건 추천 결과',()=>{
- it('분야·직군·기술 변경 시 실제 순위와 점수가 달라진다',()=>{const web=buildChatResult({...ready(),roles:[{name:'프론트엔드',count:2}]},developers,projects);const ai=buildChatResult({...ready(),fields:['AI / 머신러닝'],interests:['AI'],stacks:['Python'],roles:[{name:'AI 엔지니어',count:1}]},developers,projects);expect(web.developers[0].id).toBe('yuna');expect(ai.developers[0].id).toBe('seoyeon');expect(web.projects[0].id).not.toBe(ai.projects[0].id);expect(ai.developers[0].reasons.join(' ')).toContain('AI / 머신러닝');});
- it('복수 직군과 인원·요구 경력이 이유/점수에 반영된다',()=>{const a=buildChatResult(ready(),developers,projects);expect(a.developers.find(d=>d.id==='minjun')?.reasons.join(' ')).toContain('백엔드 1명');const b=buildChatResult({...ready(),career:'5년 이상'},developers,projects);expect(b.developers.find(d=>d.id==='yuna')!.score).toBeLessThan(a.developers.find(d=>d.id==='yuna')!.score);expect(b.developers.every(d=>d.score>=20&&d.score<=98)).toBe(true);});
- it('본인은 추천에서 제외하고 여러 직군 프로필을 비교한다',()=>{const x=send('추천',ready(),undefined,undefined,{...member,id:'yuna'});expect(x.conversation.messages[1].result?.developers.some(d=>d.id==='yuna')).toBe(false);});
-});
-describe('사용량과 대화 저장',()=>{
- it('일반 대화/조회/조건 수정은 차감하지 않고 명시적 재추천만 차감한다',()=>{const a=send();const b=send('고마워요',a.conversation.requirements,a.matching,a.conversation);expect(b.conversation.messages.at(-1)?.result).toBeUndefined();expect(matchingUsage(b.matching,member,now).used).toBe(1);const c=send('추천해 주세요',b.conversation.requirements,b.matching,b.conversation);expect(matchingUsage(c.matching,member,now).used).toBe(2);});
- it('무료 15회 성공 후 결과 생성만 차단하고 대화는 저장한다',()=>{let s=structuredClone(initialMatchingState);for(let n=0;n<15;n++)s=send('추천',ready(),s).matching;const x=send('추천',ready(),s);expect(x.conversation.messages.at(-1)?.text).toContain('모두 사용');expect(x.conversation.messages.at(-1)?.result).toBeUndefined();expect(matchingUsage(x.matching,member,now).used).toBe(15);});
- it('프리미엄 100회, 계정 분리 및 한국 시각 월 변경을 적용한다',()=>{const s={usage:{[member.id]:{'2026-10':15},[demoAccounts[1].id]:{'2026-10':100}},last:{}};expect(send('추천',ready(),s,undefined,demoAccounts[1]).conversation.messages.at(-1)?.result).toBeUndefined();expect(send('추천',ready(),s,undefined,member,new Date('2026-10-31T15:00:00Z')).matching.usage[member.id]['2026-11']).toBe(1);expect(matchingUsage(s,demoAccounts[1],now).limit).toBe(100);});
- it('로그인 전 조건 수집은 가능하지만 결과/차감은 없다',()=>{const x=send('추천',ready(),undefined,undefined,null);expect(x.conversation.messages[1].text).toContain('로그인');expect(x.matching).toEqual(initialMatchingState);});
- it('대화·사용자 입력·응답·추천 결과와 사용량을 함께 복원한다',()=>{const x=send();const home=freshHomeState();home.chat={conversations:{[member.id]:[x.conversation]},active:{[member.id]:x.conversation.id}};home.matching=x.matching;const restored=parseHomeState(JSON.stringify(home));expect(restored.chat).toEqual(home.chat);expect(restored.matching).toEqual(home.matching);});
- it('손상 대화만 제거하고 기존 사용량과 유효한 대화를 유지한다',()=>{const x=send();const out=parseMatchingChat({conversations:{a:[x.conversation,{...x.conversation,id:'bad',messages:[{role:'bogus'}]}]},active:{a:'bad'}});expect(out.conversations.a).toEqual([x.conversation]);expect(out.active.a).toBeUndefined();});
- it('이전 단일 추천을 대화로 이관하되 삭제된 대화를 부활시키지 않는다',()=>{const input={description:'React 일정 프론트엔드 웹 서비스를 만들어요',stacks:['React'],interest:'생산성',role:'프론트엔드 개발자'};const old={version:1,input,matching:consumeMatching(initialMatchingState,member,input,developers,projects,now).state};const migrated=parseHomeState(JSON.stringify(old));expect(migrated.chat.conversations[member.id][0].messages[1].result).toBeDefined();migrated.chat={conversations:{},active:{}};expect(parseHomeState(JSON.stringify(migrated)).chat.conversations).toEqual({});});
+
+const now = new Date('2026-10-30T12:00:00+09:00');
+const ready = (): ChatRequirements => ({ description: '팀의 일정을 관리하는 웹 프로젝트입니다.', fields: ['웹'], interests: ['생산성'], stacks: ['React', 'TypeScript'], roles: [{ name: '프론트엔드', count: 2 }, { name: '백엔드', count: 1 }], career: '경력 무관', duration: '3개월' });
+
+describe('로컬 사용자 메시지 저장', () => {
+    it.each(['안녕하세요', '설정한 조건으로 추천해 주세요.', 'React 백엔드 3명, 6개월로 변경'])('내용과 관계없이 USER만 기록한다: %s', text => {
+        const original = newMatchingConversation(now);
+        original.draft = text;
+        const requirements = ready();
+        const next = sendMatchingMessage(original, text, requirements, now);
+        expect(next.messages).toHaveLength(1);
+        expect(next.messages[0]).toMatchObject({ role: 'user', text, requirements });
+        expect(next.messages[0].result).toBeUndefined();
+        expect(next.requirements).toEqual(requirements);
+        expect(next.draft).toBe('');
+        expect(original.messages).toEqual([]);
+        expect(original.draft).toBe(text);
+    });
+
+    it('빈 조건이어도 저장하며 자연어 조건 추출·추가 질문을 실행하지 않는다', () => {
+        const next = sendMatchingMessage(newMatchingConversation(now), 'React 웹과 백엔드 2명, 3개월 프로젝트', emptyChatRequirements, now);
+        expect(next.requirements).toEqual(emptyChatRequirements);
+        expect(next.messages.map(m => m.role)).toEqual(['user']);
+        expect(next.title).toBe('React 웹과 백엔드 2명, 3개월 프로젝트');
+    });
+
+    it('후속 메시지를 입력 순서로 추가하고 선택한 조건 스냅샷을 보존한다', () => {
+        const first = sendMatchingMessage(newMatchingConversation(now), '첫 메시지', ready(), now);
+        const changed = { ...ready(), stacks: ['Java'] };
+        const second = sendMatchingMessage(first, '두 번째 메시지', changed, new Date(now.getTime() + 1000));
+        changed.stacks.push('Python');
+        expect(second.messages.map(m => m.text)).toEqual(['첫 메시지', '두 번째 메시지']);
+        expect(second.messages[0].requirements?.stacks).toEqual(['React', 'TypeScript']);
+        expect(second.messages[1].requirements?.stacks).toEqual(['Java']);
+        expect(second.title).toBe('첫 메시지');
+    });
+
+    it.each(['', '   ', 'x'.repeat(1501)])('잘못된 메시지는 초안 원본을 바꾸지 않는다', text => {
+        const original = { ...newMatchingConversation(now), draft: text };
+        const snapshot = structuredClone(original);
+        expect(() => sendMatchingMessage(original, text, emptyChatRequirements, now)).toThrow('메시지');
+        expect(original).toEqual(snapshot);
+    });
+
+    it('조건 입력 오류를 처리하고 기존 저장 검증을 보존한다', () => {
+        expect(() => sendMatchingMessage(newMatchingConversation(now), '메시지', { ...ready(), stacks: ['없는기술'] }, now)).toThrow('선택 조건');
+    });
 });
 
-describe('LAN 데모 호환',()=>{it('비보안 HTTP처럼 crypto.randomUUID가 없어도 대화/메시지 ID를 만든다',()=>{vi.stubGlobal('crypto',undefined);try{const x=send();expect(x.conversation.id).toMatch(/^mock-/);expect(x.conversation.messages[0].id).not.toBe(x.conversation.messages[1].id);}finally{vi.unstubAllGlobals();}});});
+describe('버전 1 로컬 데이터 호환', () => {
+    it('전송 전 입력문·선택 조건·메시지를 새로고침 후 복원한다', () => {
+        const home = freshHomeState();
+        const conversation = sendMatchingMessage(newMatchingConversation(now), '기록할 메시지', ready(), now);
+        conversation.draft = '아직 전송하지 않은 입력';
+        home.chat = { conversations: { guest: [conversation] }, active: { guest: conversation.id } };
+        const restored = parseHomeState(JSON.stringify(home));
+        expect(restored.chat).toEqual(home.chat);
+        expect(restored.matching).toEqual(initialMatchingState);
+    });
+
+    it('draft 필드가 없는 이전 대화를 복원하고 손상 대화만 제거한다', () => {
+        const valid = newMatchingConversation(now);
+        const invalid = { ...valid, id: 'invalid', draft: 123 };
+        const parsed = parseMatchingChat({ conversations: { guest: [valid, invalid] }, active: { guest: valid.id } });
+        expect(parsed.conversations.guest).toEqual([valid]);
+        expect(parsed.active.guest).toBe(valid.id);
+    });
+
+    it('이전 저장된 Mock 결과를 조회용으로 복원하며 삭제된 대화를 부활시키지 않는다', () => {
+        const member = demoAccounts[0];
+        const input = { description: 'React 일정 프론트엔드 웹 서비스를 만들어요', stacks: ['React'], interest: '생산성', role: '프론트엔드 개발자' };
+        const old = { version: 1, input, matching: consumeMatching(initialMatchingState, member, input, developers, projects, now).state };
+        const migrated = parseHomeState(JSON.stringify(old));
+        expect(migrated.chat.conversations[member.id][0].messages[1].result).toBeDefined();
+        migrated.chat = { conversations: {}, active: {} };
+        expect(parseHomeState(JSON.stringify(migrated)).chat.conversations).toEqual({});
+    });
+});
+
+// 기존 Mock 계산 유틸리티의 회귀 확인. 현재 메시지 저장 흐름에서는 호출하지 않는다.
+describe('기존 Mock 유틸리티 보존', () => {
+    it('기존 조건 추출과 필수 항목 검증을 보존한다', () => {
+        const requirements = inferChatRequirements(emptyChatRequirements, 'React 웹과 모바일 일정 앱, 프론트엔드 2명과 백엔드 1명, 경력 무관, 3개월을 생각합니다.');
+        expect(requirements.fields).toEqual(['웹', '모바일']);
+        expect(requirements.roles).toEqual([{ name: '프론트엔드', count: 2 }, { name: '백엔드', count: 1 }]);
+        expect(missingChatRequirements(requirements)).toEqual([]);
+    });
+
+    it('이전 저장 결과 fixture용 Mock 점수 계산을 보존한다', () => {
+        const web = buildChatResult({ ...ready(), roles: [{ name: '프론트엔드', count: 2 }] }, developers, projects);
+        const ai = buildChatResult({ ...ready(), fields: ['AI / 머신러닝'], interests: ['AI'], stacks: ['Python'], roles: [{ name: 'AI 엔지니어', count: 1 }] }, developers, projects);
+        expect(web.developers[0].id).toBe('yuna');
+        expect(ai.developers[0].id).toBe('seoyeon');
+    });
+
+    it('crypto.randomUUID가 없어도 로컬 대화·메시지 ID를 만든다', () => {
+        vi.stubGlobal('crypto', undefined);
+        try {
+            const conversation = sendMatchingMessage(newMatchingConversation(now), '메시지', emptyChatRequirements, now);
+            expect(conversation.id).toMatch(/^mock-/);
+            expect(conversation.messages[0].id).not.toBe(conversation.id);
+        } finally { vi.unstubAllGlobals(); }
+    });
+});

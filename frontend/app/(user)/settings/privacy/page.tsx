@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/state/authStore';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Modal } from '@/components/common/Modal';
+import { mockDataEnabled } from '@/lib/demo/mockVisibility';
 import { mockPaymentMethod } from '@/mocks/account';
 import { passwordChangeErrors } from '@/lib/account/accountAreaService';
 import type { PasswordChangeInput } from '@/types/account';
@@ -117,7 +118,7 @@ function AccountSettingsContent() {
                         </div>
                         <div>
                             <dt>결제 수단</dt>
-                            <dd>{premium ? mockPaymentMethod : '등록된 데모 결제 수단 없음'}</dd>
+                            <dd>{premium && mockDataEnabled() ? mockPaymentMethod : '등록된 결제 수단 없음'}</dd>
                         </div>
                     </dl>
                     <h3>결제 내역 예시</h3>

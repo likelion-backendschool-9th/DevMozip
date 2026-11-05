@@ -1,3 +1,4 @@
+import { mockDataEnabled, visibleSeeds, readDemoStorage, writeDemoStorage } from '@/lib/demo/mockVisibility';
 import {addDemoApplicants} from './projectApplicantDemo';
 import {validKickVotes} from '@/lib/projects/chatKickService';
 import {canCreateProject} from '@/lib/projects/projectPermissionsService';
@@ -83,5 +84,5 @@ export function parseRecruitmentState(raw:string|null):RecruitmentState{
  if(!Object.values(v.chatMembers||{}).every(strings)||!Object.values(v.endedAt||{}).every(t=>typeof t==='string'&&!Number.isNaN(Date.parse(t))))return defaults;
  return {...defaults,...v};}catch{return freshRecruitmentState();}
 }
-export function loadRecruitmentState(){try{return parseRecruitmentState(localStorage.getItem(PROJECT_KEY));}catch{return freshRecruitmentState();}}
-export function saveRecruitmentState(state:RecruitmentState){try{localStorage.setItem(PROJECT_KEY,JSON.stringify(state));return true;}catch{return false;}}
+export function loadRecruitmentState(){try{return parseRecruitmentState(readDemoStorage(PROJECT_KEY));}catch{return freshRecruitmentState();}}
+export function saveRecruitmentState(state:RecruitmentState){try{writeDemoStorage(PROJECT_KEY,JSON.stringify(state));return true;}catch{return false;}}

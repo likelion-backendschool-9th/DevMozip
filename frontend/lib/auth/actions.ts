@@ -1,6 +1,5 @@
 'use server';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { normalizeEmail } from '@/lib/account/authService';
 import type { SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
@@ -24,13 +23,26 @@ async function startSession(username: string, password: string): Promise<{ error
     const jar = await cookies();
     jar.set(ACCESS_COOKIE, data.accessToken, { ...cookieOptions, maxAge: Math.max(0, payload.exp - Math.floor(Date.now() / 1000)) });
     jar.set(REFRESH_COOKIE, data.refreshToken, { ...cookieOptions, maxAge: REFRESH_MAX_AGE });
+
     return null;
 }
 
-export async function loginAction(form: FormData): Promise<{ error: string } | never> {
-    const failure = await startSession(normalizeEmail(String(form.get('username') ?? '')), String(form.get('password') ?? ''));
+export async function loginAction(
+    form: FormData,
+): Promise<{ error: string } | { redirectTo: string }> {
+    const failure = await startSession(
+        normalizeEmail(String(form.get('username') ?? '')),
+        String(form.get('password') ?? ''),
+    );
     if (failure) return failure;
-    redirect(safeNext(form.get('next')));
+
+    const target = safeNext(form.get('next'));
+    return {
+        redirectTo:
+            new URL(target, 'https://internal.invalid').pathname === '/login'
+                ? '/'
+                : target,
+    };
 }
 
 // 가입 화면의 직군·기술 스택·관심 분야 선택지. 기준은 백엔드 enum이다.
