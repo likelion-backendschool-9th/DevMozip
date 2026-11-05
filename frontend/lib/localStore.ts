@@ -23,17 +23,17 @@ export interface DerivedStore<T> {
 }
 
 const resets = new Set<() => void>();
+const mockResets = new Set<() => void>();
 
-export function createLocalStore<T>(load: () => T): LocalStore<T> {
+export function createLocalStore<T>(load: () => T, modeSensitive = false): LocalStore<T> {
     const listeners = new Set<() => void>();
     let value: T;
     let loaded = false;
     let version = 0;
 
-    resets.add(() => {
-        loaded = false;
-        version++;
-    });
+    const reset = () => { loaded = false; version++; };
+    resets.add(reset);
+    if (modeSensitive) mockResets.add(reset);
 
     return {
         get: () => {
@@ -87,3 +87,6 @@ export function useStore<T>(store: DerivedStore<T>): T {
 export function resetLocalStores() {
     resets.forEach(reset => reset());
 }
+
+/** 인증 세션은 유지하고 데이터 모드에 의존하는 캐시만 다시 읽는다. */
+export function resetMockStores() { mockResets.forEach(reset => reset()); }

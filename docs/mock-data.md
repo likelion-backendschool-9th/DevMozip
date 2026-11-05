@@ -1,15 +1,17 @@
 # Mock 데이터와 상태 구조
 
-Next.js 마이그레이션 기준. 모든 화면은 프론트엔드 Context와 브라우저 저장소를 사용합니다. 데이터베이스·서버 동기화·실제 AI/결제/인증 요청은 없습니다. 원본 선택지/데모 데이터는 `frontend/mocks`, 타입은 `types`, 검증/변경/복원은 `lib`의 도메인별 함수, 화면 공유는 `lib/state`가 담당합니다.
+프론트 업무 Mock 상태 기준. 로그인·회원가입·프로필 일부는 실제 API와 연결되어 있으며, 나머지 데모 콘텐츠는 브라우저 저장소를 사용합니다. 실제 AI·결제 요청은 없습니다. 상단 Mock ON/OFF는 화면과 폼을 유지하면서 샘플 레코드만 비우고 복원합니다. OFF 직접 작성 데이터는 별도 작업 공간에 보관합니다. [표시 전환 범위](mock-visibility.md)를 참고하세요. 원본 선택지/데모 데이터는 `frontend/mocks`, 타입은 `types`, 검증/변경/복원은 `lib`의 도메인별 함수, 화면 공유는 `lib/state`가 담당합니다.
 
 ## 저장소
 
 | 키 | 주요 필드/역할 | 공유 상태 |
 |---|---|---|
+| `devmozip:mock-visibility:v1` | `version`, `enabled` | Mock 표시 설정만 저장, 다른 도메인/인증 불변 |
+| `devmozip:empty-mode:v1:<원래 키>` | OFF에서 직접 작성한 도메인 상태 | ON 샘플 저장소와 분리 |
 | `devmozip:prototype:v1` | 안내 표시 설정 | 공통 안내 |
 | `devmozip:auth:v1` | 계정 ID 세션 | 로그인 유지 시 localStorage, 해제 시 sessionStorage |
 | `devmozip:profiles:v1` | `profiles`, `portfolios`, `posts`, `reposts`, `reviews`, `following`, `followPreferences`, `followNotices`, `social`, `socialNotices` | 프로필·SNS·검색·추천 |
-| `devmozip:account-area:v1` | 계정별 `kakaoLinked`, `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
+| `devmozip:account-area:v1` | 계정별 `kakaoLinked`(기존 저장값 호환용, 화면 표시에 쓰지 않음), `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
 | `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수 |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |

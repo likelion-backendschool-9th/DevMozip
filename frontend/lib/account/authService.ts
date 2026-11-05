@@ -16,3 +16,10 @@ export function validateSignup(input:SignupInput):SignupErrors{
  if(input.interests.length===0)errors.interests='관심 분야를 하나 이상 선택해 주세요.';
  return errors;
 }
+// 카카오 가입은 비밀번호를 받지 않는다. 나머지 항목의 규칙은 이메일 가입과 같다.
+export function validateKakaoSignup(input:SignupInput):SignupErrors{
+ const errors=validateSignup(input);
+ delete errors.password;
+ delete errors.confirmPassword;
+ return errors;
+}
