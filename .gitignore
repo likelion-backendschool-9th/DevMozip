@@ -19,11 +19,13 @@ build/
 *.log
 
 # Local agent / cloud configuration
+.claude/
 .codex/
 .agents/
 .aws/
 
 # YAML configuration
+*.yaml
 *.yml
 
 # Next.js output
