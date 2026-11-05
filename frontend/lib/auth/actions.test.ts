@@ -34,13 +34,31 @@ describe('인증 서버 액션', () => {
         expect(await signupAction(signupInput)).toEqual({ error: '회원가입은 완료했지만 로그인하지 못했습니다. 로그인 화면에서 다시 시도해 주세요.' });
         expect(doubles.set).not.toHaveBeenCalled();
     });
-    it('로그인 성공시에만 두 HttpOnly 쿠키를 쓰고 내부 경로로 이동한다', async () => {
+    it('로그인 성공시에만 두 HttpOnly 쿠키를 쓰고 안전한 이동 경로를 반환한다', async () => {
         const access = `h.${Buffer.from(JSON.stringify({ sub: 'user', role: 'USER', exp: 9999999999 })).toString('base64url')}.s`;
         doubles.fetch.mockResolvedValue(Response.json({ accessToken: access, refreshToken: 'refresh' }));
         const form = new FormData(); form.set('username', 'user'); form.set('password', 'input'); form.set('next', '//outside.test');
-        await expect(loginAction(form)).rejects.toThrow('redirect:/');
+        expect(await loginAction(form)).toEqual({ redirectTo: '/' });
+        expect(doubles.redirect).not.toHaveBeenCalled();
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, access, expect.objectContaining({ httpOnly: true, path: '/', sameSite: 'lax' }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, 'refresh', expect.objectContaining({ httpOnly: true, maxAge: 1209600 }));
+    });
+    it.each([
+        [null, '/'],
+        ['/ai/matching', '/ai/matching'],
+        ['/projects?sort=latest', '/projects?sort=latest'],
+        ['/login?next=%2Fai%2Fmatching', '/'],
+    ])('로그인 복귀 경로 %s를 %s로 반환한다', async (next, target) => {
+        const access = `h.${Buffer.from(JSON.stringify({ sub: 'user', role: 'USER', exp: 9999999999 })).toString('base64url')}.s`;
+        doubles.fetch.mockResolvedValue(Response.json({ accessToken: access, refreshToken: 'refresh' }));
+        const form = new FormData();
+        if (next) form.set('next', next);
+        expect(await loginAction(form)).toEqual({ redirectTo: target });
+    });
+    it('서버 연결 실패시 이동 경로나 쿠키를 만들지 않는다', async () => {
+        doubles.fetch.mockRejectedValueOnce(new Error('offline'));
+        expect(await loginAction(new FormData())).toEqual({ error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+        expect(doubles.set).not.toHaveBeenCalled();
     });
     it('인증 실패시 쿠키를 쓰지 않는다', async () => {
         doubles.fetch.mockResolvedValue(new Response('{}', { status: 401 }));

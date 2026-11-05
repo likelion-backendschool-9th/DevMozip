@@ -2,7 +2,7 @@
 import styles from './page.module.css';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useNavigation as useNavigate, useCurrentLocation as useLocation } from '@/lib/navigation';
+import { useNavigation as useNavigate } from '@/lib/navigation';
 import { Plus, Send, Sparkles, Trash2 } from 'lucide-react';
 import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
@@ -14,32 +14,33 @@ import { Modal } from '@/components/common/Modal';
 import { chatWelcome } from '@/mocks/matchingChat';
 export default function MatchingPage() {
     const { user } = useAuth();
-    const { usage, conversations, conversation, newChat, selectChat, deleteChat, sendChat } = useHome();
-    const location = useLocation();
+    const { conversations, conversation, newChat, selectChat, deleteChat, sendChat, editChatMessage } = useHome();
     const navigate = useNavigate();
-    const handoff = useRef<string | null>(null);
-    const [text, setText] = useState('');
+    const text = conversation?.draft || '';
     const [error, setError] = useState('');
     const [deleting, setDeleting] = useState<string | null>(null);
     const [historyOpen, setHistoryOpen] = useState(false);
     const bottom = useRef<HTMLDivElement>(null);
-    const premium = user?.role === 'premium' || user?.role === 'admin';
-    // 대화나 계정이 바뀌면 입력과 오류를 비운다(렌더 중 이전 값과 비교).
-    const chatKey = `${conversation?.id}|${user?.id}`;
+    // 입력문은 대화별 로컬 초안에 보존하고 계정 전환 시 오류/삭제 창만 닫는다.
+    const chatKey = `${conversation?.id}|${user?.email}`;
     const [shownChat, setShownChat] = useState(chatKey);
     if (shownChat !== chatKey) {
         setShownChat(chatKey);
-        setText('');
         setError('');
+        setDeleting(null);
     }
     useEffect(() => {
         if (bottom.current) bottom.current.scrollTop = bottom.current.scrollHeight;
     }, [conversation?.id, conversation?.messages.length]);
     const send = () => {
         const result = sendChat(text);
-        if (result.ok) setText('');
         setError(result.error || '');
     };
+    useEffect(() => {
+        if (!user) navigate('/login?next=%2Fai%2Fmatching', { replace: true });
+    }, [user, navigate]);
+    const recommend = () => setError('추천 실행은 아직 준비 중입니다. 대화와 조건은 이 브라우저에 보관됩니다.');
+    if (!user) return <div className="container"><p>AI 추천 대화는 로그인 후 이용할 수 있습니다.</p><Link href="/login?next=%2Fai%2Fmatching">로그인하기</Link></div>;
     return (
         <div className={[styles.scope, 'container ai-chat-page'].join(' ')}>
             <div className={[styles.scope, 'ai-chat-title'].join(' ')}>
@@ -49,7 +50,7 @@ export default function MatchingPage() {
                         <Sparkles size={25} /> AI 팀원 추천
                     </h1>
                 </div>
-                <span className={[styles.scope, 'outline-badge'].join(' ')}>Mock 추천 · API 연결 없음</span>
+                <span className={[styles.scope, 'outline-badge'].join(' ')}>로컬 초안 · 추천 준비 중</span>
             </div>
             <div className={[styles.scope, 'ai-chat-layout'].join(' ')}>
                 <aside
@@ -72,7 +73,7 @@ export default function MatchingPage() {
                     <div id="matching-history" className={[styles.scope, 'ai-history-block'].join(' ')}>
                         <h2>이전 대화 기록</h2>
                         <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                            {user ? '현재 계정의 대화만 표시합니다.' : '비로그인 대화는 별도 데모 공간입니다.'}
+                            현재 계정의 로컬 대화만 표시합니다.
                         </p>
                         <div className={[styles.scope, 'ai-conversation-list'].join(' ')}>
                             {conversations.map(c => (
@@ -110,32 +111,15 @@ export default function MatchingPage() {
                         )}
                     </div>
                     <div className={[styles.scope, 'ai-usage'].join(' ')}>
-                        <strong>
-                            {usage.month} · {premium ? '프리미엄' : '무료'} 추천
-                        </strong>
-                        {user ? (
-                            <>
-                                <p>
-                                    남은 추천 <b>{usage.remaining}</b> / {usage.limit}회
-                                </p>
-                                <small>{usage.used}회 사용 · 결과 생성만 차감</small>
-                                <progress
-                                    max={usage.limit}
-                                    value={Math.min(usage.used, usage.limit)}
-                                    aria-label="이번 달 추천 사용량"
-                                />
-                            </>
-                        ) : (
-                            <Link href="/login">로그인하고 추천 받기</Link>
-                        )}
-                        <small>한국 시각 매월 새 한도 적용</small>
-                        {!premium && <Link href="/subscription">프리미엄 월 100회 안내 →</Link>}
+                        <strong>대화·조건 임시 보관</strong>
+                        <p>메시지와 조건을 기록해도 추천 횟수는 차감되지 않습니다.</p>
+                        <small>추천 실행은 준비 중입니다.</small>
                     </div>
                 </aside>
                 <section className={[styles.scope, 'ai-chat-main'].join(' ')} aria-label="AI 추천 대화">
                     <header className={[styles.scope, 'ai-conversation-title'].join(' ')}>
                         <strong>{conversation?.title || '아이디어에서 시작하는 새로운 팀'}</strong>
-                        <span>일반 메시지·추가 질문 무료</span>
+                        <span>메시지·조건 로컬 저장</span>
                     </header>
                     <div
                         ref={bottom}
@@ -176,13 +160,7 @@ export default function MatchingPage() {
                         ))}
                     </div>
                     <div className={[styles.scope, 'ai-chat-controls'].join(' ')}>
-                        <ChatConditions key={`${user?.id || 'guest'}:${conversation?.id || 'new'}`} />
-                        {user && usage.remaining === 0 && (
-                            <div role="status" className={[styles.scope, 'matching-limit'].join(' ')}>
-                                이번 달 추천 횟수를 모두 사용했습니다. 추가 질문은 계속 이용할 수 있어요.
-                                {!premium && <Link href="/subscription">프리미엄 업그레이드 →</Link>}
-                            </div>
-                        )}
+                        <ChatConditions key={`${user?.email || 'guest'}:${conversation?.id || 'new'}`} onRecommend={recommend} />
                         <form
                             className={[styles.scope, 'ai-chat-composer'].join(' ')}
                             onSubmit={e => {
@@ -195,7 +173,7 @@ export default function MatchingPage() {
                                 rows={2}
                                 maxLength={1500}
                                 value={text}
-                                onChange={e => setText(e.target.value)}
+                                onChange={e => editChatMessage(e.target.value)}
                                 placeholder="예: 웹과 AI 분야, 프론트엔드 2명과 백엔드 1명, 경력 무관, 3개월을 생각해요."
                                 onKeyDown={e => {
                                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -214,15 +192,14 @@ export default function MatchingPage() {
                             </p>
                         )}
                         <small className={[styles.scope, 'ai-disclaimer'].join(' ')}>
-                            Gemini 연결 없는 Mock 규칙 기반 추천 · 적합도는 데모 계산 점수 · Enter 전송 / Shift+Enter
-                            줄바꿈
+                            자동 답변·추천 없이 기록만 보관합니다. Enter 전송 / Shift+Enter 줄바꿈
                         </small>
                     </div>
                 </section>
             </div>
             {deleting && (
                 <Modal title="대화를 삭제할까요?" onClose={() => setDeleting(null)}>
-                    <p>메시지와 추천 결과가 삭제됩니다. 이미 사용한 추천 횟수는 복원되지 않습니다.</p>
+                    <p>이 브라우저에 보관된 대화와 메시지·조건이 삭제됩니다.</p>
                     <div className={[styles.scope, 'modal-actions'].join(' ')}>
                         <Button variant="secondary" onClick={() => setDeleting(null)}>
                             취소

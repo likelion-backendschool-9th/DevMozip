@@ -6,5 +6,5 @@ export interface Project { id: string; title: string; summary: string; field: st
 export type PostCategory = '정보' | '피드백' | '홍보' | '자유';
 export interface Post { id: string; authorId: string; category: PostCategory; title: string; body: string; tags: string[]; likes: number; comments: number; color: string }
 export interface RecommendationInput { description: string; stacks: string[]; interest: string;role?:string;skipStacks?:boolean;skipInterest?:boolean;skipRole?:boolean }
-export interface HomeState { version: 1; chat:MatchingChatState; matching:MatchingState; input: RecommendationInput }
+export interface HomeState { version: 1; chat:MatchingChatState; matching:MatchingState; input: RecommendationInput; inputOwner?: string }
 export type ProjectSort = 'latest' | 'popular' | 'deadline';
