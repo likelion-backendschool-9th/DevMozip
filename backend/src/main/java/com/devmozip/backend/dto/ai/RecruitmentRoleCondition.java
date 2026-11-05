@@ -1,17 +1,16 @@
 package com.devmozip.backend.dto.ai;
 
-import com.devmozip.backend.entity.enums.JobCategory;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
-public record RecruitmentRoleCondition(String name,
+public record RecruitmentRoleCondition(@JsonDeserialize(using = StrictStringDeserializer.class) String name,
 	@JsonDeserialize(using = StrictIntegerDeserializer.class) Integer count) {
 	public RecruitmentRoleCondition {
-		if (name == null || !JobCategory.contains(name.strip())) {
-			throw new IllegalArgumentException("모집 직군을 확인해 주세요.");
+		if (name == null || name.isBlank() || name.strip().length() > 30) {
+			throw new IllegalArgumentException("모집 직군은 1~30자로 입력해 주세요.");
 		}
 		name = name.strip();
-		if (count == null || count < 1) throw new IllegalArgumentException("모집 인원은 1명 이상의 정수여야 합니다.");
+		if (count == null || count < 1 || count > 20) throw new IllegalArgumentException("모집 인원은 1~20명의 정수여야 합니다.");
 	}
 
 	@JsonAnySetter
