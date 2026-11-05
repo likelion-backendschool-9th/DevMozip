@@ -7,7 +7,7 @@ import { notify } from '@/lib/state/prototypeStore';
 import type { MessagingAction, MessagingState } from '@/types/messaging';
 
 // 1:1 쪽지 · 프로젝트 단체 대화방 · 알림 읽음 상태.
-const messagingStore = createLocalStore(() => reconcile(loadMessaging(), getProjectState(), getProfileState(), projectClock()));
+const messagingStore = createLocalStore(() => reconcile(loadMessaging(), getProjectState(), getProfileState(), projectClock()), true);
 
 const messagingSources = [...projectSources, messagingStore];
 

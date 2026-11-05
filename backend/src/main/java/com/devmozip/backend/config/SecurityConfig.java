@@ -64,9 +64,13 @@ public class SecurityConfig {
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me/options").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/options").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/introduction").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/introduction").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}").permitAll()
+                // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
                 // 관리자만 접근 가능
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능

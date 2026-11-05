@@ -1,3 +1,4 @@
+import { mockDataEnabled, visibleSeeds, readDemoStorage, writeDemoStorage } from '@/lib/demo/mockVisibility';
 import {demoCollaborationReviews} from '@/mocks/reviewDemos';
 import { demoAccounts, careerOptions, jobOptions } from '@/mocks/auth';
 import {portfolioBlockErrors,preparePortfolioBlocks,validPortfolioBlocks} from './portfolioBlocks';
@@ -20,8 +21,8 @@ import { interestOptions, stackOptions } from '@/mocks/home';
 import type { AuthUser, AccountRole } from '@/types/auth';
 import type { CollaborationReview, PortfolioInput, ProfileAction, ProfileState, Collaboration } from '@/types/profile';
 export const PROFILE_KEY='devmozip:profiles:v1';
-export function freshProfileState():ProfileState{return structuredClone(initialProfileState);}
-export function allProfiles(state:ProfileState,users:AuthUser[]){const profiles={...initialProfileState.profiles,...state.profiles};for(const u of users)if(!profiles[u.id])profiles[u.id]=profileFromAccount(u);return profiles;}
+export function freshProfileState():ProfileState{return mockDataEnabled() ? structuredClone(initialProfileState) : {version:1,profiles:{},portfolios:[],posts:[],reposts:[],reviews:[],following:{},followPreferences:{},followNotices:[],socialNotices:[],social:{likes:{},bookmarks:{},reports:[],views:{},comments:[]}};}
+export function allProfiles(state:ProfileState,users:AuthUser[]){const profiles={...(mockDataEnabled()?initialProfileState.profiles:{}),...state.profiles};for(const u of visibleSeeds(users))if(!profiles[u.id])profiles[u.id]=profileFromAccount(u);return profiles;}
 export function canViewPortfolioDetail(ownerId:string,viewerId:string|null,role?:AccountRole){return ownerId===viewerId||role==='premium'||role==='admin';}
 export function portfolioFeedback(input:PortfolioInput){return [input.features.trim()?'주요 기능이 기록되어 있어 역할을 이해하기 좋아요. 사용자 흐름과 기여 범위를 추가해 보세요.':'주요 구현 기능과 본인의 기여 범위를 추가해 보세요.',input.challenge.trim()?'문제 해결 경험을 원인 → 선택 → 결과 순으로 구체화해 보세요.':'가장 어려웠던 문제와 해결 방법을 기록해 보세요.',input.outcome.trim()?'결과에 수치나 사용자 피드백을 더하면 전달력이 높아져요.':'개발 결과와 배운 점을 추가하면 더 좋아요.'];}
 export function canOpenPortfolioDetail(role?:AccountRole,ownerId?:string,viewerId?:string|null){return !!viewerId&&!!ownerId&&ownerId===viewerId||role==='premium'||role==='admin';}
@@ -49,7 +50,7 @@ export function applyProfileAction(state:ProfileState,actorId:string|null,action
  const ownPost=(id:string)=>{const p=next.posts.find(p=>p.id===id);if(!p||p.authorId!==actorId)throw new Error('본인 게시글만 관리할 수 있습니다.');return p;};
  const ownRepost=(id:string)=>{const p=next.reposts.find(p=>p.id===id);if(!p||p.ownerId!==actorId)throw new Error('본인이 퍼간 글만 관리할 수 있습니다.');return p;};
  switch(action.type){
- case 'reviews-demo':{if(!demoAccounts.some(account=>account.id===actorId))throw new Error('데모 계정에서만 리뷰 예시를 추가할 수 있습니다.');for(const review of demoCollaborationReviews){const project=history.find(c=>c.projectId===review.projectId&&c.status==='프로젝트 종료');if(!project||!project.members.some(m=>m.userId===review.authorId)||!project.members.some(m=>m.userId===review.targetId)||!next.profiles[review.authorId]||!next.profiles[review.targetId]||next.reviews.some(r=>r.projectId===review.projectId&&r.authorId===review.authorId&&r.targetId===review.targetId))continue;next.reviews.push({...review,keywords:review.keywords.filter(k=>allowedKeywords.includes(k))});}break;}
+ case 'reviews-demo':{if(!mockDataEnabled())throw new Error('Mock 데이터가 꺼져 있어 리뷰 예시를 추가하지 않습니다.');if(!demoAccounts.some(account=>account.id===actorId))throw new Error('데모 계정에서만 리뷰 예시를 추가할 수 있습니다.');for(const review of demoCollaborationReviews){const project=history.find(c=>c.projectId===review.projectId&&c.status==='프로젝트 종료');if(!project||!project.members.some(m=>m.userId===review.authorId)||!project.members.some(m=>m.userId===review.targetId)||!next.profiles[review.authorId]||!next.profiles[review.targetId]||next.reviews.some(r=>r.projectId===review.projectId&&r.authorId===review.authorId&&r.targetId===review.targetId))continue;next.reviews.push({...review,keywords:review.keywords.filter(k=>allowedKeywords.includes(k))});}break;}
 
  case 'reviews-batch':{if(!action.entries.length||new Set(action.entries.map(e=>e.targetId)).size!==action.entries.length)throw new Error('평가할 팀원을 확인해 주세요.');for(const entry of action.entries){const reason=reviewEligibility(next,actorId,entry.targetId,action.projectId,now,history);if(reason)throw new Error(reason);if(!Number.isInteger(entry.rating)||entry.rating<1||entry.rating>5)throw new Error('모든 팀원의 별점을 선택해 주세요.');if(entry.keywords.some(k=>!allowedKeywords.includes(k))||new Set(entry.keywords).size!==entry.keywords.length)throw new Error('리뷰 키워드를 확인해 주세요.');next.reviews.unshift({id:createMockId(),projectId:action.projectId,authorId:actorId,targetId:entry.targetId,rating:entry.rating,keywords:[...entry.keywords],createdAt:now.toISOString()});}break;}
 
@@ -96,7 +97,7 @@ export function parseProfileState(raw:string|null):ProfileState{
  if(data.followPreferences!==undefined&&(!data.followPreferences||typeof data.followPreferences!=='object'||Array.isArray(data.followPreferences)||!Object.values(data.followPreferences).every((v:any)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.values(v).every((p:any)=>p&&typeof p.activity==='boolean'&&typeof p.projects==='boolean'))))return freshProfileState();
  if(data.followNotices!==undefined&&(!Array.isArray(data.followNotices)||!data.followNotices.every((n:any)=>n&&['id','recipientId','actorId','recordId','title','createdAt'].every(k=>typeof n[k]==='string')&&['activity','project'].includes(n.kind))))return freshProfileState();
  if(data.socialNotices!==undefined&&(!Array.isArray(data.socialNotices)||!data.socialNotices.every((n:any)=>n&&['id','recipientId','actorId','title','body','href','createdAt','eventKey'].every(k=>typeof n[k]==='string')&&['follow','like','comment','repost'].includes(n.kind))))return freshProfileState();
- return {...data,portfolios:data.portfolios.map(upgradePortfolioMock),socialNotices:data.socialNotices||[],followPreferences:data.followPreferences||{},followNotices:data.followNotices||[],social:data.social||legacySocial(data.posts)} as ProfileState;}catch{return freshProfileState();}
+ return {...data,portfolios:data.portfolios.map((p:ProfileState['portfolios'][number])=>mockDataEnabled()?upgradePortfolioMock(p):p),socialNotices:data.socialNotices||[],followPreferences:data.followPreferences||{},followNotices:data.followNotices||[],social:data.social||legacySocial(data.posts)} as ProfileState;}catch{return freshProfileState();}
 }
-export function loadProfiles(){try{return parseProfileState(localStorage.getItem(PROFILE_KEY));}catch{return freshProfileState();}}
-export function saveProfiles(state:ProfileState){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(state));return true;}catch{return false;}}
+export function loadProfiles(){try{return parseProfileState(readDemoStorage(PROFILE_KEY));}catch{return freshProfileState();}}
+export function saveProfiles(state:ProfileState){try{writeDemoStorage(PROFILE_KEY,JSON.stringify(state));return true;}catch{return false;}}

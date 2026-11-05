@@ -16,12 +16,11 @@ public record SignupRequest(
         @Size(max = 254, message = "올바른 이메일 주소를 입력해 주세요.")
         String email,
 
-        @NotNull(message = "영문과 숫자를 포함해 8~64자로 입력해 주세요.")
+        // 이메일 가입은 필수이고 카카오 가입은 받지 않는다. 필수 여부는 MemberService가 확인한다.
         @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*[0-9]).{8,64}$", flags = Pattern.Flag.DOTALL,
                 message = "영문과 숫자를 포함해 8~64자로 입력해 주세요.")
         String password,
 
-        @NotBlank(message = "비밀번호가 일치하지 않습니다.")
         String confirmPassword,
 
         @NotBlank(message = "한글·영문·숫자·공백·밑줄로 2~20자를 입력해 주세요.")
@@ -45,5 +44,8 @@ public record SignupRequest(
         List<@NotBlank(message = "관심 분야를 하나 이상 선택해 주세요.") @Size(max = 50, message = "관심 분야를 다시 선택해 주세요.") String> interests,
 
         @NotNull(message = "협업 가능 여부를 선택해 주세요.")
-        Boolean available
+        Boolean available,
+
+        // 카카오 가입일 때만 보낸다. 카카오 회원번호는 요청 값으로 받지 않고 이 토큰으로만 확인한다.
+        String kakaoSignupToken
 ) {}

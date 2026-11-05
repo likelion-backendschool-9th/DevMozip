@@ -3,6 +3,7 @@ package com.devmozip.backend.controller;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +19,7 @@ import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
 import com.devmozip.backend.service.AuthService;
+import com.devmozip.backend.service.KakaoAuthService;
 import com.devmozip.backend.service.MemberService;
 
 import jakarta.validation.Valid;
@@ -27,17 +29,21 @@ import jakarta.validation.Valid;
 public class AuthController {
     private final AuthService service;
     private final MemberService memberService;
+    private final KakaoAuthService kakaoAuthService;
 
-    public AuthController(AuthService service, MemberService memberService) {
+    public AuthController(AuthService service, MemberService memberService, KakaoAuthService kakaoAuthService) {
         this.service = service;
         this.memberService = memberService;
+        this.kakaoAuthService = kakaoAuthService;
     }
 
-    /** 회원가입. 로그인은 프론트엔드가 가입 직후 따로 호출한다. */
+    /** 회원가입. 이메일 가입은 프론트엔드가 가입 직후 로그인을 따로 호출하고, 카카오 가입은 토큰을 함께 돌려준다. */
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public SignupResponse signup(@Valid @RequestBody SignupRequest request){
-        return memberService.signup(request);
+        return StringUtils.hasText(request.kakaoSignupToken())
+                ? kakaoAuthService.signup(request)
+                : memberService.signup(request);
     }
 
     /** 회원가입 화면의 직군·기술 스택·관심 분야 선택지 */

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { FeedPreview } from './_components/FeedPreview';
 import { MatchingStart } from './_components/MatchingStart';
+import { MockDataNote } from './_components/MockVisibility';
 import { ProjectPreview } from './_components/ProjectPreview';
 
 export const metadata: Metadata = { title: '홈' };
@@ -15,7 +16,7 @@ export default function HomePage() {
         <div className={[styles.scope, 'container home-page'].join(' ')}>
             <div className={[styles.scope, 'home-demo-note'].join(' ')}>
                 <span className={[styles.scope, 'status-dot'].join(' ')} />
-                기획 발표용 Mock 프로토타입 · 추천 점수와 모든 콘텐츠는 데모 데이터입니다.
+                <MockDataNote />
             </div>
             <MatchingStart />
             <ProjectPreview />
