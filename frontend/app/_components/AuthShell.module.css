@@ -9,7 +9,6 @@
 @layer devmozip-auth{:where(.scope):global(.auth-panel){background:#fff;border:1px solid var(--border);border-radius:18px;padding:34px;box-shadow:var(--shadow-card)}}
 @layer devmozip-auth{:where(.scope):global(.auth-panel>h2){font-size:25px;letter-spacing:-1px;margin:10px 0 6px}}
 @layer devmozip-auth{:where(.scope):global(.auth-description){font-size:14px;color:var(--muted);margin:0 0 27px}}
-@layer devmozip-auth{:where(.scope):global(.auth-footnote){font-size:14px;text-align:center;color:#aaa1b5;border-top:1px solid var(--border);padding-top:18px;margin:25px 0 0}}
 @layer devmozip-auth{:where(.scope):global(.auth-wide){grid-template-columns:.85fr 1.15fr;gap:70px}}
 @layer devmozip-auth{@media(max-width:1000px){:where(.scope):global(.auth-page){gap:35px}}}
 @layer devmozip-auth{@media(max-width:1000px){:where(.scope):global(.auth-wide){gap:35px}}}

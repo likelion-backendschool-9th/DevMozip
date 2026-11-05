@@ -8,7 +8,6 @@ Next.js 마이그레이션 기준. 모든 화면은 프론트엔드 Context와 �
 |---|---|---|
 | `devmozip:prototype:v1` | 안내 표시 설정 | 공통 안내 |
 | `devmozip:auth:v1` | 계정 ID 세션 | 로그인 유지 시 localStorage, 해제 시 sessionStorage |
-| `devmozip:accounts:v1` | 신규 Mock 가입 계정·데모 검증용 salt/해시 | 계정 전환/로그인 |
 | `devmozip:profiles:v1` | `profiles`, `portfolios`, `posts`, `reposts`, `reviews`, `following`, `followPreferences`, `followNotices`, `social`, `socialNotices` | 프로필·SNS·검색·추천 |
 | `devmozip:account-area:v1` | 계정별 `kakaoLinked`, `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |

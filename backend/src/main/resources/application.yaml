@@ -37,6 +37,11 @@ management:
     health:
       show-details: never
 
+profile:
+  images:
+    directory: ${PROFILE_IMAGE_DIRECTORY:./uploads/profile-images}
+    public-base-url: ${PROFILE_IMAGE_PUBLIC_BASE_URL:http://localhost:8080}
+
 ---
 # local(H2) 프로필은 리프레시 토큰을 메모리에 두므로 Redis 없이 실행한다.
 # Redis 연결 상태를 헬스체크에서 빼야 /actuator/health가 DOWN이 되지 않는다.

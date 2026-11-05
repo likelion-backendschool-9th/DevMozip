@@ -1,13 +1,13 @@
 import { parseMatchingChat } from '@/lib/matching/matchingChatService';
 import { buildMatchingResult,parseMatchingState } from '@/lib/matching/matchingService';
-import { jobOptions } from '@/mocks/auth';
 import { projectStatus } from '@/lib/projects/projectService';
-import { defaultHomeState, developers, posts, projects, stackOptions, interestOptions } from '@/mocks/home';
+import { defaultHomeState, developers, posts, projects, stackOptions, interestOptions, interestFilterOptions } from '@/mocks/home';
+import { jobOptions } from '@/mocks/auth';
 import type { HomeState, ProjectSort, RecommendationInput, Post } from '@/types/home';
 export const HOME_KEY = 'devmozip:home:v1';
 export function freshHomeState(): HomeState { return structuredClone(defaultHomeState); }
 export function parseHomeState(raw: string | null): HomeState {
- try { const v = JSON.parse(raw || 'null'); if(v?.version===1 && typeof v.input?.description==='string' && Array.isArray(v.input.stacks) && v.input.stacks.every((s: unknown) => typeof s==='string' && stackOptions.includes(s)) && interestOptions.includes(v.input.interest)) return {version:1,...(typeof v.inputOwner==='string'?{inputOwner:v.inputOwner}:{}),chat:migrateMatchingChat(v.chat,v.matching),matching:parseMatchingState(v.matching),input:{description:v.input.description.slice(0,1500),stacks:v.input.stacks,interest:v.input.interest,role:jobOptions.includes(v.input.role)?v.input.role:'',skipStacks:v.input.skipStacks===true,skipInterest:v.input.skipInterest===true,skipRole:v.input.skipRole===true}}; } catch { /* Restore defaults for invalid storage. */ }
+ try { const v = JSON.parse(raw || 'null'); if(v?.version===1 && typeof v.input?.description==='string' && Array.isArray(v.input.stacks) && v.input.stacks.every((s: unknown) => typeof s==='string' && stackOptions.includes(s)) && interestFilterOptions.includes(v.input.interest)) return {version:1,...(typeof v.inputOwner==='string'?{inputOwner:v.inputOwner}:{}),chat:migrateMatchingChat(v.chat,v.matching),matching:parseMatchingState(v.matching),input:{description:v.input.description.slice(0,1500),stacks:v.input.stacks,interest:v.input.interest,role:jobOptions.includes(v.input.role)?v.input.role:'',skipStacks:v.input.skipStacks===true,skipInterest:v.input.skipInterest===true,skipRole:v.input.skipRole===true}}; } catch { /* Restore defaults for invalid storage. */ }
  return freshHomeState();
 }
 export function loadHomeState() { try { return parseHomeState(localStorage.getItem(HOME_KEY)); } catch { return freshHomeState(); } }

@@ -28,10 +28,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, 
-                                    HttpServletResponse response, 
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        
+
         // 요청 헤더에서 순수 토큰 추출
         String token = resolveToken(request);
 
@@ -57,8 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 스프링 시큐리티 전용 인증 객체(출입증) 생성
             Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    username, 
-                    null, 
+                    username,
+                    null,
                     Collections.singletonList(authority)
             );
 
@@ -72,13 +72,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        
+
         // 헤더에 값이 있고 "Bearer "로 시작하는지 확인한다.
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             // "Bearer " 7글자를 제외한 나머지 순수 토큰 문자열만 잘라서 반환한다.
             return bearerToken.substring(7);
         }
-        
+
         return null;
     }
 }

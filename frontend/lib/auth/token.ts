@@ -1,6 +1,6 @@
 import type { ServerRole } from '@/types/session';
 export interface TokenPayload { sub: string; role?: ServerRole; exp: number }
-const roles: unknown[] = ['USER', 'PREMIUM', 'ADMIN'] satisfies ServerRole[];
+const roles: unknown[] = ['USER', 'PREMIUM', 'OWNER', 'ADMIN'] satisfies ServerRole[];
 // 화면 이동 판단용 디코딩이다. 실제 인가는 백엔드 서명 검증을 거친다.
 export function decodeToken(token?: string): TokenPayload | null {
     try {
