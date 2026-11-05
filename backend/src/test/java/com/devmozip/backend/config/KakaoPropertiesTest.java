@@ -51,7 +51,7 @@ class KakaoPropertiesTest {
             "https://service.test/, /api/auth/kakao/callback"
     })
     void 주소와_경로를_슬래시_하나로_잇는다(String domainName, String path) {
-        assertThat(properties("key", "secret", domainName, path).getRedirectUri())
+        assertThat(properties("key", "secret", domainName, path).buildRedirectUri())
                 .isEqualTo("https://service.test/api/auth/kakao/callback");
     }
 }

@@ -335,6 +335,12 @@ sequenceDiagram
 - backend `./gradlew test --no-daemon`: 실패. 238개 중 236개 통과, 1개 실패, 1개 스킵이며 2단계 기록의 두 건과 같다. frontend `npm run build`: 성공.
 - 미완료: 서버 `.env`의 `DOMAINNAME` 설정.
 
+### 2026-11-05 compose 기동 실패 수정
+
+- 원인: compose가 넘기는 `KAKAO_REDIRECT_URI`가 완화 바인딩으로 `kakao.redirect-uri`에 대응되는데, `KakaoProperties.getRedirectUri()`에 setter가 없어 기동 시 바인딩에 실패했다.
+- 변경: 메서드 이름을 `buildRedirectUri()`로 바꿨다. 환경 변수 이름은 그대로다.
+- 검증: compose에서 health 200, 존재하지 않는 계정 로그인 401을 확인했다.
+
 ### 2026-11-05 카카오 `id` 수신 확인
 
 - 사용자가 로컬 서버에서 실제 카카오 로그인 후 인가 코드로 콜백 API를 호출해 `status: SIGNUP_REQUIRED`와 `kakaoSignupToken`을 받았다. 응답에 `id`가 없으면 502로 끝나므로, 실제 `id`를 받아 가입 토큰까지 발급한 것을 확인했다.

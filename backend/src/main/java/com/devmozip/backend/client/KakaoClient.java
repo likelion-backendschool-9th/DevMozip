@@ -73,7 +73,7 @@ public class KakaoClient {
                 .queryParam("redirect_uri", "{redirectUri}")
                 .queryParam("state", "{state}")
                 .encode()
-                .buildAndExpand(properties.getRestApiKey(), properties.getRedirectUri(), state)
+                .buildAndExpand(properties.getRestApiKey(), properties.buildRedirectUri(), state)
                 .toUriString();
     }
 
@@ -83,7 +83,7 @@ public class KakaoClient {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "authorization_code");
         form.add("client_id", properties.getRestApiKey());
-        form.add("redirect_uri", properties.getRedirectUri());
+        form.add("redirect_uri", properties.buildRedirectUri());
         form.add("code", code);
         form.add("client_secret", properties.getClientSecret());
 

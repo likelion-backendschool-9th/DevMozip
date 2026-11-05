@@ -24,7 +24,7 @@ public class KakaoProperties {
     }
 
     /** 카카오 콘솔에 등록한 Redirect URI. 주소와 경로를 슬래시 하나로 잇는다. */
-    public String getRedirectUri() {
+    public String buildRedirectUri() {
         return domainName.replaceAll("/+$", "") + "/" + redirectPath.replaceAll("^/+", "");
     }
 
