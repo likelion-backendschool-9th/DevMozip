@@ -1,3 +1,4 @@
+import { mockDataEnabled } from '@/lib/demo/mockVisibility';
 import { demoAccounts } from '@/mocks/auth';
 import type { AccountRole, AuthUser } from '@/types/auth';
 import type { ServerIdentity, ServerRole } from '@/types/session';
@@ -8,5 +9,5 @@ const roles: Record<ServerRole, AccountRole> = { USER: 'free', PREMIUM: 'premium
 export function projectServerIdentity(identity: ServerIdentity): AuthUser {
     const template = demoAccounts.find(user => user.email === identity.username) ?? demoAccounts[0];
     return { ...template, id: identity.role === 'ADMIN' ? 'demo-admin' : template.role === 'admin' ? 'demo-user' : template.id,
-        email: identity.username, role: roles[identity.role], onboardingCompleted: true };
+        email: identity.username, role: roles[identity.role], ...(!mockDataEnabled() ? {nickname:identity.username.split('@')[0],job:'',career:'',stacks:[],interests:[],available:true} : {}), onboardingCompleted: true };
 }

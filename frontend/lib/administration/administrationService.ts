@@ -1,9 +1,10 @@
+import { mockDataEnabled, visibleSeeds, readDemoStorage, writeDemoStorage } from '@/lib/demo/mockVisibility';
 import type { AuthUser } from '@/types/auth';
 import type { AdministrationAction,AdministrationState } from '@/types/administration';
 import { initialAdministration } from '@/mocks/administration';
 import { createMockId } from '@/lib/utils/createMockId';
 export const ADMINISTRATION_KEY='devmozip:administration:v1';
-export const freshAdministration=():AdministrationState=>structuredClone(initialAdministration);
+export const freshAdministration=():AdministrationState=>({...structuredClone(initialAdministration),payments:mockDataEnabled()?structuredClone(initialAdministration.payments):[]});
 export function effectiveUser(user:AuthUser,state:AdministrationState):AuthUser {return {...user,role:user.role==='admin'?'admin':state.subscriptions[user.id]?state.subscriptions[user.id].active?'premium':'free':user.role};}
 export const isSuspended=(state:AdministrationState,id:string)=>state.members[id]?.status==='suspended';
 export function applyAdministration(state:AdministrationState,actor:AuthUser|null,action:AdministrationAction,knownIds:string[],now=new Date()):AdministrationState {
@@ -24,5 +25,5 @@ export function applyAdministration(state:AdministrationState,actor:AuthUser|nul
  next.audit.unshift({id:createMockId(),actorId:actor.id,action:action.type,createdAt:date});return next;
 }
 export function parseAdministration(raw:string|null):AdministrationState {try{const s=JSON.parse(raw||'null');const record=(v:any)=>v&&typeof v==='object'&&!Array.isArray(v);if(s?.version!==1||!record(s.subscriptions)||!Object.values(s.subscriptions).every((v:any)=>v&&typeof v.active==='boolean'&&typeof v.updatedAt==='string')||!record(s.members)||!Object.values(s.members).every((v:any)=>v&&['active','warned','suspended'].includes(v.status)&&typeof v.reason==='string'&&typeof v.updatedAt==='string')||!record(s.resolutions)||!Object.values(s.resolutions).every((v:any)=>v&&['resolved','dismissed'].includes(v.status)&&typeof v.note==='string'&&typeof v.updatedAt==='string')||!Array.isArray(s.keywords)||s.keywords.length>12||s.keywords.some((v:any)=>typeof v!=='string'||!v.trim()||v.length>30)||new Set(s.keywords).size!==s.keywords.length||!Array.isArray(s.audit)||!s.audit.every((v:any)=>v&&['id','actorId','action','createdAt'].every(k=>typeof v[k]==='string'))||!Array.isArray(s.payments)||!s.payments.every((v:any)=>v&&['id','userId','date','status'].every(k=>typeof v[k]==='string')&&Number.isFinite(v.amount)&&v.amount>=0))return freshAdministration();return s;}catch{return freshAdministration();}}
-export function loadAdministration(){try{return parseAdministration(localStorage.getItem(ADMINISTRATION_KEY));}catch{return freshAdministration();}}
-export function saveAdministration(state:AdministrationState){try{localStorage.setItem(ADMINISTRATION_KEY,JSON.stringify(state));return true;}catch{return false;}}
+export function loadAdministration(){try{return parseAdministration(readDemoStorage(ADMINISTRATION_KEY));}catch{return freshAdministration();}}
+export function saveAdministration(state:AdministrationState){try{writeDemoStorage(ADMINISTRATION_KEY,JSON.stringify(state));return true;}catch{return false;}}
