@@ -148,6 +148,7 @@ public class Member {
     @Column(name = "introduction", columnDefinition = "text")
     private String introduction;
 
+    // 상세 자기소개 작성 형식 (text 또는 html)
     @Column(name = "introduction_format", length = 10)
     private String introductionFormat;
 
@@ -184,7 +185,8 @@ public class Member {
                   String externalLinks, BigDecimal trustScore, String paymentMethods,
                   CollaborationStatus collaborationStatus, String profileImage,
                   String bannerImage, String summary, String career, String contactHours,
-                  List<String> jobCategories, List<String> skills, List<String> interests) {
+                  List<String> jobCategories, List<String> skills, List<String> interests,
+                  String introduction, String introductionFormat) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.kakaoId = kakaoId;
@@ -204,6 +206,8 @@ public class Member {
         this.jobCategories = jobCategories;
         this.skills = skills;
         this.interests = interests;
+        this.introduction = introduction;
+        this.introductionFormat = introductionFormat;
     }
 
     // 협업 가능 상태와 연락 가능 시간을 바꾼다. null로 받은 값은 그대로 둔다.
