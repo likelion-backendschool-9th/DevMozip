@@ -58,7 +58,7 @@ class AiAuthenticatedConversationTests {
 	}
 
 	private String login(int userId) throws Exception {
-		String response = mvc.perform(post("/api/auth/login").contentType("application/json")
+		String response = mvc.perform(post("/api/v1/auth/login").contentType("application/json")
 			.content(mapper.writeValueAsString(Map.of("username", userId + "@ai.test", "password", PASSWORD))))
 			.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 		return "Bearer " + mapper.readTree(response).get("accessToken").asText();

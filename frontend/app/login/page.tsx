@@ -3,7 +3,7 @@ import { loginAction } from '@/lib/auth/actions';
 import { useSearchParams } from 'next/navigation';
 import { AuthShell } from '@/app/_components/AuthShell';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
@@ -19,7 +19,7 @@ function LoginForm() {
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
     const [kakao, setKakao] = useState(false);
-    const submit = async (e: React.FormEvent) => {
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         if (!validEmail(email) || !password) {
@@ -31,11 +31,21 @@ function LoginForm() {
         form.set('password', password);
         form.set('next', searchParams.get('next') ?? '/');
         setBusy(true);
-        // 성공하면 서버 액션이 next 경로로 이동시키므로 오류만 돌아온다.
-        try {
-            const result = await loginAction(form);
-            if (result?.error) setError(result.error);
-        } finally { setBusy(false); }
+        // 쿠키 설정 응답을 받은 후 새 문서로 이동해 로그인 세션을 다시 확인한다.
+        startTransition(async () => {
+            try {
+                const result = await loginAction(form);
+                if ('error' in result) {
+                    setError(result.error);
+                    setBusy(false);
+                    return;
+                }
+                window.location.replace(result.redirectTo);
+            } catch {
+                setError('로그인 처리 중 문제가 발생했습니다. 다시 시도해 주세요.');
+                setBusy(false);
+            }
+        });
     };
     return (
         <>

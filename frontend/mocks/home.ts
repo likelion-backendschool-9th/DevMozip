@@ -1,8 +1,11 @@
 import { initialMatchingChat } from '@/mocks/matchingChat';
 import { initialMatchingState } from '@/mocks/matching';
 import type { Developer, HomeState, Post, Project, ProjectSort } from '@/types/home';
+// Mock 화면(매칭·검색·프로젝트 등)의 선택지. 회원가입 선택지는 백엔드 enum에서 받는다.
 export const stackOptions = ['React', 'TypeScript', 'Java', 'Spring Boot', 'Python', 'Node.js', 'Figma'];
-export const interestOptions = ['전체 분야', '생산성', '핀테크', '교육', '커뮤니티', 'AI'];
+export const interestOptions = ['생산성', '핀테크', '교육', '커뮤니티', 'AI'];
+// AI 매칭 조건의 관심 분야 필터. '전체 분야'는 선택하지 않았다는 뜻이다.
+export const interestFilterOptions = ['전체 분야', ...interestOptions];
 export const categories = ['전체', '정보', '피드백', '홍보', '자유'] as const;
 export const projectSortOptions: { value: ProjectSort; label: string }[] = [{value:'latest',label:'최신순'},{value:'popular',label:'인기순'},{value:'deadline',label:'마감 임박순'}];
 export const defaultHomeState: HomeState = {version:1,chat:initialMatchingChat,matching:initialMatchingState,input:{description:'',stacks:[],interest:'전체 분야',role:'',skipStacks:false,skipInterest:false,skipRole:false}};

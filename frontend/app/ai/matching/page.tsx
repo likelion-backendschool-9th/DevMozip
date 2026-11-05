@@ -14,7 +14,7 @@ import { Modal } from '@/components/common/Modal';
 import { chatWelcome } from '@/mocks/matchingChat';
 export default function MatchingPage() {
     const { user } = useAuth();
-    const { conversations, conversation, newChat, selectChat, deleteChat, sendChat, editChatMessage, guestDraft, resumeGuestChat, prepareChatLogin } = useHome();
+    const { conversations, conversation, newChat, selectChat, deleteChat, sendChat, editChatMessage } = useHome();
     const navigate = useNavigate();
     const text = conversation?.draft || '';
     const [error, setError] = useState('');
@@ -36,13 +36,11 @@ export default function MatchingPage() {
         const result = sendChat(text);
         setError(result.error || '');
     };
-    const recommend = () => {
-        if (!user) {
-            const saved = prepareChatLogin();
-            if (!saved.ok) { setError(saved.error || ''); return; }
-            navigate('/login?next=%2Fai%2Fmatching');
-        } else setError('추천 실행은 아직 준비 중입니다. 대화와 조건은 이 브라우저에 보관됩니다.');
-    };
+    useEffect(() => {
+        if (!user) navigate('/login?next=%2Fai%2Fmatching', { replace: true });
+    }, [user, navigate]);
+    const recommend = () => setError('추천 실행은 아직 준비 중입니다. 대화와 조건은 이 브라우저에 보관됩니다.');
+    if (!user) return <div className="container"><p>AI 추천 대화는 로그인 후 이용할 수 있습니다.</p><Link href="/login?next=%2Fai%2Fmatching">로그인하기</Link></div>;
     return (
         <div className={[styles.scope, 'container ai-chat-page'].join(' ')}>
             <div className={[styles.scope, 'ai-chat-title'].join(' ')}>
@@ -75,7 +73,7 @@ export default function MatchingPage() {
                     <div id="matching-history" className={[styles.scope, 'ai-history-block'].join(' ')}>
                         <h2>이전 대화 기록</h2>
                         <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                            {user ? '현재 계정의 로컬 대화만 표시합니다.' : '비로그인 대화는 이 브라우저에 보관됩니다.'}
+                            현재 계정의 로컬 대화만 표시합니다.
                         </p>
                         <div className={[styles.scope, 'ai-conversation-list'].join(' ')}>
                             {conversations.map(c => (
@@ -115,19 +113,10 @@ export default function MatchingPage() {
                     <div className={[styles.scope, 'ai-usage'].join(' ')}>
                         <strong>대화·조건 임시 보관</strong>
                         <p>메시지와 조건을 기록해도 추천 횟수는 차감되지 않습니다.</p>
-                        {!user && <Link href="/login?next=%2Fai%2Fmatching" onClick={event => { event.preventDefault(); recommend(); }}>로그인하고 초안 이어가기</Link>}
                         <small>추천 실행은 준비 중입니다.</small>
                     </div>
                 </aside>
                 <section className={[styles.scope, 'ai-chat-main'].join(' ')} aria-label="AI 추천 대화">
-                    {user && guestDraft && (
-                        <div className={[styles.scope, 'auth-hint'].join(' ')}>
-                            <p>로그인 전 초안 “{guestDraft.title}”을 {user.email} 계정으로 옮겨 이어갈 수 있습니다.</p>
-                            <Button variant="secondary" onClick={() => { const result = resumeGuestChat(); setError(result.error || ''); }}>
-                                로그인 전 초안 이어받기
-                            </Button>
-                        </div>
-                    )}
                     <header className={[styles.scope, 'ai-conversation-title'].join(' ')}>
                         <strong>{conversation?.title || '아이디어에서 시작하는 새로운 팀'}</strong>
                         <span>메시지·조건 로컬 저장</span>

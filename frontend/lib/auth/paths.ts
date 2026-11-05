@@ -1,4 +1,4 @@
-const protectedPrefixes = ['/my-projects', '/onboarding', '/profile/me', '/bookmarks', '/settings', '/messages', '/chats', '/notifications', '/portfolios', '/admin'];
+const protectedPrefixes = ['/ai/matching', '/my-projects', '/onboarding', '/profile/me', '/bookmarks', '/settings', '/messages', '/chats', '/notifications', '/portfolios', '/admin'];
 export const hasPrefix = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 export function isProtectedPath(path: string) {
     return protectedPrefixes.some(prefix => hasPrefix(path, prefix))

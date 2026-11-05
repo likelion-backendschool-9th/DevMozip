@@ -130,7 +130,6 @@ rollback은 정지된 이전 컨테이너를 그대로 다시 켠다. 특정 커
 | gradlew FileHasher 오류 | docker compose stop backend 후 호스트 Gradle 실행 |
 | next build가 node 없음/WSL 오류 | Linux용 Node 24를 PATH 앞에 배치; Windows npm을 WSL에서 호출하지 않기 |
 | /api/health 503 | 해당 색 backend/frontend 로그, DB·Redis 연결, JWT_SECRET 32바이트 이상, 두 임시 계정 비밀번호 설정 |
-| 기존 Mock 가입 계정 로그인 불가 | 정상 분리 정책; 서버는 환경변수 임시 두 계정만 지원 |
 | 로그아웃 실패 안내 | Redis/백엔드 복구 후 재시도; 토큰 폐기 실패를 성공으로 표시하지 않음 |
 
 ## 현재 서버 확인 결과 (2026-11-03)

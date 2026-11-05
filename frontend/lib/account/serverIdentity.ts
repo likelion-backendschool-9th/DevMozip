@@ -2,7 +2,7 @@ import { demoAccounts } from '@/mocks/auth';
 import type { AccountRole, AuthUser } from '@/types/auth';
 import type { ServerIdentity, ServerRole } from '@/types/session';
 
-const roles: Record<ServerRole, AccountRole> = { USER: 'free', PREMIUM: 'premium', ADMIN: 'admin' };
+const roles: Record<ServerRole, AccountRole> = { USER: 'free', PREMIUM: 'premium', OWNER: 'free', ADMIN: 'admin' };
 
 // 프로필 데모 표시는 재사용하되 권한은 오직 백엔드 응답에서 가져온다.
 export function projectServerIdentity(identity: ServerIdentity): AuthUser {
