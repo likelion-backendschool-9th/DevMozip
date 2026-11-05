@@ -1,6 +1,5 @@
 'use server';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { normalizeEmail } from '@/lib/account/authService';
 import type { KakaoAccountStatus, KakaoIntent, PasswordSetInput, SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
@@ -22,10 +21,22 @@ async function startSession(username: string, password: string): Promise<{ error
     return await writeSessionCookies(await response.json()) ? null : { error: '인증 응답을 확인할 수 없습니다.' };
 }
 
-export async function loginAction(form: FormData): Promise<{ error: string } | never> {
-    const failure = await startSession(normalizeEmail(String(form.get('username') ?? '')), String(form.get('password') ?? ''));
+export async function loginAction(
+    form: FormData,
+): Promise<{ error: string } | { redirectTo: string }> {
+    const failure = await startSession(
+        normalizeEmail(String(form.get('username') ?? '')),
+        String(form.get('password') ?? ''),
+    );
     if (failure) return failure;
-    redirect(safeNext(form.get('next')));
+
+    const target = safeNext(form.get('next'));
+    return {
+        redirectTo:
+            new URL(target, 'https://internal.invalid').pathname === '/login'
+                ? '/'
+                : target,
+    };
 }
 
 // 가입 화면의 직군·기술 스택·관심 분야 선택지. 기준은 백엔드 enum이다.

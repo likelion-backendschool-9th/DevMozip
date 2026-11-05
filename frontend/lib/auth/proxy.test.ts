@@ -14,6 +14,14 @@ describe('BFF proxy', () => {
         expect(location.pathname).toBe('/login');
         expect(location.searchParams.get('next')).toBe('/messages?userId=user');
     });
+    it('AI 대화 직접 접속을 로그인으로 보내고 로그인 후에는 허용한다', async () => {
+        const response = await proxy(request('/ai/matching'));
+        const location = new URL(response.headers.get('location')!);
+        expect(location.pathname).toBe('/login');
+        expect(location.searchParams.get('next')).toBe('/ai/matching');
+        const allowed = await proxy(request('/ai/matching', `${ACCESS_COOKIE}=${jwt('USER')}`));
+        expect(allowed.headers.get('location')).toBeNull();
+    });
     it.each(['USER', 'PREMIUM'])('%s의 관리자 접근을 막는다', async role => {
         const response = await proxy(request('/admin/users', `${ACCESS_COOKIE}=${jwt(role)}`));
         expect(new URL(response.headers.get('location')!).pathname).toBe('/');
