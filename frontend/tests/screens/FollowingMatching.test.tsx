@@ -33,5 +33,6 @@ describe('팔로우·추천 화면 렌더링',()=>{
  it('이전 Mock 결과의 무료 상세 이유 잠금과 프리미엄 조회는 보존한다',()=>{expect(page('/ai/matching','demo-user',matched())).toContain('상세 추천 이유는 프리미엄에서');const html=page('/ai/matching','demo-premium',matched(demoAccounts[1]));expect(html).toContain('일치 기술');expect(html).not.toContain('상세 추천 이유는 프리미엄에서');});
  it('이전 사용량이 가득 차도 로컬 메시지와 조건 입력을 제공한다',()=>{const home=matched();home.matching.usage['demo-user']['2026-10']=15;const html=page('/ai/matching','demo-user',home);expect(html).toContain('메시지와 조건을 기록해도 추천 횟수는 차감되지 않습니다.');expect(html).not.toContain('이번 달 추천 횟수를 모두 사용했습니다.');});
  it('다른 계정의 결과는 표시하지 않는다',()=>{const home=matched();const html=page('/ai/matching','demo-premium',home);expect(html).not.toContain('이런 동료와 함께해 보세요');});
- it('비로그인에게 로그인 안내와 정보 입력 폼을 제공한다',()=>{const html=page('/ai/matching');expect(html).toContain('로그인하고 초안 이어가기');expect(html).toContain('/login?next=%2Fai%2Fmatching');expect(html).toContain('모집 개발 직군 · 복수 선택');expect(html).toContain('자동 답변·추천 없이 기록만 보관합니다.');});
+ it('비로그인에게 로그인 안내만 표시하고 대화·조건 폼을 숨긴다',()=>{const html=page('/ai/matching');expect(html).toContain('AI 추천 대화는 로그인 후 이용할 수 있습니다.');expect(html).toContain('/login?next=%2Fai%2Fmatching');expect(html).not.toContain('모집 개발 직군 · 복수 선택');expect(html).not.toContain('AI에게 메시지');});
+ it('비로그인 메인에 로그인 안내와 로그인으로 연결되는 이전 대화 링크를 표시한다',()=>{const html=page('/');expect(html).toContain('로그인 전 입력은 저장되지 않습니다.');expect(html).toContain('/login?next=%2Fai%2Fmatching');expect(html).toContain('추천 시작');});
 });

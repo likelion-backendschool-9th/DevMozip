@@ -1,12 +1,11 @@
 'use server';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { backendFetch, readErrorMessage } from './backend';
 import { ACCESS_COOKIE, REFRESH_COOKIE, cookieOptions, REFRESH_MAX_AGE } from './cookies';
 import { decodeToken } from './token';
 import { safeNext } from './paths';
 
-export async function loginAction(form: FormData): Promise<{ error: string } | never> {
+export async function loginAction(form: FormData): Promise<{ error: string } | { redirectTo: string }> {
     let response: Response;
     try {
         response = await backendFetch('/api/auth/login', {
@@ -21,7 +20,9 @@ export async function loginAction(form: FormData): Promise<{ error: string } | n
     const jar = await cookies();
     jar.set(ACCESS_COOKIE, data.accessToken, { ...cookieOptions, maxAge: Math.max(0, payload.exp - Math.floor(Date.now() / 1000)) });
     jar.set(REFRESH_COOKIE, data.refreshToken, { ...cookieOptions, maxAge: REFRESH_MAX_AGE });
-    redirect(safeNext(form.get('next')));
+    // 쿠키 응답을 받은 클라이언트가 새 요청으로 이동해 이전 익명 화면 캐시를 사용하지 않는다.
+    const target = safeNext(form.get('next'));
+    return { redirectTo: new URL(target, 'https://internal.invalid').pathname === '/login' ? '/' : target };
 }
 
 // 화면 이동은 호출한 쪽(헤더 로그아웃 버튼)이 맡는다. 여기서 redirect하면 클라이언트 이동과 겹쳐 결과를 받지 못한다.

@@ -34,6 +34,7 @@ const clockSource: Source = {
 const homeSources = [...projectSources, homeStore, clockSource];
 
 function commit(next: HomeState) {
+    if (!getUser()) return;
     homeStore.set(next);
     if (!saveHomeState(next)) notify('저장 공간을 사용할 수 없어 대화와 추천 사용량이 이번 세션에만 유지됩니다.');
 }
@@ -52,6 +53,7 @@ function activeConversation() {
 }
 
 function saveConversation(c: MatchingConversation) {
+    if (!getUser()) return;
     const current = homeStore.get();
     const chat = structuredClone(current.chat);
     const items = chat.conversations[owner()] || [];
@@ -71,31 +73,8 @@ function run(): ChatResult {
     return { ok: false, error: '추천 실행은 아직 준비 중입니다. 대화와 조건은 이 브라우저에 보관됩니다.' };
 }
 
-function prepareChatLogin(): ChatResult {
-    return saveHomeState(homeStore.get()) ? { ok: true }
-        : { ok: false, error: '초안을 저장하지 못해 로그인 이동을 멈췄습니다. 입력은 현재 화면에 유지됩니다. 저장 공간을 확인해 주세요.' };
-}
-
-// 사용자 확인 후 활성 guest 초안 하나만 이동한다. 저장 실패 시 원본을 유지한다.
-function resumeGuestChat(): ChatResult {
-    if (!getUser()) return { ok: false, error: '로그인 후 초안을 이어받아 주세요.' };
-    const current = homeStore.get();
-    const guest = (current.chat.conversations.guest || []).find(c => c.id === current.chat.active.guest);
-    if (!guest) return { ok: false, error: '이어받을 비로그인 초안이 없습니다.' };
-    const next = structuredClone(current);
-    const account = owner();
-    const items = next.chat.conversations[account] || [];
-    const moved = { ...guest, id: items.some(c => c.id === guest.id) ? newMatchingConversation().id : guest.id };
-    next.chat.conversations[account] = [moved, ...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
-    next.chat.active[account] = moved.id;
-    next.chat.conversations.guest = (next.chat.conversations.guest || []).filter(c => c.id !== guest.id);
-    next.chat.active.guest = next.chat.conversations.guest[0]?.id || '';
-    if (!saveHomeState(next)) return { ok: false, error: '초안을 저장하지 못했습니다. 비로그인 원본을 유지했습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.' };
-    homeStore.set(next);
-    return { ok: true };
-}
-
 function newChat(description?: string) {
+    if (!getUser()) return;
     try {
         const c = newMatchingConversation();
         if (description) {
@@ -108,8 +87,9 @@ function newChat(description?: string) {
 
 // 메인 초안은 대화와 함께 저장한 뒤 소비한다. 연속 호출은 최신 입력을 확인한다.
 function startHomeChat(): ChatResult {
+    if (!getUser()) return { ok: false, error: '로그인 후 AI 추천 대화를 이용해 주세요.' };
     const current = homeStore.get();
-    const description = current.input.description.trim();
+    const description = current.inputOwner === owner() ? current.input.description.trim() : '';
     if (description.length < 10) return { ok: false, error: '프로젝트를 10자 이상 설명해 주세요.' };
     try {
         const conversation = newMatchingConversation();
@@ -129,11 +109,13 @@ function startHomeChat(): ChatResult {
 }
 
 function selectChat(id: string) {
+    if (!getUser()) return;
     const current = homeStore.get();
     if ((current.chat.conversations[owner()] || []).some(c => c.id === id)) commit({ ...current, chat: { ...current.chat, active: { ...current.chat.active, [owner()]: id } } });
 }
 
 function deleteChat(id: string) {
+    if (!getUser()) return;
     const current = homeStore.get();
     const chat = structuredClone(current.chat);
     chat.conversations[owner()] = (chat.conversations[owner()] || []).filter(c => c.id !== id);
@@ -142,15 +124,18 @@ function deleteChat(id: string) {
 }
 
 function editChat(patch: Partial<ChatRequirements>) {
+    if (!getUser()) return;
     const c = activeConversation();
     saveConversation({ ...c, requirements: { ...c.requirements, ...patch }, updatedAt: new Date().toISOString() });
 }
 
 function editChatMessage(text: string) {
+    if (!getUser()) return;
     saveConversation({ ...activeConversation(), draft: text.slice(0, 1500), updatedAt: new Date().toISOString() });
 }
 
 function sendChat(text: string): ChatResult {
+    if (!getUser()) return { ok: false, error: '로그인 후 AI 추천 대화를 이용해 주세요.' };
     try {
         const c = activeConversation();
         saveConversation(sendMatchingMessage(c, text, c.requirements));
@@ -163,16 +148,16 @@ function sendChat(text: string): ChatResult {
 const home = derived(homeSources, () => {
     const user = getUser();
     const state = homeStore.get();
-    const conversations = state.chat.conversations[owner()] || [];
+    const conversations = user ? state.chat.conversations[owner()] || [] : [];
     const conversation = conversations.find(c => c.id === state.chat.active[owner()]) || null;
     const snapshot = user ? state.matching.last[user.id] : null;
     return {
-        state: { ...state, role: user?.role || 'guest', following: user ? (getProfileState().following[user.id] || []) : [] },
+        state: { ...state, input: user && state.inputOwner === owner() ? state.input : structuredClone(freshHomeState().input), chat: user ? { conversations: { [owner()]: conversations }, active: { [owner()]: state.chat.active[owner()] } } : { conversations: {}, active: {} }, role: user?.role || 'guest', following: user ? (getProfileState().following[user.id] || []) : [] },
         usage: matchingUsage(state.matching, user, clockStore.get()),
         result: snapshot && snapshot.inputKey === inputKey(state.input) ? { ...snapshot, result: { ...snapshot.result, developers: snapshot.result.developers.filter(d => canViewProfile(d.id)) } } : null,
         run,
-        update: (patch: Partial<HomeState>) => commit({ ...homeStore.get(), ...patch }),
-        reset: () => commit({ ...homeStore.get(), input: structuredClone(freshHomeState().input) }),
+        update: (patch: Partial<HomeState>) => commit({ ...homeStore.get(), ...patch, inputOwner: owner() }),
+        reset: () => commit({ ...homeStore.get(), input: structuredClone(freshHomeState().input), inputOwner: owner() }),
         conversations,
         conversation,
         newChat,
@@ -182,9 +167,6 @@ const home = derived(homeSources, () => {
         editChat,
         sendChat,
         editChatMessage,
-        guestDraft: user ? (state.chat.conversations.guest || []).find(c => c.id === state.chat.active.guest) || null : null,
-        resumeGuestChat,
-        prepareChatLogin,
     };
 });
 
