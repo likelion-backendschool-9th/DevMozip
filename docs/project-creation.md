@@ -1,5 +1,8 @@
 # 프로젝트 생성 API — #44
 
+> 2026-11-05 후속 변경: 기본 프로젝트 사용자 공급을 실제 JWT 이메일→users.id로 연결했다. 과거 개발용 고정 ID/실회원 미연결 설명은 당시 기록이며 현재 동작은 [실제 회원 ID 연결](project-authenticated-user.md)을 따른다. 프론트 API 활성화·백엔드 프리미엄 인가는 별도다.
+
+
 2026-11-04. 기존 controller / service / service/impl / repository / entity / dto 구조를 따른다. 응답은 record이며 기존 회원·인증·AI 코드는 변경하지 않는다.
 
 ## 범위
