@@ -1,5 +1,6 @@
 import type { ChatRequirements,MatchingChatState } from '@/types/matchingChat';
 export const chatFieldOptions=['웹','모바일','AI / 머신러닝','데이터','게임','보안','클라우드 / 인프라','기타'];
+export const chatInterestOptions=['생산성','핀테크','교육','커뮤니티','AI',...chatFieldOptions.filter(value=>value!=='기타')];
 export const chatRoleOptions=['프론트엔드','백엔드','풀스택','UI/UX','DevOps','데이터 엔지니어','AI 엔지니어','모바일','게임','기타'];
 export const chatCareerOptions=['경력 무관','1년 이상','2년 이상','3년 이상','5년 이상'];
 export const chatDurationOptions=['1개월','2개월','3개월','6개월','12개월'];

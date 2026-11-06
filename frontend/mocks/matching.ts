@@ -1,5 +1,5 @@
 import type { MatchingState } from '@/types/matching';
-export const matchingLimits={free:15,premium:100,admin:100};
+export const matchingLimits={free:5,premium:100,admin:100};
 export const initialMatchingState:MatchingState={usage:{},last:{}};
 export const matchingLatency=400;
 export const stackAliases:Record<string,string[]>={React:['react','리액트'],TypeScript:['typescript','타입스크립트','ts'],Java:['java','자바'],'Spring Boot':['spring boot','springboot','스프링','스프링부트'],Python:['python','파이썬'],'Node.js':['node.js','nodejs','node js','노드'],Figma:['figma','피그마']};
