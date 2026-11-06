@@ -72,7 +72,7 @@ ERD 필드 매핑:
 - 숫자 ID의 `/portfolios/{id}`는 API 상세를 사용한다. API 실패를 Mock 데이터로 대체하지 않는다.
 - 기존 문자열 ID의 Mock 포트폴리오 상세는 `PrototypePortfolioDetail`로 이동해 작성기·미리보기와 함께 보존한다.
 - API 목록의 등록 버튼은 등록 API 연결 전까지 비활성화한다. API 상세에서 Mock 수정·삭제·AI 피드백을 수행하지 않는다.
-- 외부 링크 PR #66도 ApiProfileTabs를 수정하므로 병합 시 양쪽 기능을 함께 보존해야 한다. 최신 develop에서 구현했으며 미병합 PR을 임의로 포함하지 않았다.
+- PR #66의 외부 링크·NULL 태그 보완이 develop에 병합되어 최신 develop 병합 시 ApiProfileTabs의 외부 링크와 포트폴리오 양쪽 기능을 함께 보존했다.
 - 유리님 AI #32/#35/#83: 공개 기본 DTO와 권한 확인된 상세 데이터 계약을 맞출 결합 지점이다. AI 엔진 파일은 수정하지 않았다.
 - 프로젝트 #48: portfolios.id/user_id를 사용한 소유권 확인 및 제출 연결, 삭제/비공개 전환 시 정책은 별도 결합이다.
 
