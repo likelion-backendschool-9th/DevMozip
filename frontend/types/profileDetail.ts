@@ -13,6 +13,9 @@ export interface ProfileDetail {
     contactHours?: string | null;
 }
 
+// 본인 조회는 최초 사용자 아이디를 설정하기 전 tag가 null일 수 있다.
+export type OwnProfileDetail = Omit<ProfileDetail, 'tag'> & { tag: string | null };
+
 export interface ProfileUpdateInput {
     nickname: string;
     tag: string;

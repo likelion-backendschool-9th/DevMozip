@@ -17,6 +17,7 @@ export async function proxyProfile(path: string, init: RequestInit, parse: (body
     try {
         const response = await backendFetch(path, init);
         if (!response.ok) return profileError(messages[response.status] ? response.status : 502, messages[response.status] ?? '프로필 서버 요청을 완료하지 못했어요.');
-        return NextResponse.json(parse(await response.json()), { headers });
+        try { return NextResponse.json(parse(await response.json()), { headers }); }
+        catch { return profileError(502, '프로필 서버의 응답 형식을 확인할 수 없어요.'); }
     } catch { return profileError(502, '프로필 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'); }
 }
