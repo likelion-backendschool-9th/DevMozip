@@ -24,7 +24,9 @@ public class ProjectQueryRepository {
 		if (userId == null) where.append(" AND p.is_public = true");
 		else {
 			params.addValue("userId", userId);
-			where.append(" AND EXISTS (SELECT 1 FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')");
+			String joined="EXISTS (SELECT 1 FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')";
+			String pending="EXISTS (SELECT 1 FROM project_applications a WHERE a.project_id=p.id AND a.applicant_member_id=:userId AND a.status='PENDING')";
+			where.append(" AND ").append(tab==MyProjectsTab.APPLYING?pending:tab==MyProjectsTab.ALL?"("+joined+" OR "+pending+")":joined);
 			if (tab == MyProjectsTab.HOSTED) where.append(" AND p.host_member_id=:userId");
 			if (tab == MyProjectsTab.PARTICIPATING) where.append(" AND p.host_member_id<>:userId AND p.status<>'COMPLETED'");
 			if (tab == MyProjectsTab.COMPLETED) where.append(" AND p.status='COMPLETED'");

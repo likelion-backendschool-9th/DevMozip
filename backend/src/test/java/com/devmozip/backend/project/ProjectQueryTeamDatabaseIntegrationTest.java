@@ -114,7 +114,7 @@ class ProjectQueryTeamDatabaseIntegrationTest {
 			assertEquals(2, mine.totalElements()); assertTrue(mine.items().stream().allMatch(p -> "HOST".equals(p.myRole())));
 			assertEquals(1, queries.search(search(key, null)).totalElements());
 			assertEquals(404, assertThrows(ResponseStatusException.class, () -> queries.detail(deletedId, false)).getStatusCode().value());
-			assertEquals(501, assertThrows(ResponseStatusException.class, () -> queries.mine(search(key, null), MyProjectsTab.APPLYING)).getStatusCode().value());
+			assertEquals(0, queries.mine(search(key, null), MyProjectsTab.APPLYING).totalElements());
 		});
 	}
 	@TestConfiguration(proxyBeanMethods = false)
