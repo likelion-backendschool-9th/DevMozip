@@ -10,6 +10,7 @@ import com.devmozip.backend.repository.AiConversationDeletionRepository;
 import com.devmozip.backend.security.ai.CurrentUserProvider;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,9 @@ import com.devmozip.backend.dto.ai.CreateMessageRequest;
 import com.devmozip.backend.dto.ai.ConversationResponse;
 import com.devmozip.backend.dto.ai.ConversationDetailResponse;
 import com.devmozip.backend.dto.ai.MessageResponse;
+import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
+import com.devmozip.backend.dto.ai.ConversationConditionsResponse;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @Transactional(readOnly = true)
@@ -27,13 +31,15 @@ public class AiConversationServiceImpl implements AiConversationService {
 	private final AiConversationRepository conversations;
 	private final AiMessageRepository messages;
 	private final AiConversationDeletionRepository deletion;
+	private final ObjectMapper mapper;
 
 	public AiConversationServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
-		AiMessageRepository messages, AiConversationDeletionRepository deletion) {
+		AiMessageRepository messages, AiConversationDeletionRepository deletion, ObjectMapper mapper) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
 		this.deletion = deletion;
+		this.mapper = mapper;
 	}
 
 	@Transactional
@@ -70,6 +76,15 @@ public class AiConversationServiceImpl implements AiConversationService {
 		AiMessage message = messages.save(new AiMessage(conversation, request.content(), now));
 		conversation.touch(now);
 		return MessageResponse.from(message);
+	}
+
+	@Transactional
+	@Override
+	public ConversationConditionsResponse replaceConditions(long id, UpdateConditionsRequest request) {
+		AiConversation conversation = owned(id, true);
+		if (request == null) throw new IllegalArgumentException("조건 객체를 입력해 주세요.");
+		conversation.replaceConditions(mapper.writeValueAsString(request), LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+		return new ConversationConditionsResponse(conversation.getId(), conversation.getCurrentConditions(), conversation.getUpdatedAt());
 	}
 
 	@Transactional

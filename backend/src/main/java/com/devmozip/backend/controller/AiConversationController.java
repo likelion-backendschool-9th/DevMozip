@@ -5,6 +5,8 @@ import com.devmozip.backend.dto.ai.ConversationResponse;
 import com.devmozip.backend.dto.ai.CreateConversationRequest;
 import com.devmozip.backend.dto.ai.CreateMessageRequest;
 import com.devmozip.backend.dto.ai.MessageResponse;
+import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
+import com.devmozip.backend.dto.ai.ConversationConditionsResponse;
 import com.devmozip.backend.service.AiConversationService;
 import com.devmozip.backend.dto.common.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,6 +54,11 @@ public class AiConversationController {
 	@PostMapping("/{id}/messages")
 	public ResponseEntity<MessageResponse> message(@PathVariable long id, @RequestBody CreateMessageRequest request) {
 		return ResponseEntity.status(201).body(service.addMessage(id, request));
+	}
+
+	@PutMapping("/{id}/conditions")
+	public ConversationConditionsResponse conditions(@PathVariable long id, @RequestBody UpdateConditionsRequest request) {
+		return service.replaceConditions(id, request);
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
