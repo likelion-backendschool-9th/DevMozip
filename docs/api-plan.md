@@ -1,6 +1,6 @@
 # 향후 REST API 설계 초안
 
-**문서 초안입니다. 실제로 구현된 API는 로그인·재발급·로그아웃, 회원가입, 이메일·닉네임 중복 확인, `/users/me`, `/users/me/availability`뿐입니다.** 기본 경로 `/api/v1`, 서버 `http://localhost:8080`, 프론트 개발 포트 5173.
+**문서 초안입니다. 실제로 구현된 API는 로그인·재발급·로그아웃, 회원가입, 이메일·닉네임 중복 확인, `/users/me`, `/users/me/availability`, [비밀번호 재설정·변경](password-reset-api.md)뿐입니다.** 기본 경로 `/api/v1`, 서버 `http://localhost:8080`, 프론트 개발 포트 5173.
 아래 URL은 기본 경로를 생략했습니다. 인증 방식, 페이지네이션, 오류 스키마, 권한 정책은 백엔드 단계에서 확정합니다.
 요청 필드/응답 필드는 개념 수준이며 최종 계약이 아닙니다. 향후 공통 응답은 `{ data, message? }`, 오류는 `{ code, message }`를 검토합니다.
 
@@ -51,7 +51,7 @@
 | Admin | PATCH | /admin/users/{id} | 회원 경고/정지/해제 | 예 (관리자) | action | userStatus | 아니오 |
 | Admin | PATCH | /admin/moderation/{type}/{id} | 프로젝트/글/댓글 신고 처리 | 예 (관리자) | action, reasonCode | moderationResult | 아니오 |
 
-향후 보완: 비밀번호 찾기, 로그아웃, 프로필 수정, 포트폴리오 수정/삭제, 팔로워/팔로잉 목록과 알림 설정, 모집 기간 연장, 팀원 관리, 채팅 종료 정책, 글/댓글 삭제, 좋아요, 북마크 취소, 신고, 메시지 읽음, 구독 내역 및 관리자 상세 관리.
+향후 보완: 로그아웃, 프로필 수정, 포트폴리오 수정/삭제, 팔로워/팔로잉 목록과 알림 설정, 모집 기간 연장, 팀원 관리, 채팅 종료 정책, 글/댓글 삭제, 좋아요, 북마크 취소, 신고, 메시지 읽음, 구독 내역 및 관리자 상세 관리.
 현재 단계에서는 외부 인증·Gemini·Kakao·Toss·DB 연동을 설계 계약으로 확정하거나 구현하지 않습니다.
 
 ## 최종 프로토타입 범위를 반영한 추가 REST 후보
@@ -61,7 +61,6 @@
 | Method | 기본 경로 이후 URL | 목적 | 권한/비고 |
 |---|---|---|---|
 | POST | /auth/logout | 로그아웃 | 로그인 |
-| POST | /auth/password-recovery | 비밀번호 복구 요청 | 메일 정책 미확정 |
 | PATCH | /portfolios/{id} | 포트폴리오 수정 | 작성자 |
 | DELETE | /portfolios/{id} | 포트폴리오 삭제 | 작성자, 지원서 스냅샷 유지 검토 |
 | POST | /portfolios/{id}/feedback | 포트폴리오 피드백 | 프리미엄/관리자 |

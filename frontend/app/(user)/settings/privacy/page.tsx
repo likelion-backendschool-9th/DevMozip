@@ -11,18 +11,14 @@ import { Modal } from '@/components/common/Modal';
 import { mockDataEnabled } from '@/lib/demo/mockVisibility';
 import { mockPaymentMethod } from '@/mocks/account';
 import { needsFirstPassword, passwordChangeErrors, passwordSetErrors } from '@/lib/account/accountAreaService';
-import { kakaoAccountStatusAction, setPasswordAction, startKakaoAction } from '@/lib/auth/actions';
+import { changePasswordAction, kakaoAccountStatusAction, setPasswordAction, startKakaoAction } from '@/lib/auth/actions';
+import { AccountPasswordForm, passwordCopy } from './_components/AccountPasswordForm';
 import type { PasswordChangeInput } from '@/types/account';
 import type { KakaoAccountStatus } from '@/types/auth';
 const blankPassword = (): PasswordChangeInput => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
-const passwordFields = [
-    { key: 'currentPassword', label: '현재 비밀번호' },
-    { key: 'newPassword', label: '새 비밀번호' },
-    { key: 'confirmPassword', label: '새 비밀번호 확인' },
-] as const;
 const ACCOUNT_LOAD_ERROR = '계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 function AccountSettingsContent() {
-    const { accountUser: user, accountArea, accountAct, confirmPasswordChange, administration } = useAuth();
+    const { accountUser: user, accountArea, accountAct, administration } = useAuth();
     const [password, setPassword] = useState(blankPassword);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -48,6 +44,7 @@ function AccountSettingsContent() {
     }, []);
     // 서버 상태를 받기 전에는 비밀번호 입력을 보여 주지 않는다. 현재 비밀번호 칸이 보였다가 사라지지 않게 하기 위해서다.
     const firstPassword = needsFirstPassword(account);
+    const passwordText = firstPassword ? passwordCopy.first : passwordCopy.change;
     const kakaoLinked = !!account?.kakaoLinked;
     const prefs = user ? accountArea.accounts[user.id] : undefined;
     const isPrivate = !!prefs?.isPrivate;
@@ -58,7 +55,7 @@ function AccountSettingsContent() {
             <header className={[styles.scope, 'personal-page-heading'].join(' ')}>
                 <span className={[styles.scope, 'eyebrow'].join(' ')}>YOUR ACCOUNT, YOUR CONTROL</span>
                 <h1>개인정보 및 계정 설정</h1>
-                <p>가상 계정으로 설정을 체험해 보세요. 실제 개인정보·결제 정보는 입력하지 마세요.</p>
+                <p>실제 개인정보·결제 정보는 입력하지 마세요.</p>
             </header>
             <>
                 <section className={[styles.scope, 'account-panel'].join(' ')}>
@@ -70,66 +67,29 @@ function AccountSettingsContent() {
                     <p className={[styles.scope, 'auth-hint'].join(' ')}>
                         표시된 이메일은 기존 Mock 계정 정보입니다. 실제 개인정보를 추가로 저장하지 않습니다.
                     </p>
-                    <h3>{firstPassword ? '비밀번호 설정' : '비밀번호 변경 확인'}</h3>
+                    <h3>{passwordText.heading}</h3>
                     {!account ? (
                         <p className={[styles.scope, accountError ? 'form-error' : 'auth-hint'].join(' ')} role={accountError ? 'alert' : 'status'}>
                             {accountError || '계정 정보를 불러오고 있어요…'}
                         </p>
                     ) : (
-                        <>
-                            <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                                {firstPassword
-                                    ? '비밀번호를 설정하면 이메일과 비밀번호로도 로그인할 수 있습니다.'
-                                    : '입력 검증만 체험합니다. 원문·새 비밀번호 해시를 저장하지 않으며 실제 로그인 비밀번호도 바뀌지 않습니다.'}
-                            </p>
-                            <form
-                                className={[styles.scope, 'profile-form account-password-form'].join(' ')}
-                                onSubmit={e => {
-                                    e.preventDefault();
-                                    setSuccess('');
-                                    const errors = firstPassword ? passwordSetErrors(password) : passwordChangeErrors(password);
-                                    setError(errors.join(' '));
-                                    if (!errors.length) setModal('password');
-                                }}
-                            >
-                                {passwordFields
-                                    .filter(f => !firstPassword || f.key !== 'currentPassword')
-                                    .map(f => (
-                                        <label key={f.key}>
-                                            {f.label}
-                                            <Input
-                                                type="password"
-                                                autoComplete="off"
-                                                maxLength={64}
-                                                value={password[f.key]}
-                                                disabled={busy}
-                                                onChange={e => {
-                                                    setPassword({ ...password, [f.key]: e.target.value });
-                                                    setError('');
-                                                }}
-                                            />
-                                        </label>
-                                    ))}
-                                {error && (
-                                    <p className={[styles.scope, 'form-error'].join(' ')} role="alert">
-                                        {error}
-                                    </p>
-                                )}
-                                {success && (
-                                    <p role="status" className={[styles.scope, 'check-success'].join(' ')}>
-                                        {success}
-                                    </p>
-                                )}
-                                <Button type="submit" disabled={busy}>
-                                    {firstPassword ? '비밀번호 설정' : '비밀번호 변경 확인'}
-                                </Button>
-                            </form>
-                        </>
-                    )}
-                    {prefs?.passwordConfirmedAt && (
-                        <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                            최근 데모 확인: {new Date(prefs.passwordConfirmedAt).toLocaleString('ko-KR')}
-                        </p>
+                        <AccountPasswordForm
+                            firstPassword={firstPassword}
+                            value={password}
+                            error={error}
+                            success={success}
+                            busy={busy}
+                            onChange={value => {
+                                setPassword(value);
+                                setError('');
+                            }}
+                            onSubmit={() => {
+                                setSuccess('');
+                                const errors = firstPassword ? passwordSetErrors(password) : passwordChangeErrors(password);
+                                setError(errors.join(' '));
+                                if (!errors.length) setModal('password');
+                            }}
+                        />
                     )}
                 </section>
                 <section className={[styles.scope, 'account-panel'].join(' ')}>
@@ -209,9 +169,7 @@ function AccountSettingsContent() {
                 <Modal
                     title={
                         modal === 'password'
-                            ? firstPassword
-                                ? '비밀번호를 설정할까요?'
-                                : '비밀번호 변경을 확인할까요?'
+                            ? passwordText.modalTitle
                             : modal === 'privacy'
                               ? isPrivate
                                   ? '계정을 공개할까요?'
@@ -224,9 +182,7 @@ function AccountSettingsContent() {
                 >
                     <p>
                         {modal === 'password'
-                            ? firstPassword
-                                ? '설정한 비밀번호로 이메일 로그인도 할 수 있습니다.'
-                                : '현재 비밀번호가 맞는지 확인하고 데모 변경 확인 시각만 기록합니다. 입력한 새 비밀번호와 실제 로그인 정보는 저장·변경하지 않습니다.'
+                            ? passwordText.modalBody
                             : modal === 'privacy'
                               ? isPrivate
                                   ? '다른 사용자가 내 프로필과 작성한 SNS 게시글을 다시 볼 수 있습니다.'
@@ -254,10 +210,10 @@ function AccountSettingsContent() {
                                             setAccount({ kakaoLinked, passwordSet: true });
                                             setSuccess('비밀번호를 설정했습니다. 이제 이메일과 비밀번호로도 로그인할 수 있습니다.');
                                         } else {
-                                            await confirmPasswordChange(input);
-                                            setSuccess(
-                                                '데모 변경 확인을 완료했습니다. 실제 로그인 비밀번호는 변경되지 않았습니다.',
-                                            );
+                                            const result = await changePasswordAction(input);
+                                            if (result?.error) throw new Error(result.error);
+                                            // 쿠키가 지워진 뒤 새 문서로 이동해 로그인 상태를 다시 확인한다.
+                                            window.location.replace('/login?password=changed');
                                         }
                                     } catch (e) {
                                         setError(e instanceof Error ? e.message : '입력을 확인해 주세요.');

@@ -23,18 +23,47 @@ public class AiConversation {
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
 
-	protected AiConversation() {}
+	protected AiConversation() {
+	}
+
 	public AiConversation(long userId, String title, LocalDateTime now) {
 		this.userId = userId;
 		this.title = title;
+		this.currentConditions = "{}";
 		this.createdAt = now;
 		this.updatedAt = now;
 	}
-	public void touch(LocalDateTime now) { updatedAt = now; }
-	public Long getId() { return id; }
-	public long getUserId() { return userId; }
-	public String getTitle() { return title; }
-	public String getCurrentConditions() { return currentConditions; }
-	public LocalDateTime getCreatedAt() { return createdAt; }
-	public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+	public void touch(LocalDateTime now) {
+		updatedAt = now;
+	}
+
+	public void replaceConditions(String conditions, LocalDateTime now) {
+		currentConditions = conditions;
+		touch(now);
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public String getCurrentConditions() {
+		return currentConditions == null ? "{}" : currentConditions;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 }

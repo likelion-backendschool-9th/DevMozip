@@ -11,7 +11,7 @@ import { onboardingErrors } from '@/lib/account/onboardingService';
 import { demoAccounts } from '@/mocks/auth';
 import { notify, prototypeSources } from '@/lib/state/prototypeStore';
 import type { AdministrationAction } from '@/types/administration';
-import type { AccountAreaAction, AccountAreaState, OnboardingDraft, PasswordChangeInput } from '@/types/account';
+import type { AccountAreaAction, AccountAreaState, OnboardingDraft } from '@/types/account';
 import type { AuthUser, SignupInput } from '@/types/auth';
 
 type PreferenceAction = Exclude<AccountAreaAction, { type: 'onboarding-complete' } | { type: 'password-confirmed' }>;
@@ -97,11 +97,6 @@ async function signup(input: SignupInput, options?: { kakao?: boolean }) {
     if (result?.error) throw new Error(result.error);
 }
 
-// 비밀번호 변경 API는 아직 백엔드에 없다.
-const confirmPasswordChange: (input: PasswordChangeInput) => Promise<void> = async () => {
-    throw new Error('실제 비밀번호 변경은 아직 제공하지 않습니다.');
-};
-
 function completeOnboarding(draft: OnboardingDraft) {
     try {
         const user = getUser();
@@ -128,7 +123,6 @@ const auth = derived(authSources, () => {
         needsOnboarding: !!user && !onboardingComplete(accountAreaStore.get(), user),
         accountAct,
         completeOnboarding,
-        confirmPasswordChange,
         administration: administrationStore.get(),
         administer,
         signup,

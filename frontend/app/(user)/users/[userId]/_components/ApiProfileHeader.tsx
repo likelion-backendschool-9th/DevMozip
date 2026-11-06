@@ -4,10 +4,10 @@ import { CalendarDays, Clock3, Pencil, Star } from 'lucide-react';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { collaborationLabel, formatCareer, profileImageUrl } from '@/lib/profiles/profileDetail';
 import { starColor } from '@/lib/profiles/profileService';
-import type { ProfileDetail } from '@/types/profileDetail';
+import type { OwnProfileDetail } from '@/types/profileDetail';
 import styles from './ProfileHeader.module.css';
 
-export function ApiProfileHeader({ profile, onEdit }: { profile: ProfileDetail; onEdit?: () => void }) {
+export function ApiProfileHeader({ profile, onEdit }: { profile: OwnProfileDetail; onEdit?: () => void }) {
     const [avatarFailed, setAvatarFailed] = useState(false);
     const [bannerFailed, setBannerFailed] = useState(false);
     const avatar = profileImageUrl(profile.profileImage);
@@ -25,7 +25,7 @@ export function ApiProfileHeader({ profile, onEdit }: { profile: ProfileDetail; 
                 <button className="button secondary" disabled={!onEdit} onClick={onEdit} title={onEdit ? undefined : "본인 프로필에서 수정할 수 있어요."}><Pencil size={14} />프로필 수정</button>
             </div>
             <div className={scope('profile-heading')}>
-                <h1>{profile.nickname}</h1><span>@{profile.tag}</span>
+                <h1>{profile.nickname}</h1><span>{profile.tag ? `@${profile.tag}` : '사용자 아이디 미설정'}</span>
                 <span className={scope(`availability-badge${profile.collaborationStatus === 'AVAILABLE' ? '' : ' unavailable'}`)}>
                     {collaborationLabel(profile.collaborationStatus)}
                 </span>

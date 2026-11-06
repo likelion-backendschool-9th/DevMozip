@@ -48,7 +48,7 @@
 | `GET /api/v1/users/me/social-accounts` | 필요 | 없음 | 200 `{kakaoLinked, passwordSet}` |
 | `POST /api/v1/users/me/social-accounts/{providerId}` | 필요 | `{code}` | 204 |
 | `DELETE /api/v1/users/me/social-accounts/{providerId}` | 필요 | `code` | 204 |
-| `PATCH /api/v1/users/me/password` | 필요 | `{newPassword, confirmPassword}` | 204 |
+| `PATCH /api/v1/users/me/password` | 필요 | `{newPassword, confirmPassword}`. 비밀번호가 있는 회원은 `currentPassword`도 필수 | 204 |
 
 `providerId`는 제공자 이름 `kakao`다. 대상 회원은 항상 토큰의 주인이며, 요청 값으로 회원이나 카카오 회원번호를 지정할 수 없다.
 
@@ -77,7 +77,7 @@
 |---|---|
 | 연동 | 비밀번호 유무와 관계없다. 이미 연동한 회원이거나 다른 회원이 쓰는 카카오 계정이면 409다. |
 | 해제 | 비밀번호가 있어야 한다. 연동한 카카오 계정으로 다시 인증하면 카카오 연결을 끊고 `kakao_id`를 비운다. |
-| 비밀번호 설정 | `kakao_id`가 있고 `password_hash`가 없어야 한다. 규칙은 가입과 같다. 비밀번호가 있는 회원의 변경은 제공하지 않는다. |
+| 비밀번호 설정 | `kakao_id`가 있고 `password_hash`가 없으면 현재 비밀번호 없이 저장한다. 규칙은 가입과 같다. 비밀번호가 있는 회원의 변경은 [비밀번호 재설정·변경 API](password-reset-api.md)를 따른다. |
 
 ### 실패 응답
 
@@ -94,5 +94,4 @@
 ## 제한
 
 - 사용자가 카카오 계정 페이지에서 직접 연결을 끊어도 웹훅이 없어 `kakao_id`는 남는다.
-- 비밀번호를 한 번 설정한 카카오 회원도 이후 변경은 할 수 없다.
 - 카카오 회원번호는 개인정보이므로 회원 탈퇴를 구현할 때 함께 파기해야 한다.
