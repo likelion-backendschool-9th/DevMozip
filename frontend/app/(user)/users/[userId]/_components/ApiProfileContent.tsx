@@ -2,19 +2,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchProfileDetail, ProfileRequestError } from '@/lib/profiles/profileDetail';
-import type { ProfileDetail } from '@/types/profileDetail';
+import type { OwnProfileDetail } from '@/types/profileDetail';
 import { ApiProfileTabs } from './ApiProfileTabs';
 import { ApiProfileEditor } from './ApiProfileEditor';
 import { useOwnProfile } from '../../../_components/OwnProfileProvider';
 import { ApiProfileHeader } from './ApiProfileHeader';
 import styles from '../page.module.css';
 
-type Result = { status: 'loading' } | { status: 'ready'; profile: ProfileDetail } | { status: 'error'; code: number };
+type Result = { status: 'loading' } | { status: 'ready'; profile: OwnProfileDetail } | { status: 'error'; code: number };
 
 export function ProfileApiResult({ result, onRetry, onEdit }: { result: Result; onRetry: () => void; onEdit?: () => void }) {
     if (result.status === 'loading') return <section className="planned-card" role="status" aria-live="polite">프로필 정보를 불러오고 있어요…</section>;
     if (result.status === 'ready') return <><ApiProfileHeader key={`${result.profile.id}:${result.profile.profileImage}:${result.profile.bannerImage}`} profile={result.profile} onEdit={onEdit} />
-        <ApiProfileTabs nickname={result.profile.nickname} slug={result.profile.tag} canEdit={!!onEdit} /></>;
+        <ApiProfileTabs nickname={result.profile.nickname} slug={result.profile.tag ?? (onEdit ? `own-${result.profile.id}` : undefined)} canEdit={!!onEdit} /></>;
     const missing = result.code === 404;
     const denied = result.code === 401 || result.code === 403;
     return <section className="planned-card" role="alert">

@@ -1,6 +1,6 @@
 # 프로젝트 종료 후 협업 리뷰 (#50)
 
-현재 기준: 2026-11-06. #49 강퇴 투표는 보류하며 기존 Mock 디자인을 유지한다. 작업 브랜치는 feat/50-project-reviews이고 커밋·푸시·PR은 하지 않았다.
+현재 기준: 2026-11-06. #49 강퇴 투표는 보류하며 기존 Mock 디자인을 유지한다. 작업 브랜치는 feat/50-project-reviews이며 리뷰 구현은 e879f41로 커밋했다. 사용자 요청으로 develop 대상 PR을 준비한다.
 
 ## 데이터 구조
 
@@ -80,3 +80,11 @@ Mock ON은 기존 시연 상태·날짜 시뮬레이션을 유지한다. OFF는 
 - 실행 서버 재시작 후 실제 DB 리뷰 조회 3개·제출 후 변경 차단·타인 조회 403 확인. 1440px Chromium에 pageerror/가로 넘침 없음.
 - 정리한 파일: ProjectReviewService, 삭제한 ProjectReviewKeywords/ProjectReviewConfiguration, ProjectLifecycleRepository 주석, 프로젝트 BFF의 미사용 import, ApiProjectDetail import, 리뷰 클라이언트 선언 공백, projectProxy의 구형 501 안내, 이 문서/청사진/진행 기록.
 - git diff --check 통과. DB 스키마·데이터와 YAML은 이번 정리에서 변경하지 않았다. 기존 Mock·다른 도메인·후속 연동용 집계 서비스 및 마이그레이션 SQL은 보존한다.
+
+
+## PR 준비: 최신 develop 통합
+
+- 사용자 요청으로 리뷰 구현 커밋 e879f41을 생성하고 origin/develop 0719b2f의 프로필 외부 링크 변경을 통합했다. 문서 충돌은 양쪽 진행 기록을 보존했다. 선행 #81/#85가 미병합이므로 이번 develop 대상 PR에도 포함된다.
+- 통합 후 backend 전체 466개 중 454개 통과·11개 스킵·기존 KakaoClientTest.java:153 로그 검증 1개 실패. 프로젝트 영역은 110개 중 99개 통과·11개 스킵·실패 없음. 카카오 코드를 수정하지 않았다.
+- 이번 PR 준비 단계에서 팀 DB/스키마를 변경하지 않았으며 통합된 최신 develop으로 실제 DB·브라우저를 다시 검증하지 않았다. 앞선 실제 DB/브라우저 결과는 구현 단계 기록이다.
+- 통합 후 frontend npm run build -- --webpack/TypeScript 검사 성공, npm test -- --maxWorkers=1: 66개 파일·704개 통과.
