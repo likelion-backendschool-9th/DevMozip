@@ -92,3 +92,35 @@ RECRUITING이면 지원자·팀원 존재 자체로 삭제를 제한하지 않�
 - PostgreSQL 통합 테스트 2개 추가: 수정 후 상세/목록 반영 및 조회수 보존, 삭제 후 목록·상세·내 프로젝트·관리 비노출과 멤버 보존.
 - backend 전체 238개 통과(실패·오류·스킵 0), frontend 51개 파일·544개 통과 및 npm run build 성공.
 - 최초 백엔드 실행은 과거 Docker 실행이 만든 root 소유 backend/build 파일 때문에 AccessDeniedException으로 실패했다. build/.gradle 생성물 소유권만 현재 사용자로 복구한 뒤 전체 재실행에 성공했다. 소스 권한·팀 DB는 변경하지 않았다.
+
+## #46 팀 PostgreSQL 재검증 — 2026-11-05
+
+기존 #46 PR #63의 head 5101872 기준 제품 코드에 #44/#45 프로젝트 전용 검증 설정을 사용했다. 현재 PR #63·#70·#72는 미병합 상태다. 제품 수정·삭제 코드는 바꾸지 않고 `ProjectUpdateDeleteTeamDatabaseIntegrationTest.java`를 추가했다.
+
+### 실제 팀 DB 테스트
+
+명시적 PROJECT_TEAM_DB_TEST opt-in에서 4개 통과했다. 프로젝트·멤버 엔티티만 validate하고, 모든 생성·수정·삭제를 테스트 트랜잭션에서 롤백한다. 기본 데이터는 수정하지 않는다.
+
+- JSONB 기술/분야/모집 인원 및 본문·이미지·공개 여부 교체, null summary/goal, 생성일·조회수·주최자 보존과 관리 재조회.
+- 모집 중 공고 논리 삭제 후 행·멤버 이력 보존, 공개/내 목록·상세·관리 제외, 재수정·재삭제 404.
+- 비주최자 수정·삭제 403, 종료 공고 수정·삭제 409.
+- ACTIVE 참여자 인원보다 작은 정원 변경 409, 기존 정원 보존.
+
+사후 SQL로 기본 프로젝트 8개·멤버 21개·지원서 6개·조회수 합 2215 유지, db46_ 임시 공고 0개를 확인했다. 테스트에서 시퀀스 발급은 롤백되지 않아 빈 번호가 생길 수 있다.
+
+### 남은 연결
+
+- 실제 project_applications 테이블이 생겼지만 ProjectApplicationUsage 기본 어댑터는 여전히 빈 집합이다. 대기/승인 지원자가 있는 직군 보호는 실제 지원 데이터와 연결되지 않았으며 #48 어댑터 결합이 필요하다. ACTIVE 팀원 기반 정원/직군 검사는 기존 멤버 DB 조회를 사용한다.
+- 실제 인증 회원 ID 공급, 프론트 PUT/DELETE 연결, 브라우저 왕복·수정/삭제 알림·채팅 후처리는 아직 미완료다.
+- 팀 DB 검증은 서비스/JPA/JDBC 수준이다. 주최자 ID 공급은 테스트 대역 101/202이며 JWT 필터·실제 계정 권한 검증이 아니다.
+- 이번에 기존 지원 로직이나 프론트 수정·삭제 API 코드를 추가하지 않았으며 커밋·푸시·PR 갱신도 하지 않았다.
+
+### 이번 실행 결과
+
+- 팀 DB: `./gradlew test --tests '*ProjectUpdateDeleteTeamDatabaseIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m` 성공, 4개 통과.
+- 기존 #46 작업 기반 전체: `./gradlew test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m` 성공, 246개 중 238개 통과·팀 DB opt-in 8개 스킵·실패/오류 0. 최신 develop의 별도 카카오 변경까지 통합한 전체 실행 결과는 아니다.
+- frontend `npm run build` 성공(TypeScript 포함). 프론트 소스 변경 없음, 생성 next-env.d.ts 복원. git diff --check 통과.
+
+## 후속 PR 통합 검증
+
+#63·#70·#72와 최신 develop을 별도 브랜치에서 통합했다. 팀 DB opt-in 테스트 8개(#44 1개, #45 3개, #46 4개) 및 프론트 `npm run build -- --webpack` 성공. 전체 백엔드는 384개 중 375개 통과·8개 스킵·1개 실패이며 실패는 #70 검증 때도 발생한 KakaoClientTest 153행 로그 포함 검증이다. 프로젝트 패키지 테스트는 52개 통과·8개 opt-in 스킵·실패 0이다. 카카오 코드는 변경하지 않았으며 전체 실행의 실패는 미해결로 기록한다. 선행 PR을 먼저 병합해야 후속 PR diff가 검증 변경 중심으로 정리된다.
