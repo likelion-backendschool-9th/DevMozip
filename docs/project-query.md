@@ -37,7 +37,7 @@
 GET /api/v1/projects?interests=교육&interests=게임&techStacks=React&techStacks=Java&jobRole=BACKEND&sort=LATEST&page=0&size=20
 ```
 
-분야·기술은 각각 NFKC·앞뒤 공백 정리·소문자 비교한다. 모든 필터는 함께 적용한다. 잘못된 enum·범위·배열 입력은 400이다. 빈 검색 결과는 200과 빈 items, totalElements=0, totalPages=0이다. 범위를 벗어난 정상 페이지 번호도 빈 items와 실제 전체 개수를 반환한다.
+분야·기술은 각각 NFKC·앞뒤 공백 정리·소문자 비교한다. 모든 필터는 함께 적용한다. 모집 직군은 기본 코드/라벨 또는 직접 입력 문자열로 조회하며 대소문자를 무시한다. 잘못된 상태·정렬 enum, 직군 길이·범위·배열 입력은 400이다. 빈 검색 결과는 200과 빈 items, totalElements=0, totalPages=0이다. 범위를 벗어난 정상 페이지 번호도 빈 items와 실제 전체 개수를 반환한다.
 
 - LATEST: created_at DESC, id DESC.
 - POPULAR: view_count DESC, created_at DESC, id DESC.

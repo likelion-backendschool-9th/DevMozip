@@ -31,7 +31,7 @@
 - PENDING/APPROVED 지원서가 사용하는 직군은 실제 project_applications 조회로 보호한다. 지원 CRUD는 추가하지 않는다.
 - 진행 중 현재 ACTIVE 팀원(주최자 포함)의 절반 초과 동의로 종료한다. 확정 전 본인 동의 취소 가능, 완료 후 취소 불가.
 - 수정 시 기간 단축 불가. 모집 중 논리 삭제, 종료된 공고 수정 불가 등 기존 #46/#47 정책을 따른다.
-- 모집 직군은 코드 목록, 기술 스택·분야는 서버 선택지와 사용자 입력을 함께 지원하며 각각 최대 5개다.
+- 모집 직군·기술 스택·분야는 기본 후보 선택과 직접 입력을 함께 지원한다. 기본 직군 코드는 유지하며 사용자 직군은 같은 roleCode 문자열로 전달한다. 직군은 행별 인원/경력을 설정하며 최대 10개, 기술 스택·분야는 각각 최대 5개다. 모집 상태는 기존 4개만 허용한다.
 
 ## 실행
 
@@ -61,3 +61,7 @@ frontend 서버 환경: BACKEND_URL=http://localhost:8080, PROJECT_API_ENABLED=t
 복구 후에도 프론트 테스트 653개·webpack 빌드 및 백엔드 전체 테스트를 재실행해 같은 결과를 확인했다. 복구 후 임시 공고 38도 생성·수정 후 논리 삭제했다. 작업 위치는 `.worktrees/project-api`, 브랜치는 `feat/project-api-docker-integration`이다. 프로젝트의 클라이언트 로딩 구조에 맞게 해당 layout에만 `instant=false`를 적용했다.
 
 개발 서버의 실제 토글 전환·프로젝트 8개 표시도 확인했다. 다만 Next 개발 로그의 프로젝트 client page instant-navigation 검증 경고는 남아 있다. 프로덕션 브라우저 흐름에서는 JavaScript 오류 없이 동작했다.
+
+## 화면 디자인 유지
+
+Mock ON/OFF는 기본 Mock 디자인을 공유한다. API 모드는 기존 목록·상세·작성·관리 CSS Module과 공통 Card/Input/Button, ProjectSummaryCard를 사용하며 데이터와 권한은 기존 실제 API에 따른다. 직군별 실제 참여 인원이 제공되지 않으므로 해당 수치를 추정하지 않고 모집 인원과 전체 참여 인원만 표시한다.

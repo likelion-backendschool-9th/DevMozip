@@ -1,4 +1,4 @@
-export type ProjectRoleCode = 'FRONTEND' | 'BACKEND' | 'FULLSTACK' | 'DESIGNER' | 'DEVOPS' | 'DATA_ENGINEER' | 'AI_ENGINEER' | 'MOBILE' | 'GAME' | 'OTHER';
+export type ProjectRoleCode = string; // 기본 코드와 사용자 직접 입력 직군을 함께 사용한다.
 export interface CreateProjectRequest {
     title: string; summary: string | null; description: string; goal: string | null;
     imageUrl: string; isPublic: boolean;

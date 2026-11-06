@@ -15,8 +15,8 @@ describe('프로젝트 생성 API 어댑터', () => {
  it.each(['', 'javascript:alert(1)', 'data:image/png;base64,abc', '/local.png'])('잘못된 이미지 %s 거절', image => {
   expect(() => toProjectCreationRequest(input, image, true)).toThrow();
  });
- it('서버에 없는 직군 및 기술 6개를 거절한다', () => {
-  expect(() => toProjectCreationRequest({ ...input, slots: [{ role: 'unknown', count: 1, minYears: 0 }] }, 'https://example.test/a', true)).toThrow();
+ it('직접 입력 직군을 전달하고 기술 6개는 거절한다', () => {
+  expect(toProjectCreationRequest({ ...input, slots: [{ role: 'SRE', count: 1, minYears: 0 }] }, 'https://example.test/a', true).recruitmentSlots[0].roleCode).toBe('SRE');
   expect(() => toProjectCreationRequest({ ...input, stacks: Array(6).fill('React') }, 'https://example.test/a', true)).toThrow();
  });
  it.each([null, {}, { id: -1, title: 'a' }, { id: '1', title: 'a' }])('잘못된 등록 결과를 성공으로 취급하지 않는다', value => {
