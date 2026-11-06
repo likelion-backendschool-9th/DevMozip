@@ -1,23 +1,34 @@
 services:
   frontend:
     build:
+      context: ${DEVMOZIP_SOURCE_DIR:-.}/frontend
       target: dev
     volumes:
-      - ./frontend:/app
+      - ${DEVMOZIP_SOURCE_DIR:-.}/frontend:/app
       - /app/node_modules
       - /app/.next
     environment:
       NODE_ENV: development
+      PROJECT_API_ENABLED: "true"
     command: [npm, run, dev, --, --hostname, 0.0.0.0]
   backend:
     build:
+      context: ${DEVMOZIP_SOURCE_DIR:-.}/backend
       target: dev
     volumes:
-      - ./backend:/app
+      - ${DEVMOZIP_SOURCE_DIR:-.}/backend:/app
       - gradle_cache:/root/.gradle
     environment:
-      # bootRun의 local(H2) 기본값 대신 compose의 PostgreSQL을 쓴다
+      # compose는 default 프로필로 PostgreSQL·Redis를 사용한다 (직접 bootRun은 local 프로필).
       SPRING_PROFILES_ACTIVE: default
+      # 공유 팀 DB의 스키마·초기 데이터를 컨테이너 기동 시 변경하지 않는다.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_SQL_INIT_MODE: never
+      # .env의 DOMAINNAME은 운영 주소이므로 로컬에서는 고정한다
+      DOMAINNAME: http://localhost:3000
+      # .env의 DB_HOST:DB_PORT(원격 DB)로 접속하고, 없으면 compose의 postgres를 쓴다
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
     command: [sh, ./gradlew, bootRun, --no-daemon]
   postgres:
     ports: ['127.0.0.1:${DB_PORT:-5432}:5432']
