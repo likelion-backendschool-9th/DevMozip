@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 class ProjectQueryIntegrationTest {
+	@MockitoBean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy;
 	@Container @ServiceConnection
 	static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc;

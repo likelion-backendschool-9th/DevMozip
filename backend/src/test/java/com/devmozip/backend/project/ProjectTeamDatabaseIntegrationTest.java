@@ -125,6 +125,7 @@ class ProjectTeamDatabaseIntegrationTest {
 		@Bean ProjectMemberRepository projectMemberRepository(EntityManagerFactory factory) {
 			return new JpaRepositoryFactory(SharedEntityManagerCreator.createSharedEntityManager(factory)).getRepository(ProjectMemberRepository.class);
 		}
+		@Bean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy() { return org.mockito.Mockito.mock(com.devmozip.backend.service.ProjectCreationPolicy.class); }
 		@Bean LocalValidatorFactoryBean validator() { return new LocalValidatorFactoryBean(); }
 		@Bean JdbcTemplate jdbcTemplate(DataSource source) { return new JdbcTemplate(source); }
 		@Bean ProjectCurrentUserProvider currentUser() { return () -> 101L; }

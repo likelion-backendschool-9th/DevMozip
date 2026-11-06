@@ -49,6 +49,7 @@ import static com.devmozip.backend.dto.project.ProjectLifecycleRequest.Action.*;
 @Sql("classpath:project/lifecycle-applications.sql")
 @Import(ProjectLifecycleIntegrationTest.EventsConfiguration.class)
 class ProjectLifecycleIntegrationTest {
+	@MockitoBean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy;
 	@Container @ServiceConnection static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc;
 	@Autowired JdbcTemplate jdbc;

@@ -1,4 +1,6 @@
 'use client';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { ApiProjectList } from '@/app/projects/_components/api/ApiProjectList';
 import styles from './page.module.css';
 import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 import { useState } from 'react';
@@ -13,7 +15,7 @@ import { filterProjectList, parseProjectListFilters } from '@/lib/projects/proje
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { RecruitmentCard } from '@/components/projects/RecruitmentCard';
-export default function ProjectsPage() {
+function MockProjectsPage() {
     const { projects, now } = useProjects();
     const [params, setParams] = useSearchParams();
     const filters = parseProjectListFilters(params);
@@ -136,3 +138,5 @@ export default function ProjectsPage() {
         </div>
     );
 }
+
+export default function ProjectsPage(){const {enabled}=useMockVisibility();return enabled?<MockProjectsPage/>:<ApiProjectList/>;}

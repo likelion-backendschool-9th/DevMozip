@@ -1,15 +1,19 @@
 package com.devmozip.backend.config;
 
-import java.util.Set;
+import java.util.HashSet;
 import com.devmozip.backend.service.ProjectApplicationUsage;
+import com.devmozip.backend.entity.enums.ProjectJobRole;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-/** 현재 프로젝트 지원 도메인은 미구현이다. #48에서 실제 조회 어댑터로 교체한다. */
 @Configuration(proxyBeanMethods = false)
 public class ProjectApplicationUsageConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(ProjectApplicationUsage.class)
-	ProjectApplicationUsage projectApplicationUsage() { return projectId -> Set.of(); }
+	ProjectApplicationUsage projectApplicationUsage(JdbcTemplate jdbc) {
+		return id -> new HashSet<>(jdbc.query("SELECT DISTINCT job_role FROM project_applications WHERE project_id=? AND status IN ('PENDING','APPROVED')",
+			(rs,row) -> ProjectJobRole.valueOf(rs.getString(1)),id));
+	}
 }

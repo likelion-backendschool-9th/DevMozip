@@ -20,6 +20,7 @@ import com.devmozip.backend.repository.ProjectRepository;
 import com.devmozip.backend.repository.ProjectMemberRepository;
 import com.devmozip.backend.security.project.ProjectCurrentUserProvider;
 import com.devmozip.backend.service.ProjectService;
+import com.devmozip.backend.service.ProjectCreationPolicy;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -37,9 +38,10 @@ public class ProjectServiceImpl implements ProjectService {
 	private final Validator validator;
 	private final ProjectApplicationUsage applications;
 	private final ProjectPeriodPolicy periods;
+	private final ProjectCreationPolicy creation;
 
 	public ProjectServiceImpl(ProjectRepository projects, ProjectMemberRepository members,
-		ProjectCurrentUserProvider currentUser, @Qualifier("projectClock") Clock clock, Validator validator, ProjectApplicationUsage applications, ProjectPeriodPolicy periods) {
+		ProjectCurrentUserProvider currentUser, @Qualifier("projectClock") Clock clock, Validator validator, ProjectApplicationUsage applications, ProjectPeriodPolicy periods, ProjectCreationPolicy creation) {
 		this.projects = projects;
 		this.members = members;
 		this.currentUser = currentUser;
@@ -47,6 +49,7 @@ public class ProjectServiceImpl implements ProjectService {
 		this.validator = validator;
 		this.applications = applications;
 		this.periods = periods;
+		this.creation = creation;
 	}
 
 	@Override
@@ -54,6 +57,7 @@ public class ProjectServiceImpl implements ProjectService {
 	public ProjectResponse create(CreateProjectRequest request) {
 		long hostId = currentUser.getCurrentUserId();
 		if (hostId <= 0) throw invalid("주최자 ID를 확인해 주세요.");
+		creation.requirePermission(hostId);
 		if (request == null || !validator.validate(request).isEmpty()) throw invalid("프로젝트 필수 입력과 길이·인원·경력을 확인해 주세요.");
 		Set<Object> roles = new HashSet<>();
 		var slots = request.recruitmentSlots().stream().map(slot -> {
