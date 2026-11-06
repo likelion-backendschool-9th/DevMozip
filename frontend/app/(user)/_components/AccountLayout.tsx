@@ -67,7 +67,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
                                 onClick={() => setMenuOpen(false)}
                                 key={item.key}
                                 end
-                                href={item.key === 'profile' ? (own.profile && pathname === `/users/${own.profile.tag}` ? `/users/${own.profile.tag}` : '/profile/me') : item.path}
+                                href={item.key === 'profile' ? (own.profile?.tag && pathname === `/users/${own.profile.tag}` ? `/users/${own.profile.tag}` : '/profile/me') : item.path}
                             >
                                 <Icon size={17} />
                                 <span>{item.label}</span>

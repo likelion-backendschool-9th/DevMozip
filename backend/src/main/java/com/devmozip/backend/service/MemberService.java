@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.devmozip.backend.dto.auth.SignupOptionsResponse;
@@ -27,6 +28,7 @@ import com.devmozip.backend.entity.enums.Interest;
 import com.devmozip.backend.entity.enums.JobCategory;
 import com.devmozip.backend.entity.enums.Skill;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.security.jwt.RefreshTokenStore;
 
 @Service
 public class MemberService {
@@ -44,10 +46,15 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenStore refreshTokenStore;
+    private final PasswordResetService passwordResetService;
 
-    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+                         RefreshTokenStore refreshTokenStore, PasswordResetService passwordResetService) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenStore = refreshTokenStore;
+        this.passwordResetService = passwordResetService;
     }
 
     /** 회원을 저장한다. 직군·기술 스택·관심 분야는 화면에서 고른 값을 users 칼럼에 그대로 담는다. */
@@ -179,22 +186,48 @@ public class MemberService {
         member.unlinkKakao();
     }
 
-    /** 비밀번호 없는 카카오 회원의 첫 비밀번호를 저장한다. 이미 비밀번호가 있는 회원의 변경은 지원하지 않는다. */
+    /**
+     * 비밀번호가 있는 회원은 현재 비밀번호를 확인하고 변경하며, 비밀번호 없는 카카오 회원은 첫 비밀번호를 저장한다.
+     * 요청 값이 아니라 저장된 회원 상태로 나눈다. 현재 비밀번호를 빼고 보내도 확인을 건너뛸 수 없게 하기 위해서다.
+     */
     @Transactional
     public void setPassword(String email, PasswordSetRequest request) {
-        if (!request.newPassword().equals(request.confirmPassword())) {
-            throw badRequest("비밀번호가 일치하지 않습니다.");
-        }
-        checkPasswordBytes(request.newPassword());
+        checkNewPassword(request.newPassword(), request.confirmPassword());
 
         Member member = findMemberForUpdate(email);
         if (member.getPasswordHash() != null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 비밀번호가 설정된 계정입니다.");
+            changePassword(member, request);
+            return;
         }
         if (member.getKakaoId() == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "비밀번호를 설정할 수 없는 계정입니다.");
         }
         member.changePasswordHash(passwordEncoder.encode(request.newPassword()));
+    }
+
+    private void changePassword(Member member, PasswordSetRequest request) {
+        if (!StringUtils.hasLength(request.currentPassword())) {
+            throw badRequest("현재 비밀번호를 입력해 주세요.");
+        }
+        // 401은 BFF와 화면이 로그인 만료로 처리하므로 현재 비밀번호 불일치는 400으로 응답한다.
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPasswordHash())) {
+            throw badRequest("현재 비밀번호가 올바르지 않습니다.");
+        }
+        if (passwordEncoder.matches(request.newPassword(), member.getPasswordHash())) {
+            throw badRequest("현재 비밀번호와 다른 값을 입력해 주세요.");
+        }
+        member.changePasswordHash(passwordEncoder.encode(request.newPassword()));
+        // 같은 트랜잭션에서 지운다. Redis가 실패하면 변경도 롤백되어 탈취된 세션이 남은 채 성공 처리되지 않는다.
+        refreshTokenStore.remove(member.getEmail());
+        passwordResetService.removeToken(member.getEmail());
+    }
+
+    /** 비밀번호 확인 값과 BCrypt 길이를 검사한다. 형식은 요청 DTO의 @Pattern이 먼저 확인한다. */
+    public void checkNewPassword(String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw badRequest("비밀번호가 일치하지 않습니다.");
+        }
+        checkPasswordBytes(newPassword);
     }
 
     private Member findMember(String email) {
@@ -231,10 +264,7 @@ public class MemberService {
         if (request.password() == null) {
             throw badRequest("영문과 숫자를 포함해 8~64자로 입력해 주세요.");
         }
-        if (!request.password().equals(request.confirmPassword())) {
-            throw badRequest("비밀번호가 일치하지 않습니다.");
-        }
-        checkPasswordBytes(request.password());
+        checkNewPassword(request.password(), request.confirmPassword());
     }
 
     private void checkPasswordBytes(String password) {

@@ -1,13 +1,15 @@
 # AI API 명세
 
-기준일: 2026-11-05. **서버 대화·메시지 API 5개와 실사용자 인증 연결 구현 완료. 2026-11-05 프론트 로그인 필수 전환을 반영했다. 프론트 AI API 연결·실제 PostgreSQL 통합 검증은 미완료**다. 이전 브라우저 로그인 왕복 검증은 당시 guest 허용 정책 기준이며 이번 검증과 구분한다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
+기준일: 2026-11-05. **서버 대화·메시지 API 5개와 2단계 조건 PUT 구현 완료. 실사용자 인증과 최신 develop의 프론트 로그인 필수 동작을 유지하며, 프론트 AI API 연결·실제 PostgreSQL 통합 검증은 미완료**다. 이전 브라우저 검증은 guest 허용 당시 기록이며 현재 검증은 진행 문서 마지막 절을 따른다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
+
+구현 커밋 `0f7dc87`은 `origin/feat/ai-conditions`에 푸시 완료했다. 무료 Mock 한도 변경은 별도 커밋 `fcd0b4c`다. 현재 상태·최근 검증과 남은 작업은 [진행 현황의 최신 요약](ai-progress.md#현재-완료-상태최근-커밋)을 따른다.
 
 ## 공통 계약
 
 - 서버 기본 경로 `/api/v1/ai`, 화면 `/ai/matching`.
 - 아래 서버 영속 API는 인증을 요구한다. 프론트 대화 화면도 로그인 필수이며 비로그인 대화·메시지·조건 저장과 익명 서버 저장 API를 제공하지 않는다.
 - 사용자 ID는 인증 정보에서 얻고 모든 대화 접근에 소유권을 검증한다. 실사용자 식별 방식과 남은 BFF 계약은 아래 인증 절을 따른다.
-- 현재 응답은 DTO 객체/배열이며 별도 `data` envelope를 쓰지 않는다. 입력 JSON 필드는 아래 1단계 표에 명시된 항목이다.
+- 현재 응답은 DTO 객체/배열이며 별도 `data` envelope를 쓰지 않는다. 입력 JSON 필드는 아래 1·2단계 구현 계약에 명시된 항목이다.
 - 1단계 시각은 오프셋 없는 LocalDateTime ISO-8601(예: `2026-11-04T15:00:00`). 앱/DB 기준 시간대는 미확정이다.
 
 ### 추가 제공 API 표 반영 (2026-11-04)
@@ -33,10 +35,10 @@
 | 응답 | 필드 |
 |---|---|
 | 대화 요약 `ConversationResponse` | `id`: 정수, `title`: 문자열/null, `createdAt`, `updatedAt`: 시각 |
-| 대화 상세 `ConversationDetailResponse` | 요약 필드 + `currentConditions`: JSON 값/null, `messages`: 메시지 배열 |
+| 대화 상세 `ConversationDetailResponse` | 요약 필드 + `currentConditions`: JSON 값, DB NULL은 `{}`로 반환, `messages`: 메시지 배열 |
 | 메시지 `MessageResponse` | `id`: 정수, `role`: USER/ASSISTANT, `content`: 문자열, `createdAt`: 시각 |
 
-`currentConditions`는 엔티티 내부에서 JSON 문자열로 보관하고 상세 응답에서 JSON 값으로 직렬화한다. 1단계는 기존 조건을 조회만 하며 생성/메시지 요청으로 조건을 저장하지 않는다. 저장 API는 role을 USER로 정하고 경로의 본인 대화에 연결한다. 사용자 ID·메시지 ID·생성 시각은 서버가 정하며 요청의 임의 식별자·역할로 바꿀 수 없다. 서버 메시지 길이 상한은 현재 구현에 별도 정의가 없고 프론트 Mock의 1,500자를 서버 계약으로 간주하지 않는다.
+`currentConditions`는 엔티티 내부에서 JSON 문자열로 보관하고 상세 응답에서 JSON 값으로 직렬화한다. 2단계부터 새 대화의 초기 조건은 `{}`이고 기존 DB NULL도 조회 시 `{}`로 반환한다. 생성/메시지 요청으로 사용자 조건을 받지는 않으며 조건 PUT으로 교체한다. 저장 API는 role을 USER로 정하고 경로의 본인 대화에 연결한다. 사용자 ID·메시지 ID·생성 시각은 서버가 정하며 요청의 임의 식별자·역할로 바꿀 수 없다. 서버 메시지 길이 상한은 현재 구현에 별도 정의가 없고 프론트 Mock의 1,500자를 서버 계약으로 간주하지 않는다.
 
 ### 오류·삭제
 
@@ -50,6 +52,57 @@
 오류는 기존 `ErrorResponse`의 `status`, `error`, `message`, `path`, `timestamp`를 재사용한다. 정지 계정 등 기존 인증 체계의 별도 거절 정책은 그대로 따른다.
 
 삭제는 **해당 대화의 메시지 → 본인 대화** 순서로 한 트랜잭션에서 처리한다. 사용자 최신 요청에 따라 1단계의 추천 요청·결과 테이블 참조를 제거했다. `ai_recommendations`, `ai_recommendation_requests`, `ai_usages`가 없는 H2에서도 삭제할 수 있고 다른 대화·메시지는 유지한다. 추천 이력·월 사용량을 조회/삭제/복원하지 않으며, 추천 기능 도입 후 필요한 FK·삭제 정책은 해당 단계에서 별도 확정한다.
+
+## 2단계 구현 API — 조건 전체 교체 (2026-11-05)
+
+`PUT /api/v1/ai/conversations/{id}/conditions`, 인증 필수, 본인 대화만 수정한다. 2026-11-05 최신 사용자 요청으로 프로젝트 분야를 `interests`로 통합했다. 별도 `fields` 입력은 제거하고 직군은 화면의 선택·직접 입력을 모두 허용한다.
+
+PR 리뷰에 따라 요구 경력 enum은 `entity/enums/RequiredCareer`, 직군·인원 요청 원소는 `dto/ai/RecruitmentRoleConditionDto`, 정수/문자열 JSON 역직렬화 클래스는 `utils/StrictIntegerDeserializer`·`StrictStringDeserializer`에 둔다. 패키지·타입 이름만 정리하며 아래 JSON 키·선택지·검증·응답은 유지한다. 역직렬화 처리는 AI 요청 애너테이션에서만 적용하고 전역 Jackson 설정은 바꾸지 않는다.
+
+```json
+{
+  "interests": ["생산성", "웹", "AI / 머신러닝"],
+  "stacks": ["Java", "Spring Boot"],
+  "roles": [{"name": "백엔드", "count": 2}, {"name": "보안 개발자", "count": 1}],
+  "career": "3년 이상",
+  "durationMonths": 3
+}
+```
+
+| 요청 필드 | 타입·검증 |
+|---|---|
+| interests | **필수** 문자열 배열. 공통 Interest label 5개(생산성·핀테크·교육·커뮤니티·AI)와 기존 프로젝트 분야 7개(웹·모바일·AI / 머신러닝·데이터·게임·보안·클라우드 / 인프라)를 통합한 12개 선택지. 최소 1개·제출 최대 12개 |
+| stacks | **선택** 문자열 배열. 기존 최대 30개·항목당 1~50자, 알려진 Skill label 표기 정규화·목록 밖 기술 입력 허용을 유지한다. 프론트도 기존 선택 버튼과 직접 입력/추가·삭제를 함께 제공한다. Enter 추가(한글 조합 중 제외), 빈 값/중복·30개/50자 제한, 알려진 기술 표기 정규화를 적용하고 로컬 재복원을 지원 |
+| roles | **선택** 객체 배열. 화면처럼 선택/직접 입력 허용, 최대 12개, name은 공백 제거 후 1~30자 문자열. 같은 직군 이름 중복 거절. 공통 JobCategory·ProjectJobRole에 자동 등록하지 않음 |
+| roles[].count | 해당 직군을 보내면 필수. 화면과 동일한 1~20의 JSON 정수. 0·음수·소수·숫자 문자열·boolean·null 거절 |
+| career | **필수** 단일 문자열. 경력 무관, 1년 이상, 2년 이상, 3년 이상, 5년 이상 |
+| durationMonths | **필수** 1~36의 JSON 정수. 소수·숫자 문자열 자동 변환 차단. 화면 선택지는 기존 1·2·3·6·12개월을 유지하고 과거 저장된 유효한 기간도 표시 |
+
+- 매 PUT에 `interests`·`career`·`durationMonths`를 보낸다. 누락/null, 빈 관심 분야 배열 및 `{}` 요청은 400이다. 설명·기술·직군은 필수가 아니다. `description`은 로컬 입력이며 이 API에는 보내지 않는다.
+- PUT은 전체 교체다. stacks·roles의 누락/null/빈 배열은 미선택으로 처리해 저장 JSON에서 제외하며 빠진 기존 선택 조건은 제거한다. 세 필수값만 보내 선택 조건을 초기화할 수 있다.
+- 문자열 앞뒤 공백을 제거한다. interests·stacks는 같은 문자열 중복을 첫 순서대로 제거한다. 알려진 기술은 대소문자를 Skill label로 통일하고 새로운 기술명은 입력 표기를 유지한다. 직군은 공백 제거 후 같은 이름 중복을 거절한다. 개수 상한은 중복 제거 전 제출 개수다.
+- 관심 분야·기술 원소와 직군 이름은 문자열만 받으며 숫자/boolean 자동 변환을 차단한다. 배열 내 null·공백 문자열·잘못된 선택값은 400이다. 최상위와 직군 객체의 알 수 없는 키도 400이다. 제거한 `fields`, userId·description·duration은 받지 않는다.
+- 조건 갱신은 기존 본인 조회·비관적 잠금·트랜잭션을 재사용하고 마이크로초 단위 updated_at을 갱신한다. 같은 조건 재전송도 정상 PUT이다. 앱/DB 기준 시간대는 미확정이다.
+
+성공은 **200**, `ConversationConditionsResponse`의 조건은 JSON 문자열이 아닌 객체다.
+
+```json
+{
+  "id": 1,
+  "currentConditions": {"interests": ["웹"], "roles": [{"name":"보안 개발자","count":1}], "career": "경력 무관", "durationMonths": 3},
+  "updatedAt": "2026-11-05T10:00:00.123456"
+}
+```
+
+오류는 기존 ErrorResponse다. 입력 오류 400, 익명·삭제 계정 401, 정지 계정 403, 타인/미존재 대화는 동일한 404, DB 오류는 500이다. 검증 실패 시 기존 조건·수정 시각을 유지한다. 신규 대화 초기 `{}`와 과거 NULL 조회 정규화는 유지하며 기존 서버 저장 JSON은 조회 때 재검증하거나 일괄 변경하지 않는다. 과거 `fields`가 있는 서버 조건도 그대로 조회하고 다음 PUT부터는 새 `interests` 계약으로 전체 교체한다.
+
+프론트 로컬 복원에서는 기존 fields의 7개 기본 선택값을 interests에 중복 없이 옮긴다. 옮긴 항목은 기존 fields에서 제거해 사용자가 통합 관심 분야에서 삭제한 값이 재등장하지 않게 한다. 과거 자유 입력 fields와 메시지/결과 스냅샷은 호환 데이터로 보존한다. 새 화면에는 별도 분야 입력·분야 직접 입력을 표시하지 않는다.
+
+기존 `@JdbcTypeCode(SqlTypes.JSON)`과 엔티티·DB 설정은 유지한다. 실제 PostgreSQL 적용 컬럼/DDL·JSONB 실행 검증은 미완료다. 프론트는 계정별 로컬 초안을 사용하며 AI API BFF·자동 서버 동기화는 연결하지 않았다. 후속 연결 시 화면의 duration 문자열을 durationMonths 정수로 변환한다. 직군은 화면 문자열 그대로 허용하므로 공통 JobCategory label로 바꾸지 않는다. 조건 변경은 메시지·ASSISTANT·추천·사용량을 생성하지 않는다.
+
+### 프로젝트 기간의 추천 비교 정책
+
+추천 조건은 개월 수로 입력한다. 프로젝트 도메인은 기존 `development_start`·`development_end` 예정일을 유지하고 후속 추천 엔진이 두 날짜로 기간을 자동 계산해 비교한다. 프로젝트 엔티티·API·작성 화면에 개월 수 필드를 추가하거나 날짜 입력을 변경하지 않는다. **기간 자동 계산의 방향은 확정했지만 아직 추천 엔진은 미구현**이다. 잔여 일수 반올림/올림·월말·날짜 누락 처리와 비교 허용 오차는 해당 단계에서 정하며 임의로 확정하지 않는다.
 
 ## 인증 연결과 남은 프론트 계약
 
@@ -69,13 +122,13 @@
 - guest 초안 인계 기능은 제거했다. 기존 guest 저장 데이터는 일괄 삭제하지 않지만 노출·인계하지 않는다. 메인 입력의 브라우저 전용 선택 필드 `inputOwner`로 소유 계정을 구분한다. 과거 소유자 없는 메인 입력은 복원하지 않는다.
 - 로그인 메시지 전송은 USER만 추가한다. 자동 답변·자연어 분석·추천·사용량 차감은 실행하지 않는다. 과거 계정별 Mock 결과의 조회 호환과 추천 준비 중 안내를 유지한다.
 - 로컬 소유 키는 실제 로그인 이메일별로 구분하며, 이메일이 일치하는 기존 데모 계정은 이전 ID 키를 유지한다. 공통 Mock 프로필 ID가 같은 일반 계정도 대화는 섞이지 않게 했다. 이는 브라우저 저장 분리일 뿐 서버의 users PK·소유권 검증을 대체하지 않는다.
-- 로그인 직후 서버에 전송하지 않는다. 최초 추천 시 대화·USER 메시지·조건 전송, 로컬/서버 ID 연결·원래 시각·부분 실패·중복 재시도·원자성은 4단계 후속 계약으로 남긴다. 이번에 동기화 API나 조건 PUT을 구현하지 않았다.
+- 로그인 직후 서버에 전송하지 않는다. 최초 추천 시 대화·USER 메시지·조건 전송, 로컬/서버 ID 연결·원래 시각·부분 실패·중복 재시도·원자성은 4단계 후속 계약으로 남긴다. 로컬 초안 동기화 API는 미구현이다. 조건 PUT은 2단계에서 구현했지만 프론트 연결은 하지 않았다.
 
 ## 현재 매핑과 ERD 확인 항목
 
 | 테이블 | 현재 엔티티 필드·관계 |
 |---|---|
-| `ai_conversations` | `id` BIGINT IDENTITY, `user_id` 필수 숫자, `title` 최대 255자/null, `current_conditions` JSON/null, `created_at`, `updated_at` 필수. type/status 없음 |
+| `ai_conversations` | `id` BIGINT IDENTITY, `user_id` 필수 숫자, `title` 최대 255자/null, `current_conditions` JSON 매핑/DB null 허용(신규 앱 초기값 `{}`), `created_at`, `updated_at` 필수. type/status 없음 |
 | `ai_messages` | `id` BIGINT IDENTITY, `conversation_id` 필수 ManyToOne, `role` USER/ASSISTANT, `content` TEXT 필수, `created_at` 필수. updated_at 없음 |
 
 이 표는 코드 매핑이며 실제 DB DDL 확인 결과가 아니다. `user_id`는 JPA 연관 엔티티가 아닌 숫자다. 아래 제공 ERD와 대조했으며 실제 DB의 제약·적용 상태는 별도 확인이 필요하다. [PostgreSQL 검토 초안](sql/ai-conversations-proposal.sql)과 `backend/src/test/resources/ai/schema.sql`은 각각 참고용/격리 테스트용이다.
@@ -118,7 +171,7 @@ AI 내부의 참조 컬럼은 메시지 → 대화(`conversation_id`), 추천 �
 | `id` | BIGINT | PK, 자동 생성 권장 |
 | `user_id` | BIGINT | users 참조, 로그인 사용자 서버 대화는 NOT NULL |
 | `title` | VARCHAR(255) | 최종 NULL 허용 정책 미확정. 현재 1단계 API는 NULL 허용 |
-| `current_conditions` | JSONB | NOT NULL·기본값 `'{}'::jsonb` 권장. 현재 구현의 NULL 허용과 구분 |
+| `current_conditions` | JSONB | DB NOT NULL·기본값은 검토 대상. DB NULL 허용 유지, 2단계 신규 앱 초기값·NULL 조회 응답은 `{}` |
 | `created_at` | DATETIME | NOT NULL 권장 |
 | `updated_at` | DATETIME | NOT NULL 권장 |
 
@@ -212,27 +265,64 @@ CHECK (used_count >= 0)
 
 **메시지 동반 삭제와 DB의 ON DELETE CASCADE 적용 여부를 구분한다.** 현재 서비스는 메시지 → 대화 순서로 직접 삭제하고 트랜잭션으로 원자성을 보장한다. DB CASCADE는 확인·적용하지 않았으며 JPA cascade나 실제 DDL을 변경하지 않았다. 사용자 최신 요청으로 이전 추천 요청·결과 동반 삭제 정책을 1단계에서 제외했다. 메시지 SET NULL은 후속 설계 권장일 뿐 현재 적용하지 않으며 개별 메시지 삭제 API는 없다. 미래에 추천 FK가 생기면 보존/삭제와 FK 처리를 함께 확정해야 한다. 월 사용량은 대화 삭제 경로와 분리한다.
 
-### 추가 users ERD와 AI 데이터 계약
+### users 최신 DDL 방향과 AI 데이터 계약 (2026-11-04)
 
-아래는 당시 브랜치의 users 대조 기록이다. 사용자는 2026-11-05 다른 브랜치에서 차이를 해결했다고 확인했으며 이번 작업에서는 제외한다. users는 다른 팀원 담당이므로 아래는 AI 추천에 필요한 데이터 계약의 차이만 기록한다. 이 문서 작업에서 Member·인증·사용자 DDL은 수정하지 않는다.
+2026-11-05 원격 develop `f6ce13e` 통합 후 코드로 아래 표를 갱신했다. 과거 조건 브랜치의 Integer 경력·누락 필드 설명을 현재 상태로 사용하지 않는다. users는 다른 팀원 담당이며 Member·인증·사용자 DDL을 별도로 수정하지 않았다. 실제 PostgreSQL 적용 상태는 미검증이다.
 
-| AI 관련 항목 | 추가 ERD | 현재 `Member` 및 확인 사항 |
+| 컬럼 | 최신 제공 DDL | 현재 코드·남은 차이 |
 |---|---|---|
-| 사용자 식별 | `id` BIGINT, `email` VARCHAR(255) | 필드 존재. JWT 이메일 → users PK의 AI Provider 연결 완료. 실제 PostgreSQL 통합 검증은 별도 |
-| 역할·상태 | `role`·`status` VARCHAR(20), `collaboration_status` ENUM | Java Enum 존재. ERD의 허용 값은 보이지 않으므로 값 계약 확인 필요 |
-| 신뢰 온도 | `trust_score` DECIMAL(5,2) | BigDecimal precision=5, scale=2로 매핑. 추천 반영 방식은 3단계에서 결정 |
-| 경력(개월 수) | `career` VARCHAR(20) | **현재 Integer와 타입 불일치**. 저장 형식·변환 규칙·최신 팀 계약 확인 필요 |
-| 개발 직군 | `job_categories` JSONB | **현재 `job_category_id` Long과 구조 불일치**. 복수 직군 JSON 구조·코드 기준·실제 DB 확인 필요 |
-| 기술·관심 | `skills`·`interests` JSONB | **현재 Member에 필드 없음**. 추천 입력 원천·JSON 구조·실제 DB/담당자 계약 필요 |
-| 소개·연락 | `summary` TEXT, `introduction` TEXT, `introduction_format` Type 표시, `contact_hours` VARCHAR(100) | summary만 현재 매핑. 나머지 필드 없음. introduction_format의 구체 타입·열람 범위는 미확정 |
+| id | BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY | Member IDENTITY와 일치 |
+| email, password_hash | VARCHAR(255) | 필드 존재 |
+| kakao_id | VARCHAR(100) | 필드 존재. 외부 연결 승인이 아님 |
+| nickname, tag | VARCHAR(50), VARCHAR(100) | 필드 존재 |
+| role | VARCHAR(20), CHECK: USER/PREMIUM/OWNER/ADMIN | Java Enum 값 일치 |
+| status | VARCHAR(20), CHECK: ACTIVE/WARNED/SUSPENDED | Java Enum 값 일치 |
+| external_links, payment_methods | JSONB | 현재 JSON 문자열 매핑 |
+| trust_score | NUMERIC(5,2) | BigDecimal precision=5, scale=2 일치 |
+| collaboration_status | VARCHAR(255), CHECK: AVAILABLE/RESTING/BUSY/OPEN_TO_OFFERS/UNAVAILABLE | Java Enum 값 일치. 실제 길이·제약은 미검증 |
+| profile_image, banner_image | VARCHAR(255) | 필드 존재 |
+| summary | TEXT | 필드 존재 |
+| career | VARCHAR(30) | String, 길이 30 매핑 존재. AI 요구 경력과의 비교 변환 규칙은 후속 계약 |
+| contact_hours | VARCHAR(100) | contactHours String, 길이 100 매핑 존재 |
+| job_categories | JSONB | jobCategories List<String> JSON 매핑 존재. job_category_id는 사용하지 않음 |
+| skills, interests | JSONB | List<String> JSON 매핑 존재. 공통 Enum label을 검증 |
 
-추천에서 비밀번호 해시·결제 수단·카카오 식별자 등을 후보 정보로 사용하거나 AI에 전달하지 않는다. 공개 필드의 실제 공개/열람 정책은 ERD만으로 확정하지 않는다. 부족한 필드나 불일치를 해결하기 위해 다른 팀원 엔티티를 임의로 추가·수정하지 않는다.
+- UNIQUE: `uk_users_email(email)`, `uk_users_nickname(nickname)`, `uk_users_tag(tag)` 방향을 따른다. 실제 DB 적용은 미검증이다.
+- 제공 DDL에서 PK 외 컬럼에 NOT NULL·기본값을 지정하지 않았다. CHECK·UNIQUE가 NOT NULL을 대신하지 않는다.
+- 당시 제공 DDL에는 introduction·introduction_format이 없지만 현재 Member에는 두 필드가 있다. 기존 프로필 구현을 보존하며 AI를 위해 추가하거나 제거하지 않는다.
+- `CREATE TABLE IF NOT EXISTS`는 기존 users의 컬럼·제약을 변경하지 않는다. 실행만으로 기존 DB 구조가 전환된다고 간주하지 않는다.
+- JSONB 내부 형식·허용 코드·공개/열람 범위와 실제 DB 적용 상태는 별도 확인한다. 다른 팀원 담당 Member·공통 인증·사용자 SQL은 이번에 수정하지 않는다.
+- 비밀번호 해시·결제 수단·카카오 식별자 등은 추천 후보 정보나 AI 입력에 사용하지 않는다.
+
+#### 최신 GitHub develop 대조
+
+2026-11-04에는 원격 develop `10c3fbc`를 읽기 전용 조회했고, 2026-11-05에는 최신 `f6ce13e`를 `feat/ai-conditions` 작업 트리에 커밋 없이 병합했다. 위 표는 통합 후 Member 코드 기준이다. entity/enums의 JobCategory·Skill·Interest는 두 브랜치에서 동일하며 label 문자열을 DB에 저장하고 검증한다. 실제 DB 적용은 별도 미검증이다.
+
+AI 외 코드는 공통 controller·service·repository·entity와 도메인별 DTO를 사용한다. AuthService·MemberService·ProfileService는 service의 구체 클래스이며 service/impl에는 AI 외 프로젝트 구현체도 있다. AI의 기존 인터페이스/Impl 구조는 유지한다.
+
+현재 Project는 recruitment_slots를 `ProjectRecruitmentSlot(roleCode, capacity, minimumYears)` 목록으로, tech_stacks·interests를 문자열 목록으로 JSONB 매핑한다. ProjectJobRole 코드는 AI 조건의 JobCategory label과 별도 계약이다. AI의 `roles[].name/count`·전역 요구 경력을 프로젝트 구조에 자동 대응시키거나 공통 Enum을 변경하지 않는다. 코드 구조 확인과 실제 DB 값·추천 변환 계약 확정은 구분한다.
+
+### 2단계 확정 정책과 남은 비교 계약 (2026-11-05)
+
+최신 사용자 요청으로 분야를 `interests`에 통합하고, 기존 5개와 삭제한 분야 7개 선택지를 함께 사용한다. 이 목록 확장은 AI 요청 DTO와 AI 프론트에 한정한다. 공통 Interest·회원·프로젝트 도메인 코드는 변경하지 않는다. 직군은 기존 화면대로 선택·직접 입력을 허용하며 이름 30자·12개·인원 1~20명으로 맞춘다. 요구 경력과 기간 선택지는 기존 화면을 유지한다. 종전 `fields` 별도 필수·직군 Enum 한정 계약을 이 절로 대체한다.
+
+| 항목 | 현재 확정/구현 | 남은 확인 |
+|---|---|---|
+| 분야 | interests 12개 선택지, 최소 1개 필수. fields 신규 입력 제거 | 실제 프로젝트 interests 값과 추천 비교. AI 전용 확장값을 공통 Enum에 자동 추가하지 않음 |
+| 기술 | 선택, 기존 서버 입력/정규화와 화면 선택 UI 유지 | 실제 후보 기술의 별칭·비교 규칙 |
+| 직군·인원 | 선택/직접 입력 가능. 제출 시 이름·인원 필수, 공백 정리·중복 거절, 12개·각 30자·1~20명 | 사용자 직군·ProjectJobRole 코드와의 추천 비교·알 수 없는 직군 처리 |
+| 요구 경력 | 필수, 기존 경력 무관·1/2/3/5년 이상 선택 | 사용자 career 문자열·프로젝트 직군별 minimumYears와 비교 규칙 |
+| 프로젝트 기간 | 조건은 개월 수, 프로젝트는 시작·종료 예정일 유지, 추천에서 자동 환산하는 방향 확정 | 환산 시 잔여 일수·월말·누락 날짜·허용 오차 세부 규칙. 실제 계산은 후속 추천 엔진에서 구현 |
+| 소유권 | 본인만 조회/수정, 관리자도 타인 데이터 접근 불가 | 기존 인증/소유권 회귀 유지 |
+| 초기값·교체 | 초기/NULL 조회는 {}, PUT은 interests·career·durationMonths 필수 전체 교체 | DB NOT NULL·기본값·기존 행 일괄 갱신은 이번 범위 아님 |
+
+원본 ERD 이미지는 이번에 직접 확보하지 못했다. 문서 전사·엔티티와 SQL 초안을 대조했으며 실제 PostgreSQL JSONB·FK·DDL은 미검증이다. 프론트 로컬 입력과 서버 DTO를 맞췄지만 AI BFF·서버 호출을 연결한 것은 아니다. 추천 실행의 추가 필수 조건·점수·후보 검색은 3단계 이후 별도 요청을 기다린다.
 
 ### 추가 API 계약의 필요 범위
 
 ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응답·인증·오류 계약이다. 제공받은 API 표의 경로·기능은 위에 반영했으며 현재 문서에 1단계 API 5개의 구체 명세가 있다. 같은 목록을 다시 작성할 필요는 없다. 팀에 상세 DTO·오류·인증 계약이 있다면 대조 기준으로 활용한다.
 
-과거 guest 인계·로그인 왕복 브라우저 검증 기록은 당시 정책 기준이다. 2026-11-05부터 guest 인계를 제거했으며 이번 정책의 검증 결과는 진행 문서 마지막 기록을 따른다. AI API BFF 인증 전달 계약과 실제 PostgreSQL 통합 검증은 남아 있다. 서버 최초 전송은 추천 실행 시점의 4단계 후속 계약으로 유보했으며 중복/부분 실패 처리도 그때 확정한다. 조건 DTO·Enum·추천 응답·상세 분석·사용량의 세부 API 계약은 2~7단계 중 해당 단계 요청 시 정한다. ERD의 컬럼명을 API JSON 키로 그대로 확정하거나 API 미구현 항목을 완료로 표시하지 않는다.
+과거 guest 인계·로그인 왕복 브라우저 검증 기록은 당시 정책 기준이다. 2026-11-05부터 guest 인계를 제거했으며 이번 정책의 검증 결과는 진행 문서 마지막 기록을 따른다. AI API BFF 인증 전달 계약과 실제 PostgreSQL 통합 검증은 남아 있다. 서버 최초 전송은 추천 실행 시점의 4단계 후속 계약으로 유보했으며 중복/부분 실패 처리도 그때 확정한다. 조건 DTO·검증 계약은 위 2단계 구현 절을 따른다. 추천 응답·상세 분석·사용량의 세부 API 계약은 3~7단계 중 해당 단계 요청 시 정한다. ERD의 컬럼명을 API JSON 키로 그대로 확정하거나 API 미구현 항목을 완료로 표시하지 않는다.
 
 ## 후속 API 개요 — 미구현
 
@@ -240,7 +330,6 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 | 단계 | Method·URL | 역할·남은 계약 |
 |---|---|---|
-| 2 | PUT `/api/v1/ai/conversations/{id}/conditions` | 선택 조건 전체 교체. DTO 키·DB 코드·필수/선택·빈 값 검증 필요 |
 | 3 | 외부 API 추가 없음 | 후보 조회·점수 계산 엔진만 구현하는 단계 |
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 실제 추천 실행·요청/결과 저장. 대화 연결 필수, 메시지 연결 선택·동일 대화 검증, 중복 요청 식별 설계 |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 저장 결과 조회. 최신/특정 과거 요청 선택 계약은 미확정. 재계산 없음 |

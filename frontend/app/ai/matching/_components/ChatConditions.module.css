@@ -45,3 +45,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.chat-custom .button){width:100%}
 }}
+
+@layer devmozip-matching-chat{.required{color:#c62828}}
