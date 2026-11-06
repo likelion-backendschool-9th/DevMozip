@@ -38,7 +38,7 @@ export function createMockVisibilityStore(storage: () => PreferenceStorage | und
     };
 }
 
-/** 데이터 표시 모드는 API 선택과 무관하다. OFF는 별도 빈 작업 공간을 사용한다. */
+/** 프로젝트는 OFF에서 실제 API를 사용한다. 다른 Mock 도메인은 별도 빈 작업 공간을 유지한다. */
 export const mockVisibilityStore = createMockVisibilityStore(() => typeof localStorage === 'undefined' ? undefined : localStorage);
 export const mockDataEnabled = () => mockVisibilityStore.getSnapshot();
 export function demoStorageKey(key: string) { return mockDataEnabled() ? key : `devmozip:empty-mode:v1:${key}`; }

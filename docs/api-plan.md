@@ -22,7 +22,8 @@
 | Project | GET | /projects | 프로젝트 목록 | 아니오 | q, role, stack, status, sort | projects, total | 아니오 |
 | Project | GET | /projects/{id} | 프로젝트 상세 | 아니오 | id | project | 아니오 |
 | Project | POST | /projects | 모집 공고 생성 | 예 | 소개, 목표, 기간, 역할, 기술 | project | 예 |
-| Project | PATCH | /projects/{id} | 공고/상태 수정 | 예 (주최자) | 변경 필드 | project | 정책 검토 |
+| Project | PUT | /projects/{id} | 공고 전체 수정 (#46) | 예 (주최자) | 전체 공고 필드 | project | 아니오 |
+| Project | PATCH | /projects/{id}/update | 상태·기간·종료 동의 (#47) | 예 (현재 팀원, 명령별 권한) | action, status 또는 종료일 | project, 종료 동의 집계 | 아니오 |
 | Project | DELETE | /projects/{id} | 공고 삭제 | 예 (주최자) | id | 삭제 결과/제한 사유 | 정책 검토 |
 | Project Application | POST | /projects/{id}/applications | 지원 | 예 | portfolioId, message | application | 아니오 |
 | Project Application | PATCH | /projects/{id}/applications/{applicationId} | 승인/거절 | 예 (주최자) | status | application, members | 아니오 |
@@ -70,8 +71,8 @@
 | GET | /users/me/activities | 모집/참여 프로젝트 이력 | 본인 |
 | GET | /projects/{id}/applications | 지원자 목록 | 주최자 |
 | GET | /projects/{id}/members | 팀원 목록 | 접근 범위 검토 |
-| PATCH | /projects/{id}/period | 모집/개발 기간 연장 | 주최자 |
-| POST | /projects/{id}/close | 종료 및 채팅 보관/삭제 선택 | 주최자, 리뷰 자격 생성 |
+| PATCH | /projects/{id}/update | #47 상태·기간·종료 동의, 기존 /period 후보 대체 | 현재 팀원, 명령별 권한 |
+| PATCH | /projects/{id}/update | #47 REQUEST_END/CANCEL_END_REQUEST, 기존 /close 후보 대체 | 진행 중 ACTIVE 팀원 본인 |
 | POST | /projects/{id}/reports | 프로젝트 신고 | 로그인 |
 | PATCH | /posts/{id} | 게시글 수정/숨김 | 작성자 |
 | DELETE | /posts/{id} | 게시글 삭제 | 작성자 |
@@ -147,3 +148,6 @@
 ## Next.js 이전 후 실행 경계
 
 프론트엔드는 Next.js App Router로 이전했지만 실제 서비스 API 계획은 Spring Boot 기준으로 유지합니다. Next Route Handler/Server Action을 비즈니스 API로 구현하지 않았습니다. 브라우저의 RSC·정적 청크 요청은 Next.js 페이지 이동에 필요한 프레임워크 요청입니다. 미사용 Axios 공통 인스턴스는 `frontend/lib/shared/api.ts`, 호출 경로는 동일 출처 `/api`이며 백엔드 주소는 서버 전용 `BACKEND_URL`입니다. 인증 BFF와 도메인 API 구분은 [팀 공유 문서](team-auth-deployment.md)를 참고하세요.
+
+
+#47의 실제 서버 계약은 [프로젝트 상태·기간 API](project-lifecycle.md)를 따른다. /complete·/extend-period·/period 별도 API는 구현하지 않았다. 기존 후보 경로는 확정 계약으로 사용하지 않는다.

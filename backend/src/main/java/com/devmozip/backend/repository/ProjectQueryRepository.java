@@ -63,5 +63,10 @@ public class ProjectQueryRepository {
 			+ role + " AS my_role FROM projects p" + where + " ORDER BY " + order + " LIMIT :limit OFFSET :offset";
 		return new Result(jdbc.query(sql, params, (rs, row) -> new Row(rs.getLong("id"), rs.getLong("member_count"), rs.getString("my_role"))), total == null ? 0 : total);
 	}
+	public com.devmozip.backend.dto.project.ProjectDetailResponse.Host host(long userId) {
+		var result=jdbc.query("SELECT id,tag,nickname FROM users WHERE id=:userId AND status='ACTIVE'",new MapSqlParameterSource("userId",userId),
+			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.Host(rs.getLong("id"),rs.getString("tag"),rs.getString("nickname")));
+		return result.isEmpty()?null:result.getFirst();
+	}
 	private String normalize(String value) { return Normalizer.normalize(value, Normalizer.Form.NFKC).strip().toLowerCase(Locale.ROOT); }
 }
