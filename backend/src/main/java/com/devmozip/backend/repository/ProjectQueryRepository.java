@@ -1,6 +1,7 @@
 package com.devmozip.backend.repository;
 
 import java.text.Normalizer;
+import com.devmozip.backend.service.ProjectRoleValues;
 import java.time.LocalDate;
 import java.util.*;
 import com.devmozip.backend.dto.project.MyProjectsTab;
@@ -33,9 +34,9 @@ public class ProjectQueryRepository {
 			params.addValue("query", "%" + escaped + "%");
 			where.append(" AND (lower(p.title) LIKE :query ESCAPE '!' OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.tech_stacks) t(value) WHERE lower(t.value) LIKE :query ESCAPE '!'))");
 		}
-		if (request.jobRole() != null) {
-			params.addValue("jobRole", request.jobRole().name());
-			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE s.value->>'roleCode'=:jobRole)");
+		if (request.jobRole() != null && !request.jobRole().isBlank()) {
+			params.addValue("jobRole", ProjectRoleValues.key(request.jobRole()));
+			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE lower(s.value->>'roleCode')=:jobRole)");
 		}
 		if (request.status() != null) { params.addValue("status", request.status().name()); where.append(" AND p.status=:status"); }
 		if (request.interests() != null && !request.interests().isEmpty()) {

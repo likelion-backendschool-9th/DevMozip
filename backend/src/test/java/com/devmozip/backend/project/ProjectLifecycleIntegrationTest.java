@@ -27,7 +27,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.ObjectMapper;
 import com.devmozip.backend.dto.project.*;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import com.devmozip.backend.event.ProjectLifecycleChanged;
 import com.devmozip.backend.security.jwt.JwtProvider;
@@ -74,7 +73,7 @@ class ProjectLifecycleIntegrationTest {
 	}
 	private long fixture() {
 		return projects.create(new CreateProjectRequest("Lifecycle", "요약", "상태와 기간 테스트", null, "https://example.test/a.png", true,
-			List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND, 5, 0)),List.of("Java"),List.of("교육"),
+			List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND", 5, 0)),List.of("Java"),List.of("교육"),
 			today.minusDays(1),today.plusDays(7),today,today.plusDays(90))).id();
 	}
 	private ProjectLifecycleRequest command(ProjectLifecycleRequest.Action action) { return new ProjectLifecycleRequest(action,null,null,null); }
