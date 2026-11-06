@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
+import { addChatStack, buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 import { initialMatchingState } from '@/mocks/matching';
 import { developers, projects } from '@/mocks/home';
@@ -9,7 +9,7 @@ import { freshHomeState, parseHomeState } from '@/lib/matching/homeService';
 import type { ChatRequirements } from '@/types/matchingChat';
 
 const now = new Date('2026-10-30T12:00:00+09:00');
-const ready = (): ChatRequirements => ({ description: '팀의 일정을 관리하는 웹 프로젝트입니다.', fields: ['웹'], interests: ['생산성'], stacks: ['React', 'TypeScript'], roles: [{ name: '프론트엔드', count: 2 }, { name: '백엔드', count: 1 }], career: '경력 무관', duration: '3개월' });
+const ready = (): ChatRequirements => ({ description: '팀의 일정을 관리하는 웹 프로젝트입니다.', fields: [], interests: ['생산성', '웹'], stacks: ['React', 'TypeScript'], roles: [{ name: '프론트엔드', count: 2 }, { name: '백엔드', count: 1 }], career: '경력 무관', duration: '3개월' });
 
 describe('로컬 사용자 메시지 저장', () => {
     it.each(['안녕하세요', '설정한 조건으로 추천해 주세요.', 'React 백엔드 3명, 6개월로 변경'])('내용과 관계없이 USER만 기록한다: %s', text => {
@@ -33,6 +33,16 @@ describe('로컬 사용자 메시지 저장', () => {
         expect(next.title).toBe('React 웹과 백엔드 2명, 3개월 프로젝트');
     });
 
+    it('분야·경력·기간만 필수이며 설명·기술·직군은 미선택을 허용한다', () => {
+        expect(missingChatRequirements(emptyChatRequirements)).toEqual(['interests', 'career', 'duration']);
+        const required = { ...emptyChatRequirements, interests: ['웹'], career: '경력 무관', duration: '3개월' };
+        expect(missingChatRequirements(required)).toEqual([]);
+        expect(sendMatchingMessage(newMatchingConversation(now), '조건 기록', required, now).requirements).toEqual(required);
+        expect(missingChatRequirements({ ...required, interests: [] })).toEqual(['interests']);
+        expect(missingChatRequirements({ ...required, career: '' })).toEqual(['career']);
+        expect(missingChatRequirements({ ...required, duration: '' })).toEqual(['duration']);
+    });
+
     it('후속 메시지를 입력 순서로 추가하고 선택한 조건 스냅샷을 보존한다', () => {
         const first = sendMatchingMessage(newMatchingConversation(now), '첫 메시지', ready(), now);
         const changed = { ...ready(), stacks: ['Java'] };
@@ -52,7 +62,29 @@ describe('로컬 사용자 메시지 저장', () => {
     });
 
     it('조건 입력 오류를 처리하고 기존 저장 검증을 보존한다', () => {
-        expect(() => sendMatchingMessage(newMatchingConversation(now), '메시지', { ...ready(), stacks: ['없는기술'] }, now)).toThrow('선택 조건');
+        expect(() => sendMatchingMessage(newMatchingConversation(now), '메시지', { ...ready(), stacks: [' '] }, now)).toThrow('선택 조건');
+    });
+
+    it('기술 직접 입력의 표기·중복·길이·개수 제한을 적용한다', () => {
+        expect(addChatStack([], ' java ')).toEqual(['Java']);
+        expect(addChatStack(['Java'], ' Vue ')).toEqual(['Java', 'Vue']);
+        expect(() => addChatStack(['Java'], 'java')).toThrow('이미 추가');
+        expect(() => addChatStack(['Vue'], ' Vue ')).toThrow('이미 추가');
+        for (const value of ['', ' ', 'x'.repeat(51)]) expect(() => addChatStack([], value)).toThrow('1~50자');
+        const full = Array.from({ length: 30 }, (_, i) => `기술${i}`);
+        expect(() => addChatStack(full, 'Docker')).toThrow('최대 30개');
+        expect(addChatStack(full.slice(0, 29), 'x'.repeat(50))).toHaveLength(30);
+    });
+
+    it('직접 입력한 기술을 메시지 저장과 재복원에서 보존하고 잘못된 값은 거절한다', () => {
+        const requirements = { ...ready(), stacks: addChatStack(['Java'], 'Vue') };
+        const conversation = sendMatchingMessage(newMatchingConversation(now), '직접 입력 기술', requirements, now);
+        const restored = parseMatchingChat(JSON.parse(JSON.stringify({ conversations: { member: [conversation] }, active: { member: conversation.id } })));
+        expect(restored.conversations.member[0].requirements.stacks).toEqual(['Java', 'Vue']);
+        expect(restored.conversations.member[0].messages[0].requirements?.stacks).toEqual(['Java', 'Vue']);
+        for (const stacks of [['x'.repeat(51)], Array.from({ length: 31 }, (_, i) => `기술${i}`)]) {
+            expect(() => sendMatchingMessage(conversation, '잘못된 기술', { ...requirements, stacks }, now)).toThrow('선택 조건');
+        }
     });
 });
 
@@ -65,6 +97,18 @@ describe('버전 1 로컬 데이터 호환', () => {
         const restored = parseHomeState(JSON.stringify(home));
         expect(restored.chat).toEqual(home.chat);
         expect(restored.matching).toEqual(initialMatchingState);
+    });
+
+    it('이전 분야 선택을 관심 분야로 한 번만 옮기고 과거 메시지·직접 입력은 보존한다', () => {
+        const conversation = sendMatchingMessage(newMatchingConversation(now), '기존 메시지', ready(), now);
+        conversation.requirements = { ...ready(), fields: ['웹', '모바일', '해양 탐사'], interests: ['생산성', '웹'] };
+        const previous = structuredClone(conversation);
+        const restored = parseMatchingChat({ conversations: { member: [conversation] }, active: { member: conversation.id } });
+        expect(restored.conversations.member[0].requirements).toMatchObject({ fields: ['해양 탐사'], interests: ['생산성', '웹', '모바일'] });
+        expect(restored.conversations.member[0].messages).toEqual(previous.messages);
+        expect(conversation).toEqual(previous);
+        restored.conversations.member[0].requirements.interests = ['생산성'];
+        expect(parseMatchingChat(restored).conversations.member[0].requirements.interests).toEqual(['생산성']);
     });
 
     it('draft 필드가 없는 이전 대화를 복원하고 손상 대화만 제거한다', () => {

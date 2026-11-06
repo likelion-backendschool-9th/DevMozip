@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn(), redirect: vi.fn((path: string) => { throw new Error(`redirect:${path}`); }) }));
+const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn(), headers: vi.fn(), redirect: vi.fn((path: string) => { throw new Error(`redirect:${path}`); }) }));
 vi.mock('./backend', () => ({ backendFetch: doubles.fetch, readErrorMessage: async () => '인증 실패' }));
-vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }) }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }), headers: async () => doubles.headers() }));
 vi.mock('next/navigation', () => ({ redirect: doubles.redirect }));
-import { checkAvailabilityAction, kakaoAccountStatusAction, loginAction, logoutAction, setPasswordAction, signupAction, signupOptionsAction, startKakaoAction } from './actions';
+import { changePasswordAction, checkAvailabilityAction, kakaoAccountStatusAction, loginAction, logoutAction, requestPasswordResetAction, resetPasswordAction, setPasswordAction, signupAction, signupOptionsAction, startKakaoAction } from './actions';
 import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, REFRESH_COOKIE } from './cookies';
 import { parseKakaoFlow } from './kakao';
 const signupInput = { email: ' New@Devmozip.Demo ', password: 'Devmozip123', confirmPassword: 'Devmozip123', nickname: ' 새회원 ', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'], available: true };
@@ -193,5 +193,69 @@ describe('카카오 서버 액션', () => {
         expect(await setPasswordAction({ newPassword: 'a', confirmPassword: 'a' })).toEqual({ error: '인증 실패' });
         doubles.fetch.mockRejectedValueOnce(new Error('down'));
         expect(await setPasswordAction({ newPassword: 'a', confirmPassword: 'a' })).toHaveProperty('error');
+    });
+});
+describe('비밀번호 변경 서버 액션', () => {
+    const input = { currentPassword: 'Current123', newPassword: 'Changed456', confirmPassword: 'Changed456' };
+    it('변경에 성공하면 로그인 쿠키를 지우고 이동은 호출한 화면에 맡긴다', async () => {
+        doubles.fetch.mockResolvedValue(new Response(null, { status: 204 }));
+        expect(await changePasswordAction(input)).toBeNull();
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/users/me/password', expect.objectContaining({ method: 'PATCH', body: JSON.stringify(input) }));
+        expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
+        expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
+        expect(doubles.redirect).not.toHaveBeenCalled();
+    });
+    it('현재 비밀번호가 틀리거나 서버에 연결하지 못하면 쿠키를 유지한다', async () => {
+        doubles.fetch.mockResolvedValueOnce(new Response('{}', { status: 400 }));
+        expect(await changePasswordAction(input)).toEqual({ error: '인증 실패' });
+        doubles.fetch.mockRejectedValueOnce(new Error('down'));
+        expect(await changePasswordAction(input)).toEqual({ error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+        expect(doubles.set).not.toHaveBeenCalled();
+    });
+});
+describe('비밀번호 재설정 서버 액션', () => {
+    const input = { token: 'mail-token', newPassword: 'Changed456', confirmPassword: 'Changed456' };
+    it('재설정 요청은 이메일을 소문자로 맞추고 사용자 IP를 넘긴다', async () => {
+        doubles.headers.mockReturnValue(new Headers({ 'x-real-ip': '203.0.113.5' }));
+        doubles.fetch.mockResolvedValue(new Response(null, { status: 202 }));
+        expect(await requestPasswordResetAction(' Member@Devmozip.Demo ')).toBeNull();
+        const [path, init] = doubles.fetch.mock.calls[0];
+        expect(path).toBe('/api/v1/auth/password/reset-request');
+        expect(init.method).toBe('POST');
+        expect(init.body).toBe(JSON.stringify({ email: 'member@devmozip.demo' }));
+        expect(init.headers['X-Real-IP']).toBe('203.0.113.5');
+    });
+    it('IP 헤더가 없으면 빈 값을 넘기지 않는다', async () => {
+        doubles.headers.mockReturnValue(new Headers());
+        doubles.fetch.mockResolvedValue(new Response(null, { status: 202 }));
+        expect(await requestPasswordResetAction('a@b.co')).toBeNull();
+        expect(doubles.fetch.mock.calls[0][1].headers).not.toHaveProperty('X-Real-IP');
+    });
+    it('재설정 요청을 처리하지 못하면 오류를 돌려준다', async () => {
+        doubles.headers.mockReturnValue(new Headers());
+        doubles.fetch.mockResolvedValueOnce(new Response('{}', { status: 429 }));
+        expect(await requestPasswordResetAction('a@b.co')).toEqual({ error: '인증 실패' });
+        doubles.fetch.mockRejectedValueOnce(new Error('down'));
+        expect(await requestPasswordResetAction('a@b.co')).toEqual({ error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+    });
+    it('재설정에 성공하면 로그인 쿠키를 지우고 이동은 호출한 화면에 맡긴다', async () => {
+        doubles.fetch.mockResolvedValue(new Response(null, { status: 204 }));
+        expect(await resetPasswordAction(input)).toBeNull();
+        expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/password/reset', expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }));
+        expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
+        expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, '', expect.objectContaining({ maxAge: 0, httpOnly: true }));
+        expect(doubles.redirect).not.toHaveBeenCalled();
+    });
+    it('링크를 쓸 수 없으면 만료로 알리고 쿠키를 유지한다', async () => {
+        doubles.fetch.mockResolvedValue(new Response('{}', { status: 401 }));
+        expect(await resetPasswordAction(input)).toEqual({ error: '인증 실패', expired: true });
+        expect(doubles.set).not.toHaveBeenCalled();
+    });
+    it('입력 오류나 서버 오류는 만료로 알리지 않아 같은 링크로 다시 시도할 수 있다', async () => {
+        doubles.fetch.mockResolvedValueOnce(new Response('{}', { status: 400 }));
+        expect(await resetPasswordAction(input)).toEqual({ error: '인증 실패' });
+        doubles.fetch.mockRejectedValueOnce(new Error('down'));
+        expect(await resetPasswordAction(input)).toEqual({ error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+        expect(doubles.set).not.toHaveBeenCalled();
     });
 });

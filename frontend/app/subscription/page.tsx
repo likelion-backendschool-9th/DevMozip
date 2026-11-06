@@ -35,7 +35,7 @@ export default function PremiumPage() {
                     <ul>
                         <li>
                             <Check size={16} />
-                            AI 추천 월 15회
+                            AI 추천 월 5회
                         </li>
                         <li>
                             <Check size={16} />

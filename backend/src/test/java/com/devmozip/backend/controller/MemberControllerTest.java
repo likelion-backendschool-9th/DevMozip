@@ -122,7 +122,17 @@ class MemberControllerTest {
                         .content("{\"newPassword\":\"Devmozip123\",\"confirmPassword\":\"Devmozip123\"}"))
                 .andExpect(status().isNoContent());
 
-        verify(memberService).setPassword("premium@devmozip.demo", new PasswordSetRequest("Devmozip123", "Devmozip123"));
+        verify(memberService).setPassword("premium@devmozip.demo", new PasswordSetRequest(null, "Devmozip123", "Devmozip123"));
+    }
+
+    @Test
+    void 현재_비밀번호를_함께_전달한다() throws Exception {
+        mvc.perform(patch("/api/v1/users/me/password").header("Authorization", "Bearer " + TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"Current123\",\"newPassword\":\"Devmozip123\",\"confirmPassword\":\"Devmozip123\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(memberService).setPassword("premium@devmozip.demo", new PasswordSetRequest("Current123", "Devmozip123", "Devmozip123"));
     }
 
     @Test
