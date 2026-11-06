@@ -42,7 +42,7 @@ describe('API 프로필 화면', () => {
         const html = render(<MemoryRouter initialEntries={[`/users/api-developer?tab=${tab}`]}><ProfileApiResult result={{ status: 'ready', profile: apiProfileFixture }} onRetry={() => {}} /></MemoryRouter>);
         expect(html).toContain(`id="profile-panel-${tab}"`);
         expect((html.match(/role="tab"/g) || [])).toHaveLength(5);
-        expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
+        expect(html).toContain(tab === 'portfolio' ? '포트폴리오를 불러오는 중' : '아직 조회 API에 연결되지 않았습니다.');
         expect(html).toContain('38.5');
     });
     it('미입력 정보는 빈 값을 명확히 표시한다', () => {

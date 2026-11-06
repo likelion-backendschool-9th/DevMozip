@@ -576,3 +576,12 @@ erDiagram
 - origin/develop 09a438b를 feat/profile-skills-interests에 병합했다. 충돌 파일은 docs/ai-progress.md 한 개이며, 같은 위치에 프로필 이력과 AI 작업 기록이 서로 추가·수정되어 발생했다. develop의 최신 기록 전체를 유지하고 프로필 이력을 별도 절에 보존했다.
 - 기능 코드의 텍스트 충돌은 없었다. 자동 병합된 SecurityConfig의 공개 프로젝트 조회 규칙과 프로필 options 인증 우선순위, AppLayout의 Mock 표시 기능 및 OwnProfileProvider를 함께 확인했다.
 - 이번 검증: frontend npm test 562개 통과, npm run build 통과. backend ./gradlew test 217개 중 201개 통과·16개 건너뜀·실패/오류 0. 실제 PostgreSQL 및 이번 병합의 브라우저 수동 검증은 미실행. 외부 링크 기능은 별도 feat/64-profile-external-links에 보존했다.
+
+## #84 포트폴리오 목록·상세 조회 및 기존 화면 연결
+
+- 사용자 요청으로 origin/develop에서 feat/84-portfolio-query를 생성했다. PortfolioQueryController → PortfolioQueryService → PortfolioQueryRepository(JDBC 조회 전용) 및 record 응답 DTO를 추가했다. GET /api/v1/users/me/portfolios, /api/v1/users/{slug}/portfolios, /api/v1/portfolios/{id}와 대응 BFF를 구현했다.
+- 기본 목록에는 공개 요약만, 상세에는 소유권·현재 DB 역할 확인 후 설명·첨부파일을 제공한다. 익명은 공개 목록, 본인은 PUBLIC/PRIVATE 상세, PREMIUM/ADMIN은 ACTIVE 작성자의 PUBLIC 상세만 허용한다. 공개 범위 PUBLIC/PRIVATE·첨부 JSON(name/url)·DATETIME 한국 시각은 기존 화면/ERD에 따른 잠정 계약이며 담당자 확인이 필요하다. 실제 구독 테이블·만료 판정은 구현하지 않았다.
+- ApiPortfolioTab과 ApiPortfolioDetail에서 기존 카드·상세 디자인을 재사용한다. 등록·수정·삭제·AI 피드백은 실연결하지 않았다. 문자열 ID의 기존 Mock 상세는 PrototypePortfolioDetail로 보존하고 숫자 ID의 실제 API 응답과 구분했다. 실제 API 오류를 Mock으로 대체하지 않는다. ERD에 없는 기간·팀 규모·자유형 blocks는 생성하지 않는다.
+- 공유 PostgreSQL 메타데이터를 읽기 전용으로 확인했으며 portfolios/subscriptions 테이블이 없었다. 공유 DB·ERD는 수정하지 않았고 별도 PostgreSQL 17 Testcontainers에만 ERD 기반 테스트 테이블/데이터를 생성했다. 실제 공유 DB 정상 목록·브라우저 시각 확인은 미실행이다. 테이블 미준비는 빈 목록 대신 503 처리한다.
+- 검증: 신규 PostgreSQL 통합 테스트 18개 통과, backend 전체 380개 통과(실패·오류·스킵 0). frontend 신규 테스트 31개 통과, 전체 658개 중 657개 통과·기존 프로젝트 모집 날짜 의존 테스트 1개 실패. 신규 API 연결에 따른 기존 프로필 portfolio 탭 테스트를 갱신했다. 최초 빌드에서 새 분기 이후 불필요한 portfolio 비교의 TypeScript 오류를 수정했고 재실행 npm run build 통과, git diff --check 통과.
+- 상세 계약·필드 매핑·AI #32/#35/#83 및 프로젝트 #48 결합 지점·미병합 외부 링크 PR #66과 ApiProfileTabs 충돌 가능성을 docs/portfolio-query-api.md에 기록했다. AI 엔진·프로젝트 지원·Member Entity는 수정하지 않았다. 개발 프론트 서버를 검증 전 상태로 복구하고 /login 200, 본인 목록·상세 API의 비로그인 401을 확인했다. 최종 수정 후 관련 프론트 3개 파일 46개 테스트를 재실행해 통과했다. 현재 변경은 미커밋·미푸시다.
