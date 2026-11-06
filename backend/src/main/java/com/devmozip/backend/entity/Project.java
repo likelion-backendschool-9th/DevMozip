@@ -100,6 +100,18 @@ public class Project extends BaseEntity {
 		touch(now);
 	}
 
+	public void changeStatus(ProjectStatus status, LocalDateTime now) {
+		this.status = status;
+		if (status == ProjectStatus.COMPLETED) completedAt = now;
+		touch(now);
+	}
+
+	public void extendPeriods(LocalDate recruitmentEnd, LocalDate developmentEnd, LocalDateTime now) {
+		this.recruitmentEnd = recruitmentEnd;
+		this.developmentEnd = developmentEnd;
+		touch(now);
+	}
+
 	public void softDelete(LocalDateTime now) {
 		deletedAt = now;
 		touch(now);

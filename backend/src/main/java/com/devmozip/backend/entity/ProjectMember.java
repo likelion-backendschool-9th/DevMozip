@@ -34,6 +34,9 @@ public class ProjectMember extends BaseEntity {
 	@Column(name = "end_requested_at")
 	private LocalDateTime endRequestedAt;
 
+	public void requestEnd(LocalDateTime now) { endRequestedAt = now; touch(now); }
+	public void cancelEndRequest(LocalDateTime now) { endRequestedAt = null; touch(now); }
+
 	public static ProjectMember host(Project project, long userId, LocalDateTime now) {
 		return new ProjectMember(project, userId, now);
 	}
