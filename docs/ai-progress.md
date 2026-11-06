@@ -683,6 +683,17 @@ erDiagram
 - 전체 백엔드 402개 중 390개 통과·11개 opt-in 스킵·1개 실패(KakaoClientTest 153행 기존 로그 검증). 프로젝트 패키지는 67개 통과·11개 스킵·실패 0. 다른 도메인/인증 코드를 변경하거나 전체 실패를 숨기지 않았다.
 - frontend npm run build -- --webpack 성공(TypeScript 포함), 공유 의존성 worktree에서 실행. 프론트 제품 수정 없음, 생성 next-env.d.ts 복원. git diff --check 통과.
 - 남은 범위: 실제 인증 회원·프론트 연결, #48 지원/승인/취소와 같은 잠금·팀원 변경 즉시 종료 재집계, 알림·채팅·리뷰 소비자, 영속 outbox·재시도 및 모집 만료 배치/스케줄러. 새 테이블/컬럼이나 실제 외부 API 연결 없음. 커밋·푸시·PR/이슈 수정 없음. #48 자동 시작 없음.
+
+### 2026-11-05 실제 로그인 회원 ID를 프로젝트에 연결
+
+- 사용자 요청으로 fix/project-authenticated-user에서 기존 #47 코드와 PR을 보존하며 프로젝트 ID 공급만 수정했다. 공통 인증·회원·AI 코드는 변경하지 않았다.
+- 변경 파일: security/project/AuthenticatedProjectCurrentUserProvider.java 신규, ProjectConfiguration 기본값을 실제 인증 방식으로 변경. 관련 단위 테스트·ProjectConfigurationTest와 실제 로그인 통합 테스트 추가. docs/project-authenticated-user.md와 프로젝트 생성/조회/수정삭제/상태 문서에 현재 계약 안내, 본 문서 갱신.
+- JWT 필터가 검증한 이메일로 MemberRepository에서 users.id 조회. ACTIVE/WARNED 허용, 정지/미확인 상태 403, 삭제/익명/미인증/유효하지 않은 ID 401. 개발 고정 ID는 local/dev/test 명시적 opt-in에서만 유지, 운영 환경에서는 항상 실제 계정 사용.
+- 관련 테스트 10개 통과. 최초 설정 테스트는 Mock 빈 중복 등록으로 1개 실패했고 수정 후 재실행 성공. 전체 410개 중 398개 통과·11개 스킵·1개 실패(기존 KakaoClientTest 153행 로그 검증). 프로젝트 관련은 75개 통과·11개 스킵·실패 0.
+- 실제 읽기 전용 팀 DB 서버에서 validate/health UP, 데모 7계정 로그인/me 200, 일반·프리미엄 내 프로젝트 각각 200/4개, 프리미엄 주최 2개·본인 관리 200, 일반 타인 관리 403. 임시 서버 종료. 실제 DB 생성/수정/삭제는 수행하지 않았다.
+- frontend npm run build -- --webpack 성공(TypeScript 포함), 생성 next-env.d.ts 복원, git diff --check 통과.
+- 남은 범위: 백엔드 신규 생성 프리미엄 인가·프론트 API 활성화/조회 연동·상시 서버 재시작/배포. 회원/프로젝트 ID 또는 DB 기본 데이터 변경 없음. 커밋·푸시 없음.
+- 사용자 실행 요청으로 실제 회원 연결 worktree의 백엔드 8080(local, 팀 PostgreSQL, validate/no SQL init, 개발 고정 ID 비활성화), 프론트 3000(backend URL 8080, 생성 API 플래그 false)을 실행했다. 이전 승인에 따라 3000을 사용하던 ncafe-frontend만 중지했다. localhost의 backend health/공개 목록, frontend 홈/로그인/health 모두 HTTP 200 확인. 로그인 경로에는 기존 Next.js instant-navigation 검증 경고가 출력된다. 경고 수정·커밋·푸시는 하지 않았다.
 ## 프로필 외부 링크 #64
 
 - 사용자 요청으로 feat/64-profile-external-links를 선행 options 브랜치(7a369cc)에서 분리했다. PR #60은 확인 당시 open·미병합. 최신 origin/develop은 47a1942였으며 새 브랜치의 base는 선행 브랜치다. AI 기능은 변경하지 않았다.
