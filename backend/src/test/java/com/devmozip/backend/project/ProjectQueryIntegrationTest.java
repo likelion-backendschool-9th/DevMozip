@@ -52,7 +52,7 @@ class ProjectQueryIntegrationTest {
 	private final LocalDateTime now = LocalDateTime.of(2026,11,4,1,0);
 
 	@BeforeEach void reset() {
-		jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
+		jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
 		when(currentUser.getCurrentUserId()).thenReturn(101L);
 		when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
 		when(clock.instant()).thenReturn(Instant.parse("2026-11-03T16:00:00Z"));
