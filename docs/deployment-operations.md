@@ -54,6 +54,17 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 
 .env, 기존 PostgreSQL 볼륨, JWT_SECRET과 DB 비밀번호를 임의로 초기화하지 않는다. DB_PASSWORD 환경변수만 바꿔도 기존 DB 사용자의 비밀번호가 변경되는 것은 아니다. 비밀값 교체는 영향 범위를 확인하고 진행한다.
 
+## 비밀번호 재설정 메일
+
+계약은 [비밀번호 재설정·변경 API](password-reset-api.md)를 참조한다. 재설정 메일은 Gmail SMTP로 보낸다.
+
+- 값: 서버 ~/DevMozip/.env의 MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, DOMAINNAME. .env는 Git에 없어 배포로 전달되지 않으므로 서버에서 직접 넣는다. 값을 채팅·Git·공개 문서에 붙이지 않는다.
+- 값이 없으면 재설정 요청만 503이고 다른 기능은 정상이다.
+- SMTP 장애는 /actuator/health에 영향을 주지 않으므로 헬스체크로 알 수 없다. 메일이 오지 않으면 활성 색의 백엔드 로그에서 `비밀번호 재설정 메일 발송 실패`를 찾는다. 로그에는 예외 클래스 이름만 남는다.
+- `MailAuthenticationException`이면 앱 비밀번호를 확인한다. 구글 계정 비밀번호를 바꾸면 앱 비밀번호도 폐기된다.
+- 호스트 nginx가 X-Real-IP를 실제 접속 IP로 설정해야 IP 제한이 동작한다. 호스트 설정은 저장소에 없다.
+- 공용 데모 계정의 비밀번호를 아는 사람은 실제로 바꿀 수 있다. 바뀌면 이후 로그인에 영향이 있으므로 변경 사실을 팀에 공유한다.
+
 ## 롤백
 
 ```bash

@@ -7,3 +7,4 @@ export type KakaoIntent = 'login' | 'signup' | 'link' | 'unlink';
 export type KakaoResult = 'signup' | 'already-registered' | 'linked' | 'unlinked' | 'cancelled' | 'invalid-state' | 'failed' | 'suspended' | 'unavailable' | 'conflict' | 'unlink-blocked';
 export interface KakaoAccountStatus { kakaoLinked: boolean; passwordSet: boolean }
 export interface PasswordSetInput { newPassword: string; confirmPassword: string }
+export interface PasswordResetInput extends PasswordSetInput { token: string }
