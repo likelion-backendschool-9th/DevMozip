@@ -1,15 +1,14 @@
 # AI 추천 개발 청사진·진행 현황
 
-기준일: 2026-11-06. 1단계 대화·메시지와 2단계 조건 관리에 이어 **3단계 내부 추천 엔진을 구현했다.** 현재 브랜치는 `feat/ai-recommend`이며 기존 문서 커밋 3c3f97c를 보존한다. 원격 인증 후 fetch에 성공했다. 확인한 origin/develop은 `67bff78`이며 작업 시작 시 브랜치는 develop보다 기존 문서 커밋 1개 앞섰으며 이를 보존했다. 커밋 직전 원격을 재확인한 결과와 충돌 검사는 아래 검증을 따른다. 아래의 과거 기록은 당시 상태이며 현재 AI 범위·최종 검증은 이 절을 우선한다.
+기준일: 2026-11-06. 현재 작업 브랜치는 `feat/run-ai-recommendation`이다. 3단계 엔진을 포함한 상태에서 **4단계 백엔드 추천 실행·요청/결과 저장·조회**를 구현했다. 프론트 연결과 5~7단계는 시작하지 않는다. 아래 과거 기록은 당시 상태이며 현재 완료 범위·미완료·최종 검증은 이 절을 우선한다. 다른 도메인·팀원 기록은 보존한다.
 
 ## 현재 AI 상태·검증 (2026-11-06)
 
-- 완료: AI 전용 DB 후보 projection/조회, 협업 AVAILABLE·공개 프로필·직군·경력 필터, 별도 점수 Service, 개발자/프로젝트 점수·기본 이유·각 상위 10건·동점 ID 오름차순, 직군별 요청/후보/반환 수, 날짜 비교 정보를 구현했다. 경력은 N년차=N년 이상으로 숫자 비교하고 가산점은 없다. 신뢰 온도는 36.5도 이하 0점~50도 이상 최대 10점 선형 환산한다. 기간은 계산·표시만 적용하며 필터·점수에 반영하지 않는다.
-- **포트폴리오 연동 전 경험은 미산정으로 표시하고 사용 가능한 항목만 100점 환산한다.** 협업 배점·후기를 제거하여 직군·기술 모두 선택 시 분모는 70점이다. 미선택 조건과 후보 정보 누락은 구분한다. 구체 계산식은 [추천 정책](ai-matching.md#3단계-추천-엔진-정책-2026-11-06)을 따른다.
-- 변경 파일: `service/AiRecommendationService.java`, `AiRecommendationScoringService.java` 인터페이스와 `service/impl/AiRecommendationServiceImpl.java`, `AiRecommendationScoringServiceImpl.java` 구현체로 정리했다. 설정은 `config/AiScoringProperties.java`, `AiRecommendationConfiguration.java`, 비교 유틸은 `utils/AiCandidateMatchingUtils.java`, 후보 조회는 `repository/AiCandidateRepository.java`에 둔다. 전달 객체는 `dto/ai/internal/DeveloperCandidate.java`, `SimilarProjectCandidate.java`, `RecommendationResult.java`로 이름을 통일했다. 관련 추천 테스트 3개와 API 문서·이 진행 요약의 참조를 갱신했다. 추천 정책·계산·외부 API 계약은 유지한다.
-- 명명 기준: API 입출력은 `Request`/`Response`, 내부 조회용 객체는 `Candidate`, 계산 결과는 `Result`로 구분한다. 내부 전달 객체 3개는 `dto/ai/internal`에 둔다. `DeveloperCandidate`·`SimilarProjectCandidate`는 DB 후보 조회용이며 `RecommendationResult`는 내부 계산 결과이므로 역할을 드러내는 이름을 사용한다.
-- 최종 검증: internal 패키지 선언·import·JPQL 정리 후 backend `DEBUG=false ./gradlew test --no-daemon` 성공(종료 코드 0, JUnit XML 371개 중 355개 통과·16개 건너뜀·실패/오류 0, 추천 테스트 19개 포함). frontend `npm run build` 성공. `git diff --check`와 기존 프로필 기록 보존 확인. 커밋 직전 fetch 성공, origin/develop `67bff78` 전체 포함·Git merge-tree 충돌 없음 확인. develop에만 있는 커밋이 없어 미커밋 작업에 통합할 원격 변경도 없다. 프론트 추적 파일 변경 없음. 추천 엔진 전용 PostgreSQL 검증과 프론트 단위 테스트는 별도로 재실행하지 않았다.
-- 미완료: 실제 팀 PostgreSQL 17의 DDL/JSONB·데이터·공개 계약 대조, 포트폴리오 구현·공개 범위 연동, AI BFF/프론트 동기화와 4~7단계. 제공 portfolios ERD를 실제 엔티티·DDL 적용으로 간주하지 않고 테이블/컬럼을 추가하지 않았다. 외부 실행/저장 API·프리미엄 상세 분석·Gemini·사용량·화면 변경은 없다. 다음 단계는 자동 시작하지 않는다. 이번 커밋 범위는 3단계이며 푸시·4단계 구현은 포함하지 않는다.
+- 완료: 1단계 대화·USER 메시지·실사용자 인증/소유권, 2단계 조건 전체 교체·검증, 3단계 실제 DB 후보 기반 내부 추천 엔진을 유지했다. 4단계 POST/GET `/api/v1/ai/conversations/{id}/recommendations`, 요청 조건 스냅샷, PENDING/SUCCESS/FAILED, 결과 점수·기본 이유·대상별 순위 저장, 최신/특정 과거 요청 조회를 추가했다. GET은 재계산하지 않는다.
+- 중복/무결성: 필수 Idempotency-Key를 대화별 UNIQUE로 보존하고 같은 키·같은 입력은 재실행하지 않는다. 조건 스냅샷·메시지 ID를 직접 비교하므로 input_hash는 없다. 같은 대화 USER 메시지만 연결하며 버튼 실행은 NULL이다. 결과 대상 FK는 정확히 하나, detailed_reason은 NULL, analysis_level은 6단계로 보류한다. 서비스 삭제는 결과 → 요청 → 메시지 → 대화 한 트랜잭션이다. 사용량은 변경하지 않는다.
+- 변경 파일: 신규 `controller/AiRecommendationController.java`, `service/AiRecommendationExecutionService.java`·`service/impl/AiRecommendationExecutionServiceImpl.java`, `entity/AiRecommendationRequest.java`·`AiRecommendation.java`, 각각의 Repository, `dto/ai/CreateRecommendationRequest.java`·`RecommendationResponse.java`, `utils/StrictLongDeserializer.java`. 기존 `AiMessageRepository.java`·`AiConversationDeletionRepository.java`, AI 대화 테스트/fixture를 갱신했다. 통합 테스트 `ai/controller/AiRecommendationExecutionTests.java`, 생성 SQL `docs/sql/ai-recommendations.sql`, AI 정책·API 문서를 추가/갱신했다. Java 경로는 `backend/src/main/java/com/devmozip/backend`, 테스트는 `backend/src/test/java/com/devmozip/backend` 기준이다.
+- 최종 검증: backend `DEBUG=false ./gradlew test --no-daemon` 성공(총 384개, 367개 통과·17개 스킵·실패/오류 0). 스킵은 기존 Docker 필요 16개와 PostgreSQL 전용 1개다. 격리 PostgreSQL 18.6에서 생성 SQL을 직접 적용한 `AiRecommendationExecutionTests` 13개 전부 통과(실제 엔진 저장·조회, FK/점수/순위 제약, 동시 중복 실행, 실패·삭제 롤백 포함). frontend `npm run build` 성공(50개 페이지). 프론트 추적 파일 변경 없음. `git diff --check`·문서 상대 파일 링크·기존 기록 보존 확인. 커밋 전 fetch한 origin/develop `67bff78` 전체 포함·변경 전체를 포함한 가상 병합 충돌 없음. 프론트 단위/브라우저 테스트와 팀 PostgreSQL 17 적용 검증은 미실행.
+- 미완료: 팀 PostgreSQL 17의 신규 SQL 적용·실제 데이터/공개 계약·AI 쓰기 API 검증, 포트폴리오 연동, AI BFF/로컬 초안 동기화·프론트 버튼 연결, 5~7단계. 프로세스 강제 종료·DB 장애로 남는 PENDING의 자동 복구/만료는 없다. FK NO ACTION으로 참조 대상 물리 삭제를 차단하므로 탈퇴·다른 도메인의 삭제 계약은 후속 조율 대상이다. 앱/DB 기준 시간대는 기존과 같이 미확정이다.
 
 ## 2026-11-05 Mock 데이터만 비우도록 정정
 
@@ -44,7 +43,7 @@
 | 1. 대화 CRUD·메시지 | 서버 대화 생성/목록/상세/삭제, USER 메시지 저장. 로그인 필수 로컬 초안 | 비로그인 저장 차단, 로그인 계정 로컬 보존 및 서버 인증·소유권 보호 | **로컬·실사용자 인증 연결 완료**. 로그인 필수 전환 자동 테스트·빌드 통과. 실제 PostgreSQL 통합 검증 대기 |
 | 2. 조건 관리 | 통합 관심 분야·기술·직군별 인원·경력·기간 DTO, 조건 전체 교체 PUT, 검증 | 화면 입력과 서버 저장 검증 일치 | **기존 서버 PUT 구현·푸시 완료, 이번 입력 계약 보완 완료**. interests·경력·기간 필수, 직군 선택/직접 입력 허용. 프론트 로컬 조건 정합성 보완. 실제 PostgreSQL·AI BFF/서버 연결은 미완료 |
 | 3. 추천 엔진 | 실제 DB 후보 조회·필터링, 개발자/프로젝트 적합도·순위·기본 이유 계산 | 동일 입력·데이터로 일관된 0~100점·순위 산출 | **내부 엔진 구현 완료**. H2·격리 PostgreSQL 18 검증, 팀 DB 17 대조 미완료 |
-| 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | 미구현 |
+| 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | **백엔드 구현 완료**, 팀 DB 적용·프론트 연결 미완료 |
 | 5. Gemini 조건 분석 | 자연어 조건 추출·변경·병합, 추가 질문, 응답 저장, 장애 처리 | 검증된 조건 JSON을 선택 UI와 동기화 | 미구현·외부 AI 연결 별도 요청 필요 |
 | 6. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 미구현 |
 | 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 미구현 |
