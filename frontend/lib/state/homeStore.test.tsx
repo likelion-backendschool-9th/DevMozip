@@ -144,3 +144,73 @@ describe('로그인 필수 AI 로컬 대화', () => {
         expect(home().conversation!.draft).toBe('세션에 남겨둘 입력');
     });
 });
+
+describe('AI 서버 연동과 재시도', () => {
+    function ready() {
+        signIn('demo-user'); home().newChat();
+        home().editChat({ interests: ['웹'], career: '경력 무관', duration: '3개월' });
+        home().sendChat('함께 만들 프로젝트');
+        return home().conversation!;
+    }
+    function remote(c: ReturnType<typeof ready>) {
+        return { id: 71, clientKey: c.id, title: c.title, createdAt: '2026-11-07T10:00:00', updatedAt: '2026-11-07T10:00:00',
+            currentConditions: { interests: ['웹'], career: '경력 무관', durationMonths: 3 },
+            messages: c.messages.map((m, index) => ({ id: 81 + index, clientKey: m.id, role: 'USER', content: m.text, createdAt: '2026-11-07T10:00:00' })) };
+    }
+    it('추천 시에만 저장하고 응답 유실·재로딩 후 같은 실행 키를 사용한다', async () => {
+        const c = ready();
+        expect(fetch).not.toHaveBeenCalled();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockRejectedValueOnce(new Error('network'));
+        await expect(home().recommendChat()).rejects.toThrow('network');
+        const key = home().conversation!.pendingRecommendation!.key;
+        expect(home().conversation!.serverId).toBe(71);
+        expect(home().conversation!.messages[0].serverId).toBe(81);
+        resetLocalStores(); signIn('demo-user');
+        expect(home().conversation!.pendingRecommendation!.key).toBe(key);
+        home().editChat({ duration: '' });
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({ status: 'SUCCESS', requestId: 91 }));
+        await home().recommendChat();
+        expect(vi.mocked(fetch).mock.calls[3][1]?.headers).toMatchObject({ 'Idempotency-Key': key });
+        expect(home().conversation!.pendingRecommendation).toBeUndefined();
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).messages).toEqual([]);
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).conditions.durationMonths).toBe(3);
+    });
+    it('최초 동기화 응답을 잃어도 같은 대화·메시지 키로 재시도한다', async () => {
+        const c = ready();
+        vi.mocked(fetch).mockRejectedValueOnce(new Error('network'));
+        await expect(home().recommendChat()).rejects.toThrow();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({ status: 'SUCCESS' }));
+        await home().recommendChat();
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body))).toEqual(JSON.parse(String(vi.mocked(fetch).mock.calls[1][1]?.body)));
+    });
+    it('계정 전환 후 도착한 응답은 저장하거나 후속 추천을 실행하지 않는다', async () => {
+        const c = ready();
+        let resolve!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>(done => { resolve = done; }));
+        const running = home().recommendChat();
+        signIn('demo-premium');
+        resolve(Response.json(remote(c)));
+        await expect(running).rejects.toThrow('계정');
+        expect(home().conversations).toEqual([]);
+        expect(fetch).toHaveBeenCalledTimes(1);
+        signIn('demo-user');
+        expect(home().conversation!.serverId).toBeUndefined();
+    });
+    it('삭제 실패 시 로컬 기록을 보존하고 성공한 뒤 제거한다', async () => {
+        const c = ready();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({ status: 'SUCCESS' }));
+        await home().recommendChat();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json({ message: '서버 연결 실패' }, { status: 502 }));
+        await expect(home().deleteAiChat(c.id)).rejects.toThrow();
+        expect(home().conversation!.id).toBe(c.id);
+        vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+        await home().deleteAiChat(c.id);
+        expect(home().conversations).toEqual([]);
+    });
+    it('저장 공간 실패 시 서버 실행을 시작하지 않는다', async () => {
+        ready();
+        storage.setItem.mockImplementation(() => { throw new Error('quota'); });
+        await expect(home().recommendChat()).rejects.toThrow('저장 공간');
+        expect(fetch).not.toHaveBeenCalled();
+    });
+});

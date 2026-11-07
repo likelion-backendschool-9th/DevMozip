@@ -113,3 +113,7 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.ai-chat-composer textarea){font-size:0.9375rem}
 }}
+
+.scope:global(.ai-chat-controls) { border: 0; margin: 0; min-width: 0; }
+
+.scope:global(.ai-chat-main)[data-saved="true"] { height: auto; min-height: 850px; }

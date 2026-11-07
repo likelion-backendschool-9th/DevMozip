@@ -62,7 +62,7 @@ public class AiConversationServiceImpl implements AiConversationService {
 		AiConversation conversation = owned(id, false);
 		return new ConversationDetailResponse(conversation.getId(), conversation.getTitle(), conversation.getCurrentConditions(),
 			conversation.getCreatedAt(), conversation.getUpdatedAt(), messages.findByConversationIdOrderByCreatedAtAscIdAsc(id)
-				.stream().map(MessageResponse::from).toList());
+				.stream().map(MessageResponse::from).toList(), conversation.getClientKey());
 	}
 
 	@Transactional

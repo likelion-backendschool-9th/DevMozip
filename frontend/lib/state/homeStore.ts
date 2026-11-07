@@ -1,3 +1,6 @@
+import { AiApiError, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
+import { missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
+import { createMockId } from '@/lib/utils/createMockId';
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
 import { freshHomeState, loadHomeState, saveHomeState } from '@/lib/matching/homeService';
 import { inputKey, matchingUsage } from '@/lib/matching/matchingService';
@@ -145,6 +148,87 @@ function sendChat(text: string): ChatResult {
     }
 }
 
+// One in-flight mutation per account/conversation. Captured account checks prevent late writes after logout.
+const syncing = new Set<string>();
+const historyRevision = new Map<string, number>();
+function accountGuard(account: string) {
+    if (!getUser() || owner() !== account) throw new Error('로그인 계정이 변경되었습니다. 다시 시도해 주세요.');
+}
+function existingChat(id: string) {
+    return (homeStore.get().chat.conversations[owner()] || []).find(c => c.id === id);
+}
+async function loadAiChats() {
+    const account = owner();
+    if (!getUser()) return;
+    const revision = historyRevision.get(account) || 0;
+    const remote = await listAiConversations();
+    accountGuard(account);
+    const details = await Promise.all(remote.map(c => getAiConversation(c.id)));
+    accountGuard(account);
+    if ((historyRevision.get(account) || 0) !== revision) return;
+    const current = homeStore.get();
+    const chat = structuredClone(current.chat);
+    let items = chat.conversations[account] || [];
+    for (const detail of details) {
+        const local = items.find(c => c.serverId === detail.id || c.id === detail.clientKey);
+        const merged = mergeAiConversation(detail, local);
+        items = [merged, ...items.filter(c => c.id !== merged.id)];
+    }
+    chat.conversations[account] = items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    if (!items.some(c => c.id === chat.active[account])) chat.active[account] = items[0]?.id || '';
+    commit({ ...current, chat });
+}
+async function recommendChat() {
+    const account = owner();
+    accountGuard(account);
+    const initial = activeConversation();
+    const lock = `${account}:${initial.id}`;
+    if (syncing.has(lock)) throw new Error('추천 요청을 처리하고 있습니다.');
+    if (!initial.pendingRecommendation) {
+        validateChatRequirements(initial.requirements);
+        if (missingChatRequirements(initial.requirements).length) throw new Error('관심 분야·경력·기간을 선택해 주세요.');
+    }
+    syncing.add(lock);
+    try {
+        // An uncertain network outcome must reuse the original key and input, including after reload.
+        const pending = initial.pendingRecommendation || { key: createMockId(), conditions: toAiConditions(initial.requirements) };
+        saveConversation({ ...initial, pendingRecommendation: pending });
+        if (!saveHomeState(homeStore.get())) throw new Error('재시도 정보를 저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.');
+        const saved = await syncAiDraft(initial, pending.conditions);
+        accountGuard(account);
+        const current = existingChat(initial.id);
+        if (!current) throw new Error('대화가 삭제되었습니다.');
+        saveConversation(mergeAiConversation(saved, { ...current, pendingRecommendation: pending }));
+        const result = await executeAiRecommendation(saved.id, pending.key);
+        accountGuard(account);
+        const latest = existingChat(initial.id);
+        if (latest && result.status !== 'PENDING') saveConversation({ ...latest, pendingRecommendation: undefined });
+        return result;
+    } catch (error) {
+        if (getUser() && owner() === account && error instanceof AiApiError && [400, 409].includes(error.status)) {
+            const current = existingChat(initial.id);
+            if (current) saveConversation({ ...current, pendingRecommendation: undefined });
+        }
+        throw error;
+    } finally { syncing.delete(lock); }
+}
+async function deleteAiChat(id: string) {
+    const account = owner();
+    accountGuard(account);
+    const c = existingChat(id);
+    if (!c) return;
+    if (syncing.has(`${account}:${id}`)) throw new Error('추천 처리 후 대화를 삭제해 주세요.');
+    const serverId = c.serverId || (c.pendingRecommendation ? (await listAiConversations()).find(v => v.clientKey === c.id)?.id : undefined);
+    accountGuard(account);
+    if (serverId) {
+        try { await deleteAiConversation(serverId); }
+        catch (error) { if (!(error instanceof AiApiError && error.status === 404)) throw error; }
+    }
+    accountGuard(account);
+    historyRevision.set(account, (historyRevision.get(account) || 0) + 1);
+    deleteChat(id);
+}
+
 const home = derived(homeSources, () => {
     const user = getUser();
     const state = homeStore.get();
@@ -167,6 +251,9 @@ const home = derived(homeSources, () => {
         editChat,
         sendChat,
         editChatMessage,
+        loadAiChats,
+        recommendChat,
+        deleteAiChat,
     };
 });
 

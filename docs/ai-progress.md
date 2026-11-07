@@ -1,6 +1,76 @@
 # AI 추천 개발 청사진·진행 현황
 
-기준일: 2026-11-06. 현재 작업 브랜치는 `feat/run-ai-recommendation`이다. 3단계 엔진을 포함한 상태에서 **4단계 백엔드 추천 실행·요청/결과 저장·조회**를 구현했다. 프론트 연결과 5~7단계는 시작하지 않는다. 아래 과거 기록은 당시 상태이며 현재 완료 범위·미완료·최종 검증은 이 절을 우선한다. 다른 도메인·팀원 기록은 보존한다.
+기준일: 2026-11-07. 현재 작업 브랜치는 `feat/frontend-run-ai-recommendation`이다. 백엔드 1~4단계를 유지하고 사용자 승인으로 프론트 동기화·추천 실행·저장 결과 조회 코드를 구현했다. 사용자가 공유 DB 적용 성공과 실제 연동 검토 완료를 확인했다. UI 개선 요청은 남아 있다. 공유 DB 신규 스키마 적용과 실제 계정 통합 검증은 아래 최신 기록에서 구분한다. 5~7단계는 시작하지 않는다. 과거 기록의 미완료·실행 상태는 당시 기준이다.
+
+## 프론트 AI 연동 (2026-11-07, 최신)
+
+### 사용자 검토·실행 상태 갱신 (2026-11-07)
+
+- 최신 사용자 정정: “DB 적용 성공 확인했고 실제 연동도 검토 됨.” 이에 따라 DB 적용·실제 연동 검토를 완료로 갱신했다. 자동 테스트 수치나 세부 시나리오별 결과를 새로 추가하지 않으며, UI 개선 요청은 유지한다. 이번 정정은 문서만 수정한다.
+
+- 최신 요청은 구현·테스트 결과를 확인해 문서만 갱신하는 것이다. 기능 코드·테스트 코드·SQL·설정·공유 DB는 이번 문서 정리에서 변경하지 않는다. UI 개선이나 실제 연동 검증도 자동 시작하지 않는다.
+- 상태 구분: **연동 코드 구현 및 아래 자동/격리 검증 수행**, **프론트 UI 개선 필요**, **공유 DB 적용 성공·실제 연동 검토 완료(사용자 확인)**다. UI 개선 필요 상태는 유지한다.
+- 사용자가 로컬에서 `python3 scripts/dev-postgres.py backend`를 실행한 뒤 `Schema validation: missing column [client_key] in table [ai_conversations]`로 기동 실패한 로그를 제공했다. 이 로그 시점에는 DB 접속 뒤 스키마 검증이 실패했다. Redis 시작만으로 해결되는 문제가 아니며, 앞서 준비한 `docs/sql/ai-draft-sync.sql` 적용이 필요하다.
+- 공유 DB 주소는 `cloud.newlecture.com:5442/devmozip`, 서버 DB 컨테이너 이름은 `devmozip-postgres-dev`다. 노트북의 동명/유사명 컨테이너와 구분한다. 이후 사용자가 DB 적용 성공과 실제 연동 검토 완료를 명시적으로 확인했다. 이는 사용자 확인 기록이며, 에이전트가 이번에 DB에 접속하거나 개별 인덱스·헬스·모든 시나리오를 재검증한 결과는 아니다. 이전의 “공유 DB 미적용”과 기동 실패는 해결 전 이력으로 보존한다.
+- 기존 기록의 JVM/Next/Redis 기동 상태는 구현 당시 관찰이다. 다음 실행 전 실제 프로세스·포트·Docker/WSL Integration·DB 대상을 재확인한다. 프론트 직접 로컬 실행 정책은 유지한다.
+
+### 승인 범위와 구현
+
+- 사용자 승인: `feat/frontend-run-ai-recommendation`에서 프론트 연동만 진행하며 불필요한 변경·다른 도메인 수정·복잡한 구조 확장은 피한다. 추천 실행한 대화만 서버 저장, 이후 변경은 다음 추천 시 동기화, 실패 시 초안/키 보존·중복 없는 재시도, 최신/과거 결과 조회, 서버 저장 시각 표시를 확정했다.
+- 작업 시작 시 같은 이름의 브랜치였고 추적·미추적 변경이 없었다. 현재 서버를 과거 기록으로 추정하지 않았다. Compose ps에는 Redis만 실행 중이며 3000/8080 포트와 로컬 Next dev·Spring Boot JVM을 확인했다. 기존 프로세스·컨테이너·공유 DB는 재시작/변경하지 않았다.
+- AI BFF(`/api/ai/*`)는 기존 backendFetch·HttpOnly 쿠키를 재사용한다. 경로/메서드/쿼리 허용 목록·동일 Origin 변경 요청·no-store·내부 오류 비노출을 적용했다. 공통 인증/프록시/배포 설정은 수정하지 않는다.
+- 최초 추천 시 선택 대화의 USER 메시지·조건을 원자적으로 동기화한 뒤 기존 추천 POST를 호출한다. 미전송 입력·로컬 편집은 유지하며 기존 단건 API·Mock 기록 호환을 보존한다. 실행 응답 유실 시 같은 키·조건을 보존하고 UI에서 이전 요청 확인/재시도를 안내한다. SUCCESS/FAILED 확인 후 새 실행은 새 키다.
+- 서버 대화 목록·상세를 계정별 로컬 초안과 병합하고 최신 결과·과거 요청 선택·결과 새로고침·빈 후보·PENDING/FAILED·서버 삭제를 연결했다. 계정 전환 후 늦은 응답은 저장/후속 실행하지 않으며 삭제 실패 시 로컬 기록을 유지한다.
+- 기존 생성 API에는 중복 방지가 없어 필요한 계약·영향을 먼저 보고한 뒤 AI 전용 POST sync와 GET recommendation history를 추가했다. 기존 ERD에는 client_key가 없어 두 AI 테이블에만 nullable 키와 복합 UNIQUE를 추가하는 SQL을 준비했다. 다른 테이블·공통 설정은 변경하지 않는다.
+- 결과 UI는 현재 서버 DTO에 있는 대상 ID·점수·기본 이유만 표시한다. 이름·프로필 tag·상세 페이지 연결은 현재 응답으로 보장할 수 없어 Mock 조회로 대체하지 않는다. Gemini·상세 분석·포트폴리오·사용량은 미구현 범위를 유지한다.
+
+### 변경 파일
+
+- frontend: `app/api/ai/[...path]/route.ts`와 테스트, `lib/matching/aiApi.ts`와 테스트, `types/aiRecommendation.ts`, `types/matchingChat.ts`, `lib/state/homeStore.ts`와 테스트, `mocks/matchingChat.ts`의 환영 문구, `app/ai/matching/page.tsx`·`page.module.css`, `_components/ChatConditions.tsx`·`SavedRecommendations.tsx`·해당 CSS Module, `tests/screens/FollowingMatching.test.tsx`.
+- backend: `controller/AiDraftController.java`, `service/AiDraftService.java`, `dto/ai/SyncDraftRequest.java`·`RecommendationRequestSummary.java`, `dto/ai/ConversationResponse.java`·`ConversationDetailResponse.java`·`MessageResponse.java`의 clientKey 필드, `entity/AiConversation.java`·`AiMessage.java`, `repository/AiConversationRepository.java`·`AiMessageRepository.java`·`AiRecommendationRequestRepository.java`, `service/impl/AiConversationServiceImpl.java`의 응답 필드, `AiConversationTests.java`·AI H2 fixture. Java 기본 경로는 기존 소스/테스트 루트를 따른다.
+- 문서/SQL: `docs/sql/ai-draft-sync.sql`, `docs/ai-matching.md`, `docs/ai-api-spec.md`, `docs/ai-progress.md`, `docs/postgresql-development.md`.
+
+### 구현 단계 검증 기록
+
+- backend `DEBUG=false ./gradlew test --no-daemon`: 최종 성공. JUnit XML 399개 중 398개 통과·1개 스킵·실패/오류 0. 새 테스트는 동기화 재전송·동시 최초 업로드·내용 충돌·인증/소유권·요청 이력 정렬을 포함한다. 최초 샌드박스 실행은 Gradle 캐시 쓰기 제한으로 실패했으며 권한 확장 후 실행했다. 로그: `/tmp/devmozip-frontend-ai-backend-tests.log`.
+- 격리 PostgreSQL 17: 이번 작업 전용 `devmozip-ai-sync-test-20261107`에서 추가 SQL 두 번 적용·기존 NULL-key 행 유지·사용자/대화별 키 UNIQUE를 확인했다. 공유 개발 DB 또는 노트북의 기존 DB 컨테이너가 아니다.
+- frontend `npm test -- --maxWorkers=2`: 647개 중 646개 통과·1개 실패(58개 파일 중 57개 통과). 실패는 기존 `lib/projects/projectService.test.ts:18`의 마감일 2026-11-05인 공고를 현재 시각의 sortProjects가 모집 중으로 찾을 것이라는 기대다. HEAD를 `/tmp/devmozip-ai-baseline`에 별도로 추출해 변경 전 코드에서도 같은 테스트·위치의 실패를 재현했다. 해당 도메인/테스트는 수정하지 않았다. 로그: `/tmp/devmozip-frontend-ai-tests.log`.
+- 연동 관련 실행: `npm test -- lib/state/homeStore.test.tsx lib/matching/aiApi.test.ts app/api/ai/ tests/screens/FollowingMatching.test.tsx --maxWorkers=2` 4개 파일·40개 통과. 통신 실패·재로딩 후 키 보존, 미저장 메시지만 전송, 계정 전환 응답 무시, 삭제 실패 보존, 저장 공간 실패 시 서버 미실행을 포함한다.
+- `npm run typecheck` 성공. 최종 `npm run build` 성공(50개 페이지). 중간 빌드는 Next TypeScript CLI 출력이 샌드박스에서 비어 실패했으며 권한 확장으로 재실행했다. 그 과정에서 결과 조회 컴포넌트의 optional ID 타입 오류를 확인·수정한 뒤 같은 빌드가 성공했다. 공통 Next/TypeScript 설정은 변경하지 않았다. 브라우저 결과는 아래 후속 기록을 따른다. 일부 npm 명령의 최초 실행은 저장소 루트에서 package.json이 없어 ENOENT였고 frontend에서 다시 실행했다.
+- 변경 제품 파일 및 새 API/매핑 테스트의 ESLint는 성공했다. 기존 `homeStore.test.tsx`의 전역 snapshot 재할당 fixture까지 포함한 실행은 기존 react-hooks/globals 오류와 미사용 import 경고로 실패했다. fixture 부분은 이번에 수정하지 않았다.
+
+- 실제 Chromium + production Next BFF + 가짜 백엔드(임시 13000/18081)에서 9개 시나리오 통과: 추천 전 로컬 유지, 서버 저장 후 응답 유실 재시도 중복 없음, 기본 이유/점수, 다음 추천 시 조건 동기화, 빈 후보, 과거 선택, 새로고침/재로딩 미실행, PC 1440/모바일 390 레이아웃, 서버/로컬 삭제. pageerror 0·모바일 가로 넘침 없음. 최초 브라우저 실행에서 정상 Origin과 Next 내부 URL의 Host 차이로 요청이 차단되는 문제를 찾아 AI BFF에서 실제 Host 기준으로 수정했고 회귀 테스트를 추가했다. 기존 고정 채팅 높이가 결과를 가리는 것을 시각 확인해 저장된 대화에만 높이를 자동 적용했다.
+- 브라우저 산출물은 `/tmp/devmozip-ai-browser/verify.mjs`, `report.json`, `desktop.png`, `mobile.png`다. Playwright/Chromium은 `/tmp`에만 설치했고 프로젝트 의존성은 변경하지 않았다. 가짜 인증/백엔드 검증이므로 실제 로그인·DB·서버 API 통합 성공으로 해석하지 않는다. 임시 서버와 이번 작업 전용 PostgreSQL 컨테이너/익명 볼륨은 종료·정리했다. 기존 3000/8080 프로세스와 컨테이너/볼륨은 삭제하지 않았다.
+- `git diff --check` 통과. AI 정책/API/진행 문서의 상대 파일 링크는 정상이다. 기존 `postgresql-development.md`의 Postman 컬렉션 링크 대상은 현재 체크아웃에 없으며 HEAD 문서에도 동일한 링크가 있었다. 이번 범위에서 컬렉션을 새로 만들지 않았다. 빌드가 생성한 `frontend/next-env.d.ts` 변화는 작업 전 내용으로 복원했다.
+
+### 이번 문서 정리의 확인·검증
+
+- 현재 `git status`와 동기화/재시도 관련 소스·추가 SQL을 읽기 전용으로 대조했다. 기능 구현의 미커밋/미추적 파일은 그대로 보존한다.
+- 현재 남아 있는 backend JUnit XML 합계는 399개·실패/오류 0·스킵 1로 기존 보고 수치와 일치한다. 보고서 열람이며 이번에 `./gradlew test`를 새로 실행한 결과가 아니다.
+- 기존 `/tmp/devmozip-frontend-ai-tests.log`, `/tmp/devmozip-frontend-ai-build.log`, 브라우저 report 및 backend 실행 로그는 이번 확인 시 남아 있지 않았다. 이전 대화와 당시 기록의 테스트 수치는 유지하되 이번 재실행/산출물 재확인으로 표시하지 않는다. `/tmp` 자료는 영구 검증 증거가 아니다.
+- 문서만 변경하므로 기능 테스트·브라우저 검증·DB 적용/조회는 재실행하지 않으며 새 테스트도 만들지 않는다. 이번 frontend `npm run build`와 문서 정적 점검 결과는 아래 문서 검증 결과에 기록한다.
+
+### 이번 문서 검증 결과
+
+- `frontend`의 `npm run build`: 최종 성공, 50개 페이지 생성. 최초 샌드박스 실행은 `Could not parse output from TypeScript's --showConfig`로 실패했으며 설정 수정 없이 권한 확장 후 같은 명령으로 성공했다. 이번 실행 로그는 `/tmp/devmozip-ai-docs-build.log`다.
+- `git diff --check` 통과. AI 정책·API·진행 문서의 상대 파일 링크를 확인했다. 개발 DB 문서의 기존 Postman 링크 대상 부재는 유지되는 미해결 항목이다.
+- 작업 전후 변경 중인 비문서 파일 30개의 SHA-256과 변경 파일 집합이 동일함을 확인했다. 빌드 생성물 중 추적 파일인 `frontend/next-env.d.ts`는 작업 시작 시 내용으로 복원했다. 이번 갱신 파일은 AI 문서 3개와 개발 DB 안내 문서뿐이다.
+- 이번 요청으로 기존 확정 정책을 바꾸지 않았다. 이미 승인·구현된 동기화/재시도 계약과 UI 개선 필요 상태를 유지하며, 최신 사용자 확인에 따라 DB 적용 성공·실제 연동 검토 완료를 관련 명세에 반영했다. 커밋·푸시·PR 변경은 하지 않았다.
+
+### 다음 작업 순서와 주의점
+
+1. 사용자 요청으로 UI를 개선할 때에는 먼저 화면 구성과 표시 정보를 정하고, 승인된 저장 시점·계정 분리·중복 방지·재시도·스냅샷 정책을 보존한다. 이번 문서 요청은 UI 구현 승인이 아니다.
+2. 공유 개발 DB 적용은 사용자 확인으로 완료했다. 다른 환경에 적용하거나 재검증할 때에는 대상 DB와 적용 권한을 먼저 확인하고 `ai-draft-sync.sql`의 컬럼 두 개·UNIQUE 인덱스를 확인한다. `dev-postgres.py db`는 읽기 전용이므로 스키마 적용에 사용하지 않는다. `ddl-auto=update/create`로 우회하지 않는다.
+3. 실제 연동 검토는 사용자 확인으로 완료했다. UI 수정 후에는 backend 실행 방식을 재확인하고 프론트를 직접 로컬 실행해 최초 추천·조건 변경 후 재추천·과거 조회·새로고침·삭제·실패/재시도·계정 분리가 유지되는지 회귀 검증한다. 공유 데이터 삭제 검증은 전용 테스트 대화로 범위를 제한한다.
+4. 통합 검토에서 확인된 오류는 재현 절차와 영향부터 기록하고 필요한 범위만 수정한다. 기본 이유·점수·대상 ID 외의 이름/프로필 링크가 필요하면 실제 서버 조회 계약을 먼저 확인하며 Mock 데이터로 보강하지 않는다.
+5. 기존 날짜 의존 프로젝트 테스트 실패와 테스트 fixture ESLint 문제는 별도 범위로 남긴다. 다음 변경의 실패와 혼동하지 않도록 이번 baseline을 비교한다. 커밋·푸시·PR 변경은 명시적 요청 전 수행하지 않으며 5~7단계도 시작하지 않는다.
+
+### 남은 작업·실행 경계
+
+- 구현 당시 공유 `cloud.newlecture.com:5442/devmozip`에는 신규 `ai-draft-sync.sql`을 적용하지 않았다. 이후 기동 실패 로그가 있었고, 최신 사용자 확인으로 DB 적용 성공·실제 연동 검토 완료를 기록했다. 다른 환경에서 새 백엔드를 실행할 때에는 적용 여부를 확인하며 `ddl-auto=update/create`로 우회하지 않는다. 공유 DB의 실제 계정·BFF·다중 사용자·실패/삭제 통합 검증은 이번 자동/격리 검증과 구분한다.
+- 사용자 실행 방식은 프론트 직접 로컬 실행이다. 구현 당시 backend는 로컬 JVM이었다. 이후 기동 실패 로그가 있으므로 현재 실행 중이라고 가정하지 않고 재기동 전에 포트·프로필·DB 연결 대상을 재확인한다. 이번 문서 정리에서 서버를 실행하거나 재시작하지 않았다.
+- 백엔드 프로세스 종료 후 남은 PENDING 자동 복구, 도메인 탈퇴/대상 물리 삭제 계약, 앱/DB 기준 시간대 미확정은 유지한다. 과거 localStorage 전체를 서버로 이전하거나 오래된 Mock 결과를 DB에 저장하지 않는다.
+- 커밋·푸시·PR 수정·다음 단계는 수행하지 않는다.
 
 ## 현재 AI 상태·검증 (2026-11-06)
 
@@ -47,9 +117,9 @@
 | 단계 | 주요 기능 | 완료 기준 개요 | 현재 상태 |
 |---|---|---|---|
 | 1. 대화 CRUD·메시지 | 서버 대화 생성/목록/상세/삭제, USER 메시지 저장. 로그인 필수 로컬 초안 | 비로그인 저장 차단, 로그인 계정 로컬 보존 및 서버 인증·소유권 보호 | **로컬·실사용자 인증 연결 완료**. 로그인 필수 전환 자동 테스트·빌드 통과. 실제 PostgreSQL 통합 검증 대기 |
-| 2. 조건 관리 | 통합 관심 분야·기술·직군별 인원·경력·기간 DTO, 조건 전체 교체 PUT, 검증 | 화면 입력과 서버 저장 검증 일치 | **기존 서버 PUT 구현·푸시 완료, 이번 입력 계약 보완 완료**. interests·경력·기간 필수, 직군 선택/직접 입력 허용. 프론트 로컬 조건 정합성 보완. 실제 PostgreSQL·AI BFF/서버 연결은 미완료 |
+| 2. 조건 관리 | 통합 관심 분야·기술·직군별 인원·경력·기간 DTO, 조건 전체 교체 PUT, 검증 | 화면 입력과 서버 저장 검증 일치 | **서버 PUT·프론트 조건 변환·추천 시 sync 코드 구현**. interests·경력·기간 필수, 직군 선택/직접 입력 허용. 공유 DB의 신규 sync 적용 성공·실제 연동 검토 완료(사용자 확인) |
 | 3. 추천 엔진 | 실제 DB 후보 조회·필터링, 개발자/프로젝트 적합도·순위·기본 이유 계산 | 동일 입력·데이터로 일관된 0~100점·순위 산출 | **내부 엔진 구현 완료**. H2·격리 PostgreSQL 18 검증, 팀 DB 17 대조 미완료 |
-| 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | **백엔드 구현 완료**, 팀 DB 적용·프론트 연결 미완료 |
+| 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | **백엔드 및 프론트 연동 코드 구현**. 신규 sync 스키마 적용 성공·실제 연동 검토 완료(사용자 확인). UI 개선은 남음 |
 | 5. Gemini 조건 분석 | 자연어 조건 추출·변경·병합, 추가 질문, 응답 저장, 장애 처리 | 검증된 조건 JSON을 선택 UI와 동기화 | 미구현·외부 AI 연결 별도 요청 필요 |
 | 6. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 미구현 |
 | 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 미구현 |

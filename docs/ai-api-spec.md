@@ -1,8 +1,8 @@
 # AI API 명세
 
-기준일: 2026-11-06. **서버 대화·메시지 API 5개와 2단계 조건 PUT, 3단계 내부 추천 엔진과 4단계 백엔드 실행·저장·조회 구현 완료. 실사용자 인증과 최신 develop의 프론트 로그인 필수 동작을 유지하며, 프론트 AI API 연결·실제 팀 PostgreSQL 17 통합 검증은 미완료**다. 이전 브라우저 검증은 guest 허용 당시 기록이며 현재 검증은 진행 문서 상단의 현재 AI 상태를 따른다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
+기준일: 2026-11-07. **서버 대화·메시지 API 5개와 2단계 조건 PUT, 3단계 내부 추천 엔진과 4단계 백엔드 실행·저장·조회 구현 완료. 실사용자 인증과 최신 develop의 프론트 로그인 필수 동작을 유지하며, 프론트 AI API 연결은 2026-11-07 승인 범위에서 구현했으며 공유 개발 DB 적용 성공·실제 연동 검토 완료를 사용자가 확인했으며 UI 개선은 남아 있음**다. 이전 브라우저 검증은 guest 허용 당시 기록이며 현재 검증은 진행 문서 상단의 현재 AI 상태를 따른다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
 
-구현 커밋 `0f7dc87`은 `origin/feat/ai-conditions`에 푸시 완료했다. 무료 Mock 한도 변경은 별도 커밋 `fcd0b4c`다. 현재 상태·최근 검증과 남은 작업은 [진행 현황의 최신 요약](ai-progress.md#현재-ai-상태검증-2026-11-06)을 따른다.
+구현 커밋 `0f7dc87`은 `origin/feat/ai-conditions`에 푸시 완료했다. 무료 Mock 한도 변경은 별도 커밋 `fcd0b4c`다. 현재 상태·최근 검증과 남은 작업은 [진행 현황의 최신 요약](ai-progress.md#프론트-ai-연동-2026-11-07-최신)을 따른다.
 
 ## 공통 계약
 
@@ -14,7 +14,7 @@
 
 ## 구현된 API 목록
 
-모든 API는 로그인이 필요하며, 기존 대화에 접근할 때 본인 소유권을 확인한다. 직접 백엔드를 호출할 때는 `Authorization: Bearer <access-token>`을 사용한다. 브라우저용 AI BFF는 아직 연결하지 않았다.
+모든 API는 로그인이 필요하며, 기존 대화에 접근할 때 본인 소유권을 확인한다. 직접 백엔드를 호출할 때는 `Authorization: Bearer <access-token>`을 사용한다. 브라우저용 AI BFF는 `/api/ai/*`이며 기존 HttpOnly 인증 쿠키를 서버에서 Bearer로 전달한다.
 
 | 단계 | Method·URL | 기능 | 기본 성공 응답 |
 |---|---|---|---|
@@ -24,6 +24,8 @@
 | 1 | DELETE `/api/v1/ai/conversations/{id}` | 대화·추천 이력·메시지 삭제 | 204, 본문 없음 |
 | 1 | POST `/api/v1/ai/conversations/{id}/messages` | USER 메시지 저장 | 201, MessageResponse |
 | 2 | PUT `/api/v1/ai/conversations/{id}/conditions` | 추천 조건 전체 교체 | 200, ConversationConditionsResponse |
+| 연동 | POST `/api/v1/ai/conversations/sync` | 추천 전 초안 동기화 | 200, ConversationDetailResponse |
+| 연동 | GET `/api/v1/ai/conversations/{id}/recommendations/history` | 요청 요약 목록 | 200, RecommendationRequestSummary 배열 |
 | 3 | 외부 API 없음 | 내부 후보 조회·점수 계산 엔진 | 4단계 POST 내부에서 사용 |
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 추천 실행·요청/결과 저장 | 신규 성공 201, RecommendationResponse |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 최신 또는 특정 과거 요청 결과 조회 | 200, RecommendationResponse |
@@ -138,7 +140,7 @@ PR 리뷰에 따라 요구 경력 enum은 `entity/enums/RequiredCareer`, 직군�
 
 프론트 로컬 복원에서는 기존 fields의 7개 기본 선택값을 interests에 중복 없이 옮긴다. 옮긴 항목은 기존 fields에서 제거해 사용자가 통합 관심 분야에서 삭제한 값이 재등장하지 않게 한다. 과거 자유 입력 fields와 메시지/결과 스냅샷은 호환 데이터로 보존한다. 새 화면에는 별도 분야 입력·분야 직접 입력을 표시하지 않는다.
 
-기존 `@JdbcTypeCode(SqlTypes.JSON)`과 엔티티·DB 설정은 유지한다. 실제 PostgreSQL 적용 컬럼/DDL·JSONB 실행 검증은 미완료다. 프론트는 계정별 로컬 초안을 사용하며 AI API BFF·자동 서버 동기화는 연결하지 않았다. 후속 연결 시 화면의 duration 문자열을 durationMonths 정수로 변환한다. 직군은 화면 문자열 그대로 허용하므로 공통 JobCategory label로 바꾸지 않는다. 조건 변경은 메시지·ASSISTANT·추천·사용량을 생성하지 않는다.
+기존 `@JdbcTypeCode(SqlTypes.JSON)`과 엔티티·DB 설정은 유지한다. 실제 PostgreSQL 적용 컬럼/DDL·JSONB 실행 검증은 미완료다. 프론트는 계정별 로컬 초안을 사용하며 추천 실행 시에만 AI BFF의 sync로 동기화한다. 화면의 duration 문자열을 durationMonths 정수로 변환한다. 직군은 화면 문자열 그대로 허용하므로 공통 JobCategory label로 바꾸지 않는다. 조건 변경은 메시지·ASSISTANT·추천·사용량을 생성하지 않는다.
 
 ### 프로젝트 기간의 추천 비교 정책
 
@@ -309,7 +311,7 @@ ErrorResponse의 필드는 `status`, `error`, `message`, `path`, `timestamp`다.
 
 [PostgreSQL 생성 SQL](sql/ai-recommendations.sql)은 기존 users/projects/ai_conversations/ai_messages가 존재하는 DB에 적용한다. 시간은 기존 AI와 동일한 TIMESTAMP WITHOUT TIME ZONE/LocalDateTime이다. 기본값 대신 서버에서 생성 시각·상태를 넣는다. 스크립트는 앱 시작 때 자동 실행하지 않는다. **앱 기동 전 명시적으로 적용**해야 전체 CHECK·부분 UNIQUE 인덱스가 보장된다. Hibernate update만으로 SQL의 모든 제약이 적용된다고 간주하지 않는다.
 
-대상 FK 중 하나만 존재, 점수 0~100, rank 양수, 요청별 대상 중복 금지 및 대상 종류별 rank 중복 금지를 DB에서 보장한다. 메시지의 동일 대화 소속은 서비스에서 검증한다. analysis_level은 제공 ERD에 있지만 이번 스키마·엔티티에서는 생성하지 않으며 6단계에서 허용 값·용도를 확정한다. input_hash/recommendation_type은 없다. Gemini·사용량·프론트/BFF 연결·초안 일괄 동기화는 미구현이다. 2026-11-06 사용자 요청으로 개발 PostgreSQL 17.11의 devmozip/public에 이 SQL을 적용했고 컬럼·제약·인덱스를 확인했다. 같은 DB의 읽기 전용 연결로 Hibernate validate·임시 백엔드 기동·헬스 200 UP을 확인했다. 기존 member 데모 계정의 실제 엔진 POST·최신/과거 GET·중복 재요청은 개발 DB에서 확인했다. 전체 다중 사용자·실패/삭제·로그인/Redis 검증을 대신하지 않는다.
+대상 FK 중 하나만 존재, 점수 0~100, rank 양수, 요청별 대상 중복 금지 및 대상 종류별 rank 중복 금지를 DB에서 보장한다. 메시지의 동일 대화 소속은 서비스에서 검증한다. analysis_level은 제공 ERD에 있지만 이번 스키마·엔티티에서는 생성하지 않으며 6단계에서 허용 값·용도를 확정한다. input_hash/recommendation_type은 없다. Gemini·사용량은 미구현이다. 프론트/BFF·선택 초안 동기화는 아래 2026-11-07 추가 계약을 따른다. 2026-11-06 사용자 요청으로 개발 PostgreSQL 17.11의 devmozip/public에 이 SQL을 적용했고 컬럼·제약·인덱스를 확인했다. 같은 DB의 읽기 전용 연결로 Hibernate validate·임시 백엔드 기동·헬스 200 UP을 확인했다. 기존 member 데모 계정의 실제 엔진 POST·최신/과거 GET·중복 재요청은 개발 DB에서 확인했다. 전체 다중 사용자·실패/삭제·로그인/Redis 검증을 대신하지 않는다.
 
 ### 개발 DB 데모 데이터
 
@@ -325,17 +327,17 @@ ErrorResponse의 필드는 `status`, `error`, `message`, `path`, `timestamp`다.
 - `application-dev.yaml`은 `AI_DEV_USER_ENABLED`, `AI_DEV_USER_ID`를 읽는다. 모든 인증 요청을 한 ID로 취급하는 임시 방식이므로 실제 A/B 사용자 분리 검증용이 아니다.
 - 기본/local/운영 환경과 dev/test opt-in이 꺼진 환경은 실사용자 어댑터를 사용한다. 익명·미인증·삭제된 사용자는 401, 정지된 사용자는 403이다. 운영 프로필에서는 개발 옵션을 켜도 고정 ID를 사용하지 않는다. `ConditionalOnMissingBean` 교체 지점은 유지하며 Controller/Service 입력에 요청자 ID를 추가하지 않는다.
 - 브라우저는 HttpOnly 인증 쿠키를 사용한다. AI API용 BFF/프록시의 토큰 전달·갱신 계약은 미완료이며 [팀 인증 안내](team-auth-deployment.md)와 맞춰야 한다.
-- guest 초안 이어받기는 2026-11-05 로그인 필수 정책으로 제거했다. 로그인 계정의 서버 초안 동기화 API는 확정되지 않았다. 기존 생성/메시지 API에는 로컬 ID·멱등성 키·원래 작성 시각·조건 일괄 전송 필드가 없다. 저장 시점·재시도·부분 실패·중복 저장 계약을 먼저 정한다.
+- guest 초안 이어받기는 2026-11-05 로그인 필수 정책으로 제거했다. 기존 단건 생성/메시지 API는 유지한다. 로그인 계정 초안의 최초 추천 시 동기화·클라이언트 키·중복 방지·서버 시각 표시는 2026-11-07 추가 계약으로 확정했다.
 
-## 1단계 로컬 초안 계약 — 서버 API 호출 없음
+## 추천 전 로컬 초안 계약
 
 - 로그인 계정만 추천 전까지 대화·조건·전송 전 입력문을 `devmozip:home:v1`에 보관한다. `MatchingConversation.draft`는 브라우저 전용이며 서버 DTO에 추가하지 않았다. 기존 계정별 대화는 복원한다.
 - 메인에 로그인 필수·입력 미저장 안내를 표시한다. 비로그인 입력은 컴포넌트 메모리에서만 유지하고 추천 시작 시 저장·길이 검증 없이 `/login?next=%2Fai%2Fmatching`으로 이동한다. 로그인 후 대화 화면에서 새로 입력한다.
 - `/ai/matching`은 보호 경로다. 클라이언트도 비로그인 대화·조건 UI를 숨기고 로그인으로 연결하며 상태 변경 함수는 로그아웃 후 저장을 거절한다. 기존 로그인·쿠키·백엔드 인증 계약은 유지한다.
 - guest 초안 인계 기능은 제거했다. 기존 guest 저장 데이터는 일괄 삭제하지 않지만 노출·인계하지 않는다. 메인 입력의 브라우저 전용 선택 필드 `inputOwner`로 소유 계정을 구분한다. 과거 소유자 없는 메인 입력은 복원하지 않는다.
-- 로그인 메시지 전송은 USER만 추가한다. 자동 답변·자연어 분석·추천·사용량 차감은 실행하지 않는다. 과거 계정별 Mock 결과의 조회 호환과 추천 준비 중 안내를 유지한다.
+- 메시지 전송은 로컬 USER만 추가하며 자동 답변·자연어 분석·추천·사용량 차감은 실행하지 않는다. 추천 버튼은 서버 동기화·실행을 호출한다. 과거 계정별 Mock 결과의 조회 호환은 유지한다.
 - 로컬 소유 키는 실제 로그인 이메일별로 구분하며, 이메일이 일치하는 기존 데모 계정은 이전 ID 키를 유지한다. 공통 Mock 프로필 ID가 같은 일반 계정도 대화는 섞이지 않게 했다. 이는 브라우저 저장 분리일 뿐 서버의 users PK·소유권 검증을 대체하지 않는다.
-- 로그인 직후 서버에 전송하지 않는다. 최초 추천 시 대화·USER 메시지·조건 전송, 로컬/서버 ID 연결·원래 시각·부분 실패·중복 재시도·원자성은 프론트 연결 후속 계약으로 남긴다. 로컬 초안 동기화 API는 미구현이다. 조건 PUT은 2단계에서 구현했지만 프론트 연결은 하지 않았다.
+- 로그인 직후 기존 로컬 초안을 서버에 전송하지 않는다. 최초 추천 시 선택한 대화만 아래 sync API로 저장한다. 서버 저장 후의 편집도 다음 추천 시 동기화한다. 로컬/서버 ID와 미확정 실행 키는 계정별 기존 v1 저장소에 보존하며, 메시지 이력 시각은 서버 저장 시각을 표시한다.
 
 ## 현재 매핑과 ERD 확인 항목
 
@@ -535,7 +537,7 @@ AI 외 코드는 공통 controller·service·repository·entity와 도메인별 
 
 ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응답·인증·오류 계약이다. 제공받은 API 표의 경로·기능은 위에 반영했으며 현재 문서 앞부분에 1~4단계의 구현 API 8개와 내부 엔진 명세가 있다. 팀에 상세 DTO·오류·인증 계약이 있다면 대조 기준으로 활용한다.
 
-과거 guest 인계·로그인 왕복 브라우저 검증 기록은 당시 정책 기준이다. 2026-11-05부터 guest 인계를 제거했으며 이번 정책의 검증 결과는 진행 문서 마지막 기록을 따른다. AI API BFF 인증 전달 계약과 실제 PostgreSQL 통합 검증은 남아 있다. 프론트 초안의 서버 최초 전송·중복/부분 실패 처리는 백엔드 API 이후 프론트 연결 단계에서 정한다. 조건 DTO·검증 계약은 위 2단계 구현 절을 따른다. 추천 실행·조회 응답은 앞의 4단계 계약을 따르고 상세 분석·사용량은 후속 단계 요청 시 정한다. ERD의 컬럼명을 API JSON 키로 그대로 확정하거나 API 미구현 항목을 완료로 표시하지 않는다.
+과거 guest 인계·로그인 왕복 브라우저 검증 기록은 당시 정책 기준이다. 2026-11-05부터 guest 인계를 제거했으며 이번 정책의 검증 결과는 진행 문서 마지막 기록을 따른다. AI API BFF 인증 전달과 프론트 초안의 최초 전송·중복/부분 실패 처리는 2026-11-07 추가 계약으로 구현했다. 공유 PostgreSQL의 신규 sync 스키마 적용·실제 계정 통합 검증은 최신 진행 기록을 따른다. 조건 DTO·검증 계약은 위 2단계 구현 절을 따른다. 추천 실행·조회 응답은 앞의 4단계 계약을 따르고 상세 분석·사용량은 후속 단계 요청 시 정한다. ERD의 컬럼명을 API JSON 키로 그대로 확정하거나 API 미구현 항목을 완료로 표시하지 않는다.
 
 ## API 단계별 개요
 
@@ -559,3 +561,36 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 - 로그인 계정의 메인 작성 중 입력은 소유 계정이 일치할 때 새로고침 시 복원한다. 추천 시작 시 새 로컬 대화와 메인 설명 초기화를 한 번에 저장하며, 저장 성공 후에만 대화 화면으로 이동한다. 실패하면 입력·기존 대화를 유지하고 재시도한다.
 - 제출 중 버튼 잠금과 최신 메인 입력 확인으로 연속 제출을 막는다. 같은 문장을 새로 작성해 별도 대화를 만드는 것은 허용한다. 기존 중복 기록은 자동 삭제/병합하지 않으며 목록에서 직접 삭제한다.
 - 이전 추천 대화 열기도 로그인이 필요하며 guest 초안 인계는 제거했다. 서버 API·추천 실행·사용량 정책 변경은 없다.
+
+## 2026-11-07 프론트 연동 추가 계약
+
+기존 추천 점수·대상·인증·단건 저장 계약은 유지한다. 사용자 승인으로 최초 추천 시 선택한 초안만 저장하며, 최신 결과 기본 표시·과거 선택 조회를 연결했다. 다음 두 API를 추가했다.
+
+### POST `/api/v1/ai/conversations/sync`
+
+- 로그인 필수. `conversationId`를 보내면 본인 대화인지 잠금 조회하며 타인/미존재는 404다. ID는 요청자의 신원으로 사용하지 않는다.
+- 본문: `{conversationId?: number, clientKey: string, title?: string, messages: [{clientKey: string, content: string}], conditions: UpdateConditionsRequest}`.
+- clientKey는 영문·숫자·`._:-` 1~128자다. 제목은 기존과 같이 null 또는 255자 이하다. 새 동기화 메시지는 비어 있지 않은 1~1500자 USER만 받는다. 원래 작성 시각·역할·사용자 ID는 받지 않는다. 조건은 기존 PUT DTO를 재사용한다.
+- `conversationId`가 없으면 인증 사용자+clientKey로 기존 대화를 재사용하거나 생성한다. 메시지는 대화+clientKey로 기존 행을 재사용한다. 기존 메시지 키에 다른 내용은 409이며 전체 동기화를 롤백한다. 동시 최초 업로드의 UNIQUE 충돌은 새 트랜잭션에서 한 번 재조회한다.
+- 대화·메시지·조건은 한 트랜잭션이다. 응답 유실 후 같은 키로 재전송해도 행이 중복되지 않는다. 기존 메시지 삭제·수정·추천 실행은 동기화에 포함하지 않는다. 빈 messages는 허용한다.
+- 200 ConversationDetailResponse. 기존 대화 요약/상세 및 MessageResponse에 nullable `clientKey`를 추가했다. 기존 단건 API로 만든 행은 null이다. 서버 ID와 clientKey를 연결해 새 메시지와 기존 메시지를 구분한다.
+- 추천 실행은 동기화 성공 뒤 기존 POST recommendations를 별도로 호출한다. 두 API 전체를 하나의 트랜잭션으로 묶지 않는다. 실행 응답 유실 시 동일 추천 키·조건을 유지하며, 확정된 SUCCESS/FAILED 이후 신규 실행만 새 키를 사용한다.
+- 기존 ERD에 없는 AI 전용 컬럼 두 개가 필요하다. [추가 SQL](sql/ai-draft-sync.sql)은 ai_conversations.client_key, ai_messages.client_key 및 각각 `(user_id, client_key)`, `(conversation_id, client_key)` UNIQUE 인덱스만 추가한다. 기존 행은 NULL이며 공통 설정·다른 테이블은 변경하지 않는다. 공유 DB 적용 여부는 최신 진행 기록을 따른다.
+
+### GET `/api/v1/ai/conversations/{id}/recommendations/history`
+
+- 로그인·본인 대화 소유권 검증. 응답은 `{requestId, status, createdAt}` 배열, createdAt DESC·id DESC다. 이력 없음은 `[]`, 타인/미존재 대화는 404다.
+- 추천 실행·재계산 없이 요청 요약만 조회한다. 선택한 결과는 기존 GET recommendations?requestId로 조회한다.
+
+### 브라우저 BFF·표시
+
+- `/api/ai/conversations` 목록, `/{id}` 상세·삭제, `/sync`, `/{id}/recommendations` 실행·조회, `/{id}/recommendations/history`만 허용한다. 임의 프록시 경로·사용자 ID 쿼리는 거절한다.
+- POST/DELETE는 동일 Origin만 허용한다. 브라우저 Authorization은 전달하지 않고 기존 backendFetch가 HttpOnly 쿠키를 사용한다. 응답은 no-store이며 일반 오류의 내부 상세는 숨긴다. FAILED 추천 DTO는 상태와 함께 유지한다.
+- 결과는 서버 ID·점수·기본 이유로 표시한다. 이름·프로필 tag 등은 현재 추천 DTO에 없어 Mock 데이터나 잘못된 상세 URL로 대체하지 않는다. 자연어 분석·상세 분석·사용량 구현은 포함하지 않는다.
+
+### 구현·적용·사용자 검토 상태 (2026-11-07)
+
+- 위 sync/history와 BFF는 현재 작업 브랜치의 구현 계약이다. 사용자가 공유 DB 적용 성공과 실제 연동 검토 완료를 확인했다. UI 개선 요청은 남아 있어 화면 최종 승인을 뜻하지 않는다. 최신 요청은 문서 정리이며 API 계약을 새로 변경하지 않았다.
+- 사용자 제공 기동 로그는 ai_conversations.client_key 누락에 의한 Hibernate validate 실패다. 새 백엔드 기동 전 위 추가 SQL의 두 컬럼과 두 UNIQUE 인덱스 적용 여부를 확인해야 한다. 이후 사용자가 DB 적용 성공과 실제 연동 검토 완료를 확인했다. 이번에 에이전트가 헬스·개별 제약·세부 시나리오를 재검증한 것으로 기록하지 않는다. 기존 단건 대화 조회도 엔티티에 추가된 컬럼을 요구하므로 프론트 버튼만 연결해 해결할 수 없다.
+- 코드상 `pendingRecommendation`이 남아 있으면 기존 키·조건으로 확인/재시도한다. 이때 변경 중인 로컬 조건은 다음 신규 요청에 반영한다. 결과 화면의 단순 GET 새로고침은 추천을 실행하지 않는다. 백엔드의 장기 PENDING 자동 복구는 여전히 미구현이다.
+- UI 수정 시 기존 경로·DTO·조건 스냅샷·인증/소유권·같은 키 처리 계약을 보존한다. 이번 문서 정리로 Gemini·상세 분석·사용량 API·새로운 공개 프로필 조회 계약을 확정하지 않는다.
