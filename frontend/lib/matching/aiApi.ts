@@ -47,3 +47,9 @@ export function mergeAiConversation(remote: AiConversationDetail, local?: Matchi
         title: remote.title || '새 대화', createdAt: remote.createdAt, updatedAt: remote.updatedAt,
         requirements: local?.requirements || fromAiConditions(remote.currentConditions), messages: [...messages, ...pending] };
 }
+
+export async function getAiPublicProject(id: number, signal: AbortSignal): Promise<import('@/types/aiRecommendation').AiPublicProject> {
+    const response = await fetch(`/api/ai/projects/${id}`, { cache: 'no-store', signal });
+    if (!response.ok) throw new AiApiError(response.status, '프로젝트 정보를 불러올 수 없습니다.');
+    return response.json();
+}

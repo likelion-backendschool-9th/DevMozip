@@ -31,6 +31,17 @@ describe('AI BFF', () => {
             headers: { Origin: 'http://127.0.0.1:13000', Host: '127.0.0.1:13000', 'Content-Type': 'application/json' }, body: '{}' }), context('conversations/sync'));
         expect(response.status).toBe(200);
     });
+    it('기존 공개 프로젝트 API에서 카드용 필드만 읽는다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ project: { id: 9, isPublic: true, title: '공개 프로젝트', summary: '소개', description: '상세', techStacks: ['React'], recruitmentSlots: [{ role: 'BACKEND' }], hostEmail: 'private' } }));
+        const response = await GET(new Request('http://localhost/api/ai/projects/9'), context('projects/9'));
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ id: 9, title: '공개 프로젝트', summary: '소개', description: '상세', imageUrl: null, stacks: ['React'], roles: ['BACKEND'] });
+        expect(backendFetch).toHaveBeenCalledWith('/api/v1/projects/9');
+    });
+    it('비공개 프로젝트 응답을 카드 정보로 넘기지 않는다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ project: { id: 9, isPublic: false, title: 'private' } }));
+        expect((await GET(new Request('http://localhost/api/ai/projects/9'), context('projects/9'))).status).toBe(502);
+    });
     it('추천 실패 DTO와 삭제 204를 유지한다', async () => {
         vi.mocked(backendFetch).mockResolvedValueOnce(Response.json({ status: 'FAILED', requestId: 1 }, { status: 500 }))
             .mockResolvedValueOnce(new Response(null, { status: 204 }));

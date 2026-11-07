@@ -1,3 +1,4 @@
+import { matchingLoginPath, readLoginPrompt } from '@/lib/matching/loginPrompt';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { resetLocalStores } from '@/lib/localStore';
@@ -212,5 +213,33 @@ describe('AI 서버 연동과 재시도', () => {
         storage.setItem.mockImplementation(() => { throw new Error('quota'); });
         await expect(home().recommendChat()).rejects.toThrow('저장 공간');
         expect(fetch).not.toHaveBeenCalled();
+    });
+});
+
+describe('로그인 프롬프트를 실제 계정 로컬 메시지로 인계', () => {
+    function pending() {
+        const data = new Map<string, string>();
+        vi.stubGlobal('sessionStorage', { getItem: (k: string) => data.get(k) || null, setItem: (k: string,v: string) => data.set(k,v), removeItem: (k: string) => data.delete(k) });
+        const next = new URL(matchingLoginPath('로그인 전에 작성한 프로젝트'), 'http://localhost').searchParams.get('next')!;
+        return new URL(next, 'http://localhost').searchParams.get('resume')!;
+    }
+    it('로그인 후 한 번만 메시지를 만들고 서버 추천을 자동 실행하지 않는다', () => {
+        const token = pending();
+        expect(home().resumeLoginPrompt(token).ok).toBe(false);
+        signIn('demo-user');
+        expect(home().resumeLoginPrompt(token).ok).toBe(true);
+        expect(home().resumeLoginPrompt(token).ok).toBe(false);
+        expect(home().conversations).toHaveLength(1);
+        expect(home().conversation!.messages[0].text).toBe('로그인 전에 작성한 프로젝트');
+        expect(fetch).not.toHaveBeenCalled();
+        signIn('demo-premium'); expect(home().conversations).toEqual([]);
+    });
+    it('계정 저장이 실패하면 일회성 입력을 소비하지 않는다', () => {
+        const token = pending(); signIn('demo-user');
+        storage.setItem.mockImplementationOnce(() => { throw new Error('quota'); });
+        expect(home().resumeLoginPrompt(token).ok).toBe(false);
+        expect(readLoginPrompt(token)).toBe('로그인 전에 작성한 프로젝트');
+        expect(home().conversations).toHaveLength(0);
+        expect(home().resumeLoginPrompt(token).ok).toBe(true);
     });
 });

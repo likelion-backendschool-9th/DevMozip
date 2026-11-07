@@ -8,6 +8,21 @@ async function handle(request: Request, context: Context) {
     const { path } = await context.params;
     const route = path.join('/');
     const id = '[1-9][0-9]*';
+    // Presentation enrichment reuses the existing public project API; no backend contract changes.
+    if (request.method === 'GET' && new RegExp(`^projects/${id}$`).test(route)) {
+        if (new URL(request.url).search) return error(400, '조회 조건을 확인해 주세요.');
+        try {
+            const response = await backendFetch(`/api/v1/${route}`);
+            if (!response.ok) return error([401, 403, 404].includes(response.status) ? response.status : 502, '프로젝트 정보를 불러올 수 없습니다.');
+            const { project } = await response.json();
+            if (!project || project.id !== Number(path[1]) || project.isPublic !== true || typeof project.title !== 'string'
+                || !Array.isArray(project.techStacks) || !project.techStacks.every((v: unknown) => typeof v === 'string')
+                || !Array.isArray(project.recruitmentSlots)) return error(502, '프로젝트 정보를 확인할 수 없습니다.');
+            return NextResponse.json({ id: project.id, title: project.title, summary: typeof project.summary === 'string' ? project.summary : '',
+                description: typeof project.description === 'string' ? project.description : '', imageUrl: typeof project.imageUrl === 'string' ? project.imageUrl : null,
+                stacks: project.techStacks, roles: project.recruitmentSlots.filter((v: { role?: unknown }) => typeof v?.role === 'string').map((v: { role: string }) => v.role) }, { headers });
+        } catch { return error(502, '프로젝트 정보를 불러올 수 없습니다.'); }
+    }
     const allowed = request.method === 'GET'
         ? new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
         : request.method === 'DELETE' ? new RegExp(`^conversations/${id}$`).test(route)

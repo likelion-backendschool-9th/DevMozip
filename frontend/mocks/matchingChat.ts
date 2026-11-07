@@ -11,3 +11,10 @@ export const chatRequirementLabels:Record<keyof ChatRequirements,string>={descri
 export const chatRoleAliases:Record<string,string[]>={'프론트엔드':['프론트엔드','프론트','frontend'],'백엔드':['백엔드','backend'],'풀스택':['풀스택','fullstack'],'UI/UX':['ui/ux','디자이너','디자인'],'DevOps':['devops'],'데이터 엔지니어':['데이터 엔지니어'],'AI 엔지니어':['ai 엔지니어'],'모바일':['모바일 개발자','모바일 개발'],'게임':['게임 개발자','게임 개발']};
 export const chatDomainAliases:Record<string,string[]>={'웹':['웹','web'],'모바일':['모바일','앱'],'AI / 머신러닝':['머신러닝','인공지능','ai'],'데이터':['데이터'],'게임':['게임'],'보안':['보안'],'클라우드 / 인프라':['클라우드','인프라']};
 export const chatDomainStacks:Record<string,string[]>={'웹':['React','TypeScript','Java','Spring Boot','Node.js','Figma'],'모바일':['React','TypeScript'],'AI / 머신러닝':['Python'],'데이터':['Python','Java'],'게임':[],'보안':[],'클라우드 / 인프라':['Node.js','Java','Spring Boot']};
+
+// Suggestions are input examples, never simulated AI responses or inferred conditions.
+export const chatPromptExamples = [
+    { title: '새 프로젝트의 동료 찾기', text: 'React와 Spring Boot로 커뮤니티를 만들고 싶어요. 프론트엔드와 백엔드 동료를 찾고 있어요.' },
+    { title: '아이디어와 비슷한 프로젝트', text: '개발자들이 함께 공부하는 서비스를 구상하고 있어요. 비슷한 프로젝트를 살펴보고 싶어요.' },
+    { title: '작은 팀으로 시작하기', text: '3개월 동안 작은 웹 서비스를 완성하고 싶어요. 함께할 동료를 찾고 있어요.' },
+];

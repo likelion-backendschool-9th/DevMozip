@@ -18,3 +18,5 @@ export interface AiRecommendation extends AiRequestSummary {
     developers: AiRecommendationItem[];
     projects: AiRecommendationItem[];
 }
+
+export interface AiPublicProject { id: number; title: string; summary: string; description: string; imageUrl: string | null; stacks: string[]; roles: string[] }

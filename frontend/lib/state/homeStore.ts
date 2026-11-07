@@ -1,3 +1,4 @@
+import { readLoginPrompt, clearLoginPrompt } from '@/lib/matching/loginPrompt';
 import { AiApiError, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
 import { missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
 import { createMockId } from '@/lib/utils/createMockId';
@@ -109,6 +110,23 @@ function startHomeChat(): ChatResult {
     } catch (error) {
         return fail(error);
     }
+}
+
+function resumeLoginPrompt(token: string): ChatResult {
+    if (!getUser()) return { ok: false };
+    const text = readLoginPrompt(token);
+    if (!text) return { ok: false };
+    const current = homeStore.get();
+    const c = newMatchingConversation();
+    const saved = sendMatchingMessage(c, text, c.requirements);
+    const next = structuredClone(current);
+    const account = owner();
+    next.chat.conversations[account] = [saved, ...(next.chat.conversations[account] || [])];
+    next.chat.active[account] = saved.id;
+    if (!saveHomeState(next)) return { ok: false, error: '입력을 대화에 저장하지 못했습니다. 저장 공간을 확인해 주세요.' };
+    homeStore.set(next);
+    clearLoginPrompt();
+    return { ok: true };
 }
 
 function selectChat(id: string) {
@@ -246,6 +264,7 @@ const home = derived(homeSources, () => {
         conversation,
         newChat,
         startHomeChat,
+        resumeLoginPrompt,
         selectChat,
         deleteChat,
         editChat,
