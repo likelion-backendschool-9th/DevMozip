@@ -1,9 +1,9 @@
 import { createMockId } from '@/lib/utils/createMockId';
 import { chatCareerOptions,chatInterestOptions,chatDomainAliases,chatDomainStacks,chatRoleAliases,emptyChatRequirements,initialMatchingChat } from '@/mocks/matchingChat';
 import { stackOptions } from '@/mocks/home';
-import { analyzeMatching,buildMatchingResult,matchingUsage,parseMatchingState } from '@/lib/matching/matchingService';
+import { analyzeMatching,buildMatchingResult,parseMatchingState } from '@/lib/matching/matchingService';
 import type { ChatRequirements,MatchingChatState,MatchingConversation,MatchingMessage } from '@/types/matchingChat';
-import type { MatchingState,MatchingResult } from '@/types/matching';
+import type { MatchingResult } from '@/types/matching';
 import type { Developer,Project } from '@/types/home';
 export const CHAT_MESSAGE_LIMIT = 1500;
 export const CHAT_TOTAL_LIMIT = 10000;

@@ -2,7 +2,16 @@
 
 기준일: 2026-11-08. 현재 작업 브랜치는 `feat/frontend-run-ai-recommendation`이다. 백엔드 1~4단계를 유지하고 사용자 승인으로 프론트 동기화·추천 실행·저장 결과 조회 코드를 구현했다. 사용자가 공유 DB 적용 성공과 실제 연동 검토 완료를 확인했다. 이번 사용자 요청으로 채팅 UI/UX를 재구성했으며 새 화면의 사용자 최종 검토는 별도다. 공유 DB 신규 스키마 적용과 실제 계정 통합 검증은 아래 최신 기록에서 구분한다. 5~7단계는 시작하지 않는다. 과거 기록의 미완료·실행 상태는 당시 기준이다.
 
-## 요청 조건과 현재 프로필에 공통인 기술 안내 (2026-11-08, 최신)
+## PR 전 미사용 코드·로그 점검 (2026-11-08, 최신)
+
+- 미사용 import 제거: `matchingChatService.ts`의 matchingUsage/MatchingState, `homeService.ts`의 mockDataEnabled/interestOptions. 어디에서도 참조하지 않는 구형 `RecommendationPanel.tsx`와 전용 CSS를 삭제했다.
+- 누적 메시지 처리 전환 후 호출되지 않는 `AiRecommendationRequest.getMessageContent()`를 제거했다. DB/HTTP 계약·점수식·인증은 변경하지 않았다. 기존 Mock 이력 조회 및 회귀 테스트가 사용하는 함수는 유지했다.
+- 추천 화면/상태/API 및 AI 백엔드에서 불필요한 console/System.out/디버그 출력은 발견되지 않았다. `AiRecommendationExecutionServiceImpl`의 요청 ID/예외 기반 실행 실패 로그는 운영 진단에 필요해 유지한다.
+- 관련 프론트 테스트 4개 파일·61개 통과. 변경/추천 제품 파일을 대상으로 한 ESLint 오류/경고 0. 전체 matching 폴더의 기존 `matchingService.ts` Mock 파서에는 explicit-any 오류 5개가 있으며, 타입 구조 변경은 이번 정리 범위에서 제외했다. 로그 `/tmp/devmozip-ai-cleanup-tests.log`, `devmozip-ai-cleanup-eslint-final.log`, `devmozip-ai-cleanup-eslint.log`.
+- `npm run build` 성공(50개 페이지), `git diff --check` 통과. `./gradlew test`는 404개 중 402개 통과·1개 실패·1개 스킵이다. AI 테스트는 69개 통과·PostgreSQL 운영 DDL 전용 1개 스킵으로 실패가 없다. 실패는 이전에도 발생한 범위 밖 `KakaoClientTest`의 DEBUG 로그 검증이며 인증/로깅 설정은 변경하지 않았다. `/tmp/devmozip-ai-cleanup-build.log`, `devmozip-ai-cleanup-backend.log`.
+- 실제 브라우저/공유 DB 검증은 미실행이며, 커밋·푸시는 요청되지 않아 진행하지 않는다.
+
+## 요청 조건과 현재 프로필에 공통인 기술 안내 (2026-11-08, 이전 기록)
 
 - 사용자 요청으로 기술 이유를 `제시하신 조건 중 React, Java 기술 스택이 현재 프로필에 등록되어 있습니다.` 형태로 수정했다. 각 결과의 저장된 조건과 현재 공개 프로필의 공통 기술만 안내하며, 미요청 기술은 제외한다. 일치 기술이 없거나 프로필을 확인할 수 없으면 확인 불가로 안내한다.
 - 화면 표현만 수정했다. 기존 개수/기술명 이유 모두 요청 조건과 현재 프로필 기준으로 표시하며, DB 원문·점수·백엔드 API·추천 엔진은 변경하지 않는다. 이 규칙이 앞선 기술명 스냅샷 표시 정책을 대체한다.
