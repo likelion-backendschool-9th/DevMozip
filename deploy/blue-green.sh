@@ -9,6 +9,9 @@
 #
 # 상태는 nginx/upstream/active.conf 한 파일이다. 팀 nginx 가 이 파일을 include 하고,
 # 여기 적힌 색(frontend-blue 또는 frontend-green)이 트래픽을 받는다. git 에는 들어가지 않는다.
+# 메신저 WebSocket(/ws/messages)은 같은 파일의 backend_upstream 으로 활성 색의 backend 에 바로 간다.
+#
+# 종료 코드 3: 배포는 끝났지만 WebSocket 경로 확인이 실패했다. 화면은 폴링으로 동작한다.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -28,7 +31,8 @@ active_color() {
 }
 other() { [ "$1" = blue ] && echo green || echo blue; }
 
-# upstream 파일을 쓴다. resolve 를 붙여 컨테이너가 재시작해 IP 가 바뀌어도 nginx 가 5초 안에 따라가게 한다
+# upstream 파일을 쓴다. resolve 를 붙여 컨테이너가 재시작해 IP 가 바뀌어도 nginx 가 5초 안에 따라가게 한다.
+# server.conf 가 backend_upstream 을 쓰므로 두 upstream 을 항상 함께 쓴다
 write_active() {
   cat > "$ACTIVE_FILE" <<CONF
 # deploy/blue-green.sh 가 쓴다. 손으로 고치지 않는다
@@ -37,7 +41,53 @@ upstream frontend_upstream {
     resolver 127.0.0.11 valid=5s;
     server frontend-$1:3000 resolve;
 }
+# 메신저 WebSocket(/ws/messages). 브라우저가 BFF 를 거치지 않고 활성 색의 backend 에 연결한다
+upstream backend_upstream {
+    zone backend_upstream 64k;
+    resolver 127.0.0.11 valid=5s;
+    server backend-$1:8080 resolve;
+}
 CONF
+}
+
+# nginx/server.conf 는 파일 하나만 마운트돼 있어 git pull 로 바뀐 내용을 reload 로는 읽지 못한다.
+# 실행 중인 nginx 가 읽은 내용과 다르면 다시 시작한다. 다시 시작하는 동안 전체 트래픽이 잠깐 끊긴다
+restart_nginx_if_config_changed() {
+  local expected running i
+  expected=$(sha256sum nginx/server.conf | cut -d' ' -f1)
+  running=$($COMPOSE exec -T nginx sha256sum /etc/nginx/conf.d/default.conf 2>/dev/null | cut -d' ' -f1 || true)
+  [ "$expected" = "$running" ] && return 0
+  log "nginx/server.conf 가 바뀌어 nginx 를 다시 시작한다"
+  $COMPOSE restart nginx
+  for ((i = 1; i <= 15; i++)); do
+    if $COMPOSE exec -T nginx nginx -t > /dev/null 2>&1; then return 0; fi
+    sleep 1
+  done
+  log "nginx 가 새 설정으로 시작하지 못했다. 원인은:  $COMPOSE logs nginx"
+  return 1
+}
+
+env_value() {
+  [ -f .env ] && sed -n "s/^$1=//p" .env | tail -n 1 | tr -d "\"'" || true
+}
+
+# 메신저 WebSocket 경로를 팀 nginx 로 확인한다. 쿠키 없이 요청하므로 경로와 Origin 이 맞으면 백엔드가 401 로 거절한다.
+# 실시간이 끊겨도 화면은 폴링으로 동작해 장애가 드러나지 않으므로 배포 때 확인한다
+check_websocket() {
+  local origin port code
+  origin=${DOMAINNAME:-$(env_value DOMAINNAME)}
+  port=${TEAM_PORT:-$(env_value TEAM_PORT)}
+  code=$(curl -s -o /dev/null -m 10 -w '%{http_code}' \
+    -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
+    -H 'Sec-WebSocket-Key: ZGV2bW96aXAtY2hlY2s9PQ==' -H "Origin: $origin" \
+    "http://127.0.0.1:$port/ws/messages" || true)
+  case "$code" in
+    401) log "WebSocket 경로 확인: 401 (정상. 쿠키 없는 요청을 backend 가 거절했다)"; return 0 ;;
+    403) log "WebSocket 경로 확인 실패: 403. .env 의 DOMAINNAME($origin)이 사이트 주소와 같은지 확인한다" ;;
+    404) log "WebSocket 경로 확인 실패: 404. nginx/server.conf 의 /ws/messages 경로가 적용되지 않았다" ;;
+    *) log "WebSocket 경로 확인 실패: ${code:-응답 없음}. 활성 색의 backend 와 nginx 를 확인한다" ;;
+  esac
+  return 1
 }
 
 # 새 색의 frontend 가 BFF 로 backend 까지 응답하는지 본다. 컨테이너 안에서 자기 자신을 부른다.
@@ -83,6 +133,9 @@ cmd_deploy() {
   else
     new=$(other "$cur")
     log "활성 색은 $cur. 새 버전(${IMAGE_TAG:-latest})을 $new 에 띄운다"
+    # git pull 로 server.conf 가 먼저 바뀌어 있을 수 있다. 아래에서 실패해 끝나도 디스크의 두 설정이 맞도록 먼저 쓴다.
+    # 실행 중인 nginx 에는 영향이 없다(이전 server.conf 와 새 active.conf 의 조합도 유효하다)
+    write_active "$cur"
   fi
 
   if [ "${SKIP_PULL:-0}" = 1 ]; then
@@ -101,12 +154,17 @@ cmd_deploy() {
 
   if [ -z "$cur" ]; then write_active "$new"; fi
   $COMPOSE up -d --no-build nginx
+  restart_nginx_if_config_changed
   switch_to "$new"
   if [ -n "$cur" ]; then
     $COMPOSE stop "frontend-$cur" "backend-$cur"            # 지우지 않고 멈춘다. rollback 이 다시 켠다
     log "$cur 정지. 되돌리려면:  bash deploy/blue-green.sh rollback"
   fi
   cmd_status
+  if ! check_websocket; then
+    log "배포는 끝났지만 메신저 실시간 연결이 동작하지 않는다. 화면은 폴링으로 동작한다"
+    exit 3
+  fi
 }
 
 cmd_rollback() {
@@ -115,11 +173,13 @@ cmd_rollback() {
   [ -n "$cur" ] || { log "활성 색이 없다. 먼저 deploy 한다"; exit 1; }
   prev=$(other "$cur")
   log "활성 색은 $cur. 멈춰 둔 $prev 를 다시 켠다"
+  write_active "$cur"                                        # deploy 와 같은 이유로 디스크의 두 설정을 먼저 맞춘다
   $COMPOSE start "backend-$prev" "frontend-$prev"           # up 이 아니라 start: 이미지를 바꾸지 않고 그대로 켠다
   if ! health "$prev"; then
     log "$prev 도 응답하지 않는다. 전환하지 않는다"
     exit 1
   fi
+  restart_nginx_if_config_changed
   switch_to "$prev"
   $COMPOSE stop "frontend-$cur" "backend-$cur"
   cmd_status

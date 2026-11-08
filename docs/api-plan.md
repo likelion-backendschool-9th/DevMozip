@@ -4,6 +4,8 @@
 아래 URL은 기본 경로를 생략했습니다. 인증 방식, 페이지네이션, 오류 스키마, 권한 정책은 백엔드 단계에서 확정합니다.
 요청 필드/응답 필드는 개념 수준이며 최종 계약이 아닙니다. 향후 공통 응답은 `{ data, message? }`, 오류는 `{ code, message }`를 검토합니다.
 
+**메신저(1:1·프로젝트 단톡방·사용자 신고·WebSocket)도 구현됐습니다. 계약은 [메신저 API](messenger-api.md)를 따르며, 아래 표의 Message·Project Chat·`/conversations`·`/projects/{id}/chat` 행과 사용자 신고는 이전 초안입니다.**
+
 | 도메인 | Method | URL | 기능 | 인증 필요 | 요청 | 응답 | 프리미엄 |
 |---|---|---|---|---|---|---|---|
 | Auth | POST | /auth/login | 로그인 | 아니오 | email, password | user, session | 아니오 |

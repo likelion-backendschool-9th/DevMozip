@@ -28,6 +28,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// 요청 값 검증 (@Valid)
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// 메신저 실시간 신호 (/ws/messages)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20261011.1'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -56,6 +58,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// test 프로필 없이 실행하는 통합 테스트도 Redis 구독을 시도하지 않게 한다. Redis를 시험하는 테스트는 실행 인자로 켠다.
+	systemProperty 'messenger.realtime.redis.enabled', 'false'
 }
 
 // 로컬에서 ./gradlew bootRun만 실행해도 local(H2) 프로필로 뜨게 한다.

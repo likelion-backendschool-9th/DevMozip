@@ -61,6 +61,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 // 오류 응답(404, 409 등)이 403으로 바뀌지 않도록 스프링의 오류 경로는 허용
                 .requestMatchers("/error").permitAll()
+                // 메신저 WebSocket은 쿠키로 인증하므로 Bearer 필터 대신 핸드셰이크 인터셉터가 검증한다
+                .requestMatchers(HttpMethod.GET, "/ws/messages").permitAll()
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
