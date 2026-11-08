@@ -53,12 +53,12 @@ async function kakaoSignup(input: SignupInput): Promise<{ error: string } | null
     const jar = await cookies();
     const kakaoSignupToken = jar.get(KAKAO_SIGNUP_COOKIE)?.value;
     if (!kakaoSignupToken) return { error: '카카오 인증이 만료되었습니다. 다시 시도해 주세요.' };
-    const { job, career, stacks, interests, available } = input;
+    const { job, career, skills, interests, available } = input;
     let response: Response;
     try {
         response = await backendFetch('/api/v1/auth/signup', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: normalizeEmail(input.email), nickname: input.nickname.trim(), job, career, stacks, interests, available, kakaoSignupToken }),
+            body: JSON.stringify({ email: normalizeEmail(input.email), nickname: input.nickname.trim(), job, career, skills, interests, available, kakaoSignupToken }),
         });
     } catch { return { error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' }; }
     if (!response.ok) return { error: await readErrorMessage(response) };

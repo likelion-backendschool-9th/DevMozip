@@ -43,7 +43,7 @@ class AuthControllerTest {
     private static final String SIGNUP_BODY = """
             {"email":"new@devmozip.demo","password":"Devmozip123","confirmPassword":"Devmozip123",
              "nickname":"새회원","job":"백엔드 개발자","career":"3년 차",
-             "stacks":["Java"],"interests":["AI"],"available":true}""";
+             "skills":["Java"],"interests":["AI"],"available":true}""";
 
     @Autowired
     private MockMvc mvc;
@@ -153,7 +153,7 @@ class AuthControllerTest {
                 new SignupResponse(1L, "new@devmozip.demo", "새회원", "access", "refresh", "Bearer"));
         String body = """
                 {"email":"new@devmozip.demo","nickname":"새회원","job":"백엔드 개발자","career":"3년 차",
-                 "stacks":["Java"],"interests":["AI"],"available":true,"kakaoSignupToken":"signup-token"}""";
+                 "skills":["Java"],"interests":["AI"],"available":true,"kakaoSignupToken":"signup-token"}""";
 
         mvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
@@ -187,7 +187,7 @@ class AuthControllerTest {
 
     @Test
     void 기술_스택을_선택하지_않으면_400() throws Exception {
-        String body = SIGNUP_BODY.replace("\"stacks\":[\"Java\"]", "\"stacks\":[]");
+        String body = SIGNUP_BODY.replace("\"skills\":[\"Java\"]", "\"skills\":[]");
 
         mvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())

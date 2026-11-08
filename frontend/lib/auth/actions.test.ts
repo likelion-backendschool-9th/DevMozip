@@ -6,7 +6,7 @@ vi.mock('next/navigation', () => ({ redirect: doubles.redirect }));
 import { checkAvailabilityAction, kakaoAccountStatusAction, loginAction, logoutAction, setPasswordAction, signupAction, signupOptionsAction, startKakaoAction } from './actions';
 import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, REFRESH_COOKIE } from './cookies';
 import { parseKakaoFlow } from './kakao';
-const signupInput = { email: ' New@Devmozip.Demo ', password: 'Devmozip123', confirmPassword: 'Devmozip123', nickname: ' 새회원 ', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'], available: true };
+const signupInput = { email: ' New@Devmozip.Demo ', password: 'Devmozip123', confirmPassword: 'Devmozip123', nickname: ' 새회원 ', job: '백엔드 개발자', career: '3년 차', skills: ['Java'], interests: ['AI'], available: true };
 beforeEach(() => { vi.clearAllMocks(); doubles.get.mockReturnValue({ value: 'refresh' }); });
 describe('인증 서버 액션', () => {
     it('로그인은 이메일을 소문자로 맞춰 /api/v1/auth/login을 호출한다', async () => {
@@ -152,7 +152,7 @@ describe('카카오 서버 액션', () => {
         expect(doubles.fetch).toHaveBeenCalledTimes(1);
         const [path, init] = doubles.fetch.mock.calls[0];
         expect(path).toBe('/api/v1/auth/signup');
-        expect(JSON.parse(init.body)).toEqual({ email: 'new@devmozip.demo', nickname: '새회원', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'], available: true, kakaoSignupToken: 'signup-token' });
+        expect(JSON.parse(init.body)).toEqual({ email: 'new@devmozip.demo', nickname: '새회원', job: '백엔드 개발자', career: '3년 차', skills: ['Java'], interests: ['AI'], available: true, kakaoSignupToken: 'signup-token' });
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, access, expect.objectContaining({ httpOnly: true }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, 'refresh', expect.objectContaining({ httpOnly: true }));
         expect(doubles.set).toHaveBeenCalledWith(KAKAO_SIGNUP_COOKIE, '', expect.objectContaining({ maxAge: 0 }));

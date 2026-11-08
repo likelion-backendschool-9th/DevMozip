@@ -53,9 +53,9 @@ class MemberServiceTest {
     @Captor
     private ArgumentCaptor<Member> memberCaptor;
 
-    private static SignupRequest request(String password, String confirmPassword, List<String> stacks, boolean available) {
+    private static SignupRequest request(String password, String confirmPassword, List<String> skills, boolean available) {
         return new SignupRequest("New@Devmozip.Demo ", password, confirmPassword, " 새회원 ", "백엔드 개발자", "3년 차",
-                stacks, List.of("AI"), available, null);
+                skills, List.of("AI"), available, null);
     }
 
     private static SignupRequest kakaoRequest(String password, String confirmPassword) {
@@ -469,8 +469,8 @@ class MemberServiceTest {
                         e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
-    private static SignupRequest requestWith(String job, List<String> stacks, List<String> interests) {
-        return new SignupRequest("new@devmozip.demo", PASSWORD, PASSWORD, "새회원", job, "3년 차", stacks, interests, true, null);
+    private static SignupRequest requestWith(String job, List<String> skills, List<String> interests) {
+        return new SignupRequest("new@devmozip.demo", PASSWORD, PASSWORD, "새회원", job, "3년 차", skills, interests, true, null);
     }
 
     @Test

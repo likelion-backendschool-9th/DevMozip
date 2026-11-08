@@ -10,7 +10,7 @@
 | Auth | GET | /auth/signup/options | 회원가입 선택지(직군·기술 스택·관심 분야) | 아니오 | 없음 | jobCategories, skills, interests | 아니오 |
 | Auth | GET | /auth/check-email | 이메일 중복 확인 (남용 방지 정책 필요) | 아니오 | email | available | 아니오 |
 | Auth | GET | /auth/check-nickname | 닉네임 중복 확인 (남용 방지 정책 필요) | 아니오 | nickname | available | 아니오 |
-| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, stacks, interests, available | id, email, nickname | 아니오 |
+| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, skills, interests, available | id, email, nickname | 아니오 |
 | User | PATCH | /users/me/availability | 협업 가능 상태·연락 가능 시간 수정 | 예 | collaborationStatus, contactHours (보낸 값만 변경) | collaborationStatus, contactHours | 아니오 |
 | User | GET | /users/{id} | 사용자 조회 | 선택 | id | user | 아니오 |
 | Profile | PATCH | /users/me/profile | 프로필 수정 | 예 | 소개, 기술, 연락 시간 | profile | 아니오 |
