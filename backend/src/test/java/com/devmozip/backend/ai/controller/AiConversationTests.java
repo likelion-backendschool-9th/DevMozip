@@ -100,6 +100,17 @@ class AiConversationTests {
 		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE role='ASSISTANT'", Integer.class));
 		assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
 	}
+	@Test void messageAndConversationLimitsAreCheckedWithoutDeletingExistingHistory() throws Exception {
+		long id = create("limits");
+		mvc.perform(authenticated(post(BASE + "/" + id + "/messages")).contentType("application/json")
+			.content(mapper.writeValueAsString(Map.of("content", "가".repeat(1501))))).andExpect(status().isBadRequest());
+		for (int i = 0; i < 6; i++) message(id, "가".repeat(1500));
+		message(id, "나".repeat(988));
+		mvc.perform(authenticated(post(BASE + "/" + id + "/messages")).contentType("application/json")
+			.content("{\"content\":\"더\"}")).andExpect(status().isBadRequest());
+		assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
+	}
+
 	@Test void otherOwnersAndMissingIdsCannotBeReadWrittenOrDeleted() throws Exception {
 		otherConversation(9001);
 		for (long id : new long[]{9001, 9002}) {
@@ -414,6 +425,18 @@ class AiConversationTests {
 	private org.springframework.test.web.servlet.ResultActions sync(String body) throws Exception {
 		return mvc.perform(authenticated(post(BASE + "/sync")).contentType("application/json").content(body));
 	}
+	@Test void draftSyncCumulativeLimitRollsBackNewBatchAndAllowsExactReplay() throws Exception {
+		String body = draft("limit-sync", null, "가".repeat(1500));
+		String first = sync(body).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+		long id = mapper.readTree(first).get("id").asLong();
+		for (int i = 0; i < 5; i++) message(id, "가".repeat(1500));
+		message(id, "나".repeat(988));
+		sync(body).andExpect(status().isOk()).andExpect(jsonPath("$.messages.length()").value(7));
+		sync(body.replace("message-1", "overflow").replace("가".repeat(1500), "더"))
+			.andExpect(status().isBadRequest());
+		assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
+	}
+
 	@Test void draftSyncRetriesKeepOneConversationAndMessageAndServerTimestamps() throws Exception {
 		String body = draft("draft-1", null, "first");
 		String first = sync(body).andExpect(status().isOk()).andExpect(jsonPath("$.clientKey").value("draft-1"))

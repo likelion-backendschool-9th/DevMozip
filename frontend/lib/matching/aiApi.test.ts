@@ -1,11 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AiApiError, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions } from './aiApi';
+import { AiApiError, aiConditionsKey, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions } from './aiApi';
 import { newMatchingConversation, sendMatchingMessage } from './matchingChatService';
 import type { AiConversationDetail } from '@/types/aiRecommendation';
 const remote: AiConversationDetail = { id: 7, clientKey: 'local-chat', title: '팀원', createdAt: '2026-11-07T10:00:00', updatedAt: '2026-11-07T10:00:00',
     currentConditions: { interests: ['웹'], career: '경력 무관', durationMonths: 3 }, messages: [{ id: 8, clientKey: 'local-message', role: 'USER', content: '첫 메시지', createdAt: '2026-11-07T10:00:00' }] };
 afterEach(() => vi.unstubAllGlobals());
 describe('AI API 및 초안 매핑', () => {
+    it('동일 조건의 배열 순서·기술 표기는 무시하고 실제 인원·기간 변경은 구분한다', () => {
+        const a = { interests:['웹','교육'],stacks:['React','Java'],roles:[{name:'백엔드',count:1},{name:'프론트엔드',count:2}],career:'경력 무관',durationMonths:3 };
+        const b = {...a,interests:['교육','웹'],stacks:['java',' react '],roles:[...a.roles].reverse()};
+        expect(aiConditionsKey(a)).toBe(aiConditionsKey(b));
+        expect(aiConditionsKey(a)).not.toBe(aiConditionsKey({...a,durationMonths:6}));
+        expect(aiConditionsKey(a)).not.toBe(aiConditionsKey({...a,roles:[{name:'백엔드',count:2}]}));
+    });
     it('기간을 변환하고 설명·이전 fields를 서버 조건에 보내지 않는다', () => {
         const r = fromAiConditions(remote.currentConditions);
         expect(toAiConditions({ ...r, description: '로컬 설명', fields: ['웹'] })).toEqual({ interests: ['웹'], stacks: [], roles: [], career: '경력 무관', durationMonths: 3 });

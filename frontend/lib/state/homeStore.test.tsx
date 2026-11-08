@@ -1,3 +1,4 @@
+import { toAiConditions } from '@/lib/matching/aiApi';
 import { matchingLoginPath, readLoginPrompt } from '@/lib/matching/loginPrompt';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -175,6 +176,65 @@ describe('AI 서버 연동과 재시도', () => {
         expect(home().conversation!.pendingRecommendation).toBeUndefined();
         expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).messages).toEqual([]);
         expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).conditions.durationMonths).toBe(3);
+    });
+    it('성공 조건이 같으면 재실행·선택 순서 변경·재로딩·메시지 추가로도 POST하지 않는다', async () => {
+        ready();
+        home().editChat({ interests: ['웹', '교육'], stacks: ['React', 'Java'], roles: [{name:'백엔드',count:1},{name:'프론트엔드',count:2}] });
+        const c = home().conversation!;
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({status:'SUCCESS',requestId:91}));
+        await home().recommendChat();
+        expect(home().recommendationUnchanged).toBe(true);
+        await expect(home().recommendChat()).rejects.toThrow('이미 추천한 조건');
+        home().editChat({interests:['교육','웹'],stacks:['Java','React'],roles:[{name:'프론트엔드',count:2},{name:'백엔드',count:1}]});
+        expect(home().recommendationUnchanged).toBe(true);
+        resetLocalStores(); signIn('demo-user');
+        home().sendChat('조건은 그대로인 추가 설명');
+        await expect(home().recommendChat()).rejects.toThrow('이미 추천한 조건');
+        expect(fetch).toHaveBeenCalledTimes(2);
+        home().editChat({duration:'6개월'});
+        expect(home().recommendationUnchanged).toBe(false);
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(home().conversation!))).mockResolvedValueOnce(Response.json({status:'SUCCESS',requestId:92}));
+        await home().recommendChat();
+        expect(fetch).toHaveBeenCalledTimes(4);
+        expect(home().recommendationUnchanged).toBe(true);
+    });
+    it('저장 이력이 아직 화면에 복원되지 않았어도 같은 성공 조건이면 GET만 한다', async () => {
+        const c = ready();
+        const chat = structuredClone(home().state.chat);
+        chat.conversations['demo-user'][0].serverId = 71;
+        home().update({chat});
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json([{requestId:91,status:'SUCCESS'}]))
+            .mockResolvedValueOnce(Response.json({requestId:91,status:'SUCCESS',conditions:toAiConditions(c.requirements)}));
+        await expect(home().recommendChat()).rejects.toThrow('이미 추천한 조건');
+        expect(home().recommendationUnchanged).toBe(true);
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(vi.mocked(fetch).mock.calls.every(([,init]) => !init?.method)).toBe(true);
+        expect(home().conversation!.pendingRecommendation).toBeUndefined();
+    });
+    it('실패한 추천은 같은 조건으로 다시 실행할 수 있다', async () => {
+        const c = ready();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({status:'FAILED',requestId:91},{status:500}));
+        await home().recommendChat();
+        expect(home().recommendationUnchanged).toBe(false);
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json([{requestId:91,status:'FAILED'}]))
+            .mockResolvedValueOnce(Response.json(remote(c))).mockResolvedValueOnce(Response.json({status:'SUCCESS',requestId:92}));
+        await home().recommendChat();
+        expect(home().recommendationUnchanged).toBe(true);
+        expect(vi.mocked(fetch).mock.calls.filter(([,init])=>init?.method==='POST')).toHaveLength(4);
+    });
+    it('여러 메시지의 마지막 ID를 범위로 보내고 재시도 중 추가한 메시지는 범위를 바꾸지 않는다', async () => {
+        const c = ready();
+        home().sendChat('두 번째 설명');
+        const all = home().conversation!;
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(all))).mockRejectedValueOnce(new Error('network'));
+        await expect(home().recommendChat()).rejects.toThrow('network');
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[1][1]?.body))).toEqual({ messageId: 82 });
+        home().sendChat('요청 이후 설명');
+        const updated = home().conversation!;
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(updated))).mockResolvedValueOnce(Response.json({ status: 'SUCCESS', requestId: 91 }));
+        await home().recommendChat();
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[3][1]?.body))).toEqual({ messageId: 82 });
+        expect(home().conversation!.id).toBe(c.id);
     });
     it('최초 동기화 응답을 잃어도 같은 대화·메시지 키로 재시도한다', async () => {
         const c = ready();

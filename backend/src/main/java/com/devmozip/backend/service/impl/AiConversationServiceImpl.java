@@ -1,5 +1,7 @@
 package com.devmozip.backend.service.impl;
 
+import com.devmozip.backend.utils.AiMessageLimits;
+
 import com.devmozip.backend.service.AiConversationService;
 
 import com.devmozip.backend.entity.AiConversation;
@@ -72,6 +74,10 @@ public class AiConversationServiceImpl implements AiConversationService {
 		if (request == null || request.content() == null || request.content().isBlank()) {
 			throw new IllegalArgumentException("메시지 내용을 입력해 주세요.");
 		}
+		AiMessageLimits.validateMessage(request.content());
+		var previous = messages.findByConversationIdOrderByCreatedAtAscIdAsc(id);
+		AiMessageLimits.validateTotal(AiMessageLimits.length(previous) + request.content().length()
+			+ (previous.stream().anyMatch(m -> m.getRole() == AiMessage.Role.USER) ? 2 : 0));
 		LocalDateTime now = LocalDateTime.now();
 		AiMessage message = messages.save(new AiMessage(conversation, request.content(), now));
 		conversation.touch(now);

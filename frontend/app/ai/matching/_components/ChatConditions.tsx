@@ -1,7 +1,7 @@
 'use client';
 import { useId, useRef, useState } from 'react';
 import { ArrowRight, Check, SlidersHorizontal, Sparkles, X } from 'lucide-react';
-import { chatCareerOptions, chatDurationOptions, chatFieldOptions, chatInterestOptions, chatRequirementLabels, chatRoleOptions, emptyChatRequirements } from '@/mocks/matchingChat';
+import { chatCareerOptions, chatDurationOptions, chatInterestOptions, chatRequirementLabels, chatRoleOptions, emptyChatRequirements } from '@/mocks/matchingChat';
 import { stackOptions } from '@/mocks/home';
 import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
@@ -10,7 +10,7 @@ import styles from './ChatConditions.module.css';
 export function ChatConditions({ onRecommend, onClose, busy = false, retry = false, signedIn = true }: {
     onRecommend: () => void; onClose?: () => void; busy?: boolean; retry?: boolean; signedIn?: boolean;
 }) {
-    const { conversation, editChat } = useHome();
+    const { conversation, editChat, recommendationUnchanged } = useHome();
     const { user } = useAuth();
     const r = conversation?.requirements || emptyChatRequirements;
     const [stack, setStack] = useState('');
@@ -21,8 +21,6 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
     const errorId = useId();
     const missing = missingChatRequirements(r);
     const message = error || (showMissing && !retry && missing.length ? `${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.` : '');
-    const fields = chatFieldOptions.filter(v => v !== '기타');
-    const interests = chatInterestOptions.filter(v => !fields.includes(v));
     const limit = user?.role === 'premium' || user?.role === 'admin' ? 100 : 5;
     const tags = (key: 'interests' | 'stacks', options: string[]) => <div className={styles.chips}>{options.map(value => <button type="button" key={value} aria-pressed={r[key].includes(value)} onClick={() => {
         try { editChat({ [key]: r[key].includes(value) ? r[key].filter(v => v !== value) : key === 'stacks' ? addChatStack(r.stacks, value) : [...r[key], value] }); setError(''); }
@@ -31,6 +29,7 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
     const status = (values: string[]) => values.length ? values.join(', ') : '미설정';
     const recommend = () => {
         if (!signedIn) { onRecommend(); return; }
+        if (recommendationUnchanged) return;
         setShowMissing(true); setError('');
         if (missing.length && !retry) {
             const target = root.current?.querySelector<HTMLElement>(`[data-condition="${missing[0]}"]`);
@@ -45,11 +44,8 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
         <div className={styles.intro}><span className={styles.badge}>{missing.length ? `${missing.length}개 항목 확인 필요` : '조건 준비 완료'}</span><p>아이디어에 맞게 조건을 정리해 보세요.<br />선택한 조건으로 동료와 프로젝트를 찾아요.</p></div>
         <fieldset disabled={busy || !signedIn} className={styles.body}>
             <div className={styles.group} data-condition="interests">
-                <label>프로젝트 분야</label><small className={styles.value}>{status(r.interests.filter(v => fields.includes(v)))}</small>{tags('interests', fields)}
-            </div>
-            <div className={styles.group}>
-                <label>관심 분야 <span className={styles.required}>(필수)</span></label><small className={styles.value}>{status(r.interests.filter(v => !fields.includes(v)))}</small>{tags('interests', interests)}
-                <small className={styles.help}>프로젝트 분야·관심 분야 중 하나 이상 선택해 주세요.</small>
+                <label>관심 분야 <span className={styles.required}>(필수)</span></label><small className={styles.value}>{status(r.interests)}</small>{tags('interests', chatInterestOptions)}
+                <small className={styles.help}>관심 분야를 하나 이상 선택해 주세요.</small>
             </div>
             <details className={styles.group}>
                 <summary>기술 스택 <span>{r.stacks.length || '선택'}</span></summary><small className={styles.value}>{status(r.stacks)}</small>{tags('stacks', [...new Set([...stackOptions, ...r.stacks])])}
@@ -73,8 +69,8 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
         </fieldset>
         <footer className={styles.footer}>
             <div className={styles.usage}><span>월간 추천</span><strong>— <small>/ {limit}회</small></strong></div><p>서버 사용량 집계 준비 중 · 현재 차감되지 않습니다.</p>
-            <button type="button" className={styles.recommend} disabled={busy} onClick={recommend}><Sparkles size={16} />{busy ? '추천 처리 중…' : retry ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}<ArrowRight size={15} /></button>
-            <small>{signedIn ? '대화·조건 변경은 추천 횟수에 영향을 주지 않아요.' : '로그인 후 추천을 실행할 수 있어요.'}</small>
+            <button type="button" className={styles.recommend} disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={16} />{busy ? '추천 처리 중…' : retry ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}<ArrowRight size={15} /></button>
+            <small>{recommendationUnchanged ? '추천 조건을 변경하면 다시 추천받을 수 있어요.' : signedIn ? '대화·조건 변경은 추천 횟수에 영향을 주지 않아요.' : '로그인 후 추천을 실행할 수 있어요.'}</small>
         </footer>
     </div>;
 }

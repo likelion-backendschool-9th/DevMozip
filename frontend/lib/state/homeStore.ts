@@ -1,6 +1,6 @@
 import { readLoginPrompt, clearLoginPrompt } from '@/lib/matching/loginPrompt';
-import { AiApiError, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
-import { missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
+import { AiApiError, aiConditionsKey, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
+import { CHAT_TOTAL_LIMIT, chatMessageLength, sortChatConversations, missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
 import { createMockId } from '@/lib/utils/createMockId';
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
 import { freshHomeState, loadHomeState, saveHomeState } from '@/lib/matching/homeService';
@@ -12,6 +12,7 @@ import { projectSources } from '@/lib/state/projectStore';
 import { notify } from '@/lib/state/prototypeStore';
 import { demoAccounts } from '@/mocks/auth';
 import type { HomeState } from '@/types/home';
+import type { AiRecommendation } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 
 type ChatResult = { ok: boolean; error?: string };
@@ -61,8 +62,7 @@ function saveConversation(c: MatchingConversation) {
     const current = homeStore.get();
     const chat = structuredClone(current.chat);
     const items = chat.conversations[owner()] || [];
-    chat.conversations[owner()] = [c, ...items.filter(v => v.id !== c.id)]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    chat.conversations[owner()] = sortChatConversations([c, ...items.filter(v => v.id !== c.id)]);
     chat.active[owner()] = c.id;
     commit({ ...current, chat });
 }
@@ -100,8 +100,7 @@ function startHomeChat(): ChatResult {
         const saved = sendMatchingMessage(conversation, description, { ...conversation.requirements, description });
         const next = structuredClone(current);
         const account = owner();
-        next.chat.conversations[account] = [saved, ...(next.chat.conversations[account] || [])]
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        next.chat.conversations[account] = sortChatConversations([saved, ...(next.chat.conversations[account] || [])]);
         next.chat.active[account] = saved.id;
         next.input.description = '';
         if (!saveHomeState(next)) return { ok: false, error: '대화를 저장하지 못했습니다. 입력은 유지됩니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.' };
@@ -121,7 +120,7 @@ function resumeLoginPrompt(token: string): ChatResult {
     const saved = sendMatchingMessage(c, text, c.requirements);
     const next = structuredClone(current);
     const account = owner();
-    next.chat.conversations[account] = [saved, ...(next.chat.conversations[account] || [])];
+    next.chat.conversations[account] = sortChatConversations([saved, ...(next.chat.conversations[account] || [])]);
     next.chat.active[account] = saved.id;
     if (!saveHomeState(next)) return { ok: false, error: '입력을 대화에 저장하지 못했습니다. 저장 공간을 확인해 주세요.' };
     homeStore.set(next);
@@ -192,8 +191,22 @@ async function loadAiChats() {
         const merged = mergeAiConversation(detail, local);
         items = [merged, ...items.filter(c => c.id !== merged.id)];
     }
-    chat.conversations[account] = items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+    chat.conversations[account] = sortChatConversations(items);
     if (!items.some(c => c.id === chat.active[account])) chat.active[account] = items[0]?.id || '';
+    commit({ ...current, chat });
+}
+function recommendationUnchanged(c: MatchingConversation | null) {
+    return !!c?.lastRecommendation && !c.pendingRecommendation
+        && aiConditionsKey(c.lastRecommendation.conditions) === aiConditionsKey(toAiConditions(c.requirements));
+}
+function rememberAiRecommendation(conversationId: number, result: AiRecommendation) {
+    if (result.status !== 'SUCCESS' || !getUser()) return;
+    const current = homeStore.get();
+    const items = current.chat.conversations[owner()] || [];
+    const c = items.find(v => v.serverId === conversationId);
+    if (!c || c.lastRecommendation && c.lastRecommendation.requestId >= result.requestId) return;
+    const chat = structuredClone(current.chat);
+    chat.conversations[owner()] = items.map(v => v.id === c.id ? { ...v, lastRecommendation: { requestId: result.requestId, conditions: result.conditions } } : v);
     commit({ ...current, chat });
 }
 async function recommendChat() {
@@ -203,13 +216,29 @@ async function recommendChat() {
     const lock = `${account}:${initial.id}`;
     if (syncing.has(lock)) throw new Error('추천 요청을 처리하고 있습니다.');
     if (!initial.pendingRecommendation) {
+        if (recommendationUnchanged(initial)) throw new Error('이미 추천한 조건입니다. 추천 조건을 변경해 주세요.');
+        if (chatMessageLength(initial.messages) > CHAT_TOTAL_LIMIT) throw new Error('대화가 10,000자를 초과했습니다. 새 대화를 시작해 주세요.');
         validateChatRequirements(initial.requirements);
         if (missingChatRequirements(initial.requirements).length) throw new Error('관심 분야·경력·기간을 선택해 주세요.');
     }
     syncing.add(lock);
     try {
+        // 이력 복원이 끝나기 전에 눌러도 기존 성공 조건으로 새 POST를 만들지 않는다.
+        if (!initial.pendingRecommendation && initial.serverId && !initial.lastRecommendation) {
+            const history = await getAiHistory(initial.serverId);
+            accountGuard(account);
+            const success = history.find(v => v.status === 'SUCCESS');
+            if (success) {
+                const previous = await getAiRecommendation(initial.serverId, success.requestId);
+                accountGuard(account);
+                rememberAiRecommendation(initial.serverId, previous);
+            }
+        }
+        if (!initial.pendingRecommendation && recommendationUnchanged(existingChat(initial.id) || null)) {
+            throw new Error('이미 추천한 조건입니다. 추천 조건을 변경해 주세요.');
+        }
         // An uncertain network outcome must reuse the original key and input, including after reload.
-        const pending = initial.pendingRecommendation || { key: createMockId(), conditions: toAiConditions(initial.requirements) };
+        const pending = initial.pendingRecommendation || { key: createMockId(), conditions: toAiConditions(initial.requirements), messageKey: initial.messages.filter(m => m.role === 'user').at(-1)?.id || null };
         saveConversation({ ...initial, pendingRecommendation: pending });
         if (!saveHomeState(homeStore.get())) throw new Error('재시도 정보를 저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.');
         const saved = await syncAiDraft(initial, pending.conditions);
@@ -217,10 +246,13 @@ async function recommendChat() {
         const current = existingChat(initial.id);
         if (!current) throw new Error('대화가 삭제되었습니다.');
         saveConversation(mergeAiConversation(saved, { ...current, pendingRecommendation: pending }));
-        const result = await executeAiRecommendation(saved.id, pending.key);
+        const boundary = pending.messageKey ? saved.messages.find(m => m.clientKey === pending.messageKey || m.id === initial.messages.find(v => v.id === pending.messageKey)?.serverId) : undefined;
+        if (pending.messageKey && !boundary) throw new Error('추천에 반영할 메시지 저장을 확인하지 못했습니다. 다시 시도해 주세요.');
+        const result = await executeAiRecommendation(saved.id, pending.key, boundary?.id);
         accountGuard(account);
         const latest = existingChat(initial.id);
-        if (latest && result.status !== 'PENDING') saveConversation({ ...latest, pendingRecommendation: undefined });
+        if (latest && result.status !== 'PENDING') saveConversation({ ...latest, pendingRecommendation: undefined,
+            ...(result.status === 'SUCCESS' ? { lastRecommendation: { requestId: result.requestId, conditions: result.conditions || pending.conditions } } : {}) });
         return result;
     } catch (error) {
         if (getUser() && owner() === account && error instanceof AiApiError && [400, 409].includes(error.status)) {
@@ -272,6 +304,8 @@ const home = derived(homeSources, () => {
         editChatMessage,
         loadAiChats,
         recommendChat,
+        recommendationUnchanged: recommendationUnchanged(conversation),
+        rememberAiRecommendation,
         deleteAiChat,
     };
 });

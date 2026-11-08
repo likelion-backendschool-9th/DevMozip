@@ -1,6 +1,7 @@
 package com.devmozip.backend.service;
 
 import com.devmozip.backend.dto.ai.*;
+import com.devmozip.backend.utils.AiMessageLimits;
 import com.devmozip.backend.entity.*;
 import com.devmozip.backend.repository.*;
 import com.devmozip.backend.security.ai.CurrentUserProvider;
@@ -56,6 +57,9 @@ public class AiDraftService {
 				conversation = conversations.saveAndFlush(conversation);
 			}
 		}
+		var stored = messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId());
+		long total = AiMessageLimits.length(stored);
+		boolean hasUser = stored.stream().anyMatch(m -> m.getRole() == AiMessage.Role.USER);
 		for (var input : request.messages()) {
 			var previous = messages.findByConversationIdAndClientKey(conversation.getId(), input.clientKey());
 			if (previous.isPresent()) {
@@ -63,6 +67,10 @@ public class AiDraftService {
 					throw new ResponseStatusException(HttpStatus.CONFLICT, "같은 메시지 키의 내용을 변경할 수 없습니다.");
 				}
 			} else {
+				AiMessageLimits.validateMessage(input.content());
+				total += input.content().length() + (hasUser ? 2 : 0);
+				hasUser = true;
+				AiMessageLimits.validateTotal(total);
 				var message = new AiMessage(conversation, input.content(), LocalDateTime.now());
 				message.setClientKey(input.clientKey());
 				messages.save(message);

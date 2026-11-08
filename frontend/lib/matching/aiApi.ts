@@ -16,6 +16,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export function toAiConditions(r: ChatRequirements): AiConditions {
     return { interests: r.interests, stacks: r.stacks, roles: r.roles, career: r.career, durationMonths: Number(r.duration.replace('개월', '')) };
 }
+// 선택 순서는 추천 조건의 변경이 아니다. 기술명 대소문자·앞뒤 공백도 비교 시 정규화한다.
+export function aiConditionsKey(c: AiConditions): string {
+    return JSON.stringify({ interests: [...new Set(c.interests.map(v => v.trim()))].sort(),
+        stacks: [...new Set((c.stacks || []).map(v => v.trim().toLowerCase()))].sort(),
+        roles: (c.roles || []).map(v => [v.name.trim().toLowerCase(), v.count]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+        career: c.career, durationMonths: c.durationMonths });
+}
 export function fromAiConditions(c: Partial<AiConditions>): ChatRequirements {
     return { ...structuredClone(emptyChatRequirements), interests: c.interests || [], stacks: c.stacks || [],
         roles: c.roles || [], career: c.career || '', duration: c.durationMonths ? `${c.durationMonths}개월` : '' };
@@ -30,9 +37,9 @@ export function syncAiDraft(c: MatchingConversation, conditions: AiConditions) {
         body: JSON.stringify({ conversationId: c.serverId, clientKey: c.id, title: c.title, conditions,
             messages: c.messages.filter(m => m.role === 'user' && !m.serverId).map(m => ({ clientKey: m.id, content: m.text })) }) });
 }
-export function executeAiRecommendation(id: number, key: string) {
+export function executeAiRecommendation(id: number, key: string, messageId?: number) {
     return request<AiRecommendation>(`/${id}/recommendations`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: '{}' });
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(messageId ? { messageId } : {}) });
 }
 
 // Keep local unsent edits and match persisted messages by their stable client key.
