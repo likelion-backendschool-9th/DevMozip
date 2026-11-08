@@ -34,7 +34,7 @@ function PublicProjectCard({ item }: { item: AiRecommendationItem }) {
         {open && project && <Modal title={project.title} onClose={() => setOpen(false)}><p>{project.summary}</p><div className={styles.description}>{project.description || '추가 소개가 없습니다.'}</div><div className={styles.tags}>{project.stacks.map(v => <span key={v}>{v}</span>)}</div></Modal>}
     </article>;
 }
-function DeveloperCard({ item, premium }: { item: AiRecommendationItem; premium: boolean }) {
+function DeveloperCard({ item, premium, requestedStacks }: { item: AiRecommendationItem; premium: boolean; requestedStacks: string[] }) {
     const developer = item.developer;
     const image = profileImageUrl(developer?.profileImage || null);
     const trust = developer?.trustScore;
@@ -51,16 +51,16 @@ function DeveloperCard({ item, premium }: { item: AiRecommendationItem; premium:
                 </dl>
             </> : <p className={styles.summary}>현재 공개 프로필 정보를 확인할 수 없어요.</p>}
             {developer && <div className={styles.tags}>{developer.skills.length ? developer.skills.map(v => <span key={v}>{v}</span>) : <span>기술 스택 미등록</span>}</div>}
-            <div className={styles.reason}><span>추천 이유</span><p>{developerReason(item.basicReason, developer?.skills)}</p></div>
+            <div className={styles.reason}><span>추천 이유</span><p>{developerReason(item.basicReason, developer?.skills, requestedStacks)}</p></div>
             {href ? <Link className={styles.detail} href={href}>프로필 상세 보기<ArrowUpRight size={13} /></Link> : <button type="button" disabled className={styles.detail}>프로필 상세 보기<ArrowUpRight size={13} /></button>}
         </div>
         <div className={styles.locked}><LockKeyhole size={12} />{premium ? '상세 분석·포트폴리오 연결 준비 중' : <Link href="/subscription">상세 분석·포트폴리오는 프리미엄에서</Link>}</div>
     </article>;
 }
-export function RecommendationCards({ developers, projects, tab }: { developers: AiRecommendationItem[]; projects: AiRecommendationItem[]; tab: 'developers' | 'projects' }) {
+export function RecommendationCards({ developers, projects, tab, requestedStacks = [] }: { requestedStacks?: string[]; developers: AiRecommendationItem[]; projects: AiRecommendationItem[]; tab: 'developers' | 'projects' }) {
     const { user } = useAuth();
     const premium = user?.role === 'premium' || user?.role === 'admin';
     const items = tab === 'developers' ? developers : projects;
     if (!items.length) return <div className={styles.empty}><FolderKanban size={24} /><strong>조건에 맞는 {tab === 'developers' ? '개발자가' : '프로젝트가'} 아직 없어요</strong><p>기술 스택이나 모집 직군의 범위를 넓혀 다시 찾아보세요.</p></div>;
-    return <div className={styles.grid}>{items.map(item => tab === 'projects' ? <PublicProjectCard key={item.id} item={item} /> : <DeveloperCard key={item.id} item={item} premium={premium} />)}</div>;
+    return <div className={styles.grid}>{items.map(item => tab === 'projects' ? <PublicProjectCard key={item.id} item={item} /> : <DeveloperCard key={item.id} item={item} premium={premium} requestedStacks={requestedStacks} />)}</div>;
 }

@@ -70,7 +70,7 @@ function RecommendationBlock({ current, loading, onRefresh }: { current: AiRecom
                     <button type="button" role="tab" id={`developers-${current.requestId}`} aria-controls={`panel-${current.requestId}`} aria-selected={tab === 'developers'} tabIndex={tab === 'developers' ? 0 : -1} onClick={() => setTab('developers')}><UsersRound size={14} />개발자 <span>{current.developers.length}</span></button>
                     <button type="button" role="tab" id={`projects-${current.requestId}`} aria-controls={`panel-${current.requestId}`} aria-selected={tab === 'projects'} tabIndex={tab === 'projects' ? 0 : -1} onClick={() => setTab('projects')}><FolderKanban size={14} />유사 프로젝트 <span>{current.projects.length}</span></button>
                 </div>
-                <div role="tabpanel" id={`panel-${current.requestId}`} aria-labelledby={`${tab}-${current.requestId}`}><RecommendationCards developers={current.developers} projects={current.projects} tab={tab} /></div>
+                <div role="tabpanel" id={`panel-${current.requestId}`} aria-labelledby={`${tab}-${current.requestId}`}><RecommendationCards developers={current.developers} projects={current.projects} tab={tab} requestedStacks={current.conditions.stacks} /></div>
                 <p className={styles.caption}>적합도는 추천 당시 기준이며, 공개 프로필·프로젝트 정보는 현재 기준입니다.</p>
             </>}
     </section>;
