@@ -2,6 +2,25 @@
 
 기준일: 2026-11-05. **최신 develop의 로그인 필수 동작과 2단계 서버 조건 PUT·DTO 검증을 통합했다.** 서버 대화·메시지 API 5개와 로컬 초안 동작은 유지한다. 현재 작업 브랜치는 `feat/ai-conditions`다. 최신 develop `f6ce13e` 통합은 `61a0318`로 커밋해 origin/feat/ai-conditions에 푸시 완료했다. 관심 분야 통합·직군 자유 입력 보완은 a437c7e로 로컬 커밋되어 있다. 기술 스택 직접 입력·필수 표시·누락 안내/이동은 79dc907로 로컬 커밋되어 있다. 직접 추가한 기술 태그 위치 변경은 63276fc에 반영되어 있다. 이번에는 PR 리뷰에 따라 AI 타입의 패키지와 DTO 이름을 정리한다. 실제 PostgreSQL 스키마 확인·통합 검증은 남아 있으며 서버 동기화는 4단계 후속 계약이다.
 
+
+## 2026-11-08 PR #81 충돌 해결
+
+- 사용자 요청으로 .worktrees/pr81-conflicts의 feat/project-api-integration-no-yaml에서 develop 058397e를 반영했다. 프로젝트 초기/후속 구현이 겹친 24개 충돌을 비교하고 직군 직접 입력·실제 DB 조회·생성 권한·Mock 디자인을 보존했다. 최신 인증/프로필 변경과 양쪽 문서 기록도 유지한다.
+- backend 563개 중 551개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패. 프로젝트 93개 중 82개 통과·11개 스킵·실패 없음. frontend 빌드/TypeScript·721개 테스트 통과. YAML은 develop 대비 차이 0개다.
+- 실제 DB/브라우저/실행 서버와 기존 root 미커밋 작업·다른 PR은 변경하지 않았다. 검증 상세는 [프로젝트 API 통합](project-api-integration.md)을 참조한다. 기존 PR #81에 반영하며 develop/main에 직접 푸시하지 않는다.
+
+## 2026-11-05 PR #63 충돌 해결
+
+- develop `09a438b`를 #46 브랜치에 반영하고 조회/조회수와 수정/삭제를 모두 보존했다. 충돌 파일은 ProjectController, Project, ProjectMemberRepository, 이 문서 4개다.
+- 삭제 공고의 HTTP 조회 비노출과 수정 후 조회수 보존 통합 테스트 2개를 추가했다. backend 238개, frontend 51개 파일·544개 및 빌드 통과. Docker 생성물 소유권 복구 후 백엔드 재실행 결과이며 [상세 기록](project-update-delete.md)을 참조한다.
+
+## 2026-11-05 프로젝트 #46 공고 수정·삭제
+
+- 최신 develop `650de14`에서 프로젝트 전체 PUT 수정·모집 중 논리 삭제를 구현했다. 기존 프로젝트 구조·BaseEntity·개발 사용자 경계를 재사용하고 기간 공통 검증을 분리했다. AI·인증·배포·프론트 코드는 변경하지 않았다.
+- backend 신규 PostgreSQL 통합 테스트 23개 및 전체 222개 통과(스킵 0). frontend 48개 파일·525개 테스트와 빌드 성공. 상세 변경 파일·계약·최초 컴파일 실패 수정과 재실행 결과는 [프로젝트 수정·삭제](project-update-delete.md)를 참조한다.
+- #48 실제 지원자 직군 제한 연결, #47 기간/상태 API 연결, #45 병합 후 HTTP 비노출 검증 및 프론트 수정 페이지·API 연결은 후속 범위다. 실제 팀 DB에 접속하거나 커밋·푸시하지 않았다.
+
+
 ## 2026-11-05 PR #63 충돌 해결
 
 - develop `09a438b`를 #46 브랜치에 반영하고 조회/조회수와 수정/삭제를 모두 보존했다. 충돌 파일은 ProjectController, Project, ProjectMemberRepository, 이 문서 4개다.
@@ -766,3 +785,34 @@ erDiagram
 - frontend npm run build -- --webpack 성공(TypeScript 포함), npm test -- --maxWorkers=1 663개 통과. backend 전체 432개 중 420개 통과·11개 opt-in 스킵·기존 KakaoClientTest 153행 1개 실패. 추가 지원서 보호 검증을 포함한 프로젝트 재실행은 93개 중 82개 통과·11개 스킵·실패 0.
 - PC Chromium: 기본 후보 표시, 직접 입력 SRE 필터 200, 상태 전체+4개 확인. 프리미엄으로 SRE/공공서비스/Rust를 직접 선택해 실제 저장 후 직군을 보안 엔지니어로 수정·검색(1개) 확인. pageerror 0. 검증 공고 39는 논리 삭제했고 기본 공개 목록 8개 복원. 프로젝트 데이터의 실제 사용 이외 스키마 변경은 하지 않았다. 모바일 검증·구현은 진행하지 않았다.
 - Docker 실행 소스에 이번 프로젝트 코드/프론트 변경을 반영하고 backend만 재시작했다. DB validate/초기화 비활성화와 볼륨은 유지한다. 커밋·푸시 없음. API 계약 변경은 이번 직접 입력 요구에 필요한 모집 직군 값 확장에 한정한다.
+## 프로필 외부 링크 #64
+
+- 사용자 요청으로 feat/64-profile-external-links를 선행 options 브랜치(7a369cc)에서 분리했다. PR #60은 확인 당시 open·미병합. 최신 origin/develop은 47a1942였으며 새 브랜치의 base는 선행 브랜치다. AI 기능은 변경하지 않았다.
+- ProfileLinksRequest/Response, ProfileLinksPolicy/Service/Controller를 추가했다. 기존 Member.externalLinks JSON 문자열 매핑을 유지하고 해당 필드 갱신 메서드만 추가했다. SecurityConfig의 공개·본인 links GET 우선순위와 예외 처리 Controller 범위를 추가했다.
+- 기존 프론트의 GitHub·블로그·추가 링크 10개 구성에 맞춰 JSON 계약과 URL 검증을 구현했다. NULL은 미등록, 알려지지 않은 기존 JSON은 조회 오류로 처리해 자동 삭제·변환을 방지한다. 상세 계약은 docs/profile-external-links-api.md에 기록했다.
+- ApiProfileLinks·ApiProfileLinksEditor, profileLinksApi, ProfileLinksDetail, 공개·본인 BFF를 추가하고 ApiProfileTabs에 연결했다. 기존 사이드바·소개 탭·편집 폼 CSS를 재사용하며 options·introduction·기본 정보 동작을 유지한다.
+- 검증: frontend npm test 569개 및 npm run build 통과. backend ./gradlew test 211개 중 210개 통과·1개 건너뜀. 신규 외부 링크 통합 테스트 17개 포함. 초기 테스트에서 URL 길이 경계 테스트값과 연결 전 안내를 기대하던 기존 테스트를 수정한 후 전체 통과했다.
+- 로컬 H2 HTTP 서버에서 저장·본인 재조회·공개 조회 200, 위험 URL 400·값 보존, 전체 삭제 확인. Safari UI 조작은 페이지 재로드·자동화 오류로 미완료이며 실제 PostgreSQL·운영 데이터 호환성은 미검증. 새 DDL·ERD 변경 없음.
+- 로컬 서버는 backend 18080, frontend 5173으로 복구했다. 이번 단계의 커밋·푸시·PR 생성은 수행하지 않았다. 다음 기능은 자동 진행하지 않는다.
+
+## PR #66 develop 충돌 해결
+
+- PR #60 병합 후 외부 링크 PR #66의 대상이 develop으로 변경된 상태에서 origin/develop a331121을 병합했다. docs/ai-progress.md의 같은 위치에 추가된 PR #60 병합 기록과 외부 링크 #64 기록이 충돌했으며 양쪽을 보존했다. 기능 코드의 텍스트 충돌은 없었다.
+- 자동 병합된 Member의 최신 카카오·비밀번호 관련 변경과 외부 링크 갱신 메서드, options·links 인증 경로를 함께 확인했다. 실제 카카오 API 연결은 수행하지 않았다.
+- frontend npm test 647개 및 npm run build 통과. backend 최초 실행은 도구 환경의 DEBUG 변수로 HTTP 요청 로그가 켜져 로그 보안 테스트 1개가 실패했다. 제품 코드는 변경하지 않고 env -u DEBUG ./gradlew test로 재실행하여 총 358개 중 342개 통과·16개 건너뜀·실패/오류 0을 확인했다.
+- 실제 PostgreSQL 및 이번 병합의 브라우저 수동 검증은 미실행. 병합 충돌 해결 커밋 97222c7을 원격 외부 링크 브랜치에 반영했다.
+
+## 프로필 소개 탭 중복 key 수정
+
+- 사용자 화면의 React 중복 key 오류 원인은 ApiProfileTabs에서 같은 Card의 형제인 ApiProfileOptions·ApiProfileLinks에 동일한 slug key를 지정한 것이었다. API 미연결·북마크 기능과는 별개다.
+- 각 key를 options:slug, links:slug로 구분해 사용자 변경 시 재마운트 동작을 유지했다. 데이터·API 경로·레이아웃은 변경하지 않았다.
+- frontend npm test 647개와 npm run build 통과. 이번 수정의 브라우저 콘솔 수동 검증은 미실행. 백엔드 코드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 아직 커밋·푸시하지 않았다.
+
+## 신규 가입자 내 프로필 BFF 502 보완
+
+- 사용자 보고에 따라 확인한 결과, 현재 가입 Service는 tag를 저장하지 않고 본인 조회는 tag=null로 200을 반환한다. 공개 프로필용 파서는 tag를 필수로 요구해 BFF에서 502를 만들었다. 일회용 로컬 H2 계정으로 backend 200/tag=NULL → BFF 502를 실제 재현했다. 사용자 팀원의 환경도 같은 원인인지는 해당 환경의 백엔드 응답 확인이 필요하다.
+- OwnProfileDetail·parseOwnProfileDetail을 분리해 본인 GET에만 명시적 tag=null을 허용했다. 본인 Provider·헤더·수정 폼·사이드바·소개 탭 연결을 보완해 최초 아이디 설정이 가능하다. 공개 응답 및 수정 시 유효 아이디 필수 검증, 인증·DB·회원가입 생성 정책은 유지했다. 임시 내부 키를 공개 사용자 주소로 사용하지 않는다.
+- BFF 접속 실패와 응답 형식 오류 메시지를 구분했다. 기존 중복 key 수정도 함께 미커밋 상태로 유지한다.
+- 변경 파일: types/profileDetail, profileDetail/profileUpdate/profileProxy, 본인 profile BFF, OwnProfileProvider·AccountLayout, ApiProfileContent/Header/Editor와 관련 파서·BFF·화면 테스트, profile-edit-integration 문서.
+- 검증: frontend npm test 651개·npm run build 통과. 로컬 HTTP: tag=NULL 본인 BFF 200, 최초 아이디 설정 PUT 200, 공개 BFF GET 200, 빈 아이디 거절 400, 재조회 값 유지 확인. 백엔드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 실제 PostgreSQL·브라우저 수동 UI 검증은 미실행.
+- 아직 커밋·푸시는 하지 않았다. 프론트는 기존 5173 포트와 backend 18080 연결로 복구했다.

@@ -65,3 +65,16 @@ frontend 서버 환경: BACKEND_URL=http://localhost:8080, PROJECT_API_ENABLED=t
 ## 화면 디자인 유지
 
 Mock ON/OFF는 기본 Mock 디자인을 공유한다. API 모드는 기존 목록·상세·작성·관리 CSS Module과 공통 Card/Input/Button, ProjectSummaryCard를 사용하며 데이터와 권한은 기존 실제 API에 따른다. 직군별 실제 참여 인원이 제공되지 않으므로 해당 수치를 추정하지 않고 모집 인원과 전체 참여 인원만 표시한다.
+
+
+## 2026-11-08 PR #81 develop 충돌 해결
+
+- 기준: PR head 816b7b1, 최신 develop 058397e. 선행 #63/#70/#72/#73/#74/#76 병합으로 발생한 24개 충돌을 비교·해결했다.
+- 초기 구현과 겹친 프로젝트 서비스/지원 직군 조회·생성 BFF·타입·테스트는 직접 입력 직군, 실제 PENDING/APPROVED 조회, 프리미엄 생성 인가, Mock OFF 실제 API 사용을 유지했다.
+- develop의 회원 생성자·프로필 외부 링크·비밀번호 재설정/수정·메일 의존성을 보존했다. 진행 문서 충돌은 양쪽 기록을 유지했다. 현재 프로젝트 화면/CSS는 PR 기존 상태와 동일하다.
+- YAML/YML은 최신 develop과 동일하며 PR 차이는 0개다. 기존 root 미커밋 작업·실행용 worktree·팀 DB·다른 PR은 변경하지 않았다. 충돌 해결은 .worktrees/pr81-conflicts에서 수행했다.
+- 검증 결과는 아래에 실제 실행 결과를 기록한다. 이번 단계에서 실제 DB/브라우저 검증은 수행하지 않는다.
+
+- 이번 backend ./gradlew test: 563개 중 551개 통과·11개 스킵·기존 KakaoClientTest.java:153 로그 검증 1개 실패. 프로젝트 영역은 93개 중 82개 통과·11개 스킵·실패 없음.
+- 이번 frontend npm run build -- --webpack/TypeScript 성공, npm test -- --maxWorkers=1: 721개 통과. 기존 프로젝트 Mock/API 화면 회귀를 자동 테스트로 검증했다. 실제 DB/브라우저/실행 서버는 이번 작업에서 검증하거나 변경하지 않았다.
+- git diff --check 통과, 최신 develop 대비 YAML diff 0개. 카카오 실패는 수정하지 않았으며 전체 테스트 성공으로 보고하지 않는다.
