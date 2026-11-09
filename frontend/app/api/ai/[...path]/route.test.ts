@@ -42,6 +42,13 @@ describe('AI BFF', () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json({ project: { id: 9, isPublic: false, title: 'private' } }));
         expect((await GET(new Request('http://localhost/api/ai/projects/9'), context('projects/9'))).status).toBe(502);
     });
+    it('메시지 분석 오류의 안전한 안내만 전달한다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ message: 'Gemini 요청 한도를 확인해 주세요.', detail: 'secret' }, { status: 429 }));
+        const response = await post('conversations/1/messages');
+        expect(response.status).toBe(429);
+        expect(await response.json()).toEqual({ message: 'Gemini 요청 한도를 확인해 주세요.' });
+        expect(vi.mocked(backendFetch).mock.calls[0][0]).toBe('/api/v1/ai/conversations/1/messages');
+    });
     it('추천 실패 DTO와 삭제 204를 유지한다', async () => {
         vi.mocked(backendFetch).mockResolvedValueOnce(Response.json({ status: 'FAILED', requestId: 1 }, { status: 500 }))
             .mockResolvedValueOnce(new Response(null, { status: 204 }));

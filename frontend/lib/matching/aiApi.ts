@@ -1,4 +1,4 @@
-import type { AiConditions, AiConversationDetail, AiConversationSummary, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
+import type { AiAnalysisResponse, AiConditions, AiConversationDetail, AiConversationSummary, AiMessage, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 
@@ -28,6 +28,10 @@ export function fromAiConditions(c: Partial<AiConditions>): ChatRequirements {
         roles: c.roles || [], career: c.career || '', duration: c.durationMonths ? `${c.durationMonths}개월` : '' };
 }
 export const listAiConversations = () => request<AiConversationSummary[]>('');
+export const createAiConversation = (title: string) => request<AiConversationSummary>('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) });
+const postMessage = (id: number, content: string, clientKey: string, analyze = false) => request<AiMessage | AiAnalysisResponse>(`/${id}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, clientKey, ...(analyze ? { analyze: true } : {}) }) });
+export const saveAiMessage = (id: number, content: string, clientKey: string) => postMessage(id, content, clientKey) as Promise<AiMessage>;
+export const analyzeAiMessage = (id: number, content: string, clientKey: string) => postMessage(id, content, clientKey, true) as Promise<AiAnalysisResponse>;
 export const getAiConversation = (id: number) => request<AiConversationDetail>(`/${id}`);
 export const getAiHistory = (id: number) => request<AiRequestSummary[]>(`/${id}/recommendations/history`);
 export const getAiRecommendation = (id: number, requestId?: number) => request<AiRecommendation>(`/${id}/recommendations${requestId ? `?requestId=${requestId}` : ''}`);
@@ -43,6 +47,35 @@ export function executeAiRecommendation(id: number, key: string, messageId?: num
 }
 
 // Keep local unsent edits and match persisted messages by their stable client key.
+export function applySavedUserMessage(local: MatchingConversation, clientKey: string, saved: AiMessage): MatchingConversation {
+    return { ...local, messages: local.messages.map(m => m.id === clientKey ? { ...m, serverId: saved.id, text: saved.content, createdAt: saved.createdAt } : m) };
+}
+export function applyAiAnalysis(local: MatchingConversation, response: AiAnalysisResponse): MatchingConversation {
+    const user = response.userMessage;
+    const assistant = response.assistantMessage;
+    const messages = local.messages.map(m => m.id === user.clientKey || m.serverId === user.id ? { ...m, serverId: user.id, text: user.content, createdAt: user.createdAt } : m);
+    if (!messages.some(m => m.serverId === assistant.id)) {
+        const index = messages.findIndex(m => m.serverId === user.id);
+        messages.splice(index < 0 ? messages.length : index + 1, 0, { id: assistant.clientKey || `server-message:${assistant.id}`, serverId: assistant.id, role: 'assistant', text: assistant.content, createdAt: assistant.createdAt });
+    }
+    const remote = response.currentConditions || {};
+    const structured = fromAiConditions(remote);
+    const requirements = { ...local.requirements };
+    // CLEAR removes a condition key, while its provenance remains in sources.
+    const analysis = response.analysis as { sources?: Record<string, unknown> } | null;
+    const sources = analysis?.sources || {};
+    if (Array.isArray(remote.interests)) requirements.interests = structured.interests;
+    if (Array.isArray(remote.stacks)) requirements.stacks = structured.stacks;
+    if (Array.isArray(remote.roles)) requirements.roles = structured.roles;
+    if (typeof remote.career === 'string') requirements.career = structured.career;
+    if (typeof remote.durationMonths === 'number') requirements.duration = structured.duration;
+    if ('interests' in sources && !('interests' in remote)) requirements.interests = [];
+    if ('stacks' in sources && !('stacks' in remote)) requirements.stacks = [];
+    if ('roles' in sources && !('roles' in remote)) requirements.roles = [];
+    if ('career' in sources && !('career' in remote)) requirements.career = '';
+    if ('durationMonths' in sources && !('durationMonths' in remote)) requirements.duration = '';
+    return { ...local, messages, requirements };
+}
 export function mergeAiConversation(remote: AiConversationDetail, local?: MatchingConversation): MatchingConversation {
     const messages = remote.messages.map(m => {
         const previous = local?.messages.find(v => v.serverId === m.id || v.id === m.clientKey);

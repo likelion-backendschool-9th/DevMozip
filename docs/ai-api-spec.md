@@ -2,7 +2,7 @@
 
 ## 2026-11-09 STEP 5 — 자연어 분석 API (최신 계약)
 
-사용자 STEP 5 요청과 후속 답변으로 **백엔드 API·테스트만** 구현한다. 프론트/BFF 연결은 이번 범위가 아니다. 이 절은 아래 과거의 USER 저장 전용·Gemini 미구현 설명에 우선한다. 기존 추천 엔진·조건 키·필수값·점수식·사용량 계약을 변경하지 않는다.
+5단계 분석 API는 백엔드에 구현되어 있고, 2026-11-09 프론트 연동으로 `/ai/matching` 로그인 전송이 `analyze:true`를 호출한다. 이 절은 아래 과거의 USER 저장 전용·Gemini 미구현 설명에 우선한다. 기존 추천 엔진·조건 키·필수값·점수식·사용량 계약은 변경하지 않는다. 분석은 추천을 실행하지 않는다.
 
 ### 기존 메시지 API의 명시적 분석 모드
 
@@ -36,7 +36,7 @@
 
 2026-11-09 스키마 복잡도 대응: 공식 structured output 문서에 따라 Google로 보내는 `responseJsonSchema`에서는 `maxItems`/`minItems`/`minimum`/`maximum` 등 배열·수치 한계를 제거한다. 앱은 `analysis-schema.json` 전체와 DTO로 동일 한계를 계속 검증한다. BadRequest `fieldViolations`가 있으면 허용된 API 필드 경로만 `fields=`로 덧붙인다. 예: `Google HTTP 400 / INVALID_ARGUMENT / fields=generationConfig.responseJsonSchema`. description 원문·알 수 없는 필드·키·대화 내용은 노출하지 않는다. 로컬 비교 진단은 `scripts/gemini-diagnose.py`이며 프로세스 환경 키만 읽고 키/본문/자유 텍스트를 출력하지 않는다. 이 변경만으로 실제 Gemini 성공을 확정하지 않는다.
 
-재확인은 키를 export한 프로젝트 루트 터미널에서 `python3 scripts/gemini-diagnose.py`를 먼저 실행한다. 비교 항목은 minimal_text → json_mime_only → tiny_schema → full_schema_current_file → simplified_wire_schema이며 합성 입력으로 각각 한 번 호출한다. 원본만 400이고 단순화 스키마가 200이면 스키마 복잡도 가설을 지지하지만, 실제 analyze API의 DTO 검증·저장 성공을 대신하지 않는다. 한 항목이라도 비성공이면 스크립트 종료 코드는 1이므로 case별 HTTP 결과로 판단한다. 이후 기존 백엔드를 종료하고 `python3 scripts/dev-postgres.py backend`로 재시작해 같은 clientKey·본문으로 analyze를 재시도한다. 현재 진단 비교 결과와 실제 API 성공 결과는 아직 전달받지 않았다. Cursor의 백엔드 437개 중 436개 통과·1개 스킵/Gemini 호출부 15개 통과는 사용자 전달 자동 테스트 기록이며 실제 Google 검증과 구분한다.
+재확인은 키를 export한 프로젝트 루트 터미널에서 `python3 scripts/gemini-diagnose.py`를 먼저 실행한다. 비교 항목은 minimal_text → json_mime_only → tiny_schema → full_schema_current_file → simplified_wire_schema이며 합성 입력으로 각각 한 번 호출한다. 원본만 400이고 단순화 스키마가 200이면 스키마 복잡도 가설을 지지하지만, 실제 analyze API의 DTO 검증·저장 성공을 대신하지 않는다. 한 항목이라도 비성공이면 스크립트 종료 코드는 1이므로 case별 HTTP 결과로 판단한다. 이후 기존 백엔드를 종료하고 `python3 scripts/dev-postgres.py backend`로 재시작해 같은 clientKey·본문으로 analyze를 재시도한다. 진단 비교 결과는 아직 전달받지 않았으나, 후속 대화에서 사용자가 Postman의 실제 Gemini 분석 성공을 확인했다. 이번 에이전트의 재실행 결과와 구분한다. Cursor의 백엔드 437개 중 436개 통과·1개 스킵/Gemini 호출부 15개 통과는 사용자 전달 자동 테스트 기록이며 실제 Google 검증과 구분한다.
 
 ### 조건과 분석 정보의 저장
 
@@ -75,9 +75,22 @@ current_conditions의 기존 `interests`, `stacks`, `roles`, `career`, `duration
 - `ai/gemini.properties`에서 GEMINI_API_KEY, GEMINI_MODEL, GEMINI_CONNECT_TIMEOUT(3s), GEMINI_TIMEOUT(25s, 최대 60s), GEMINI_MAX_OUTPUT_TOKENS(4096, 256~8192)를 읽는다. 자동 모델 대체·자동 재시도·유료 전환은 없다. 응답 수신은 100000 bytes에서 중단한다.
 - 2026-11-09 설정 오류 보완: API 키는 발급 형식을 추측하지 않고 공백/제어문자/비 ASCII 문자·4096자 초과만 로컬에서 거절한다. 점(`.`)이 포함된 opaque 키도 변형 없이 인증 헤더로 전달한다. 키의 유효성은 Google이 판정한다. 키·모델명·제한 시간·출력 토큰의 로컬 설정 오류는 각각 다른 503 안내로 구분하며 실제 설정값을 오류/로그에 포함하지 않는다.
 - 키는 **백엔드 프로세스 환경변수**에 전달한다. 루트 .env에 쓰는 것만으로 기존 Compose에 자동 전달되지는 않는다. 현재 Compose·실행 도구·배포 설정은 변경하지 않았다. 직접 실행은 키를 셸 기록에 남기지 않도록 `read -rs GEMINI_API_KEY; export GEMINI_API_KEY` 후 기존 백엔드 실행 명령을 사용한다. 키를 프론트/NEXT_PUBLIC 변수에 두지 않는다.
+- `backend/src/main/resources/ai/gemini.properties`의 `ai.gemini.api-key=${GEMINI_API_KEY:}`는 환경변수 참조다. 실제 키로 치환해 커밋하지 않는다. resources의 파일은 Git뿐 아니라 JAR에도 포함된다. 루트 `.env`는 Git에서 제외되어 있지만 Spring이 자동으로 읽는 파일은 아니며, 현재 실행 스크립트가 Compose에서 받는 환경 목록에도 Gemini 항목이 없다. 따라서 `.env`에 `GEMINI_API_KEY=실제키`를 추가하는 것만으로는 적용되지 않는다. `.env` 자동 전달은 별도 실행 설정 변경이 필요하며 이번 문서·커밋 작업에서는 변경하지 않았다.
+
+
+로컬 직접 실행에서 위 키 미설정 503이 발생하면 기존 백엔드를 Ctrl+C로 종료한 뒤 **같은 Bash 터미널**에서 다음을 실행한다. 첫 명령 실행 후 나타난 프롬프트에 실제 키를 붙여넣고 Enter를 누른다. 입력이 화면에 보이지 않는 것은 정상이다. 명령의 `GEMINI_API_KEY` 문자열을 실제 키로 바꾸지 않는다.
+
+```bash
+read -rs -p "Gemini API key: " GEMINI_API_KEY
+export GEMINI_API_KEY
+python3 scripts/dev-postgres.py backend
+```
+
+키를 재입력하고 백엔드를 재시작한 다음 기존 메시지의 ‘분석 다시 시도’를 누른다. 키를 채팅·로그·프론트 환경변수에 기록하지 않는다.
+
 - 모델의 무료 지원과 사용 키의 프로젝트 결제 상태는 다르다. 무료 티어 프로젝트의 키를 사용하고 AI Studio에서 현재 모델·할당량·결제 미활성 상태를 확인한다. 앱에서 Google 결제 티어를 조회·전환하지 않는다. 계정별 가용성·한도는 실제 키로 검증해야 한다.
 - 무료 티어 데이터는 Google의 [데이터 처리 약관](https://ai.google.dev/gemini-api/terms)에 따른다. 전송은 해당 대화의 USER 문맥·최근 ASSISTANT 일부·조건·세부 요구사항으로 제한한다. 사용자 DB 식별자·프로필·다른 회원/프로젝트/포트폴리오는 조회·전송하지 않는다. 입력에 포함된 흔한 이메일·전화번호·토큰·키·비밀번호 패턴은 가리며, 모든 형태의 개인정보 탐지를 보장하지는 않는다. HTTP wire/header/body 디버그 로깅을 켜지 않는다.
-- 이번 환경에는 Gemini 키가 없어 실제 모델 호출은 미검증이다. 격리 테스트의 분석 응답은 fixture/가짜 응답이며 실제 Gemini 추출 정확도나 무료 할당량 확인을 대신하지 않는다. 실제 DB는 JSONB 컬럼·USER/ASSISTANT 역할 CHECK·메시지 FK·client_key 복합 UNIQUE 인덱스 메타데이터를 읽었고 쓰기·스키마 변경은 하지 않았다.
+- 이번 에이전트 환경에는 Gemini 키가 없어 외부 호출을 재실행하지 않았다. 사용자는 별도 Postman 실행으로 실제 Gemini 분석 성공을 확인했다. 격리 테스트의 분석 응답은 fixture/가짜 응답이며 실제 Gemini 추출 정확도나 무료 할당량 확인을 대신하지 않는다. 실제 DB는 JSONB 컬럼·USER/ASSISTANT 역할 CHECK·메시지 FK·client_key 복합 UNIQUE 인덱스 메타데이터를 읽었고 쓰기·스키마 변경은 하지 않았다.
 
 기준일: 2026-11-08. **서버 대화·메시지 API 5개와 2단계 조건 PUT, 3단계 내부 추천 엔진과 4단계 백엔드 실행·저장·조회 구현 완료. 서버의 실사용자 인증·소유권 검증은 유지하며 비로그인 화면 입력/로그인 인계는 아래 최신 UI 계약을 따른다. 프론트 AI API 연결을 2026-11-07 승인 범위에서 구현했고, 공유 개발 DB 적용 성공·실제 연동 검토 완료를 사용자가 확인했다. 이후 UI/UX 재구성 코드를 구현했으며 새 화면의 사용자 최종 검토는 별도다.** 이전 브라우저 검증은 guest 허용 당시 기록이며 현재 검증은 진행 문서 상단의 현재 AI 상태를 따른다. 전체 단계·통합 과제·필요 자료는 [개발 청사진](ai-progress.md), 공통 정책은 [기능 정책](ai-matching.md)를 따른다.
 
@@ -109,7 +122,7 @@ current_conditions의 기존 `interests`, `stacks`, `roles`, `career`, `duration
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 추천 실행·요청/결과 저장 | 신규 성공 201, RecommendationResponse |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 최신 또는 특정 과거 요청 결과 조회 | 200, RecommendationResponse |
 
-아래 단계별 표에 요청·응답·오류를 정리한다. 5~7단계의 미구현 API는 뒤의 단계별 개요와 구분한다.
+아래 단계별 표에 요청·응답·오류를 정리한다. 5단계 분석은 메시지 POST의 `analyze:true`이며 6~7단계 API는 미구현이다.
 
 ### 추가 제공 API 표 반영 (2026-11-04)
 
@@ -414,9 +427,9 @@ ErrorResponse의 필드는 `status`, `error`, `message`, `path`, `timestamp`다.
 - 비로그인 메인/AI 입력은 컴포넌트 메모리에서 유지한다. 사용자가 로그인 인계를 시작할 때만 최대 1500자 입력·resume 토큰·작성 시각을 같은 탭의 v1 sessionStorage에 10분간 보관한다. 로그인 후 유효한 토큰을 실제 로그인 계정의 로컬 USER 메시지로 한 번 저장하고 소비한다. next URL에는 입력 텍스트를 넣지 않으며, 서버 저장/추천 자동 실행은 없다.
 - `/ai/matching`은 환영/입력용 공개 화면이다. 추천 버튼이나 비로그인 메시지 전송은 입력을 명시적으로 인계해 로그인으로 연결한다. 기존 계정별 저장 함수는 계속 비로그인 저장을 거절한다. 다른 보호 경로·인증 쿠키·백엔드 소유권 검증은 유지한다.
 - 과거 guest 대화의 인계는 제공하지 않는다. 최신 UI 요청에 따른 단일 입력의 일회성 로그인 인계만 허용하며, 기존 guest 저장 데이터는 일괄 삭제하거나 노출·인계하지 않는다. 메인 입력의 브라우저 전용 선택 필드 `inputOwner`로 소유 계정을 구분한다. 과거 소유자 없는 메인 입력은 복원하지 않는다.
-- 메시지 전송은 로컬 USER만 추가하며 자동 답변·자연어 분석·추천·사용량 차감은 실행하지 않는다. 추천 버튼은 서버 동기화·실행을 호출한다. 과거 계정별 Mock 결과의 조회 호환은 유지한다.
+- 로그인 메시지 전송은 분석 모드로 USER·ASSISTANT를 저장하고 정형 조건을 반영한다. 추천 버튼만 서버 동기화·실행을 호출한다. 과거 계정별 Mock 결과의 조회 호환은 유지한다.
 - 로컬 소유 키는 실제 로그인 이메일별로 구분하며, 이메일이 일치하는 기존 데모 계정은 이전 ID 키를 유지한다. 공통 Mock 프로필 ID가 같은 일반 계정도 대화는 섞이지 않게 했다. 이는 브라우저 저장 분리일 뿐 서버의 users PK·소유권 검증을 대체하지 않는다.
-- 로그인 직후 기존 로컬 초안을 서버에 전송하지 않는다. 최초 추천 시 선택한 대화만 아래 sync API로 저장한다. 서버 저장 후의 편집도 다음 추천 시 동기화한다. 로컬/서버 ID와 미확정 실행 키는 계정별 기존 v1 저장소에 보존하며, 메시지 이력 시각은 서버 저장 시각을 표시한다.
+- 로그인 직후 기존 로컬 초안을 서버에 전송하지 않는다. 로그인 메시지 전송 시 해당 대화를 생성·저장하고 분석한다. 완성된 UI 조건은 분석 전에 sync하며, 실제 추천 버튼에서도 기존 sync를 수행한다. 부분 UI 조건의 서버 전달 한계는 문서 마지막의 프론트 분석 보완 계약을 따른다. 로컬/서버 ID와 미확정 실행 키는 계정별 기존 v1 저장소에 보존하며, 메시지 이력 시각은 서버 저장 시각을 표시한다.
 
 ## 현재 매핑과 ERD 확인 항목
 
@@ -620,7 +633,7 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 ## API 단계별 개요
 
-4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5~7단계는 미구현이며 개요만 기록한다.
+4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다. 6~7단계는 미구현이다.
 
 | 단계 | Method·URL | 역할·남은 계약 |
 |---|---|---|
@@ -663,9 +676,9 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 ### 브라우저 BFF·표시
 
-- `/api/ai/conversations` 목록, `/{id}` 상세·삭제, `/sync`, `/{id}/recommendations` 실행·조회, `/{id}/recommendations/history`만 허용한다. 임의 프록시 경로·사용자 ID 쿼리는 거절한다.
-- POST/DELETE는 동일 Origin만 허용한다. 브라우저 Authorization은 전달하지 않고 기존 backendFetch가 HttpOnly 쿠키를 사용한다. 응답은 no-store이며 일반 오류의 내부 상세는 숨긴다. FAILED 추천 DTO는 상태와 함께 유지한다.
-- 결과는 서버 ID·점수·기본 이유로 표시한다. 이름·프로필 tag 등은 현재 추천 DTO에 없어 Mock 데이터나 잘못된 상세 URL로 대체하지 않는다. 자연어 분석·상세 분석·사용량 구현은 포함하지 않는다.
+- `/api/ai/conversations` 목록·생성, `/{id}` 상세·삭제, `/sync`, `/{id}/messages` 저장·분석, `/{id}/recommendations` 실행·조회, `/{id}/recommendations/history`만 허용한다. 임의 프록시 경로·사용자 ID 쿼리는 거절한다.
+- POST/DELETE는 동일 Origin만 허용한다. 브라우저 Authorization은 전달하지 않고 기존 backendFetch가 HttpOnly 쿠키를 사용한다. 응답은 no-store이며 추천 등 일반 오류의 내부 상세는 숨긴다. 메시지 분석 오류는 400/401/403/404/409/429/502/503/504의 안전한 message만 전달한다. FAILED 추천 DTO는 상태와 함께 유지한다.
+- 결과는 서버 ID·점수·기본 이유와 공개 개발자 정보로 표시한다. 상세 분석·사용량 API는 포함하지 않는다.
 
 ### 구현·적용·사용자 검토 상태 (2026-11-07)
 
@@ -710,3 +723,10 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 ### 요청 기술 안내 문구 후속 수정 (2026-11-08)
 
 - API 변경 없이 결과의 `conditions.stacks`를 개발자 카드에 전달한다. 화면 기술 이유는 해당 요청 조건과 현재 공개 `developer.skills`의 공통 항목으로 표시한다. 기술 별칭/대소문자는 기존 엔진 기준으로 대조한다. 앞 절의 기술명 스냅샷 유지 표시 대신 현재 프로필 기준임을 명시하며, DB의 basicReason/matchScore는 그대로 보존한다.
+
+
+### 2026-11-09 프론트 분석 보완 계약
+
+- 분석 성공 응답의 sources에 출처가 남아 있으나 정형 조건 키가 제거된 경우 UI에서도 해당 조건을 비운다. 분석에서 다루지 않은 로컬 조건은 보존한다.
+- 실패한 분석의 메시지 키는 기존 로컬 저장소에 보존하여 이력 복원 뒤에도 같은 키로 재시도한다. 일반 대화는 필수값 없이 허용하며 추천 실행 버튼에서 기존 필수 정책을 검증한다.
+- 완성된 UI 조건은 분석 전에 기존 `/sync`로 전달한다. 부분 UI 조건의 서버 전달은 현재 전체 조건 sync 계약으로 지원되지 않는다. 이를 위해 기존 필수 조건·DTO 계약을 임의로 완화하지 않는다.

@@ -22,6 +22,6 @@ export function ChatComposer({ value, busy, signedIn, used = 0, onChange, onSend
             <div className={styles.bottom}><span><CornerDownLeft size={12} />Enter 전송 · Shift+Enter 줄바꿈</span><button type="submit" disabled={busy || !value.trim() || overLimit} aria-label={signedIn ? '메시지 전송' : '로그인하고 메시지 이어가기'}><ArrowUp size={19} /></button></div>
         </form>
         <p id="matching-message-length" role={overLimit ? 'alert' : undefined}>{value.length.toLocaleString()} / 1,500자 · 대화 {total.toLocaleString()} / 10,000자 (메시지 구분 줄바꿈 포함) · 남은 용량 {Math.max(0, CHAT_TOTAL_LIMIT - total).toLocaleString()}자{overLimit && ' — 전송 한도를 초과했습니다. 입력을 줄이거나 새 대화를 시작해 주세요.'}</p>
-        <p>{signedIn ? '메시지는 자동 분석되지 않습니다. 오른쪽에서 조건을 선택해 추천을 시작하세요.' : '입력은 서버에 저장되지 않으며, 로그인 후 메시지로 이어집니다.'}</p>
+        <p>{signedIn ? '메시지를 분석해 조건을 정리합니다. 개발자·프로젝트 추천은 추천 버튼으로 실행합니다.' : '입력은 서버에 저장되지 않으며, 로그인 후 메시지로 이어집니다.'}</p>
     </div>;
 }
