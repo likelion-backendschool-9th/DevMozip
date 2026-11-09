@@ -102,3 +102,11 @@ ERD에 blocks·기간·팀 규모용 컬럼이 없어 **기존 TEXT description 
 2026-11-09 사용자 위임으로 공유 개발 DB에 portfolios를 생성했다. 스키마 백업 후 feeds·feed_likes와 함께 단일 트랜잭션으로 적용했으며 기존 테이블·데이터는 변경하지 않았다. `docs/sql/portfolio-schema-review.sql`은 적용 기록이며 재실행하지 않는다. 지원서 연결의 portfolio_id FK와 스냅샷은 변경하지 않았다. 기존 고아 참조를 임의 삭제·NULL 보정하지 말고 DB/프로젝트 담당자와 확인해야 한다.
 
 정상 CRUD 및 참조/동시성 검증은 격리된 PostgreSQL 17 Testcontainers에서 수행한다. 공유 DB 실데이터·브라우저 수동 저장 확인은 미실행이다. 테이블은 준비됐으며 외래키·문서 계약 합의와 실연동 검증이 필요하다.
+
+## 공유 DB 브라우저 검증 (2026-11-09)
+
+- premium 개발 계정 로그인 후 본인 목록의 공개·비공개 샘플 2건 확인.
+- 실제 작성 화면에서 비공개 ID 3 등록, 수정 폼의 저장값 복원 및 제목·소개 수정 성공.
+- 새로고침 후 제목·소개·본문 유지. DB에서 user_id=5, PRIVATE, devmozip.portfolio.v1 문서와 수정 시각 변경 확인. 검증용 ID 3은 비공개로 남겨둔다.
+- Docker 내부 Request URL과 외부 Origin 차이로 같은 출처의 POST가 403인 문제를 재현했다. 요청 Host와 URL 프로토콜을 기준으로 비교하도록 보완했다. X-Forwarded-Host는 신뢰하지 않으며 다른 도메인·포트·프로토콜·누락/잘못된 Origin은 거절한다.
+- 파일 업로드·삭제는 이번 브라우저 검증에서 제외.

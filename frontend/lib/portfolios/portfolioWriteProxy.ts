@@ -2,7 +2,18 @@ import 'server-only';
 import { portfolioError } from './portfolioProxy';
 const MAX = 2 * 1024 * 1024;
 export function portfolioWriteGuard(request: Request, body = true) {
-    if (request.headers.get('origin') !== new URL(request.url).origin) return portfolioError(403, '같은 사이트에서 요청해 주세요.');
+    // Next의 Docker 내부 URL 대신 브라우저가 요청한 Host를 비교한다.
+    // x-forwarded-host는 출처 검증에 사용하지 않는다.
+    const target = new URL(request.url);
+    const host = request.headers.get('host');
+    if (host) {
+        try {
+            const external = new URL(`${target.protocol}//${host}`);
+            if (external.host !== host || external.username || external.password || external.pathname !== '/' || external.search || external.hash) throw new Error('host');
+            target.host = external.host;
+        } catch { return portfolioError(403, '같은 사이트에서 요청해 주세요.'); }
+    }
+    if (request.headers.get('origin') !== target.origin) return portfolioError(403, '같은 사이트에서 요청해 주세요.');
     if (body && !request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return portfolioError(415, 'JSON 형식이 필요합니다.');
     return null;
 }

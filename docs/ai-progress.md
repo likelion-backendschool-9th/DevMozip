@@ -726,3 +726,10 @@ erDiagram
 - 이슈 #88은 기존 이슈를 갱신하고 PR은 미병합 선행 #87의 feat/84-portfolio-query를 대상으로 생성한다. #87 병합 후 develop 대상으로 전환해야 한다.
 - 좋아요 매핑 변경은 feat/75-liked-posts의 56fed81로 푸시 완료(PR #82). 이번 브랜치에는 공유 테이블 DDL 적용 기록만 함께 보관한다.
 - 이번 npm run build 및 git diff --check 통과. 공유 DB에 실제 포트폴리오 저장·브라우저 수동 E2E는 여전히 미실행.
+
+### 2026-11-09 포트폴리오 로그인·등록·수정 브라우저 검증
+
+- 사용자 제공 개발 계정 로그인 후 본인 샘플 2건 확인. 작성 UI로 PRIVATE ID 3 등록, 수정 폼 값 복원, 제목·소개 수정, 새로고침 유지 및 PostgreSQL 재조회 성공. 소유자 ID 5·문서 형식·수정 시각 확인. 검증용 데이터는 PRIVATE로 남겨둔다.
+- Docker 내부 URL과 외부 Origin 차이로 등록 403 발생. portfolioWriteProxy에서 Host 기반 비교로 보완하고 임의 X-Forwarded-Host는 신뢰하지 않는다. 프로토콜·포트·외부 출처 차단 유지.
+- 관련 테스트 38개, 수정 파일 ESLint, npm run build, git diff --check 통과. 백엔드 코드 변경 없어 백엔드 테스트 재실행 안 함.
+- 삭제·파일 업로드·지원서 스냅샷 검증 제외. 이번 보완 미커밋·미푸시.
