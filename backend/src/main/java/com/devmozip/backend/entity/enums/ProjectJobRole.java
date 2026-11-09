@@ -3,7 +3,7 @@ package com.devmozip.backend.entity.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** 회원의 직군 허용 값과 분리한 프로젝트 모집 코드. */
+/** 프로젝트 모집의 기본 후보. 사용자 직접 입력 직군은 별도 enum 추가 없이 문자열로 저장한다. */
 @Getter
 @RequiredArgsConstructor
 public enum ProjectJobRole {

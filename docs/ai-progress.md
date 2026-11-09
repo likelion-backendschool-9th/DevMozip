@@ -16,6 +16,13 @@
 - WSL/Compose 최종 검증(2026-11-07): Linux Docker CLI와 Windows Docker Desktop이 같은 정지 컨테이너를 조회하는 것을 확인했다. 개발 compose.yaml+개인 override로 생성된 postgres-1은 로컬 서비스이며 백엔드는 .env의 cloud.newlecture.com:5442/devmozip(PostgreSQL17.11)을 사용한다. Redis를 healthy까지 시작한 후 `docker compose up -d --no-deps backend frontend`로 개발 앱만 복구했고 로컬 postgres는 Exited 상태로 유지했다. 백엔드/프론트 헬스200·실제 데모 로그인200·최신 요청2/과거 요청1 조회200(각 개발자6·프로젝트8), DB 요청2·결과28 보존을 확인했다. 개발 실행 안내를 서비스 지정 방식과 ps -a 설명으로 보완했다. frontend npm run build·git diff --check·문서 링크/기존 기록 보존 확인 성공. 제품 Java 미변경으로 Gradle test는 재실행하지 않았다. 기존 컨테이너·볼륨·데이터는 삭제하지 않았다.
 - 미완료: 팀 PostgreSQL 17의 전체 공개 계약·실제 다중 사용자/실패·삭제 통합 검증, 포트폴리오 연동, AI BFF/로컬 초안 동기화·프론트 버튼 연결, 5~7단계. 프로세스 강제 종료·DB 장애로 남는 PENDING의 자동 복구/만료는 없다. FK NO ACTION으로 참조 대상 물리 삭제를 차단하므로 탈퇴·다른 도메인의 삭제 계약은 후속 조율 대상이다. 앱/DB 기준 시간대는 기존과 같이 미확정이다.
 
+
+## 2026-11-08 PR #81 충돌 해결
+
+- 사용자 요청으로 .worktrees/pr81-conflicts의 feat/project-api-integration-no-yaml에서 develop 058397e를 반영했다. 프로젝트 초기/후속 구현이 겹친 24개 충돌을 비교하고 직군 직접 입력·실제 DB 조회·생성 권한·Mock 디자인을 보존했다. 최신 인증/프로필 변경과 양쪽 문서 기록도 유지한다.
+- backend 563개 중 551개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패. 프로젝트 93개 중 82개 통과·11개 스킵·실패 없음. frontend 빌드/TypeScript·721개 테스트 통과. YAML은 develop 대비 차이 0개다.
+- 실제 DB/브라우저/실행 서버와 기존 root 미커밋 작업·다른 PR은 변경하지 않았다. 검증 상세는 [프로젝트 API 통합](project-api-integration.md)을 참조한다. 기존 PR #81에 반영하며 develop/main에 직접 푸시하지 않는다.
+
 ## 2026-11-05 PR #63 충돌 해결
 
 - develop `09a438b`를 #46 브랜치에 반영하고 조회/조회수와 수정/삭제를 모두 보존했다. 충돌 파일은 ProjectController, Project, ProjectMemberRepository, 이 문서 4개다.
@@ -724,6 +731,90 @@ erDiagram
 - frontend npm run build -- --webpack 성공(TypeScript 포함), 생성 next-env.d.ts 복원, git diff --check 통과.
 - 남은 범위: 백엔드 신규 생성 프리미엄 인가·프론트 API 활성화/조회 연동·상시 서버 재시작/배포. 회원/프로젝트 ID 또는 DB 기본 데이터 변경 없음. 커밋·푸시 없음.
 - 사용자 실행 요청으로 실제 회원 연결 worktree의 백엔드 8080(local, 팀 PostgreSQL, validate/no SQL init, 개발 고정 ID 비활성화), 프론트 3000(backend URL 8080, 생성 API 플래그 false)을 실행했다. 이전 승인에 따라 3000을 사용하던 ncafe-frontend만 중지했다. localhost의 backend health/공개 목록, frontend 홈/로그인/health 모두 HTTP 200 확인. 로그인 경로에는 기존 Next.js instant-navigation 검증 경고가 출력된다. 경고 수정·커밋·푸시는 하지 않았다.
+
+### 2026-11-06 프로젝트 #44–#47 실제 회원·프론트 연결
+
+- 사용자 확정: Mock 켜기=기존 시연, 끄기=실제 프로젝트 DB/API. feat/project-api-integration worktree(`/home/luvsuna/DevMozip/.worktrees/project-api`)에서 선행 PR 코드를 보존하며 연결했다. 원래 작업 디렉터리의 미커밋 파일은 변경하지 않았다. AI 업무·#48 지원 구현은 시작하지 않았다.
+- 백엔드: ProjectCreationPolicy 신규 생성 PREMIUM 인가, ProjectServiceImpl 연결, ProjectApplicationUsageConfiguration 실제 PENDING/APPROVED 직군 조회. ProjectDetailResponse/ProjectQueryServiceImpl/ProjectQueryRepository에 현재 참여자 종료 동의 정보와 주최자 공개 정보 추가. 기존 회원·인증·DB 스키마는 변경하지 않았다.
+- 프론트: app/api/projects의 목록/내 목록/선택지/신원/상세/관리/PUT/DELETE/PATCH BFF, lib/projects의 API 계약·검증·요청 훅, app/projects/_components/api의 목록·폼·상세/관리 UI 추가. 기존 프로젝트·내 프로젝트·메인 미리보기·탐색 페이지는 모드에 따라 분기하고 기존 Mock 기능을 유지한다. 독립 edit 경로와 보호 규칙 추가. 기술·분야 다중 입력/자동완성, 실제 권한·오류·빈 결과·페이지네이션·정렬 제공. 개인 API 데이터는 localStorage에 저장하지 않는다.
+- BFF는 생성/수정에서 신원·상태를 제거한다. 정상 브라우저 요청이 Next 내부 호스트 정규화로 차단되는 오류를 실제 브라우저에서 발견해 Origin과 실제 Host를 비교하도록 수정하고 회귀 테스트를 추가했다. 서버 오류를 Mock 데이터로 덮어쓰지 않고, 쓰기 요청 자동 재시도는 하지 않는다.
+- frontend npm test -- --maxWorkers=2: 653개 통과. 처음 발견한 기존 Mock 테스트의 날짜 의존성은 해당 테스트 시간을 고정해 수정했다. npm run build -- --webpack 성공(TypeScript 포함). 샌드박스 실행은 TypeScript --showConfig 출력 읽기 오류로 실패했고 권한 승인 후 실제 빌드로 검증했다.
+- backend ./gradlew test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m: 413개 중 401개 통과·11개 opt-in 스킵·1개 실패. 실패는 기존 KakaoClientTest 153행 로그 검증으로 그대로 남겨두었다. 프로젝트 패키지 별도 실행은 85개 중 74개 통과·11개 opt-in 스킵·실패 0. 신규 실제 로그인 테스트에서 무료 생성 차단, 프리미엄 생성, 공개 상세의 참여 정보 비노출, 실제 지원서 직군 보호를 확인했다. Testcontainers PostgreSQL은 팀 DB와 별도다.
+- Chromium 실제 검증: Mock ON 유지/OFF 실제 목록(기본 8개), 1440/390 목록 가로 넘침 없음, JS pageerror 없음. 프리미엄 로그인 후 임시 공고 생성→상세→수정→논리 삭제, 실제 내 프로젝트 200, 일반 회원 생성 403/작성 제한 UI/내 목록 200 확인. 임시 공고 36·37은 논리 삭제했고 공개 목록 8개 복원. 논리 삭제 이력은 정책대로 DB에 남는다. 기존 공고·회원은 수정하지 않았다. 전체 페이지·모든 해상도·종료 전체 브라우저 흐름을 검증했다고 주장하지 않는다.
+- README.md, frontend/.env.example, docs/project-api-integration.md 갱신. 문서에 #44–#47 체크리스트 점검과 미연결 범위를 기록했다. 이번 작업은 커밋·푸시·PR 및 GitHub 이슈 수정 없이 유지한다.
+- 남은 범위: #48 지원·승인·취소와 지원 중 조회(501), 알림/채팅/리뷰 소비자, 관리자 배치·팀원 변경 즉시 종료 재집계. 기존 카카오 테스트 실패도 미해결이다. 다음 이슈는 자동 시작하지 않는다.
+
+### 2026-11-06 연결 중단 후 복구·최종 검증
+
+- 작업 환경 재연결 후 /tmp worktree와 실행 로그가 사라져, 보존된 Git 커밋과 세션의 코드 변경 기록으로 동일 변경을 `.worktrees/project-api`에 복구했다. 원래 브랜치의 미커밋 변경을 유지했으며 원격 작업은 하지 않았다. 작업 폴더는 로컬 Git 제외 목록에만 등록했다.
+- 복구 후 프론트 653개 테스트 및 npm run build -- --webpack(TypeScript 포함) 재실행 성공. 백엔드 전체 재실행 413개 중 401개 통과·11개 opt-in 스킵·기존 카카오 로그 검증 1개 실패. 그중 프로젝트 패키지는 74개 통과·11개 스킵·실패 0.
+- 복구한 프로덕션 빌드의 Chromium 검증: Mock ON/OFF, 실제 목록 8개, 1440/390 가로 넘침 없음, 프리미엄 생성→상세→수정→논리 삭제 및 내 목록 200 재확인. 임시 공고 38도 논리 삭제했고 pageerror 0. 전체 종료 흐름·지원 기능은 브라우저 완료 항목으로 표시하지 않는다.
+- 개발 모드에서 프로젝트 layout의 instant-navigation 검증 경고가 화면 확인을 방해해, 설치된 Next.js 문서를 확인하고 프로젝트 layout에만 instant=false를 명시했다. 기존 클라이언트 세션·Mock 모드 로딩 구조는 유지한다. 변경 후 테스트·빌드를 다시 통과했다.
+- 프론트 3000·백엔드 8080 실행. 3000을 다시 점유한 ncafe-frontend만 기존 승인대로 중지했으며 다른 컨테이너는 유지했다. DB 스키마·기본 공고·회원 데이터는 변경하지 않았다.
+- 최종 개발 서버 Chromium 검사에서도 실제 토글 버튼으로 Mock OFF 전환 후 실제 프로젝트 8개 표시·pageerror 0을 확인했다. frontend /projects와 backend /actuator/health는 HTTP 200이다. 검증용 3100 서버는 종료하고 3000/8080만 유지했다.
+- 개발 로그에는 layout 설정 보완 이후에도 app/projects/page.tsx에 대한 기존 Next instant-navigation 검증 경고가 남는다. 프로덕션 흐름 통과와 개발 로그 무경고를 혼동하지 않는다. 클라이언트 페이지를 서버 셸로 재구성하는 작업은 이번 범위에서 진행하지 않았다.
+
+### 2026-11-06 Docker에서 프로젝트 목록 미표시 수정
+
+- 원인: 루트 chore/postgresql-only의 이전 프론트 코드가 Docker에 마운트되어 GET /api/projects가 405였다. 백엔드 DB 조회는 8개로 정상이었으며 최신 API 연동 코드는 별도 worktree에 있었다.
+- compose.override.yaml에서 빌드 context와 소스 bind 경로를 모두 ${DEVMOZIP_SOURCE_DIR:-.} 기준으로 통일했다. 루트 비공개 .env에는 `./.worktrees/project-api`를 지정했고 .env.example에는 기본 `.`와 설명만 추가했다. PROJECT_API_ENABLED=true 명시. README 실행 경로 설명 수정. 기존 원래 폴더의 미커밋 제품 코드는 덮어쓰지 않았다.
+- 최신 backend worktree에도 직전 PostgreSQL 설정 단계의 H2 testRuntimeOnly와 관련 주석을 반영했다. 실제 런타임은 PostgreSQL, Compose ddl-auto=validate/sql.init=never를 유지한다.
+- DOCKER_BUILDKIT=0 docker compose build 성공 후 frontend/backend 재생성. frontend의 호스트 node_modules 외부 심볼릭 링크 때문에 Turbopack이 Next.js를 찾지 못하는 추가 문제가 발생해 해당 링크만 제거하고 npm ci로 독립 설치했다. 기존 공용 의존성 폴더는 유지했다. 이후 프론트 개발용 익명 볼륨만 새로 생성했으며 PostgreSQL/Redis 명명 볼륨은 유지했다.
+- 최신 frontend 독립 의존성 기준 npm test -- --maxWorkers=2 653개 통과, npm run build -- --webpack TypeScript 포함 성공. 최신 backend ./gradlew test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m 413개 중 402개 통과·11개 opt-in 스킵·실패 0. 이전 카카오 로그 테스트를 수정한 것은 아니며 이번 실행 결과만 기록한다.
+- 실제 Docker GET /api/projects 200·totalElements=8, frontend /api/health 200 UP, backend /actuator/health 200 UP. Chromium에서 실제 Mock 끄기 클릭→프로젝트 8개 표시, 1440/390 가로 넘침 없음, 카드 클릭→/projects/7 실제 이동 및 상세 h1 표시, pageerror 0 확인. 상세 열람에 따른 기존 조회수 집계 외 신규 데이터/스키마 변경은 하지 않았다.
+- 프론트 3000·백엔드 8080 Docker 실행 상태 유지. 커밋·푸시 없음. 현재 로컬은 .env의 소스 경로를 통해 worktree를 실행하며 일반 팀 환경의 기본값은 현재 폴더다.
+
+### 2026-11-06 사용자 추가 환경 파일 PostgreSQL 점검
+
+- 대상은 현재 열린 원래 작업 디렉터리(/home/luvsuna/DevMozip, chore/postgresql-only)다. 별도 프로젝트 API worktree의 기존 변경은 유지했다. Spring Boot 4.1.2/Java 21/Gradle 9.8.2/JPA 및 PostgreSQL 드라이버를 파일로 재확인했다.
+- application-local.yml은 H2가 활성화돼 있었고 주석 PostgreSQL 주소는 다른 ncafe 프로젝트용이었다. 해당 예제를 제거하고 팀 DB cloud.newlecture.com:5442/devmozip으로 연결하도록 DB_* 환경변수와 root .env/.env.local import를 구성했다. 비밀번호/JWT 비밀값은 직접 기록하지 않았다. 개인 local 파일은 기존 gitignore 대상이다.
+- local SQL init=never로 H2 전용 *_data.sql 자동 실행을 끄고 ddl-auto=validate로 공유 스키마 자동 변경을 막았다. 기본 application.yaml·dev 프로필의 기존 의미와 사용자가 추가한 compose 환경 설정은 보존했다. dev 파일의 CRLF만 정리했다.
+- build.gradle의 H2는 기존 회원/AI 테스트가 사용하므로 testRuntimeOnly로 이동했다. 실제 runtime은 PostgreSQL을 사용한다. bootRun, compose.override.yaml, InMemoryRefreshTokenStore, README 및 team-auth-deployment의 local(H2) 설명을 현재 동작에 맞게 수정했다. 메모리 리프레시 토큰 정책은 유지했다.
+- DB 정보를 명령줄로 덮어쓰지 않고 backend에서 ./gradlew bootRun --args='--server.address=127.0.0.1 --server.port=18089'로 실행했다. local 프로필, 실제 PostgreSQL JDBC URL·드라이버·서버 17.11, Hibernate 스키마 검증 및 기동 성공. /actuator/health HTTP 200·UP 확인 후 검증용 서버 종료. 데이터 삽입·DDL 실행은 하지 않았다.
+- 현재 디렉터리 ./gradlew test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m 성공: 246개 중 238개 통과·8개 opt-in 스킵·실패 0. 다른 worktree의 413개 테스트 결과와 구분한다. frontend npm run build -- --webpack 성공(TypeScript 포함), 생성 next-env.d.ts 복원. git diff --check 통과. 커밋·푸시 없음.
+
+### 2026-11-06 수정된 Compose 실행 검증
+
+- 사용자 요청으로 현재 원래 작업 폴더의 compose.yaml + compose.override.yaml을 확인했다. 합성 설정은 dev 이미지 타깃, frontend 3000/backend 8080, default 프로필, 팀 PostgreSQL cloud.newlecture.com:5442/devmozip, Redis 서비스 연결이다. 별도 project-api worktree 변경을 합치지 않았다.
+- docker compose config --quiet 통과. 최초 docker compose build는 호스트의 docker-buildx 실행 파일 누락으로 실패했다. 호스트 설치 변경 없이 DOCKER_BUILDKIT=0 docker compose build로 동일 이미지를 빌드해 성공했다.
+- 최초 실행 요청은 ddl-auto=update가 공유 DB 스키마를 바꿀 수 있어 자동 승인 검토가 거절했다. 우회하지 않고 compose.override.yaml에 SPRING_JPA_HIBERNATE_DDL_AUTO=validate, SPRING_SQL_INIT_MODE=never를 명시해 위험을 제거했다. 합성 환경 확인 후 docker compose up -d --no-build 실행 승인·기동 성공.
+- devmozip frontend/backend/postgres/redis 4개 실행, postgres/redis healthy. backend PostgreSQL 연결·스키마 검증·기동 성공. /actuator/health 200 UP, frontend /api/health 200 UP로 프론트→백엔드 연결 확인. 기본 local postgres 컨테이너도 실행되지만 현재 backend 접속 대상은 .env의 원격 팀 DB다. 기존 ncafe 컨테이너와 볼륨은 변경하지 않았다.
+- frontend npm run build -- --webpack 성공(TypeScript 포함). 설정 외 제품 코드 변경은 없으며 이번 단계에서 백엔드 테스트는 재실행하지 않았다(직전 단계의 238개 통과·8개 스킵과 구분). 커밋·푸시 없음. 개발 컨테이너는 실행 상태로 유지한다.
+
+
+### 2026-11-06 통합 브랜치 푸시 준비
+
+- 사용자 요청으로 feat/project-api-docker-integration 브랜치를 생성했다. #44~#47의 API 실연동과 실행 환경 보완을 두 커밋으로 분리한다. 개인 .env/application-local.yml, Zone.Identifier 파일과 원래 폴더의 중복·미완료 변경은 포함하지 않는다. 신규 API·실행 설정은 선행 PR #63/#70/#72/#73/#74/#76 이후 변경이며 자동 이슈 종료/PR 생성은 하지 않는다.
+
+### 2026-11-06 YAML 제외 PR 재작성
+
+- 사용자 요청으로 PR #79를 닫고 최신 origin/develop(67bff78) 기준 feat/project-api-integration-no-yaml 브랜치를 별도 폴더에 생성했다. 이전 프로젝트 구현을 YAML 제외 패치로 적용했으며 충돌은 없었다. 현재 Docker가 사용하는 원래 작업 폴더·로컬 YAML·DB 볼륨은 유지한다.
+- .gitignore의 *.yaml/*.yml 규칙을 유지하고 기존 YAML 예외를 제거했다. 기존 추적 파일을 삭제하는 대신 이번 PR에서 YAML 변경·추가·삭제를 모두 제외한다. Windows Zone.Identifier도 제외한다. 로컬 전용 Compose 옵션 안내를 README에서 구분하고 지원하지 않는 DEVMOZIP_SOURCE_DIR 예시는 공유 .env.example에서 제외했다.
+- 과거 기록의 YAML 변경·Docker 실행 결과는 로컬 설정에 대한 기록이며 이번 PR에 해당 YAML 파일이 포함된다는 뜻이 아니다. 이 브랜치의 Git diff로 YAML 0개를 최종 확인한다.
+
+- 새 브랜치 검증: frontend npm run build -- --webpack 성공(TypeScript 포함). 최초 병렬 검증은 프로필 BFF 1개가 기본 5초 제한으로 실패했고, 다른 빌드 종료 후 npm test -- --maxWorkers=1 재실행에서 659개 모두 통과했다.
+- backend 전체 실행은 417개 중 404개 통과·11개 스킵·2개 실패였다. 실패는 기존 KakaoClientTest 로그 검증과 ProjectQueryIntegrationTest의 PostgreSQL 테스트 컨테이너 기동 실패다. 프로젝트 조회 클래스는 별도 재실행으로 통과했고 카카오 실패는 그대로 보고한다. 전체 백엔드 성공으로 표시하지 않는다. YAML 미포함 상태의 새로운 Docker 실행은 하지 않았으며 기존 로컬 Docker는 유지한다.
+
+### 2026-11-06 기본 Mock 디자인으로 API 프론트 정리
+
+- 사용자 요청: 기존 Mock 디자인으로 화면을 복원하고 연결된 API는 변경하지 않는다. feat/project-api-integration-no-yaml의 로컬 변경으로 진행했으며 커밋·푸시하지 않았다. 현재 Docker가 사용하는 project-api 작업 폴더에도 동일한 UI 7개 파일만 반영했다. YAML/백엔드/BFF/요청 훅/응답 계약/도메인 타입은 변경하지 않았다.
+- 변경 파일: ApiProjectList.tsx, ApiProjectDetail.tsx, ApiProjectForm.tsx, ApiCommon.tsx/ApiCommon.module.css, 신규 components/projects/ProjectSummaryCard.tsx/동일 디렉터리 CSS Module. 기존 RecruitmentCard·ProjectPreview·목록/상세/작성/내 프로젝트/관리 CSS Module과 Card/Input/Button을 재사용한다.
+- 목록은 기본 Mock의 제목·폭·검색창·필터·정렬 탭·4열 카드로 맞췄다. 메인 미리보기, 내 프로젝트 카드, 상세 본문/사이드바, 관리 지표, 작성/수정 패널 및 무료 회원 안내도 기존 스타일로 맞췄다. 유효한 실제 이미지는 유지하고 기본 이미지·로드 실패는 제목 기반 문자 표지를 사용한다. 제공되지 않는 직군별 참여 인원은 추정하지 않고 모집 인원과 실제 전체 참여 인원을 표시한다.
+- 복수 분야·기술 입력은 기존 요청 값을 유지하는 접이식 필터로 표시하며 외부 클릭/Escape 닫기를 제공한다. 서버 권한·신청 미연결 안내·기간/종료 동의·수정/삭제 명령과 요청 경로/페이로드는 유지한다. git diff의 backend/app/api/lib/types 변경 0개 및 기존 주요 API 파일 SHA-256 일치를 확인했다.
+- frontend npm run build -- --webpack 성공(TypeScript 포함), npm test -- --maxWorkers=1 659개 통과. git diff --check 통과. 백엔드 변경이 없어 backend 테스트는 이번 UI 단계에서 재실행하지 않았다.
+- 실제 Docker Chromium 검증: Mock/API 모두 1440px 제목 x=48·카드 폭=315px·8개 목록, 검색 1개 결과·인기순·초기화·상세 이동 정상. 1440/390 목록 가로 넘침 없음. React+TypeScript 복수 필터 요청/결과 3개, 외부 클릭 닫기 및 메인 미리보기 확인. pageerror 0.
+- 실제 프리미엄 로그인으로 내 프로젝트·작성·관리·수정 값 복원 확인, 390px 수정 화면 가로 넘침 없음. 일반 회원 작성 제한 표시 확인. 프로젝트 생성/수정/상태 변경은 실제 제출하지 않았다. 전체 해상도/모든 상태 변경/종료 흐름을 브라우저 검증한 것으로 표시하지 않는다. 상세 조회수와 로그인 세션의 정상 처리 외 프로젝트 데이터를 변경하지 않았다.
+
+### 2026-11-06 공통 후보 선택·직접 입력 구현 (PC)
+
+- 사용자 확정: 모집 직군·분야·기술 스택은 같은 기본 후보/직접 입력 선택 방식, 상태는 기존 4개만 유지. 추가 지시에 따라 이번 단계는 PC만 검증했다.
+- 프론트: TagsInput의 datalist 대신 기본 후보 버튼과 선택 상태 표시를 제공한다. 직접 입력도 동일 목록에서 선택/해제하며 중복 표시를 없앴다. 검색 필터와 Mock/API 작성 화면에 적용. 비로그인 기본 기술/분야는 기존 signupOptionsAction의 서버 enum 후보를 재사용한다. 직군·분야·기술의 문자열 정규화/검증은 projectChoices.ts에서 공통 처리하고 타입·Mock 검증·생성 어댑터를 맞췄다.
+- 새 직군 저장에는 기존 enum 제한 확장이 필요하므로 프로젝트 범위에서만 roleCode 및 jobRole을 문자열로 처리했다. ProjectJobRole enum은 기본 후보 제공용으로 유지한다. 기존 코드·API 주소·JSON 필드명·권한·상태 규칙은 유지한다. 새 직군은 1~30자/NFKC/공백 정리/대소문자 중복 방지, 기본 라벨은 기존 코드로 정규화한다. 지원·팀원 직군 보호도 문자열 키로 유지한다.
+- 실제 팀 DB 메타데이터 읽기 비교: projects.recruitment_slots JSONB, project_members/project_applications.job_role VARCHAR(50), 관련 CHECK 제약 없음. 신규 테이블·컬럼·DDL 없이 수용 가능함을 확인했다. YAML 파일 변경 없음.
+- 변경: ProjectRoleValues 신규, CreateProjectRequest/ProjectSearchRequest/ProjectRecruitmentSlot/ProjectMember/ProjectApplicationUsage 및 프로젝트 생성·수정·검색의 문자열 처리, 관련 테스트. 프론트 공통 선택기/목록/작성 폼·projectChoices·타입/검증/Mock 어댑터 및 테스트. 회원·AI 등 다른 도메인 코드는 수정하지 않았다.
+- frontend npm run build -- --webpack 성공(TypeScript 포함), npm test -- --maxWorkers=1 663개 통과. backend 전체 432개 중 420개 통과·11개 opt-in 스킵·기존 KakaoClientTest 153행 1개 실패. 추가 지원서 보호 검증을 포함한 프로젝트 재실행은 93개 중 82개 통과·11개 스킵·실패 0.
+- PC Chromium: 기본 후보 표시, 직접 입력 SRE 필터 200, 상태 전체+4개 확인. 프리미엄으로 SRE/공공서비스/Rust를 직접 선택해 실제 저장 후 직군을 보안 엔지니어로 수정·검색(1개) 확인. pageerror 0. 검증 공고 39는 논리 삭제했고 기본 공개 목록 8개 복원. 프로젝트 데이터의 실제 사용 이외 스키마 변경은 하지 않았다. 모바일 검증·구현은 진행하지 않았다.
+- Docker 실행 소스에 이번 프로젝트 코드/프론트 변경을 반영하고 backend만 재시작했다. DB validate/초기화 비활성화와 볼륨은 유지한다. 커밋·푸시 없음. API 계약 변경은 이번 직접 입력 요구에 필요한 모집 직군 값 확장에 한정한다.
 ## 프로필 외부 링크 #64
 
 - 사용자 요청으로 feat/64-profile-external-links를 선행 options 브랜치(7a369cc)에서 분리했다. PR #60은 확인 당시 open·미병합. 최신 origin/develop은 47a1942였으며 새 브랜치의 base는 선행 브랜치다. AI 기능은 변경하지 않았다.

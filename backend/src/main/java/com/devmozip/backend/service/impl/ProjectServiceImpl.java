@@ -9,7 +9,7 @@ import java.util.*;
 import com.devmozip.backend.dto.project.CreateProjectRequest;
 import com.devmozip.backend.dto.project.ProjectResponse;
 import com.devmozip.backend.dto.project.UpdateProjectRequest;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
+import com.devmozip.backend.service.ProjectRoleValues;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import com.devmozip.backend.service.ProjectApplicationUsage;
 import com.devmozip.backend.service.ProjectPeriodPolicy;
@@ -20,6 +20,7 @@ import com.devmozip.backend.repository.ProjectRepository;
 import com.devmozip.backend.repository.ProjectMemberRepository;
 import com.devmozip.backend.security.project.ProjectCurrentUserProvider;
 import com.devmozip.backend.service.ProjectService;
+import com.devmozip.backend.service.ProjectCreationPolicy;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -37,9 +38,10 @@ public class ProjectServiceImpl implements ProjectService {
 	private final Validator validator;
 	private final ProjectApplicationUsage applications;
 	private final ProjectPeriodPolicy periods;
+	private final ProjectCreationPolicy creation;
 
 	public ProjectServiceImpl(ProjectRepository projects, ProjectMemberRepository members,
-		ProjectCurrentUserProvider currentUser, @Qualifier("projectClock") Clock clock, Validator validator, ProjectApplicationUsage applications, ProjectPeriodPolicy periods) {
+		ProjectCurrentUserProvider currentUser, @Qualifier("projectClock") Clock clock, Validator validator, ProjectApplicationUsage applications, ProjectPeriodPolicy periods, ProjectCreationPolicy creation) {
 		this.projects = projects;
 		this.members = members;
 		this.currentUser = currentUser;
@@ -47,6 +49,7 @@ public class ProjectServiceImpl implements ProjectService {
 		this.validator = validator;
 		this.applications = applications;
 		this.periods = periods;
+		this.creation = creation;
 	}
 
 	@Override
@@ -54,11 +57,13 @@ public class ProjectServiceImpl implements ProjectService {
 	public ProjectResponse create(CreateProjectRequest request) {
 		long hostId = currentUser.getCurrentUserId();
 		if (hostId <= 0) throw invalid("주최자 ID를 확인해 주세요.");
+		creation.requirePermission(hostId);
 		if (request == null || !validator.validate(request).isEmpty()) throw invalid("프로젝트 필수 입력과 길이·인원·경력을 확인해 주세요.");
-		Set<Object> roles = new HashSet<>();
+		Set<String> roles = new HashSet<>();
 		var slots = request.recruitmentSlots().stream().map(slot -> {
-			if (!roles.add(slot.roleCode())) throw invalid("모집 직군을 중복 선택할 수 없습니다.");
-			return new ProjectRecruitmentSlot(slot.roleCode(), slot.capacity(), slot.minimumYears());
+			String role = ProjectRoleValues.normalize(slot.roleCode());
+			if (!roles.add(ProjectRoleValues.key(role))) throw invalid("모집 직군을 중복 선택할 수 없습니다.");
+			return new ProjectRecruitmentSlot(role, slot.capacity(), slot.minimumYears());
 		}).toList();
 		List<String> stacks = normalize(request.techStacks());
 		List<String> interests = normalize(request.interests());
@@ -83,10 +88,11 @@ public class ProjectServiceImpl implements ProjectService {
 		if (request == null || !validator.validate(request).isEmpty()) throw invalid("프로젝트 필수 입력과 길이·인원·경력을 확인해 주세요.");
 		var input = request.asCreateRequest();
 		periods.validateUpdate(project, input);
-		Set<ProjectJobRole> codes = new HashSet<>();
+		Set<String> codes = new HashSet<>();
 		var slots = input.recruitmentSlots().stream().map(slot -> {
-			if (!codes.add(slot.roleCode())) throw invalid("모집 직군을 중복 선택할 수 없습니다.");
-			return new ProjectRecruitmentSlot(slot.roleCode(), slot.capacity(), slot.minimumYears());
+			String role = ProjectRoleValues.normalize(slot.roleCode());
+			if (!codes.add(ProjectRoleValues.key(role))) throw invalid("모집 직군을 중복 선택할 수 없습니다.");
+			return new ProjectRecruitmentSlot(role, slot.capacity(), slot.minimumYears());
 		}).toList();
 		List<String> stacks = normalize(input.techStacks());
 		List<String> interests = normalize(input.interests());
@@ -120,14 +126,15 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 
 	private void validateSlots(Project project, List<ProjectRecruitmentSlot> slots) {
-		Map<ProjectJobRole, Integer> capacities = new EnumMap<>(ProjectJobRole.class);
-		for (var slot : slots) capacities.put(slot.roleCode(), slot.capacity());
-		Set<ProjectJobRole> used = new HashSet<>(applications.usedRoles(project.getId()));
-		Map<ProjectJobRole, Integer> active = new EnumMap<>(ProjectJobRole.class);
+		Map<String, Integer> capacities = new HashMap<>();
+		for (var slot : slots) capacities.put(ProjectRoleValues.key(slot.roleCode()), slot.capacity());
+		Set<String> used = new HashSet<>();
+		applications.usedRoles(project.getId()).forEach(role -> used.add(ProjectRoleValues.key(role)));
+		Map<String, Integer> active = new HashMap<>();
 		for (ProjectMember member : members.findByProjectId(project.getId())) {
 			if (member.getRole() == ProjectMember.Role.HOST || member.getJobRole() == null || member.getStatus() != ProjectMember.Status.ACTIVE) continue;
-			used.add(member.getJobRole());
-			if (member.getStatus() == ProjectMember.Status.ACTIVE) active.merge(member.getJobRole(), 1, Integer::sum);
+			used.add(ProjectRoleValues.key(member.getJobRole()));
+			if (member.getStatus() == ProjectMember.Status.ACTIVE) active.merge(ProjectRoleValues.key(member.getJobRole()), 1, Integer::sum);
 		}
 		if (!capacities.keySet().containsAll(used)) throw conflict("지원자·참여자가 있는 모집 직군은 삭제하거나 변경할 수 없습니다.");
 		for (var entry : active.entrySet()) if (capacities.getOrDefault(entry.getKey(), 0) < entry.getValue())

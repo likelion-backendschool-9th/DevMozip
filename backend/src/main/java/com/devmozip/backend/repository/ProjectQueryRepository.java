@@ -1,6 +1,7 @@
 package com.devmozip.backend.repository;
 
 import java.text.Normalizer;
+import com.devmozip.backend.service.ProjectRoleValues;
 import java.time.LocalDate;
 import java.util.*;
 import com.devmozip.backend.dto.project.MyProjectsTab;
@@ -33,9 +34,9 @@ public class ProjectQueryRepository {
 			params.addValue("query", "%" + escaped + "%");
 			where.append(" AND (lower(p.title) LIKE :query ESCAPE '!' OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.tech_stacks) t(value) WHERE lower(t.value) LIKE :query ESCAPE '!'))");
 		}
-		if (request.jobRole() != null) {
-			params.addValue("jobRole", request.jobRole().name());
-			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE s.value->>'roleCode'=:jobRole)");
+		if (request.jobRole() != null && !request.jobRole().isBlank()) {
+			params.addValue("jobRole", ProjectRoleValues.key(request.jobRole()));
+			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE lower(s.value->>'roleCode')=:jobRole)");
 		}
 		if (request.status() != null) { params.addValue("status", request.status().name()); where.append(" AND p.status=:status"); }
 		if (request.interests() != null && !request.interests().isEmpty()) {
@@ -62,6 +63,11 @@ public class ProjectQueryRepository {
 		String sql = "SELECT p.id, (SELECT count(*) FROM project_members m WHERE m.project_id=p.id AND m.status='ACTIVE') AS member_count, "
 			+ role + " AS my_role FROM projects p" + where + " ORDER BY " + order + " LIMIT :limit OFFSET :offset";
 		return new Result(jdbc.query(sql, params, (rs, row) -> new Row(rs.getLong("id"), rs.getLong("member_count"), rs.getString("my_role"))), total == null ? 0 : total);
+	}
+	public com.devmozip.backend.dto.project.ProjectDetailResponse.Host host(long userId) {
+		var result=jdbc.query("SELECT id,tag,nickname FROM users WHERE id=:userId AND status='ACTIVE'",new MapSqlParameterSource("userId",userId),
+			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.Host(rs.getLong("id"),rs.getString("tag"),rs.getString("nickname")));
+		return result.isEmpty()?null:result.getFirst();
 	}
 	private String normalize(String value) { return Normalizer.normalize(value, Normalizer.Form.NFKC).strip().toLowerCase(Locale.ROOT); }
 }

@@ -1,5 +1,7 @@
 'use client';
 import styles from '../page.module.css';
+import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
+import {ApiProjectForm} from '@/app/projects/_components/api/ApiProjectForm';
 import { useState } from 'react';
 import { PremiumProjectGate } from '@/components/projects/PremiumProjectGate';
 import { Button } from '@/components/common/Button';
@@ -11,6 +13,8 @@ import { CreateProjectForm } from '@/app/projects/_components/CreateProjectForm'
 export default function CreateProjectPage({ apiEnabled = false }: { apiEnabled?: boolean }) {
     const { user } = useAuth();
     const [gate, setGate] = useState(false);
+    const {enabled}=useMockVisibility();
+    if(!enabled)return <ApiProjectForm/>;
     return (
         <div className={[styles.scope, 'container create-project-page'].join(' ')}>
             <Link className={[styles.scope, 'text-link'].join(' ')} href="/projects">
