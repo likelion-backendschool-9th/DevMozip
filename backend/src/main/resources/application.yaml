@@ -75,9 +75,9 @@ payment:
   domain-name: ${DOMAINNAME:}
   # 결제 준비 후 승인까지 기다리는 시간
   checkout-ttl: 15m
-  # 매월 결제·해지 예약 만료 스케줄러. 10분마다 기간이 끝난 구독을 처리한다 (한국 시각)
+  # 매월 결제·해지 예약 만료 스케줄러. 매일 24:00(0시, 한국 시각)에 그날이 결제일인 구독을 결제하고 해지 예약 만료를 처리한다
   renewal-enabled: true
-  renewal-cron: "0 */10 * * * *"
+  renewal-cron: "0 0 0 * * *"
 
 management:
   health:

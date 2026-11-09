@@ -72,7 +72,7 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 - 값: 서버 ~/DevMozip/.env의 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY, PAYMENT_ENCRYPTION_KEY, DOMAINNAME. PAYMENT_ENCRYPTION_KEY는 서버에서 `openssl rand -base64 32`로 만들고 안전한 곳에 보관한다. 바꾸면 저장된 빌링키를 읽을 수 없다.
 - 값이 없으면 결제만 503이고 다른 기능은 정상이다.
 - 테스트 채널은 실제 청구가 없다. 실제 청구에는 토스페이먼츠 자동결제 계약, 카카오페이 가맹 계약, 포트원 실연동 채널 전환이 필요하다.
-- 매월 결제는 백엔드 스케줄러가 10분마다 실행한다(`payment.renewal-cron`). 블루그린의 두 백엔드가 함께 실행해도 한 구독을 한 번만 결제한다.
+- 매월 결제는 백엔드 스케줄러가 매일 24:00(0시, 한국 시간)에 실행해 그날이 결제일인 구독을 결제한다(`payment.renewal-cron`). 실행 시각에 서버가 멈춰 있었으면 다음 날 실행에서 함께 처리한다. 블루그린의 두 백엔드가 함께 실행해도 한 구독을 한 번만 결제한다.
 - 결과를 모르는 매월 결제는 구독이 `RENEWING`, 결제가 `PENDING`으로 남는다. 백엔드 로그의 `매월 결제 결과를 알 수 없어`에 있는 주문 번호로 포트원 결제 조회를 확인해 처리한다.
 - 해지·결제 실패 후 빌링키 삭제에 실패하면 로그 `빌링키 삭제 실패`가 남는다. 결제는 일어나지 않지만 포트원 콘솔에서 빌링키를 삭제한다.
 

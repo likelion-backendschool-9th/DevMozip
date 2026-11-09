@@ -107,7 +107,7 @@ export function addMonths(from: Date, months: number) {
 /** 결제 전에 보여 주는 고지(docs/premium-payment-plan.md 3절 "결제 전 고지") */
 export function checkoutNotices(plan: SubscriptionPlan, today: Date) {
     return [
-        `오늘 ${formatWon(plan.price)}이 결제되고, 이후 ${cycleLabel(plan)} 같은 날(다음 결제일 ${formatDate(addMonths(today, 1).toISOString())})에 자동으로 결제됩니다. 그날이 없는 달은 마지막 날에 결제됩니다.`,
+        `오늘 ${formatWon(plan.price)}이 결제되고, 이후 ${cycleLabel(plan)} 같은 날 0시(한국 시간)에 자동으로 결제됩니다(다음 결제일 ${formatDate(addMonths(today, 1).toISOString())}). 그날이 없는 달은 마지막 날에 결제됩니다.`,
         '구독 관리 페이지에서 언제든 해지할 수 있습니다. 해지하면 다음 결제부터 청구되지 않고, 이미 결제한 기간이 끝날 때까지 프리미엄을 이용할 수 있습니다.',
         '이미 결제한 금액은 환불되지 않으며, 해지해도 남은 기간을 나눠 돌려주지 않습니다.',
         '매월 결제가 실패하면 구독이 바로 취소되고 등록한 결제 수단도 삭제됩니다. 다시 이용하려면 새로 결제해 주세요.',

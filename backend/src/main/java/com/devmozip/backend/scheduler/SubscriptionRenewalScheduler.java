@@ -14,7 +14,8 @@ import com.devmozip.backend.service.SubscriptionRenewalService;
 import com.devmozip.backend.service.SubscriptionRenewalService.RenewalResult;
 
 /**
- * 매월 결제·해지 예약 만료를 주기적으로 실행한다. 실행 주기는 payment.renewal-cron(기본 10분마다, 한국 시각)이다.
+ * 매월 결제·해지 예약 만료를 매일 한 번 실행한다. 실행 시각은 payment.renewal-cron(기본 매일 0시, 한국 시각)이다.
+ * 실행 시각에 서버가 멈춰 있었으면 다음 실행에서 지난 결제일의 구독까지 함께 처리한다.
  * 블루그린 배포 중 두 서버가 함께 실행해도 서비스가 한 구독을 한 번만 처리한다.
  */
 @Component
@@ -30,7 +31,7 @@ public class SubscriptionRenewalScheduler {
 		this.clock = clock;
 	}
 
-	@Scheduled(cron = "${payment.renewal-cron:0 */10 * * * *}", zone = "Asia/Seoul")
+	@Scheduled(cron = "${payment.renewal-cron:0 0 0 * * *}", zone = "Asia/Seoul")
 	public void run() {
 		try {
 			RenewalResult result = service.run(LocalDateTime.now(clock));

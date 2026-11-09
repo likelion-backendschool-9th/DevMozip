@@ -64,19 +64,23 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
 
 	@Override
 	public RenewalResult run(LocalDateTime now) {
+		// 해지 예약은 이용 기간이 끝난 뒤에 무료로 바꾼다. 결제한 기간을 줄이지 않는다.
 		int expired = 0;
 		for (Long id : subscriptions.findDueIds(SubscriptionStatus.CANCEL_REQUESTED, now)) {
 			if (Boolean.TRUE.equals(transaction.execute(status -> expire(id, now)))) expired++;
 		}
+		// 매월 결제는 결제일 당일에 한다. 스케줄러는 매일 0시에 돌고, 오늘 안에 기간이 끝나는 구독(지난 것 포함)을 결제한다.
+		// 내일 0시 정각에 끝나는 구독은 내일 결제한다. 일찍 결제해도 다음 기간은 시작일 기준이라 밀리지 않는다.
+		LocalDateTime endOfToday = now.toLocalDate().plusDays(1).atStartOfDay();
 		int renewed = 0, failed = 0, unknown = 0, skipped = 0;
 		if (!properties.isApiConfigured()) {
 			// 설정이 없으면 결제할 수 없다. 구독은 ACTIVE로 두어 설정 후 다음 실행에서 결제한다.
-			int waiting = subscriptions.findDueIds(SubscriptionStatus.ACTIVE, now).size();
+			int waiting = subscriptions.findDueIds(SubscriptionStatus.ACTIVE, endOfToday).size();
 			if (waiting > 0) log.warn("포트원 설정이 없어 매월 결제 {}건을 미룹니다.", waiting);
 			return new RenewalResult(0, 0, 0, expired, waiting);
 		}
-		for (Long id : subscriptions.findDueIds(SubscriptionStatus.ACTIVE, now)) {
-			switch (renew(id, now)) {
+		for (Long id : subscriptions.findDueIds(SubscriptionStatus.ACTIVE, endOfToday)) {
+			switch (renew(id, now, endOfToday)) {
 				case RENEWED -> renewed++;
 				case FAILED -> failed++;
 				case UNKNOWN -> unknown++;
@@ -96,10 +100,10 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
 		return true;
 	}
 
-	private Outcome renew(Long id, LocalDateTime now) {
+	private Outcome renew(Long id, LocalDateTime now, LocalDateTime dueBefore) {
 		Claim claim;
 		try {
-			claim = transaction.execute(status -> claim(id, now));
+			claim = transaction.execute(status -> claim(id, now, dueBefore));
 		} catch (IllegalStateException e) {
 			// 저장된 결제 수단을 읽지 못했다(암호화 키 변경 등). 구독을 잡지 않고 다음 실행으로 미룬다.
 			log.error("매월 결제 수단을 읽지 못해 결제를 미룹니다: subscriptionId={}", id);
@@ -125,9 +129,9 @@ public class SubscriptionRenewalServiceImpl implements SubscriptionRenewalServic
 		return Outcome.RENEWED;
 	}
 
-	/** ACTIVE인 구독을 RENEWING으로 바꾸고 PENDING 결제 행을 만든다. 다른 실행이 먼저 잡았으면 null */
-	private Claim claim(Long id, LocalDateTime now) {
-		if (subscriptions.changeStatusIfDue(id, SubscriptionStatus.ACTIVE, SubscriptionStatus.RENEWING, now) != 1) return null;
+	/** dueBefore 전에 기간이 끝나는 ACTIVE 구독을 RENEWING으로 바꾸고 PENDING 결제 행을 만든다. 다른 실행이 먼저 잡았으면 null */
+	private Claim claim(Long id, LocalDateTime now, LocalDateTime dueBefore) {
+		if (subscriptions.changeStatusIfDue(id, SubscriptionStatus.ACTIVE, SubscriptionStatus.RENEWING, dueBefore) != 1) return null;
 		Subscription subscription = subscriptions.findWithMemberAndPlanById(id).orElseThrow();
 		StoredPaymentMethod method = paymentMethods.read(subscription.getMember())
 				.orElseThrow(() -> new IllegalStateException("등록된 결제 수단이 없습니다."));

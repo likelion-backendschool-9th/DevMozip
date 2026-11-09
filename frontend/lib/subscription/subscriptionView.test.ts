@@ -56,6 +56,7 @@ describe('결제 결과 코드와 고지', () => {
         const text = checkoutNotices(mockPremiumPlan, new Date(2026, 10, 9)).join(' ');
         expect(text).toContain('₩9,900');
         expect(text).toContain('2026년 12월 9일');
+        expect(text).toContain('같은 날 0시(한국 시간)');
         expect(text).toContain('언제든 해지');
         expect(text).toContain('환불되지 않으며');
         expect(text).toContain('구독이 바로 취소');

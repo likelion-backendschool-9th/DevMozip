@@ -10,12 +10,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -87,6 +91,7 @@ class SubscriptionRenewalIntegrationTest {
 	@Autowired JdbcTemplate jdbc;
 	@Autowired PlatformTransactionManager transactionManager;
 	@Autowired ApplicationContext context;
+	@Value("${payment.renewal-cron}") String renewalCron;
 	@MockitoBean PortOneClient portOne;
 
 	@BeforeEach
@@ -136,6 +141,29 @@ class SubscriptionRenewalIntegrationTest {
 		assertThat(role(due)).isEqualTo("PREMIUM");
 		assertThat(status(notDue)).isEqualTo("ACTIVE");
 		assertThat(renewal.run(NOW)).isEqualTo(new RenewalResult(0, 0, 0, 0, 0));
+	}
+
+	@Test
+	void 결제일_0시에_실행하면_그날_끝나는_구독을_결제하고_다음_날_0시에_끝나는_구독은_다음_날_결제한다() {
+		Subscription today = subscribed(LocalDateTime.of(2026, 11, 9, 12, 0), "billing-key-today");
+		Subscription midnight = subscribed(LocalDateTime.of(2026, 11, 10, 0, 0), "billing-key-midnight");
+		assertThat(renewal.run(LocalDateTime.of(2026, 12, 9, 0, 0))).isEqualTo(new RenewalResult(1, 0, 0, 0, 0));
+		verify(portOne).payWithBillingKey(anyString(), eq("billing-key-today"), anyString(), anyString(), anyLong(), anyString());
+		verify(portOne, never()).payWithBillingKey(anyString(), eq("billing-key-midnight"), anyString(), anyString(), anyLong(), anyString());
+		// 일찍 결제해도 다음 기간은 시작일 기준으로 한 달 뒤다.
+		assertThat(jdbc.queryForObject("SELECT current_period_end FROM subscriptions WHERE id = ?", LocalDateTime.class, today.getId()))
+				.isEqualTo(LocalDateTime.of(2027, 1, 9, 12, 0));
+		assertThat(status(midnight)).isEqualTo("ACTIVE");
+		assertThat(renewal.run(LocalDateTime.of(2026, 12, 10, 0, 0))).isEqualTo(new RenewalResult(1, 0, 0, 0, 0));
+		verify(portOne).payWithBillingKey(anyString(), eq("billing-key-midnight"), anyString(), anyString(), anyLong(), anyString());
+	}
+
+	@Test
+	void 스케줄러는_매일_한국_시각_0시에_실행된다() {
+		assertThat(renewalCron).isEqualTo("0 0 0 * * *");
+		ZoneId seoul = ZoneId.of("Asia/Seoul");
+		assertThat(CronExpression.parse(renewalCron).next(ZonedDateTime.of(2026, 12, 9, 12, 5, 0, 0, seoul)))
+				.isEqualTo(ZonedDateTime.of(2026, 12, 10, 0, 0, 0, 0, seoul));
 	}
 
 	@Test
