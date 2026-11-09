@@ -13,7 +13,10 @@ WBS 8.0 SNS 피드/게시글(8.1~8.16)을 실제 백엔드에 연결하기 위�
 | 2026-11-09 | 게시글 테이블은 ERD 원래 이름인 `posts`를 쓰고, 엔티티도 `Post`로 한다. `comments.post_id`, `posts.original_post_id`, 공통 테이블 `bookmarks.post_id`·`reports.post_id`도 원래 이름을 쓴다. 2026-11-08의 `feeds`·`feed_id` 이름 변경 결정을 되돌렸다. API 경로(`/api/v1/feeds`)는 WBS대로 둔다. |
 | 2026-11-09 | 좋아요는 공통 테이블 `likes`(`id`·`user_id`·`project_id`·`post_id`·`created_at`·`updated_at`)를 쓴다(2절). 2026-11-09의 `feed_likes` 결정을 바꿨다. |
 | 2026-11-09 | posts에 `title`·`tech_stacks`·`interests`·`image_urls`·`view_count`를 추가한다(2절). |
-| 2026-11-09 | 값 목록: `type`은 `POST`(원본 글)·`REPOST`(퍼온 글), `category`는 `INFO`·`FEEDBACK`·`PROMO`·`COMMUNITY`, `visibility`는 `VISIBLE`·`HIDDEN`. |
+| 2026-11-09 | 값 목록: `type`은 `POST`(원본 글)·`REPOST`(퍼온 글), `category`는 `INFO`·`FEEDBACK`·`PROMO`·`COMMUNITY`, `visibility`는 `VISIBLE`·`HIDDEN`(작성자 숨김)·`RESTRICTED`(관리자 숨김). |
+| 2026-11-09 | 작성자 숨김(`HIDDEN`)과 관리자 숨김(`RESTRICTED`)을 나눈다. 작성자는 `RESTRICTED`를 바꿀 수 없다. 목업은 둘을 같은 `hidden` 값으로 처리했다. |
+| 2026-11-09 | local 프로필의 H2에서는 JSON 컬럼을 `JSON` 타입으로 만든다. PostgreSQL은 `JSONB`다(3절 "H2 호환"). |
+| 2026-11-09 | posts 데모 데이터 INSERT문은 2단계에서 엔티티와 컬럼이 정해진 뒤 보여 준다(3절 "데모 데이터"). |
 | 2026-11-08 | bookmarks의 외래 키는 모두 NULL 허용이다. reports의 `project_id`·`post_id`·`comment_id`·`handled_by`는 NULL 허용 외래 키다. |
 | 2026-11-08 | reports `status` 초기값은 `AWATING`이다. |
 | 2026-11-09 | 공통 `Report` 엔티티의 초기 상태를 `AWATING`으로 바꾸고, 이후 Report 작업 담당자에게 알린다. |
@@ -42,11 +45,11 @@ WBS 8.0 SNS 피드/게시글(8.1~8.16)을 실제 백엔드에 연결하기 위�
 | category | VARCHAR(30) | | | `INFO`·`FEEDBACK`·`PROMO`·`COMMUNITY` | |
 | title | VARCHAR(150) | 허용 | 없음 | 제목. 원본 글은 1~150자 필수, 퍼간 글은 NULL | 추가 |
 | content | TEXT | | | 내용. 퍼간 글이면 의견 | |
-| tech_stacks | JSONB | 불가 | `'[]'` | 기술 스택 문자열 배열. 중복 없이 1~30자, 최대 30개 | 추가 |
-| interests | JSONB | 불가 | `'[]'` | 관심 분야 문자열 배열. 제한은 위와 같다 | 추가 |
-| image_urls | JSONB | 불가 | `'[]'` | 이미지 경로 배열(표시 순서). 최대 3개, 각 2048자 이내 | 추가 |
+| tech_stacks | JSONB (H2: JSON) | 불가 | `'[]'` | 기술 스택 문자열 배열. 중복 없이 1~30자, 최대 30개 | 추가 |
+| interests | JSONB (H2: JSON) | 불가 | `'[]'` | 관심 분야 문자열 배열. 제한은 위와 같다 | 추가 |
+| image_urls | JSONB (H2: JSON) | 불가 | `'[]'` | 이미지 경로 배열(표시 순서). 최대 3개, 각 2048자 이내 | 추가 |
 | view_count | BIGINT | 불가 | `0` | 조회수 | 추가 |
-| visibility | VARCHAR(20) | | | `VISIBLE`·`HIDDEN` | |
+| visibility | VARCHAR(20) | | | `VISIBLE`·`HIDDEN`·`RESTRICTED` | |
 | created_at | DATETIME | | | 생성 시각 | |
 | updated_at | DATETIME | | | 수정 시각 | |
 | deleted_at | DATETIME | | | 삭제 시각 | |
@@ -135,10 +138,12 @@ erDiagram
 | category | `PROMO` | 홍보 |
 | category | `COMMUNITY` | 자유 |
 | visibility | `VISIBLE` | `hidden: false` |
-| visibility | `HIDDEN` | `hidden: true` |
+| visibility | `HIDDEN` | `hidden: true` 중 작성자가 숨긴 글(`post-hide`·`repost-hide`) |
+| visibility | `RESTRICTED` | `hidden: true` 중 관리자가 숨긴 글(`lib/profiles/moderationService.ts`의 `post-visibility`) |
 
 - 화면은 카테고리 코드를 기존 한글 문구로 바꿔 표시한다. 필터의 `전체`는 저장 값이 아니며 조건을 보내지 않는다는 뜻이다.
-- `HIDDEN`은 목업의 `hidden` 동작을 따른다. 작성자가 프로필 게시글 탭의 숨기기 버튼으로 켜고 끄며, 관리자도 같은 값으로 숨기거나 복원한다. 숨긴 글은 피드에 나오지 않고 상세는 작성자만 볼 수 있다. 숨긴 원본은 퍼갈 수 없다.
+- `HIDDEN`·`RESTRICTED`는 목업의 `hidden` 동작을 따른다. 피드에 나오지 않고 상세는 작성자만 볼 수 있으며, 원본이면 퍼갈 수 없다.
+- 작성자는 프로필 게시글 탭의 숨기기 버튼으로 `VISIBLE`과 `HIDDEN`을 오간다(WBS 3.8). `RESTRICTED`는 관리자만 정하고 풀며(WBS 14.7), 작성자의 숨김 버튼으로 바꿀 수 없다.
 
 ### 값 변경의 영향과 공통 엔티티
 
@@ -235,6 +240,27 @@ erDiagram
 
 - `ddl-auto: update`이므로 엔티티를 추가한 서버를 재시작하면 연결된 DB에 테이블이 생긴다. 공용 개발 DB에 연결된 경우 반영 시점을 팀과 맞춘다.
 - DB에 `posts` 등이 이미 있으면 update는 없는 컬럼(`title`·`view_count` 등)만 추가하고, 기존 컬럼의 타입이나 제약은 바꾸지 않는다. 기존 테이블이나 데이터가 있으면 1단계 DB 확인 결과에 따라 반영 방법을 정한다.
+
+### H2 호환 (local 프로필)
+
+local 프로필은 H2 메모리 DB(`jdbc:h2:mem:security`)를 쓰므로, PostgreSQL에서만 되는 매핑과 SQL을 피한다.
+
+- JSON 컬럼(`tech_stacks`·`interests`·`image_urls`)은 `@JdbcTypeCode(SqlTypes.JSON)`만 쓰고 `columnDefinition = "jsonb"`를 적지 않는다. 그러면 Hibernate가 PostgreSQL에서는 `jsonb`, H2에서는 `json`으로 만든다. 2단계에서 두 DB에 실제로 생긴 타입을 확인한다.
+- 기본값 `'[]'`은 매핑에 넣지 않는다. H2는 `'[]'` 같은 문자열을 JSON 배열이 아닌 JSON 문자열로 바꾸기 때문이다. 엔티티가 항상 값을 채운다.
+- 쿼리에 PostgreSQL 전용 함수·연산자(`jsonb_array_elements_text`, `@>`, `::jsonb`, `ILIKE`)를 쓰지 않는다. 프로젝트 목록 검색은 `jsonb_array_elements_text`를 써서 H2에서는 같은 방식이 동작하지 않으므로 따르지 않는다.
+  - 태그 검색: JSON 값을 문자열로 바꿔 소문자로 비교한다. 두 DB의 변환 결과는 테스트로 확인한다.
+  - 추천순: seed와 게시글 id로 만든 산술식으로 순서를 정한다.
+  - 퍼가기 중복: 조건부 유일 인덱스 대신 원본 행을 잠그고 서비스에서 확인한다.
+- 테스트: PostgreSQL(Testcontainers)과 H2 양쪽에서 목록·검색·정렬을 확인한다. #90의 `UserReportApiH2Test`처럼 H2 테스트를 둔다.
+
+### 데모 데이터 (posts INSERT문)
+
+- 2단계에서 엔티티와 컬럼이 정해진 뒤 INSERT문을 작성해 보여 준다. 실행 여부는 사용자가 정하며, 공유 DB에는 직접 실행하지 않는다.
+- 내용: 기존 Mock 게시글(`mocks/home.ts`·`mocks/profile.ts`·`mocks/social.ts`)을 옮기고, 카테고리는 코드 값으로 바꾼다. 이미지 파일이 없으므로 `image_urls`는 비운다.
+- 작성자: 고정 id 대신 `members_data.sql`의 회원을 이메일로 찾아 넣는다. Mock 작성자가 local 회원보다 많으므로 어느 회원에게 맞출지는 그때 정한다.
+- H2(local): `backend/src/main/resources`의 `*_data.sql`은 서버 시작 때 파일 이름 순으로 실행된다(`application-local.yml`). 작성자 회원이 먼저 있어야 하므로 `members_data.sql`보다 뒤에 오는 이름을 쓴다. 기존 파일처럼 이미 있으면 넣지 않는 `INSERT ... SELECT ... WHERE NOT EXISTS` 형식으로 쓰고, JSON 값은 H2 문법(`JSON '[...]'`)으로 쓴다. 이 폴더의 `*.sql`은 Git에서 제외된다.
+- PostgreSQL: JSON 값을 `'[...]'::jsonb`로 쓴 판을 따로 둔다. `docs/sql/project-demo-data.sql`처럼 `docs/sql`에 둘지는 그때 정한다.
+
 ## 4. API
 
 WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그인한 작성자 본인만 가능하다는 뜻이다.
@@ -267,7 +293,8 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 - 화면의 추천·팔로잉 탭은 각각 8.2의 두 목록을 부르고, 카테고리·검색어·정렬은 두 탭 모두에 적용된다(목업과 같다).
 - 응답: `items`, `page`, `size`, `hasNext`. 화면은 다음 페이지 표시 버튼으로 `page + 1`을 요청해 기존 목록 뒤에 붙이고, `hasNext`가 false면 버튼을 숨긴다.
 - 정렬 네 가지에 같은 방식을 쓰려고 페이지 번호 방식을 쓴다. 그 사이 새 글이 생기면 다음 페이지에 이미 받은 글이 다시 올 수 있으므로, 화면은 이미 있는 id를 다시 넣지 않는다.
-- `HIDDEN`·삭제된 글은 목록에 나오지 않는다.
+- `HIDDEN`·`RESTRICTED`·삭제된 글은 목록에 나오지 않는다.
+- 팔로잉 목록은 `follows`의 `following_id`로 작성자를 거른다. `follows`는 팔로우 PR #107(`feat/94-follows`, 미병합)에 있으므로 병합 후 연결한다.
 
 | 정렬 | 값 | 기준 (현재 목업과 같다) |
 |---|---|---|
@@ -279,10 +306,16 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 ### 조회수
 
 - 서버: `GET /api/v1/feeds/{id}?view=true`이면 조회수를 1 올리고 올린 값을 응답에 담는다. `view`가 없으면 올리지 않는다. 방문 기록은 저장하지 않으므로 집계 요청마다 오른다(프로젝트 상세와 같다).
-- 로그인한 작성자 본인의 요청은 `view=true`여도 올리지 않는다. 볼 수 없는 글(없음·삭제·다른 사람의 `HIDDEN` 글)도 올리지 않는다.
+- 로그인한 작성자 본인의 요청은 `view=true`여도 올리지 않는다. 볼 수 없는 글(없음·삭제·다른 사람의 `HIDDEN`·`RESTRICTED` 글)도 올리지 않는다.
 - 동시 요청에서 증가가 빠지지 않도록 `view_count = view_count + 1` 갱신이나 행 잠금으로 처리한다.
 - 화면: localStorage `devmozip:feed-views:v1`에 읽은 게시글 id 목록을 저장한다. 상세 페이지에서 목록에 id가 없으면 `view=true`로 요청하고, 성공하면 id를 추가한다. 이미 있으면 `view` 없이 요청한다. 수정 화면은 항상 `view` 없이 요청한다.
 - 한계: localStorage는 브라우저를 닫아도 남으므로, 같은 브라우저에서는 저장소를 지우기 전까지 한 번만 센다. 같은 브라우저를 쓰는 다른 계정도 같은 기록을 쓴다. localStorage를 쓸 수 없는 환경에서는 들어올 때마다 센다.
+
+### 숨김
+
+- 작성자 숨김·해제는 WBS 3.8 내 글 숨김 `PATCH /api/v1/feeds/{id}/visibility`(프로필 담당)로 한다. 8.6 `PUT`으로는 `visibility`를 바꾸지 않는다.
+- 3.8은 `VISIBLE`·`HIDDEN`만 받고, 글이 `RESTRICTED`면 거절해야 한다. 이 규칙을 3.8 담당자에게 공유한다.
+- `RESTRICTED`로 바꾸고 푸는 것은 WBS 14.7 `PATCH /api/v1/admin/posts/{id}/visibility`(관리자 범위)이며 이 계획에 넣지 않는다.
 
 ### 좋아요
 
@@ -292,7 +325,7 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 
 - `POST /api/v1/feeds/{id}/reposts`: 원본 `{id}`를 퍼간 새 posts 행을 만든다. `type`은 `REPOST`, `original_post_id`는 원본 id, `content`는 의견(선택, 목업 기준 1,000자 이내)이다. `title`·태그·이미지는 비운다.
 - 같은 사람이 같은 원본을 이미 퍼갔으면 거절한다(409). 삭제되지 않은 퍼간 글만 중복으로 보므로, 목업처럼 취소한 뒤 다시 퍼갈 수 있다.
-- 원본이 없거나 삭제·`HIDDEN` 상태면 퍼갈 수 없다(목업 기준).
+- 원본이 없거나 삭제·`HIDDEN`·`RESTRICTED` 상태면 퍼갈 수 없다(목업 기준).
 - `DELETE /api/v1/feeds/{id}/reposts`: 원본 `{id}`에 대해 내가 퍼간 글을 삭제한다.
 - 의견 수정: `PUT /api/v1/feeds/{id}`에 퍼간 글의 id를 쓴다. 퍼간 글은 `content`만 바꿀 수 있다.
 - 원본이 삭제돼도 퍼간 글은 남고, 화면은 원본 삭제 안내를 표시한다(현재 화면 동작).
@@ -330,15 +363,34 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 
 | 화면 | 위치 | 비고 |
 |---|---|---|
-| 메인 SNS 미리보기 | `app/_components/FeedPreview.tsx` | |
-| 프로필 게시글 탭 | `app/(user)/users/[userId]/_components/PostsTab.tsx` | 작성 글·퍼간 글·숨김 |
-| 북마크 | `app/(user)/bookmarks/page.tsx` | WBS 16.3 |
+| 메인 SNS 미리보기 | `app/_components/FeedPreview.tsx` | WBS 1.6 `GET /api/v1/feeds/preview` |
+| 프로필 게시글 탭 | `app/(user)/users/[userId]/_components/PostsTab.tsx` | WBS 3.7 내 글 목록, 3.8 내 글 숨김 |
+| 북마크 | `app/(user)/bookmarks/page.tsx` | WBS 16.3·16.4 |
 | 좋아요한 글 | `app/(user)/profile/me/likes/page.tsx` | #75 |
-| 관리자 게시글 | `app/admin/posts/page.tsx` | 관리자 범위 |
+| 관리자 게시글 | `app/admin/posts/page.tsx` | WBS 14.6·14.7, 관리자 범위 |
 
 ## 6. 단계별 진행
 
 모든 단계에서 `frontend`의 `npm run build`와 관련 테스트를 실행한다. 백엔드 코드를 바꾼 단계는 `backend`의 `./gradlew test`도 실행한다. 실행한 명령, 성공·실패, 실행하지 못한 이유를 7절에 기록한다.
+
+### 선행·후속 WBS 작업
+
+확인일은 2026-11-09다.
+
+| 구분 | WBS | 피드와의 관계 | 상태 |
+|---|---|---|---|
+| 선행 | 9.1 팔로우·9.4 팔로잉 목록 | 8.2 팔로잉 피드가 `follows`를 쓴다 | PR #107 미병합 |
+| 선행 | 7.15 프로젝트 신고·7.16 프로젝트 북마크 | 8.7·8.8·8.15·8.16이 #96의 `Like`·`Bookmark`·`Report`를 재사용한다 | PR #96 미병합 |
+| 선행 | 11.4 메신저 사용자 신고 | 8.15·8.16이 #90의 `Report`를 재사용한다 | PR #90 미병합 |
+| 완료 | 2.x 인증·회원가입, 3.1 공통 프로필 | 작성자 식별과 작성자 정보 표시 | develop |
+| 후속 | 1.6 SNS 피드 미리보기 | posts 목록을 쓴다 | 담당 미정 |
+| 후속 | 3.7 내 글 목록·3.8 내 글 숨김 | posts를 조회하고 `visibility`를 바꾼다. 3.8은 `RESTRICTED`를 거절해야 한다 | 프로필 담당 |
+| 후속 | 14.6·14.7 게시글·댓글 관리, 14.8 신고 처리 | `RESTRICTED` 설정·해제, 게시글·댓글 신고 처리 | 관리자 범위 |
+| 후속 | 16.3·16.4 북마크한 게시글 | bookmarks의 `post_id`와 8.8 해제 API를 쓴다 | 북마크 담당 |
+| 후속 | #75 좋아요한 글 | likes의 `post_id`를 쓴다 | #75 담당 |
+
+- 선행 작업이 끝나기 전에도 posts·comments와 8.1·8.3~8.6·8.9~8.12는 진행할 수 있다. 8.2 팔로잉 목록은 #107, 좋아요·북마크·신고는 #96·#90 병합 후 연결한다.
+- 후속 작업 담당자에게는 posts 컬럼·값(1·2절)과 API 계약(4절)을 공유한다.
 
 ### 1단계 — ERD·정책 확정
 
@@ -356,6 +408,8 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 ### 2단계 — 엔티티·Repository
 
 - [ ] enum, `Post`·`Comment` 엔티티와 Repository
+- [ ] JSON 컬럼이 PostgreSQL `jsonb`, H2 `json`으로 생기는지 확인
+- [ ] posts 데모 데이터 INSERT문(H2용·PostgreSQL용)을 작성해 보여 주기 (3절 "데모 데이터")
 - [ ] #96 병합 후 `LikeRepository`·`BookmarkRepository`에 게시글용 조회 추가
 - [ ] #90·#96 병합 후 `Report`의 초기 상태 변경, 사용자·프로젝트 신고 코드와 테스트 수정
 - [ ] Testcontainers PostgreSQL로 매핑·조회 테스트
@@ -369,7 +423,9 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 - [ ] `FeedImageStorage`, multipart 작성·수정, 조회수 `view=true`
 - [ ] 공개 GET 경로를 `SecurityConfig`에 반영 (팀 공유 후)
 - [ ] 운영·로컬 HTTPS의 `public/images` 연결, nginx `/images/` 제공과 업로드 크기, 운영 폴더 권한, `.gitignore`의 `/public/images/` (팀 공유 후)
-- [ ] 작성자 권한, 입력 검증, 이미지 형식·크기·개수, 없거나 삭제·숨긴 게시글, 비로그인 접근, 조회수 테스트
+- [ ] 팔로잉 목록을 `follows`에 연결 (#107 병합 후)
+- [ ] 작성자 권한, 입력 검증, 이미지 형식·크기·개수, 없거나 삭제·숨긴(`HIDDEN`·`RESTRICTED`) 게시글, 비로그인 접근, 조회수 테스트
+- [ ] 목록·검색·정렬을 PostgreSQL과 H2 양쪽에서 테스트
 - [ ] API 문서 `docs/feed-api.md` 작성
 
 ### 4단계 — 반응·댓글·퍼가기·신고 API (8.7~8.13, 8.15~8.16)
@@ -400,3 +456,5 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 | 2026-11-09 | 1단계 | 값 목록, 추가 컬럼, `feed_likes`, 필터를 세 목록에 적용, localStorage 기반 조회수, 이미지 저장 위치·이름·`IMAGE_STORAGE`, Report 변경 반영. 조회 기록 테이블 안은 뺐다. 로컬 `compose.override.yaml`에 `./public:/public`과 `IMAGE_STORAGE=/public/images` 추가(`docker compose config` 검증 통과, 컨테이너 재시작 안 함). 애플리케이션 코드 변경 없음. |
 | 2026-11-09 | 1단계 | 운영 서버의 `~/DevMozip/public` 연결 방식 정리. 폴더 권한(`app` 사용자), `.gitignore`, nginx 업로드 크기(기본 1MB), 백업 주의 추가. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | 게시글 테이블 이름을 `posts`로 되돌림(`feeds`·`feed_id` 결정 철회). 엔티티는 `Post`, API 경로는 `/api/v1/feeds` 유지. 좋아요를 `feed_likes`에서 공통 `likes`로 바꿈. #96의 `Like`·`Bookmark`·`Report`를 재사용하도록 공통 엔티티 정리, #82 공유 내용 갱신. 개발 DB의 테이블은 `posts`·`likes`로 정리되어 있다. 코드 변경 없음. |
+| 2026-11-09 | 1단계 | `visibility`에 관리자 숨김 `RESTRICTED` 추가(작성자 숨김은 `HIDDEN`), 작성자 숨김 변경 경로 정리. H2 local 프로필의 JSON 타입과 이식 가능한 쿼리 기준 추가. posts 데모 INSERT문을 2단계에서 보여 주기로 함. 팔로잉 목록은 #107 병합 후 `follows`에 연결. 코드 변경 없음. |
+| 2026-11-09 | 1단계 | WBS 전체 대조로 선행·후속 작업 정리. 작성자 숨김을 8.6 `PUT`이 아닌 WBS 3.8 `PATCH /api/v1/feeds/{id}/visibility`(프로필 담당)로 바로잡음. 관리자 숨김은 WBS 14.7. 코드 변경 없음. |
