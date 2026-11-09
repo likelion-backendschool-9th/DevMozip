@@ -30,8 +30,6 @@ public class GeminiAnalysisClient {
 	private final String instruction;
 	/** 앱 검증용 전체 JSON Schema. */
 	private final tools.jackson.databind.JsonNode schema;
-	/** Google 전송용 단순화 Schema. maxItems/minimum 등 복잡도 유발 한계를 제거한다. */
-	private final tools.jackson.databind.JsonNode wireSchema;
 	@Autowired
 	public GeminiAnalysisClient(GeminiProperties properties, ObjectMapper mapper) throws java.io.IOException {
 		this(properties, mapper, HttpClient.newBuilder().connectTimeout(safeConnectTimeout(properties))
@@ -46,10 +44,13 @@ public class GeminiAnalysisClient {
 		}
 		try (var input = new ClassPathResource("ai/analysis-schema.json").getInputStream()) {
 			schema = mapper.readTree(input);
-			wireSchema = simplifyForProvider(mapper, schema);
 		}
 	}
 	public GeminiAnalysis analyze(String context) {
+		return mapper.treeToValue(generate(context, instruction, schema), GeminiAnalysis.class);
+	}
+	/** 별도 역할·스키마를 사용하는 추천 근거 비교도 동일한 제한·오류 처리를 따른다. */
+	public tools.jackson.databind.JsonNode generate(String context, String instruction, tools.jackson.databind.JsonNode schema) {
 		if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
 			throw error(HttpStatus.SERVICE_UNAVAILABLE, "자연어 분석이 설정되지 않았습니다. 직접 조건을 선택할 수 있습니다.");
 		}
@@ -71,7 +72,7 @@ public class GeminiAnalysisClient {
 		}
 		var payload = Map.of("systemInstruction", Map.of("parts", new Object[]{Map.of("text", instruction)}),
 			"contents", new Object[]{Map.of("role", "user", "parts", new Object[]{Map.of("text", context)})},
-			"generationConfig", Map.of("responseMimeType", "application/json", "responseJsonSchema", wireSchema,
+			"generationConfig", Map.of("responseMimeType", "application/json", "responseJsonSchema", simplifyForProvider(mapper, schema),
 				"maxOutputTokens", properties.getMaxOutputTokens()));
 		var request = HttpRequest.newBuilder(URI.create("https://generativelanguage.googleapis.com/v1beta/models/"
 			+ properties.getModel() + ":generateContent"))
@@ -90,7 +91,7 @@ public class GeminiAnalysisClient {
 			for (var part : parts) if (!part.path("thought").asBoolean(false) && part.path("text").isString()) text.append(part.path("text").asText());
 			var analysis = mapper.readTree(text.toString());
 			validate(analysis, schema);
-			return mapper.treeToValue(analysis, GeminiAnalysis.class);
+			return analysis;
 		} catch (ResponseStatusException expected) {
 			throw expected;
 		} catch (java.util.concurrent.TimeoutException timeout) {

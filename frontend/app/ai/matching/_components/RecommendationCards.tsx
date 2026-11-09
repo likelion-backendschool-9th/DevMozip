@@ -7,13 +7,27 @@ import { developerReason } from '@/lib/matching/recommendationPresentation';
 import { getAiPublicProject } from '@/lib/matching/aiApi';
 import { collaborationLabel, formatCareer, profileImageUrl, validProfileSlug } from '@/lib/profiles/profileDetail';
 import { useAuth } from '@/lib/state/authStore';
-import { Modal } from '@/components/common/Modal';
 import type { AiRecommendationItem, AiPublicProject } from '@/types/aiRecommendation';
 import styles from './SavedRecommendations.module.css';
+function RequirementEvaluation({ item }: { item: AiRecommendationItem }) {
+    const labels = { MET: '충족', PARTIAL: '부분 충족', UNKNOWN: '미확인', MISMATCH: '명시적 불일치' };
+    return <div className={styles.reason}>
+        <span>기본 적합도 {typeof item.baseScore === 'number' ? item.baseScore.toFixed(2) : item.matchScore.toFixed(2)}점</span>
+        <p>{item.requirementsApplied && typeof item.requirementScore === 'number'
+            ? `요구사항 충족도 ${item.requirementScore.toFixed(2)}점 · 최종 점수에 20% 반영`
+            : '세부 요구사항 평가 미적용'}</p>
+        {!!item.requirementAssessments?.length && <details><summary>요구사항별 평가 보기</summary>
+            <p>미확인은 자료가 부족하다는 뜻이며, 경험이 없다는 뜻은 아닙니다.</p>
+            <ul>{item.requirementAssessments.map(a => <li key={a.requirementId}>
+                {a.requirement} — {labels[a.status]}{a.mode === 'MANDATORY_UNENFORCED' && ' · 필수 표현(후보 제외 미적용)'}
+                {a.source && <p>공개 자료: {a.source}{a.quote && ` · ${a.quote}`}</p>}
+            </li>)}</ul>
+        </details>}
+    </div>;
+}
 function PublicProjectCard({ item }: { item: AiRecommendationItem }) {
     const [project, setProject] = useState<AiPublicProject>();
     const [failed, setFailed] = useState(false);
-    const [open, setOpen] = useState(false);
     useEffect(() => {
         const controller = new AbortController();
         if (item.recommendedProjectId) void getAiPublicProject(item.recommendedProjectId, controller.signal).then(p => {
@@ -28,10 +42,9 @@ function PublicProjectCard({ item }: { item: AiRecommendationItem }) {
             <div className={styles.cardTitle}><h4>{project?.title || `프로젝트 #${item.recommendedProjectId}`}</h4><strong>{item.matchScore.toFixed(2)}<small>%</small></strong></div>
             <p className={styles.summary}>{project?.summary || (failed ? '공개 프로젝트 정보를 불러오지 못했어요.' : '프로젝트 정보를 불러오는 중…')}</p>
             {project && <><div className={styles.tags}>{project.stacks.map(v => <span key={v}>{v}</span>)}</div><p className={styles.roles}><BriefcaseBusiness size={12} />{project.roles.join(' · ') || '모집 직군 미등록'}</p></>}
-            <div className={styles.reason}><span>추천 이유</span><p>{item.basicReason}</p></div>
-            <button type="button" className={styles.detail} disabled={!project} onClick={() => setOpen(true)}>프로젝트 상세 보기<ArrowUpRight size={13} /></button>
+            <RequirementEvaluation item={item} /><div className={styles.reason}><span>추천 이유</span><p>{item.basicReason}</p></div>
+            <Link className={styles.detail} href={`/projects/${item.recommendedProjectId}`}>프로젝트 상세 보기<ArrowUpRight size={13} /></Link>
         </div>
-        {open && project && <Modal title={project.title} onClose={() => setOpen(false)}><p>{project.summary}</p><div className={styles.description}>{project.description || '추가 소개가 없습니다.'}</div><div className={styles.tags}>{project.stacks.map(v => <span key={v}>{v}</span>)}</div></Modal>}
     </article>;
 }
 function DeveloperCard({ item, premium, requestedStacks }: { item: AiRecommendationItem; premium: boolean; requestedStacks: string[] }) {
@@ -51,7 +64,7 @@ function DeveloperCard({ item, premium, requestedStacks }: { item: AiRecommendat
                 </dl>
             </> : <p className={styles.summary}>현재 공개 프로필 정보를 확인할 수 없어요.</p>}
             {developer && <div className={styles.tags}>{developer.skills.length ? developer.skills.map(v => <span key={v}>{v}</span>) : <span>기술 스택 미등록</span>}</div>}
-            <div className={styles.reason}><span>추천 이유</span><p>{developerReason(item.basicReason, developer?.skills, requestedStacks)}</p></div>
+            <RequirementEvaluation item={item} /><div className={styles.reason}><span>추천 이유</span><p>{developerReason(item.basicReason, developer?.skills, requestedStacks)}</p></div>
             {href ? <Link className={styles.detail} href={href}>프로필 상세 보기<ArrowUpRight size={13} /></Link> : <button type="button" disabled className={styles.detail}>프로필 상세 보기<ArrowUpRight size={13} /></button>}
         </div>
         <div className={styles.locked}><LockKeyhole size={12} />{premium ? '상세 분석·포트폴리오 연결 준비 중' : <Link href="/subscription">상세 분석·포트폴리오는 프리미엄에서</Link>}</div>

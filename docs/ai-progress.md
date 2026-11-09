@@ -1,5 +1,47 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-09 STEP 6A 작업 통합·커밋
+
+- 사용자 요청으로 `feat/gemini-recommend`의 지금까지 구현한 6A·인원 미정 대화·주석 정리와 이번 중복 질문/프로젝트 이동 보완을 함께 커밋한다. 푸시는 요청 범위가 아니며 6B를 시작하지 않는다. 아래 커밋 미실행 기록은 각 작업 당시 이력이다.
+- `AiAnalysisMergePolicy`에서 기존 모델 인원 질문이 있는 직군의 서버 보완 질문을 생략하고, 답변 본문에 포함된 동일 질문을 확인 목록에 재출력하지 않는다. `analysis-instruction.txt`는 질문을 questions에 한 번만 작성하도록 안내한다. `AiMessageAnalysisTests`에 본문·모델 질문·두 직군 보완 질문의 중복 방지 회귀 검증을 추가했다.
+- `RecommendationCards.tsx`의 프로젝트 모달을 `/projects/{recommendedProjectId}` 링크로 교체했다. 기존 상세 페이지는 Mock 전용이어서 숫자 ID를 `PublicProjectDetail.tsx`로 연결하고 기존 공개 API의 제목·요약·설명·스택·모집 직군을 표시한다. 로딩/실패와 AI 추천 복귀 링크를 제공하며 기존 문자열 Mock ID는 유지한다. 새 프로젝트 백엔드/API/DB·지원/관리 기능은 추가하지 않았다. `FollowingMatching.test.tsx`에 상세 링크·모달 미사용·실제 조회 로딩 표시 회귀 검증을 추가했다.
+- 프론트 `npm test -- --maxWorkers=2`: 전체61개 파일·683개 중682개 통과, 기존 `projectService.test.ts`의 공고 생성→메인 목록 반영1개 실패. 해당 fixture 마감일은 2026-11-05인데 `sortProjects`가 실제 현재 날짜로 모집 중 여부를 검사해 제외하는 날짜 의존 검증이다. 해당 테스트·projectService·homeService가 HEAD와 동일함을 확인했으며 이번 범위에서 수정하지 않았다. `npm run build`는 성공(50개 페이지)했다. 자동 생성 next-env.d.ts 변화만 복원한다.
+- 백엔드 `DEBUG=false ./gradlew test --no-daemon` 성공(3분26초): 총455개 중454개 통과·1개 스킵·실패/오류0, AI 대화25개 모두 통과. 스킵은 별도 PostgreSQL URL이 필요한 기존 운영 DDL 검증이다. 변경 제품 파일 3개의 ESLint 및 `git diff --check` 통과. 로그는 `/tmp/devmozip-6a-commit-{backend,frontend-tests,frontend-build,eslint}.log`다. 실제 Gemini·공유 DB 신규 추천·브라우저 수동 검증은 별도로 수행하지 않았다. 기존 AI 문서 3개와 설계 기록을 함께 보존한다.
+
+## 2026-11-09 인원 미정 대화 흐름 보완
+
+- 사용자 화면의 ‘명시되지 않은 인원은 질문해야 합니다’ 분석 오류 원인을 확인했다. GeminiAnalysis.Change 생성자가 roles ADD/SET의 count:null을 거부하면서 대화 저장·응답까지 실패하던 경로였다.
+- GeminiAnalysis DTO는 인원 미정 제안을 허용하고 AiAnalysisMergePolicy가 해당 제안만 정형 조건에서 제외한다. 직군·근거는 OTHER 인원 미정 사실로 보존하고 원하는 인원을 묻는 질문을 ASSISTANT에 포함한다. 다른 유효한 조건은 적용하며 기존 직군 인원을 덮어쓰거나 기본 인원을 생성하지 않는다.
+- 후속 인원 답변을 기존 질문·사실 문맥에서 해석하도록 analysis-instruction.txt를 보완했다. 확인된 직군 인원 적용 후 미정 사실은 서버에서 제거한다. AiMessageAnalysisTests에 두 직군 인원 누락→각각 1명 답변→대화 4개 저장·추천 미실행과 기존 인원 보존·다른 조건 적용 회귀 검증을 추가했다. DB 스키마·공통 도메인·실제 추천 검증·점수 정책·6B는 변경하지 않았다.
+- 검증: 프론트 `npm test -- --maxWorkers=2 tests/screens/FollowingMatching.test.tsx lib/state/homeStore.test.tsx` 2개 파일 40개 테스트 통과. `npm run build` 성공(50개 페이지), 자동 생성 next-env.d.ts 변화만 작업 전으로 복원했다. 최종 소스에서 `DEBUG=false ./gradlew test --no-daemon` 성공(3분 10초), 전체454개 중453개 통과·1개 스킵·실패/오류0, AI 대화24개 모두 통과. 별도 PostgreSQL URL이 필요한 기존 검증1개는 스킵이다. 최초 DEBUG 로그 환경의 실행은 기존 KakaoClientTest의 인증 코드 로그 차단 검증1개가 실패했으며, 기존 검증 방식대로 DEBUG=false를 해당 명령에만 지정해 재실행했다. 영구 설정·카카오 코드는 바꾸지 않았다. 로그는 `/tmp/devmozip-role-count-tests-final.log`, `/tmp/devmozip-role-count-build.log`, `/tmp/devmozip-role-count-frontend-tests.log`. 실제 Gemini·브라우저 수동 검증은 수행하지 않았다. 커밋·푸시는 하지 않는다.
+
+## 2026-11-09 로컬 Compose 실행 오류 복구
+
+- 후속 Gradle 캐시 잠금 오류의 Owner PID 38은 Docker 백엔드 내부 Java 프로세스로 확인했다. 컨테이너와 호스트가 backend 바인드 마운트의 `.gradle` 캐시를 공유한 상태에서 동시에 실행한 충돌이었다. `docker compose stop backend frontend`로 앱 컨테이너만 중지한 뒤 `backend`에서 `./gradlew help --no-daemon` 성공(14초)을 확인했다. 잠금 파일·캐시를 삭제하지 않았으며 PostgreSQL·Redis는 healthy로 유지된다. 실제 백엔드 기동은 사용자 셸에서 기존 명령으로 재실행해야 한다.
+- `dev-postgres.py backend`의 Compose 설정 해석 실패를 재현했다. 개인 `compose.override.yaml`의 DB_HOST 변수 참조에 백틱이 들어가 `${DB`_HOST:-postgres}`가 된 오타가 원인이었다. `${DB_HOST:-postgres}`로 한 글자만 수정했다. Gemini 키·공통 Compose·스크립트·DB 설정값은 변경하지 않았다.
+- `docker compose --env-file .env config --quiet` 성공, 기존 스크립트의 읽기 전용 `SELECT 1` DB 연결 성공. 컨테이너 상태 확인 시 backend/frontend도 8080/3000 포트를 사용 중이므로 직접 실행 방식으로 돌아갈 때 해당 앱 컨테이너만 정지해야 한다. Redis/PostgreSQL·볼륨·데이터는 변경하지 않았다. 백엔드 JVM을 대신 시작하거나 사용자 셸의 Gemini 키를 읽지 않았다. 이번 실행 설정 복구에서는 기능 테스트·프론트 빌드를 새로 실행하지 않았으며 기동 전체 성공으로 보고하지 않는다.
+
+## 2026-11-09 AI 주석·문자 점검
+
+- 사용자 지적에 따라 AI 코드·테스트·프롬프트·문서·SQL/스크립트 등 텍스트116개를 검사했다. 초기 작성 중 일본어를 혼입한 작성 오류가 있었으며 현재 디스크에는 해당 부분이 이미 한국어로 수정되어 있었다. 일본어/한자/깨진 문자/방향 제어 문자는0건이었다. 이번에는 평가 서비스의 한국어 설명을 정확히 정리하고 Gemini 클라이언트에서 생성자 위에 잘못 남은 스키마 주석을 제거했다.
+- 추가 문자 검사에서 AI 화면 브랜드 문구의 불필요한 U+200C 한 개를 발견해 제거했다. 영문 모델 프롬프트·기술 식별자는 의도된 내용이라 유지했다. 기능 로직·점수·정책은 변경하지 않았다. 기존6A 미커밋 변경을 보존한다.
+- 변경 파일: `backend/.../service/AiRequirementEvaluationService.java`, `client/GeminiAnalysisClient.java`, `frontend/app/ai/matching/page.tsx`, 이 문서. 주석·문자 정리용 새 테스트는 만들지 않았다. 당시 시작한 검증은 완료 결과를 확보하지 못했으며, 이후 인원 미정 대화 보완 절의 전체 백엔드 테스트·프론트 빌드 성공에 해당 변경이 포함된다. 커밋·푸시는 하지 않는다.
+
+## 2026-11-09 STEP 6A 구현 — 자연어 요구사항 기반 추천
+
+- 범위: 사용자 요청으로 `feat/gemini-recommend`에서 6A 본체 구현·자동 검증을 완료했다. 시작 HEAD `556fe84`, 작업 트리 깨끗함, 로컬 develop이 HEAD의 조상임을 확인했다. fetch·main 병합·커밋·푸시는 없다. 기존 부분 UI sync·일반 채팅/추천 분리·인증/소유권·실패 재시도를 보존한다.
+- 최종 사용자 정책: 기본80%+요구20%, 요구 없으면 기존 점수. 요구별 충족100/부분50/미확인0/명시적 불일치0 동일 비중 평균. 필수 표현은 표시하되 후보 탈락 없음. 전체 필터 통과 후보 배치 평가, 분석 실패는 FAILED이며 기본 결과로 대체하지 않는다. 최신 요청의 공개/열람 가능 정보 제한을 앞선 무료 본문 내부 활용 허용보다 우선한다.
+- 구현: 요청 conditions JSONB에 정형 조건+서버 facts/sources/버전/메시지 범위 텍스트 스냅샷 저장. 본인 기술/수준·추론·PURPOSE를 보존하되 대상 요구로 채점하지 않는다. 정형 stacks 중복 기술, 명시적 면제 요구·주제 제한 없음은 별도 가산하지 않는다. 현재 대화 변경과 분리해 과거 평가를 유지한다.
+- 후보: 기존 공개·협업 가능·직군·경력 필터와 기본 계산을 재사용하고 전체 후보를 200건씩 읽는다. 후보4×요구8 배치로 Gemini 근거를 추출·검증한 뒤 상위10건을 유지한다. 세부 요구가 있을 때 프로젝트 원문 Jaccard 항목은 제외해 삭제 요구·본인 기술 중복 반영을 피한다. 요구가 없으면 기존 텍스트 비교를 유지한다.
+- 근거: 공개 개발자의 기술/직군/경력/요약 및 공개 프로젝트 제목/설명/기술만 전송한다. 필드별 HTML 제거·개인정보 마스킹 후 3000자 제한. 후보·요구 ID/중복·상태·source 소속·정확 인용 검증, 위조 출처·인용은 UNKNOWN으로 제외한다. 기술/경력 목록만으로 실제 구현 경험을 인정하지 않는다. 자료 부재는 경험 부재가 아니다. 인용 검증이 내용 진위/의미 판단의 완벽한 정확성을 보장하지는 않는다.
+- 저장/표시: 기본 이유 TEXT를 버전 있는 공개 평가 JSON으로 재사용하며 과거 일반 문자열도 읽는다. DTO·카드에 기본 적합도/요구 충족도/최종 점수·네 상태·공개 출처를 분리한다. detailed_reason은 생성·노출하지 않는다. 새 DDL·공통 도메인·배포/인증 변경·사용량 구현은 없다.
+- 실행/재시도: 독립 PENDING 저장 → 트랜잭션 밖 후보 평가/Gemini → 전체 결과+SUCCESS 원자 저장. 실패는 결과 없이 FAILED. 선택 replay=true는 소유한 동일 키·메시지의 저장 요청을 현재 조건과 무관하게 재사용하며 새 실행은 하지 않는다(없는 요청/다른 메시지 409). 프론트는 facts 변경 시 재추천 허용, 미완료 분석 차단, 메타데이터 있는 응답 유실 재시도는 GET+replay로 보존한다. BFF 추천 POST 제한은 300초로 조정했다.
+- 실제 환경 재확인: Java21/Boot4.1.2/Gradle9.8.2/JPA 유지. 개발 DB 읽기 전용 메타데이터에서 conditions JSONB·basic_reason/detailed_reason TEXT 확인. 이전 기록과 달리 현재 public에 subscriptions 테이블이 있으나 이 브랜치에 구독 판정 엔티티/API·도메인은 없다. portfolios 본문 테이블·엔티티/API도 없어 실제 경험·권한을 Mock으로 대체하거나 스키마를 추가하지 않았다. 원본 ERD는 없어 저장소 전사/실제 메타데이터/엔티티를 대조했다. DB 쓰기·실제 Gemini·브라우저 전체 통합은 이번에 실행하지 않았다.
+- 변경 파일: 백엔드 신규 `dto/ai/RequirementEvaluation`, `service/AiRequirementSnapshot`·`AiRequirementEvaluationService`·`AiStoredEvaluation`, `resources/ai/requirements-{instruction.txt,schema.json}`, 신규 `ai/engine/AiRequirementEvaluationTest`. 기존 GeminiAnalysisClient·AI 후보 읽기 Repository/개발자 공개 요약 projection·추천 Controller/요청·응답/내부 DTO·조건 문서·추천 인터페이스/실행/엔진·분석 API/엔진 테스트 수정. 프론트 AI 타입/대화 타입·aiApi·homeStore·추천 카드·BFF·관련 테스트 수정. 문서는 `ai-matching.md`, `ai-api-spec.md`, `ai-progress.md`, `ai-step6-design.md` 갱신.
+- 최종 검증: `backend`의 `DEBUG=false ./gradlew test --no-daemon` 성공(종료0, BUILD SUCCESSFUL). 이번 JUnit은 **442개 중425개 통과·17개 스킵·실패/오류0**이며 평가8개·엔진9개·분석 API22개 모두 통과했다. 스킵은 Docker/Ryuk 연결이 필요한 기존 프로젝트/컨텍스트16개와 별도 PostgreSQL URL이 필요한 운영 DDL1개다. 앞선 실행과 Docker 가용성·파라미터 테스트 실행 수가 달라 총수가 달라질 수 있으며 최종 XML을 기준으로 기록한다. `frontend` 관련4개 파일63개 통과, 제품6개 파일 ESLint 통과. `npm run build`는 최초 샌드박스 TypeScript --showConfig 출력 오류 후 권한 확장 재실행 성공(종료0, 50개 페이지). Linux Node24.22.1의 기존 설치 경로를 명령 PATH에 지정했고 의존성·영구 실행 설정은 변경하지 않았다. 로그 `/tmp/devmozip-6a-backend-final-source.log`, `/tmp/devmozip-6a-frontend-verified.log`, `/tmp/devmozip-6a-build-retry.log`, `/tmp/devmozip-6a-eslint.log`.
+- 검증 이력/한계: 백엔드 최초 실행의 종전 ‘분석 사실은 엔진과 분리’ 테스트1개와 최초 프론트 재시도 테스트2개는 새 6A 스냅샷/GET+replay 계약에 맞게 갱신한 뒤 통과했다. 신규 검증은 기본/요구 점수 분리·50점 부분 충족·위조 근거/ID·기술만으로 경험 인정 금지·면제 요구 보존·상위10건 밖 후보 역전·공개 요약 근거/민감 필드 미전송·실패 시 기본 대체 없음·과거 스냅샷/replay·요구만 변경한 재추천·화면 표시를 포함한다. Gemini는 가짜 응답 기반이며 실제 호출/정확도·무료 할당량·브라우저 전체 통합·공유 DB 쓰기는 미검증이다. `users.summary TEXT`도 읽기 전용 메타데이터로 확인했고 새 컬럼은 없다. 빌드 생성 next-env.d.ts만 작업 전으로 복원했으며 `git diff --check`·AI 문서 상대 링크 대상 점검 통과. 커밋·푸시·배포는 하지 않았다.
+- 한계/6B 준비: 공개 요약의 자기서술 외 실제 개발자 구현 경험·멘토링 근거는 부족해 미확인이 많을 수 있다. 필드3000자 밖 정보도 미확인이다. 전체 후보 배치 호출량·지연에 유의하며 중간429/장애는 전체 실패, 자동 모델/유료 전환·배치 재시도·PENDING 복구 작업은 없다. 6B는 유효 구독·현재 포트폴리오 열람권/변경 버전/비공개·삭제·회수/만료 차단·캐시/동시 중복 호출 계약을 갖춘 뒤 별도 사용자 지시로 진행한다. 6A 완료 후 6B·7단계를 자동 시작하지 않는다.
+
 ## 2026-11-09 PR 준비 — AI 미사용 코드·로그 점검
 
 - 요청 범위: 5단계 Gemini·프론트 연동과 부분 조건 전달 변경의 불필요한 코드·로그 정리. 시작 시 `feat/gemini-api`, HEAD `717da56`, 작업 트리 깨끗함. 로컬 develop이 HEAD의 조상임을 확인했다. 새로운 기능·6A/6B·DB·권한·배포 설정 변경은 없다.

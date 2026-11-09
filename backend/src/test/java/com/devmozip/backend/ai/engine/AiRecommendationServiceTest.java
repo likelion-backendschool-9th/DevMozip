@@ -115,4 +115,52 @@ class AiRecommendationServiceTest {
 		assertThrows(InsufficientAuthenticationException.class, () -> engine.recommend(defaults(), null));
 		verifyNoInteractions(repository);
 	}
+	@Test void semanticEvaluationIncludesCandidatesOutsideOriginalTopTen() throws Exception {
+		var mapper = new tools.jackson.databind.ObjectMapper();
+		var client = mock(com.devmozip.backend.client.GeminiAnalysisClient.class);
+		var evaluator = new com.devmozip.backend.service.AiRequirementEvaluationService(client, mapper);
+		var semantic = new AiRecommendationServiceImpl(requester, repository, new AiRecommendationScoringServiceImpl(weights()), evaluator);
+		projects(LongStream.rangeClosed(1, 13).mapToObj(id -> new SimilarProjectCandidate(id, "교육 플랫폼",
+			id == 13 ? "로그인 구현" : "공개 설명", List.of("Java", "React"), List.of("교육"), ProjectStatus.RECRUITING, null, null)).toList());
+		var seen = new java.util.HashSet<String>();
+		when(client.generate(anyString(), anyString(), any())).thenAnswer(call -> {
+			var input = mapper.readTree((String) call.getArgument(0));
+			var rows = mapper.createArrayNode();
+			for (var c : input.path("candidates")) {
+				String ref = c.path("ref").asText(); seen.add(ref);
+				if (ref.equals("project:13")) rows.add(mapper.valueToTree(java.util.Map.of("candidate", ref, "requirement", "r0",
+					"status", "MET", "source", ref + ":description", "quote", "로그인 구현")));
+			}
+			return mapper.createObjectNode().set("evaluations", rows);
+		});
+		var result = semantic.recommend(defaults(), null, List.of(new com.devmozip.backend.service.AiRequirementSnapshot.Requirement(
+			"r0", "FEATURE", "로그인 구현", "로그인 구현", 1)));
+		assertEquals(13, seen.size());
+		assertEquals(13L, result.projects().getFirst().id());
+		assertEquals(10, result.projects().size());
+	}
+	@Test void publicCandidateEvaluationNeverSendsIdentityOrPremiumDomainData() throws Exception {
+		var mapper = new tools.jackson.databind.ObjectMapper();
+		var client = mock(com.devmozip.backend.client.GeminiAnalysisClient.class);
+		var evaluator = new com.devmozip.backend.service.AiRequirementEvaluationService(client, mapper);
+		developers(List.of(new DeveloperCandidate(1, "candidate-1", "tag-1", List.of("백엔드 개발자"), List.of("Java"), List.of("교육"),
+			"3년 차", n("50"), "결제 구현 경험이 있습니다")));
+		when(client.generate(anyString(), anyString(), any())).thenAnswer(call -> {
+			String payload = call.getArgument(0);
+			assertFalse(payload.contains("candidate-1")); assertFalse(payload.contains("tag-1"));
+			var fields = mapper.readTree(payload).path("candidates").get(0).path("sources");
+			assertEquals(java.util.Set.of("skills", "jobCategories", "career", "summary"),
+				java.util.stream.StreamSupport.stream(fields.spliterator(), false).map(n -> n.path("field").asText()).collect(java.util.stream.Collectors.toSet()));
+			return mapper.valueToTree(java.util.Map.of("evaluations", List.of(java.util.Map.of("candidate", "developer:1",
+				"requirement", "r0", "status", "MET", "source", "developer:1:summary", "quote", "결제 구현 경험"))));
+		});
+		var semantic = new AiRecommendationServiceImpl(requester, repository, new AiRecommendationScoringServiceImpl(weights()), evaluator);
+		var result = semantic.recommend(defaults(), null, List.of(new com.devmozip.backend.service.AiRequirementSnapshot.Requirement(
+			"r0", "TARGET_EXPERIENCE", "결제 경험 필수", "결제 경험 필수", 1)));
+		assertEquals(com.devmozip.backend.dto.ai.RequirementEvaluation.Status.MET,
+			result.developers().getFirst().score().requirementEvaluation().assessments().getFirst().status());
+		assertEquals("MANDATORY_UNENFORCED", result.developers().getFirst().score().requirementEvaluation().assessments().getFirst().mode());
+		assertEquals(1, result.developers().size());
+	}
+
 }

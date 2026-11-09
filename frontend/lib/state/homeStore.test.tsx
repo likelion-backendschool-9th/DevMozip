@@ -174,8 +174,8 @@ describe('AI 서버 연동과 재시도', () => {
         await home().recommendChat();
         expect(vi.mocked(fetch).mock.calls[3][1]?.headers).toMatchObject({ 'Idempotency-Key': key });
         expect(home().conversation!.pendingRecommendation).toBeUndefined();
-        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).messages).toEqual([]);
-        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[2][1]?.body)).conditions.durationMonths).toBe(3);
+        expect(vi.mocked(fetch).mock.calls[2][0]).toBe('/api/ai/conversations/71');
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[3][1]?.body))).toMatchObject({ replay: true, messageId: 81 });
     });
     it('성공 조건이 같으면 재실행·선택 순서 변경·재로딩·메시지 추가로도 POST하지 않는다', async () => {
         ready();
@@ -233,7 +233,7 @@ describe('AI 서버 연동과 재시도', () => {
         const updated = home().conversation!;
         vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(updated))).mockResolvedValueOnce(Response.json({ status: 'SUCCESS', requestId: 91 }));
         await home().recommendChat();
-        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[3][1]?.body))).toEqual({ messageId: 82 });
+        expect(JSON.parse(String(vi.mocked(fetch).mock.calls[3][1]?.body))).toEqual({ messageId: 82, replay: true });
         expect(home().conversation!.id).toBe(c.id);
     });
     it('최초 동기화 응답을 잃어도 같은 대화·메시지 키로 재시도한다', async () => {
@@ -381,4 +381,21 @@ it.each([{}, { stacks: ['Java'] }, { duration: '3개월', roles: [{ name: '백�
     expect(home().conversation!.requirements).toEqual(c.requirements);
     await expect(home().recommendChat()).rejects.toThrow('관심 분야·경력·기간');
     expect(fetch).toHaveBeenCalledTimes(3);
+});
+
+
+it('정형 조건이 같아도 분석된 요구사항이 달라지면 재추천을 허용하고 미완료 분석은 차단한다', async () => {
+    signIn('demo-user'); home().newChat();
+    home().editChat({ interests: ['웹'], career: '경력 무관', duration: '3개월' });
+    const c = home().conversation!;
+    const chat = structuredClone(home().state.chat);
+    const stored = chat.conversations['demo-user'][0];
+    stored.analysisFacts = [{ kind: 'TARGET_EXPERIENCE', value: '결제 경험', origin: 'EXPLICIT' }];
+    stored.lastRecommendation = { requestId: 91, conditions: { ...toAiConditions(c.requirements), _requirements: { facts: [] } } };
+    home().update({ chat });
+    expect(home().recommendationUnchanged).toBe(false);
+    stored.pendingAnalysisKey = 'pending';
+    home().update({ chat: structuredClone(chat) });
+    await expect(home().recommendChat()).rejects.toThrow('이전 메시지 분석');
+    expect(fetch).not.toHaveBeenCalled();
 });

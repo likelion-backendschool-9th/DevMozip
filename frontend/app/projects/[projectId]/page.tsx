@@ -13,6 +13,7 @@ import { Button } from '@/components/common/Button';
 import { ApplicationModal, CancelApplicationModal } from '@/app/projects/[projectId]/_components/ApplicationModal';
 import { ProjectActions } from '@/app/projects/[projectId]/_components/ProjectActions';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
+import { PublicProjectDetail } from './_components/PublicProjectDetail';
 function ProjectDetail({ projectId }: { projectId: string }) {
     const { projects, state, now } = useProjects();
     const { state: profiles } = useProfiles();
@@ -218,5 +219,7 @@ export default function ProjectDetailPage() {
         postId: string;
         userId: string;
     }>();
-    return <ProjectDetail key={projectId} projectId={projectId} />;
+    return /^[1-9][0-9]*$/.test(projectId) && Number.isSafeInteger(Number(projectId))
+        ? <PublicProjectDetail key={projectId} projectId={Number(projectId)} />
+        : <ProjectDetail key={projectId} projectId={projectId} />;
 }

@@ -12,10 +12,14 @@ public record RecommendationResponse(long requestId, long conversationId, Long m
 	AiRecommendationRequest.Status status, @JsonRawValue String conditions,
 	LocalDateTime createdAt, LocalDateTime completedAt, List<Item> developers, List<Item> projects) {
 	public record Item(long id, Long recommendedUserId, Long recommendedProjectId, BigDecimal matchScore,
-		String basicReason, int rank, LocalDateTime createdAt, PublicDeveloper developer) {
+		String basicReason, int rank, LocalDateTime createdAt, PublicDeveloper developer, BigDecimal baseScore, BigDecimal requirementScore,
+		boolean requirementsApplied, List<com.devmozip.backend.dto.ai.RequirementEvaluation.Assessment> requirementAssessments) {
 		public static Item from(AiRecommendation result) {
+			var evaluation = com.devmozip.backend.service.AiStoredEvaluation.decode(result.getBasicReason());
 			return new Item(result.getId(), result.getUserId(), result.getProjectId(), result.getMatchScore(),
-				result.getBasicReason(), result.getRank(), result.getCreatedAt(), PublicDeveloper.from(result.getUser()));
+				evaluation == null ? result.getBasicReason() : evaluation.basicReason(), result.getRank(), result.getCreatedAt(), PublicDeveloper.from(result.getUser()),
+				evaluation == null ? result.getMatchScore() : evaluation.baseScore(), evaluation == null ? null : evaluation.requirementScore(),
+				evaluation != null && evaluation.applied(), evaluation == null ? List.of() : evaluation.assessments());
 		}
 	}
 	public record PublicDeveloper(String tag, String nickname, String profileImage, List<String> jobCategories, List<String> skills, String career, String collaborationStatus, BigDecimal trustScore) {

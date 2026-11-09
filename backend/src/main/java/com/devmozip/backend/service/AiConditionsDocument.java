@@ -21,6 +21,7 @@ public class AiConditionsDocument {
 	public ObjectNode formal(ObjectNode document) {
 		var copy = document.deepCopy();
 		copy.remove("_analysis");
+		copy.remove("_requirements");
 		return copy;
 	}
 	public UpdateConditionsRequest recommendation(String json) {

@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "evaluations": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "type": "string"
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "MET",
+              "PARTIAL",
+              "UNKNOWN",
+              "MISMATCH"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate",
+          "requirement",
+          "status",
+          "source",
+          "quote"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "evaluations"
+  ],
+  "additionalProperties": false
+}

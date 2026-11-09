@@ -99,6 +99,57 @@ class AiMessageAnalysisTests {
 		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendation_requests", Integer.class));
 		verifyNoInteractions(engine);
 	}
+	@Test void missingRoleCountsBecomeConversationQuestionsAndFollowUpCompletesThem() throws Exception {
+		long id = create();
+		var response = mapper.readValue("""
+			{"reply":"커뮤니티를 함께 만들 동료를 찾고 계시는군요.","questions":[],"facts":[],"changes":[
+			{"field":"roles","action":"SET","values":["프론트엔드"],"count":null,"origin":"EXPLICIT","evidence":"프론트엔드","explicitChange":false},
+			{"field":"roles","action":"SET","values":["백엔드"],"count":null,"origin":"EXPLICIT","evidence":"백엔드","explicitChange":false}]}
+			""", GeminiAnalysis.class);
+		when(gemini.analyze(anyString())).thenReturn(response);
+		mvc.perform(send(id, "no-counts", "커뮤니티를 만들 프론트엔드와 백엔드 동료를 찾고 있어요"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.currentConditions.roles").doesNotExist())
+			.andExpect(jsonPath("$.analysis.questions[0]").value("프론트엔드 동료는 몇 명 정도 함께하길 원하시나요?"))
+			.andExpect(jsonPath("$.analysis.questions[1]").value("백엔드 동료는 몇 명 정도 함께하길 원하시나요?"))
+			.andExpect(jsonPath("$.currentConditions._analysis.facts[0].value").value("프론트엔드 (인원 미정)"));
+		analysis(List.of(new Change(Field.roles, Action.SET, List.of("프론트엔드"), 1, Origin.EXPLICIT, "각각 1명", false),
+			new Change(Field.roles, Action.SET, List.of("백엔드"), 1, Origin.EXPLICIT, "각각 1명", false)), List.of());
+		mvc.perform(send(id, "counts", "각각 1명"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.currentConditions.roles[0].count").value(1))
+			.andExpect(jsonPath("$.currentConditions.roles[1].count").value(1))
+			.andExpect(jsonPath("$.analysis.questions").isEmpty())
+			.andExpect(jsonPath("$.currentConditions._analysis.facts").isEmpty());
+		assertEquals(4, jdbc.queryForObject("SELECT count(*) FROM ai_messages", Integer.class));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendation_requests", Integer.class));
+		verifyNoInteractions(engine);
+	}
+	@Test void missingCountKeepsExistingRoleCountAndOtherValidChanges() throws Exception {
+		long id = create();
+		conditions(id, "{\"interests\":[\"웹\"],\"roles\":[{\"name\":\"백엔드\",\"count\":2}],\"career\":\"경력 무관\",\"durationMonths\":3}");
+		analysis(List.of(change(Field.roles, Action.SET, List.of("백엔드"), null, "백엔드"),
+			change(Field.stacks, Action.ADD, List.of("React"), null, "React")), List.of());
+		mvc.perform(send(id, "keep-count", "React도 추가하고 백엔드 동료를 찾고 있어요"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.currentConditions.roles[0].count").value(2))
+			.andExpect(jsonPath("$.currentConditions.stacks[0]").value("React"))
+			.andExpect(jsonPath("$.analysis.questions[0]").exists());
+		verifyNoInteractions(engine);
+	}
+	@Test void roleCountQuestionAppearsOnlyOnceAcrossReplyQuestionsAndServerFallback() throws Exception {
+		long id = create();
+		String question = "프론트엔드와 백엔드는 각각 몇 명 정도 생각하고 계세요?";
+		when(gemini.analyze(anyString())).thenReturn(new GeminiAnalysis("함께 만들 동료를 찾고 계시는군요! " + question,
+			List.of(question), List.of(change(Field.roles, Action.SET, List.of("프론트엔드"), null, "프론트엔드"),
+				change(Field.roles, Action.SET, List.of("백엔드"), null, "백엔드")), List.of()));
+		String json = mvc.perform(send(id, "one-question", "프론트엔드와 백엔드 동료를 찾고 있어요"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.analysis.questions.length()").value(1))
+			.andExpect(jsonPath("$.currentConditions.roles").doesNotExist())
+			.andReturn().getResponse().getContentAsString();
+		String reply = mapper.readTree(json).path("assistantMessage").path("content").asText();
+		assertEquals(1, reply.split(java.util.regex.Pattern.quote(question), -1).length - 1);
+		assertFalse(reply.contains("확인할 내용"));
+		assertFalse(reply.contains("동료는 몇 명"));
+		verifyNoInteractions(engine);
+	}
 	@Test void emptyDraftClearsSelectionsWithoutErasingFactsOrRequiringCompleteConditions() throws Exception {
 		long id = create(); conditions(id, COMPLETE);
 		analysis(List.of(), List.of(new FactChange(Kind.FEATURE, Action.ADD, "로그인", Origin.EXPLICIT, "로그인")));
@@ -271,15 +322,25 @@ class AiMessageAnalysisTests {
 			.content("{\"content\":\"안녕\",\"analyze\":\"true\",\"clientKey\":\"invalid-boolean\"}")).andExpect(status().isBadRequest());
 		verifyNoInteractions(gemini);
 	}
-	@Test void analysisMetadataNeverChangesRecommendationEngineInput() throws Exception {
+	@Test void recommendationSnapshotsConfirmedRequirementsAndKeepsChatAnalysisSeparate() throws Exception {
 		long id = create(); conditions(id, COMPLETE);
 		analysis(List.of(), List.of(new FactChange(Kind.TARGET_EXPERIENCE, Action.ADD, "결제 구현 경험", Origin.EXPLICIT, "결제 경험자")));
 		mvc.perform(send(id, "intent", "결제 경험자를 원해")).andExpect(status().isCreated());
-		when(engine.recommend(any(), any())).thenReturn(new com.devmozip.backend.dto.ai.internal.RecommendationResult(List.of(), List.of(), List.of(), List.of()));
+		when(engine.recommend(any(), any(), any())).thenReturn(new com.devmozip.backend.dto.ai.internal.RecommendationResult(List.of(), List.of(), List.of(), List.of()));
 		mvc.perform(auth(post(BASE + "/" + id + "/recommendations")).header("Idempotency-Key", "engine-separation"))
 			.andExpect(status().isCreated()).andExpect(jsonPath("$.conditions.durationMonths").value(3))
 			.andExpect(jsonPath("$.conditions._analysis").doesNotExist());
-		verify(engine).recommend(any(com.devmozip.backend.dto.ai.UpdateConditionsRequest.class), isNull());
+		verify(engine).recommend(any(com.devmozip.backend.dto.ai.UpdateConditionsRequest.class), isNull(), any());
+		mvc.perform(auth(get(BASE + "/" + id + "/recommendations")))
+			.andExpect(jsonPath("$.conditions._requirements.facts[0].value").value("결제 구현 경험"));
+		conditions(id, COMPLETE.replace(":3", ":6"));
+		mvc.perform(auth(get(BASE + "/" + id + "/recommendations")))
+			.andExpect(jsonPath("$.conditions.durationMonths").value(3))
+			.andExpect(jsonPath("$.conditions._requirements.facts[0].value").value("결제 구현 경험"));
+		mvc.perform(auth(post(BASE + "/" + id + "/recommendations")).header("Idempotency-Key", "engine-separation")
+			.contentType("application/json").content("{\"replay\":true}"))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.conditions.durationMonths").value(3));
+		verify(engine, times(1)).recommend(any(), any(), any());
 		mvc.perform(auth(get(BASE + "/" + id))).andExpect(jsonPath("$.currentConditions._analysis.facts[0].value").value("결제 구현 경험"));
 	}
 	@Test void providerQuotaAndInvalidResponseFailuresRetainOnlyUserMessages() throws Exception {
@@ -290,6 +351,19 @@ class AiMessageAnalysisTests {
 			assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_messages WHERE conversation_id=? AND role='ASSISTANT'", Integer.class, id));
 		}
 		verifyNoInteractions(engine);
+	}
+	@Test void requirementEvaluationFailureStoresFailedRequestWithoutBasicFallbackOrResults() throws Exception {
+		long id = create(); conditions(id, COMPLETE);
+		analysis(List.of(), List.of(new FactChange(Kind.TARGET_EXPERIENCE, Action.ADD, "결제 경험", Origin.EXPLICIT, "결제 경험")));
+		mvc.perform(send(id, "semantic-failure", "결제 경험이 필요해")).andExpect(status().isCreated());
+		when(engine.recommend(any(), any(), any())).thenThrow(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "invalid evidence"));
+		mvc.perform(auth(post(BASE + "/" + id + "/recommendations")).header("Idempotency-Key", "semantic-failure"))
+			.andExpect(status().isInternalServerError()).andExpect(jsonPath("$.status").value("FAILED"))
+			.andExpect(jsonPath("$.developers").isEmpty()).andExpect(jsonPath("$.projects").isEmpty());
+		mvc.perform(auth(get(BASE + "/" + id + "/recommendations")))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.status").value("FAILED"));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendations", Integer.class));
+		verify(engine, never()).recommend(any(), any());
 	}
 	@Test void ownSkillEvidenceCannotBeAppliedAsTargetStackEvenWhenModelMisclassifiesIt() throws Exception {
 		long id = create();

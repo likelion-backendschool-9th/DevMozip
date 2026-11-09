@@ -1,5 +1,25 @@
 # AI API 명세
 
+- 2026-11-09 표시 보완: 분석 결과 questions는 보존하되 ASSISTANT 본문에 이미 있는 동일 질문을 재출력하지 않는다. 모델이 특정 직군 인원을 묻고 있으면 서버의 같은 직군 보완 질문을 추가하지 않는다. 새 API·응답 필드·DB 변경은 없다.
+- 실제 프로젝트 추천 상세 링크는 `/projects/{recommendedProjectId}`다. 해당 숫자 ID 페이지는 기존 BFF `GET /api/ai/projects/{id}` → 공개 `GET /api/v1/projects/{id}`의 허용 projection을 그대로 사용한다. 기존 모달은 제거하며 공개 조회 실패·비공개·삭제에는 오류 상태를 표시한다. 새로운 프로젝트 수정·지원 계약은 추가하지 않는다.
+
+- 2026-11-09 분석 응답 보완: Gemini 내부 `roles` ADD/SET 제안의 `count:null`은 HTTP 분석 실패가 아니라 인원 확인 대상으로 처리한다. 정형 roles에는 적용하지 않고 `_analysis.facts`의 OTHER(`직군 (인원 미정)`)와 questions, ASSISTANT 답변에 보존한다. 이후 확인된 인원 적용 시 해당 미정 사실을 제거한다. 실제 조건 입력 DTO의 인원 범위·필수 검증은 유지한다. 엔드포인트·DB 스키마 변경은 없다.
+
+## 2026-11-09 STEP 6A — 자연어 요구사항 추천 반영 (현재)
+
+- `feat/gemini-recommend`에서 기존 추천 실행·조회와 부분 조건 sync를 확장한다. 6B·사용량·포트폴리오/구독 도메인 구현은 포함하지 않는다. 무료/프리미엄 모두 기존 공개 후보 projection만 평가한다. 최신 사용자 요청의 공개·열람 가능 자료 제한이 앞선 무료 본문 내부 활용 허용보다 우선한다.
+- 요청 `conditions` JSONB의 기존 정형 키를 유지하고 서버 예약 `_requirements`에 `version:1`, 평가 정책 버전, 실행 시점 facts/sources 및 메시지 범위의 comparisonText를 저장한다. 대화의 최신 `_analysis`와 구분하며 과거 GET은 저장된 조건·점수·평가만 읽고 재분석하지 않는다. 구형 조건/결과도 읽는다. sync/PUT에 클라이언트 메타데이터 주입은 허용하지 않는다.
+- 평가 대상은 EXPLICIT의 TARGET_SKILL/TARGET_EXPERIENCE/FEATURE/PROJECT_PREFERENCE/COLLABORATION_GOAL/LEARNING_GOAL이다. OWN_SKILL/LEARNING_SKILL/USER_LEVEL·추론·제안은 점수에서 제외하되 원래 facts 스냅샷에는 보존한다. PURPOSE도 보존하고 새 참여/모집 후보 필터로 바꾸지 않는다. 정형 stacks와 정규화 일치하는 TARGET_SKILL은 중복 가산하지 않는다. 명시적으로 면제한 요구와 주제 제한 없음은 facts에 보존하되 점수 항목에서는 제외한다. ‘제한 없음’의 기존 필수 조건 정책은 유지한다.
+- 기존 공개·ACTIVE·AVAILABLE·직군·경력 필터를 통과한 전체 개발자와 공개·미삭제 프로젝트를 ID 배치 200건으로 순회한다. 기존 상위 10건을 먼저 자르지 않는다. 후보 4건 × 요구 8개 단위로 Gemini에 공개 projection을 전송하고 서버가 평가 후 종류별 상위 10건을 유지한다. 필드별 3000자까지 개인정보 마스킹·HTML 제거한 텍스트만 비교하므로 후반부 정보는 미확인일 수 있다. 개발자는 직군/기술/경력/공개 요약, 프로젝트는 제목/설명/기술만 보낸다. 닉네임·연락처·결제·구독·프리미엄 본문은 전송하지 않는다. 공개 요약의 자기서술은 검증된 실력이나 성과 인증이 아니다.
+- 충족 MET=100, 부분 충족 PARTIAL=50, 미확인 UNKNOWN=0, 명시적 불일치 MISMATCH=0을 동일 비중으로 평균한다(2026-11-09 사용자 확정). 미확인도 분모에 포함한다. 요구가 있으면 `기본 점수×0.8 + 요구 점수×0.2`, 없으면 기본 점수 유지. 소수 둘째 자리 반올림·동점 ID 오름차순은 유지한다. 필수 표현은 MANDATORY_UNENFORCED로 표시하되 후보 제외는 하지 않는다. 표현 감지는 보조 표시이며 확정된 필수 조건 추출 계약을 대신하지 않는다.
+- 기본 계산은 기존 엔진을 재사용한다. 세부 요구 평가가 있을 때 프로젝트 원문 전체의 Jaccard 텍스트 항목은 NOT_REQUESTED로 제외해 과거 삭제 요구·본인 기술의 중복 반영을 피하고 기존 평가 가능 항목을 환산한다. 세부 요구가 없을 때는 종전 메시지 텍스트 비교를 유지한다. 포트폴리오 경험 항목은 계속 UNASSESSED다.
+- Gemini는 `{evaluations:[{candidate,requirement,status,source,quote}]}`만 반환한다. 후보·요구 ID/중복/상태를 검증하고 source가 해당 후보의 전송 자료인지, quote가 그 자료의 1~500자 정확한 인용인지 확인한다. 없는 출처·가짜 인용은 UNKNOWN으로 제외하고 해당 주장을 반환하지 않는다. 자료 누락/생략한 쌍은 UNKNOWN이다. 알 수 없는 후보/요구 ID·형식 오류·외부 장애는 전체 추천 FAILED이며 기본 추천으로 대체하지 않는다. 인용 존재 검증은 내용 진위나 의미 분류의 완전한 정확성을 보장하지 않는다.
+- 후보 평가·Gemini 호출은 DB 저장 트랜잭션 밖에서 수행한다. 독립 PENDING 저장 후 모든 배치가 성공해야 결과 전체와 SUCCESS를 원자 저장한다. 실패 시 결과 없이 FAILED로 남긴다. 같은 키 재요청은 다시 분석하지 않는다. 대화/조건 수정 중에도 시작 시점 스냅샷을 사용한다.
+- POST recommendations 본문에 선택 `replay:boolean`을 추가했다. true는 본인 대화의 같은 Idempotency-Key·messageId로 이미 저장된 요청을 현재 조건과 무관하게 재조회하며 생성/재계산하지 않는다. 저장 요청이 없거나 메시지가 다르면 409다. 생략/false는 기존 조건·메시지에 더해 facts까지 같은지 비교하며 다르면 409다. 익명·타인 대화 접근은 기존 401/404다.
+- 출처 ref는 `developer:{users.id}:{field}` 또는 `project:{projects.id}:{field}`로 실제 행과 projection 필드를 식별한다. 결과 항목에 `baseScore`, `requirementScore`(미적용 null), `requirementsApplied`, `requirementAssessments` 배열을 추가한다. 평가 항목은 requirementId/requirement/mode/status/source/field/quote이며 공개 자료만 담는다. `matchScore`는 최종 점수다. 기본 이유 TEXT에 버전 있는 평가 JSON을 저장하고 응답에서는 기존 basicReason 문자열과 분리한다. 과거 일반 문자열은 기존 점수를 기본 점수로 제공한다. 상세 이유 detailed_reason은 계속 응답에서 제외하며 생성하지 않는다. 새 DDL은 없다.
+- 프론트는 서버 facts를 계정별 로컬 상태에 보존해 요구사항만 바뀌어도 재추천을 허용한다. 미완료 분석은 추천 전에 재시도를 안내한다. 응답 유실 후 메타데이터가 있는 재시도는 초안 재동기화 대신 기존 대화 조회 + replay 요청으로 원래 범위를 유지한다. 카드에서 기본/요구/최종 점수·네 상태·공개 출처를 보여 주며 자동 추천·로컬 사용량 차감은 없다. BFF 추천 POST 제한 시간은 300초, 메시지 분석 70초다. 전체 후보 수에 따라 더 오래 걸려 응답을 잃으면 저장된 PENDING/완료 결과를 재조회한다.
+- 실제 DB 재대조: 요청 conditions JSONB·basic_reason/detailed_reason TEXT 유지. 현재 public에 subscriptions 테이블은 있으나 이 브랜치의 구독 유효성 판정 도메인은 없다. portfolios 본문 테이블·엔티티/API가 없어 읽기 계약을 임의로 만들지 않았다. 원본 ERD는 없어 전사와 코드·메타데이터를 비교했다. 6B는 구독·포트폴리오 권한/버전 계약을 확인한 뒤 별도 요청으로 진행한다.
+
 ## 2026-11-09 부분 선택값 전달 선행 계약 (현재)
 
 이번 구현은 6A 전 부분 UI 선택값 전달이다. 6A 의미 대조·80:20 점수와 6B 상세 분석은 아직 구현하지 않았다. 확정 정책과 남은 데이터 계약은 [설계 검토](ai-step6-design.md)를 참조한다.

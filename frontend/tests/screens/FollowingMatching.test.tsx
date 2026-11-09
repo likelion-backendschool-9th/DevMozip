@@ -9,6 +9,8 @@ import FollowingPage from '@/app/(user)/users/[userId]/follows/page';
 import { AccountLayout } from '@/app/(user)/_components/AccountLayout';
 import { SavedRecommendations } from '@/app/ai/matching/_components/SavedRecommendations';
 import { ChatComposer } from '@/app/ai/matching/_components/ChatComposer';
+import { RecommendationCards } from '@/app/ai/matching/_components/RecommendationCards';
+import { PublicProjectDetail } from '@/app/projects/[projectId]/_components/PublicProjectDetail';
 import type { AiRecommendation } from '@/types/aiRecommendation';
 import MatchingPage from '@/app/ai/matching/page';
 import HomePage from '@/app/page';
@@ -28,6 +30,12 @@ function matched(user=demoAccounts[0]){const state=freshHomeState();const requir
 function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 describe('팔로우·추천 화면 렌더링',()=>{
+ it('실제 프로젝트 추천은 모달 대신 상세 페이지 링크를 제공한다',()=>{
+  const html=renderToStaticMarkup(<RecommendationCards developers={[]} tab="projects" projects={[{id:8,recommendedProjectId:42,recommendedUserId:null,matchScore:80,basicReason:'추천 이유',rank:1,createdAt:now.toISOString()}]}/>);
+  expect(html).toContain('href="/projects/42"');expect(html).toContain('프로젝트 상세 보기');expect(html).not.toContain('role="dialog"');
+  const detail=renderToStaticMarkup(<PublicProjectDetail projectId={42}/>);
+  expect(detail).toContain('프로젝트 정보를 불러오는 중');expect(detail).not.toContain('Mock 공고');
+ });
  it('팔로잉 검색에 프로필·협업 상태·알림 설정을 표시한다',()=>{const html=page('/users/demo-user/follows?q=유나','demo-user');expect(html).toContain('이유나');expect(html).not.toContain('박민준');expect(html).toContain('/users/yuna');expect(html).toContain('협업 가능');expect(html).toContain('언팔로우');expect(html).toContain('이유나 알림 설정');});
  it('팔로워 탭과 공개 사용자 목록을 조회할 수 있다',()=>{const html=page('/users/yuna/follows?tab=followers','demo-user');expect(html).toContain('김하늘');expect(html).toContain('팔로워');expect(page('/users/missing/follows','demo-user')).toContain('사용자를 찾을 수 없어요.');});
  it('언팔로우 변경이 목록에 바로 반영된다',()=>{const profiles=applyProfileAction(freshProfileState(),'demo-user',{type:'follow',targetId:'yuna'},now);expect(page('/users/demo-user/follows?q=유나','demo-user',undefined,profiles)).toContain('표시할 개발자가 없습니다.');});
@@ -56,6 +64,11 @@ describe('팔로우·추천 화면 렌더링',()=>{
   const html=renderToStaticMarkup(<SavedRecommendations serverId={7} result={result} messages={[{id:'first',serverId:8,role:'user',text:'첫 요청',createdAt:'2026-11-08T18:00:00'},{id:'next',role:'user',text:'결과 다음에 보낸 메시지',createdAt:'2026-11-08T09:02:00Z'}]}/>);
   expect(html.indexOf('첫 요청')).toBeLessThan(html.indexOf('저장된 실제 추천 이유'));
   expect(html.indexOf('저장된 실제 추천 이유')).toBeLessThan(html.indexOf('결과 다음에 보낸 메시지'));
+  const evaluated=renderToStaticMarkup(<SavedRecommendations result={{...result,developers:result.developers.map(item=>({...item,baseScore:90,requirementScore:50,requirementsApplied:true,requirementAssessments:[{requirementId:'r0',requirement:'결제 경험',mode:'PREFERENCE',status:'UNKNOWN',source:null,field:null,quote:null}]}))}}/>);
+  expect(evaluated).toContain('기본 적합도 90.00점');
+  expect(evaluated).toContain('요구사항 충족도 50.00점');
+  expect(evaluated).toContain('미확인');
+  expect(evaluated).toContain('경험이 없다는 뜻은 아닙니다');
   expect(html).toContain('실제 회원 닉네임');expect(html).toContain('/users/real-user');expect(html).toContain('백엔드 개발자');expect(html).toContain('Java');expect(html).toContain('/api/v1/profile-images/avatar.png');
   expect(html).toContain('제시하신 조건 중 Java 기술 스택이 현재 프로필에 등록되어 있습니다.');expect(html).not.toContain('Java, React 기술 스택이');expect(html).toContain('신뢰 온도 37.5도');expect(html).toContain('37.5°C');expect(html).toContain('현재 협업 상태: 협업 가능');expect(html).toContain('3년 차');expect(html).toContain('data-status="AVAILABLE"');expect(html).toContain('<dt>직군</dt>');expect(html).toContain('<dt>경력</dt>');
   const changed=renderToStaticMarkup(<SavedRecommendations serverId={7} result={{...result,developers:result.developers.map(item=>({...item,developer:{...item.developer!,career:null,collaborationStatus:'BUSY'}}))}}/>);

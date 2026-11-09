@@ -36,7 +36,7 @@ async function handle(request: Request, context: Context) {
         return error(400, '조회 조건을 확인해 주세요.');
     }
     const messages = /\/messages$/.test(route);
-    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : 60000) };
+    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : route.endsWith('/recommendations') && request.method === 'POST' ? 300000 : 60000) };
     if (request.method !== 'GET') {
         if (request.headers.get('origin') !== `${url.protocol}//${request.headers.get('host') || url.host}`) return error(403, '같은 사이트에서 요청해 주세요.');
         if (request.method === 'POST') {
