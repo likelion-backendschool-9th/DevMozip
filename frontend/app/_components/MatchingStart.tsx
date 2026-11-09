@@ -3,7 +3,6 @@ import styles from './MatchingStart.module.css';
 import Link from 'next/link';
 import { useNavigation as useNavigate } from '@/lib/navigation';
 import { Sparkles, ArrowRight } from 'lucide-react';
-import { matchingLoginPath } from '@/lib/matching/loginPrompt';
 import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
 import { useRef, useState, useTransition } from 'react';
@@ -38,8 +37,8 @@ function MatchingStartForm({ signedIn }: { signedIn: boolean }) {
             submittingRef.current = true;
             try {
                 if (!signedIn) {
-                    const target = matchingLoginPath(guestInput);
-                    startTransition(() => navigate(target));
+                    setGuestInput('');
+                    startTransition(() => navigate(loginPath));
                     return;
                 }
                 const result = startHomeChat();
@@ -48,14 +47,12 @@ function MatchingStartForm({ signedIn }: { signedIn: boolean }) {
                     return;
                 }
                 startTransition(() => navigate('/ai/matching'));
-            } catch (e) {
-                setError(e instanceof Error ? e.message : '입력을 보관하지 못했습니다.');
             } finally {
                 submittingRef.current = false;
             }
         }}>
             <label htmlFor="project-description"><strong>어떤 프로젝트를 만들고 싶으세요?</strong></label>
-            {!signedIn && <p id="matching-login-hint" className={[styles.scope, 'auth-hint'].join(' ')}>AI 추천 대화는 로그인 후 이용할 수 있습니다. 추천 시작을 누르면 입력을 잠시 보관하고 로그인 후 대화로 이어갑니다.</p>}
+            {!signedIn && <p id="matching-login-hint" className={[styles.scope, 'auth-hint'].join(' ')}>AI 추천 대화는 로그인 후 이용할 수 있습니다. 로그인 전 입력은 저장되지 않습니다.</p>}
             <Textarea aria-label="프로젝트 설명" aria-describedby={!signedIn ? 'matching-login-hint' : undefined} id="project-description" rows={5} maxLength={1500}
                 value={signedIn ? state.input.description : guestInput}
                 onChange={e => {

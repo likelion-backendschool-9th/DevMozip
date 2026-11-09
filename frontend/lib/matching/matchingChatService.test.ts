@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { chatMessageLength, sortChatConversations, addChatStack, buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
+import { addChatStack, buildChatResult, inferChatRequirements, missingChatRequirements, newMatchingConversation, parseMatchingChat, sendMatchingMessage } from '@/lib/matching/matchingChatService';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 import { initialMatchingState } from '@/mocks/matching';
 import { developers, projects } from '@/mocks/home';
@@ -153,23 +153,5 @@ describe('기존 Mock 유틸리티 보존', () => {
             expect(conversation.id).toMatch(/^mock-/);
             expect(conversation.messages[0].id).not.toBe(conversation.id);
         } finally { vi.unstubAllGlobals(); }
-    });
-});
-
-describe('AI 대화 전송 한도와 새 초안 정렬', () => {
-    it('메시지 1500자와 구분 줄바꿈을 포함한 누적 10000자를 검증한다', () => {
-        let c = newMatchingConversation(now);
-        for (let i = 0; i < 6; i++) c = sendMatchingMessage(c, '가'.repeat(1500), c.requirements);
-        c = sendMatchingMessage(c, '나'.repeat(988), c.requirements);
-        expect(chatMessageLength(c.messages)).toBe(10000);
-        expect(() => sendMatchingMessage(c, '더', c.requirements)).toThrow('10,000자');
-        expect(c.messages).toHaveLength(7);
-        expect(() => sendMatchingMessage(newMatchingConversation(), '가'.repeat(1501), c.requirements)).toThrow('1,500자');
-    });
-    it('서버와 브라우저의 시간 형식이 달라도 새 초안이 먼저 보이고 저장 대화는 생성순이다', () => {
-        const old = { ...newMatchingConversation(now), serverId: 1, createdAt: '2026-11-08T18:00:00' };
-        const saved = { ...old, id: 'saved', serverId: 2, createdAt: '2026-11-08T18:01:00' };
-        const draft = { ...newMatchingConversation(now), createdAt: '2026-11-08T09:02:00Z' };
-        expect(sortChatConversations([old, draft, saved]).map(v => v.id)).toEqual([draft.id, saved.id, old.id]);
     });
 });

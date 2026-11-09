@@ -1,17 +1,10 @@
 import { createMockId } from '@/lib/utils/createMockId';
 import { chatCareerOptions,chatInterestOptions,chatDomainAliases,chatDomainStacks,chatRoleAliases,emptyChatRequirements,initialMatchingChat } from '@/mocks/matchingChat';
 import { stackOptions } from '@/mocks/home';
-import { analyzeMatching,buildMatchingResult,parseMatchingState } from '@/lib/matching/matchingService';
+import { analyzeMatching,buildMatchingResult,matchingUsage,parseMatchingState } from '@/lib/matching/matchingService';
 import type { ChatRequirements,MatchingChatState,MatchingConversation,MatchingMessage } from '@/types/matchingChat';
-import type { MatchingResult } from '@/types/matching';
+import type { MatchingState,MatchingResult } from '@/types/matching';
 import type { Developer,Project } from '@/types/home';
-export const CHAT_MESSAGE_LIMIT = 1500;
-export const CHAT_TOTAL_LIMIT = 10000;
-export function chatMessageLength(messages: MatchingMessage[], draft = '') { return [...messages.filter(m => m.role === 'user').map(m => m.text), ...(draft.trim() ? [draft.trim()] : [])].join('\n\n').length; }
-// 서버의 시간대 없는 시각과 로컬 UTC를 서로 비교하지 않는다. 새 초안은 먼저 표시한다.
-export function sortChatConversations(items: MatchingConversation[]) {
- return items.sort((a, b) => Number(!b.serverId) - Number(!a.serverId) || Date.parse(b.createdAt) - Date.parse(a.createdAt) || (b.serverId || 0) - (a.serverId || 0));
-}
 const unique=(items:string[])=>[...new Set(items)];
 const id=createMockId;
 export function newMatchingConversation(now=new Date()):MatchingConversation{return {id:id(),title:'새 대화',createdAt:now.toISOString(),updatedAt:now.toISOString(),requirements:structuredClone(emptyChatRequirements),messages:[]};}
@@ -43,8 +36,7 @@ export function buildChatResult(r:ChatRequirements,candidates:(Developer&{availa
  return {...base,analysis:{...base.analysis,stacks:r.stacks,interests:r.interests,role:r.roles.map(v=>v.name).join(' / '),missing:[]},developers:developers.slice(0,6),projects:similar};
 }
 export function sendMatchingMessage(conversation:MatchingConversation,text:string,requirements:ChatRequirements,now=new Date()):MatchingConversation{
- if(!text.trim()||text.length>CHAT_MESSAGE_LIMIT)throw new Error('메시지를 1~1,500자로 입력해 주세요.');
- if(chatMessageLength(conversation.messages, text)>CHAT_TOTAL_LIMIT)throw new Error('대화는 합계 10,000자까지 전송할 수 있습니다. 새 대화를 시작해 주세요.');
+ if(!text.trim()||text.length>1500)throw new Error('메시지를 1~1,500자로 입력해 주세요.');
  validateChatRequirements(requirements);
  const next=structuredClone(conversation);const at=now.toISOString();
  if(!next.messages.length)next.title=text.trim().slice(0,32);

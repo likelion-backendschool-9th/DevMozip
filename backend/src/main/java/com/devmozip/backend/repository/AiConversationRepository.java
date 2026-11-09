@@ -11,8 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AiConversationRepository extends JpaRepository<AiConversation, Long> {
-	Optional<AiConversation> findByUserIdAndClientKey(long userId, String clientKey);
-
 	List<AiConversation> findByUserIdOrderByCreatedAtDescIdDesc(long userId);
 
 	Optional<AiConversation> findByIdAndUserId(long id, long userId);

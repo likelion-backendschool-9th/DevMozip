@@ -1,8 +1,8 @@
-import { visibleSeeds, readDemoStorage, writeDemoStorage } from '@/lib/demo/mockVisibility';
+import { mockDataEnabled, visibleSeeds, readDemoStorage, writeDemoStorage } from '@/lib/demo/mockVisibility';
 import { parseMatchingChat } from '@/lib/matching/matchingChatService';
 import { buildMatchingResult,parseMatchingState } from '@/lib/matching/matchingService';
 import { projectStatus } from '@/lib/projects/projectService';
-import { defaultHomeState, developers, posts, projects, stackOptions, interestFilterOptions } from '@/mocks/home';
+import { defaultHomeState, developers, posts, projects, stackOptions, interestOptions, interestFilterOptions } from '@/mocks/home';
 import { jobOptions } from '@/mocks/auth';
 import type { HomeState, ProjectSort, RecommendationInput, Post } from '@/types/home';
 export const HOME_KEY = 'devmozip:home:v1';

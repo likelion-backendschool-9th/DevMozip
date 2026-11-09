@@ -1,7 +1,3 @@
-import { readLoginPrompt, clearLoginPrompt } from '@/lib/matching/loginPrompt';
-import { AiApiError, aiConditionsKey, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
-import { CHAT_TOTAL_LIMIT, chatMessageLength, sortChatConversations, missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
-import { createMockId } from '@/lib/utils/createMockId';
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
 import { freshHomeState, loadHomeState, saveHomeState } from '@/lib/matching/homeService';
 import { inputKey, matchingUsage } from '@/lib/matching/matchingService';
@@ -12,7 +8,6 @@ import { projectSources } from '@/lib/state/projectStore';
 import { notify } from '@/lib/state/prototypeStore';
 import { demoAccounts } from '@/mocks/auth';
 import type { HomeState } from '@/types/home';
-import type { AiRecommendation } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 
 type ChatResult = { ok: boolean; error?: string };
@@ -62,7 +57,8 @@ function saveConversation(c: MatchingConversation) {
     const current = homeStore.get();
     const chat = structuredClone(current.chat);
     const items = chat.conversations[owner()] || [];
-    chat.conversations[owner()] = sortChatConversations([c, ...items.filter(v => v.id !== c.id)]);
+    chat.conversations[owner()] = [c, ...items.filter(v => v.id !== c.id)]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
     chat.active[owner()] = c.id;
     commit({ ...current, chat });
 }
@@ -100,7 +96,8 @@ function startHomeChat(): ChatResult {
         const saved = sendMatchingMessage(conversation, description, { ...conversation.requirements, description });
         const next = structuredClone(current);
         const account = owner();
-        next.chat.conversations[account] = sortChatConversations([saved, ...(next.chat.conversations[account] || [])]);
+        next.chat.conversations[account] = [saved, ...(next.chat.conversations[account] || [])]
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
         next.chat.active[account] = saved.id;
         next.input.description = '';
         if (!saveHomeState(next)) return { ok: false, error: '대화를 저장하지 못했습니다. 입력은 유지됩니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.' };
@@ -109,23 +106,6 @@ function startHomeChat(): ChatResult {
     } catch (error) {
         return fail(error);
     }
-}
-
-function resumeLoginPrompt(token: string): ChatResult {
-    if (!getUser()) return { ok: false };
-    const text = readLoginPrompt(token);
-    if (!text) return { ok: false };
-    const current = homeStore.get();
-    const c = newMatchingConversation();
-    const saved = sendMatchingMessage(c, text, c.requirements);
-    const next = structuredClone(current);
-    const account = owner();
-    next.chat.conversations[account] = sortChatConversations([saved, ...(next.chat.conversations[account] || [])]);
-    next.chat.active[account] = saved.id;
-    if (!saveHomeState(next)) return { ok: false, error: '입력을 대화에 저장하지 못했습니다. 저장 공간을 확인해 주세요.' };
-    homeStore.set(next);
-    clearLoginPrompt();
-    return { ok: true };
 }
 
 function selectChat(id: string) {
@@ -165,120 +145,6 @@ function sendChat(text: string): ChatResult {
     }
 }
 
-// One in-flight mutation per account/conversation. Captured account checks prevent late writes after logout.
-const syncing = new Set<string>();
-const historyRevision = new Map<string, number>();
-function accountGuard(account: string) {
-    if (!getUser() || owner() !== account) throw new Error('로그인 계정이 변경되었습니다. 다시 시도해 주세요.');
-}
-function existingChat(id: string) {
-    return (homeStore.get().chat.conversations[owner()] || []).find(c => c.id === id);
-}
-async function loadAiChats() {
-    const account = owner();
-    if (!getUser()) return;
-    const revision = historyRevision.get(account) || 0;
-    const remote = await listAiConversations();
-    accountGuard(account);
-    const details = await Promise.all(remote.map(c => getAiConversation(c.id)));
-    accountGuard(account);
-    if ((historyRevision.get(account) || 0) !== revision) return;
-    const current = homeStore.get();
-    const chat = structuredClone(current.chat);
-    let items = chat.conversations[account] || [];
-    for (const detail of details) {
-        const local = items.find(c => c.serverId === detail.id || c.id === detail.clientKey);
-        const merged = mergeAiConversation(detail, local);
-        items = [merged, ...items.filter(c => c.id !== merged.id)];
-    }
-    chat.conversations[account] = sortChatConversations(items);
-    if (!items.some(c => c.id === chat.active[account])) chat.active[account] = items[0]?.id || '';
-    commit({ ...current, chat });
-}
-function recommendationUnchanged(c: MatchingConversation | null) {
-    return !!c?.lastRecommendation && !c.pendingRecommendation
-        && aiConditionsKey(c.lastRecommendation.conditions) === aiConditionsKey(toAiConditions(c.requirements));
-}
-function rememberAiRecommendation(conversationId: number, result: AiRecommendation) {
-    if (result.status !== 'SUCCESS' || !getUser()) return;
-    const current = homeStore.get();
-    const items = current.chat.conversations[owner()] || [];
-    const c = items.find(v => v.serverId === conversationId);
-    if (!c || c.lastRecommendation && c.lastRecommendation.requestId >= result.requestId) return;
-    const chat = structuredClone(current.chat);
-    chat.conversations[owner()] = items.map(v => v.id === c.id ? { ...v, lastRecommendation: { requestId: result.requestId, conditions: result.conditions } } : v);
-    commit({ ...current, chat });
-}
-async function recommendChat() {
-    const account = owner();
-    accountGuard(account);
-    const initial = activeConversation();
-    const lock = `${account}:${initial.id}`;
-    if (syncing.has(lock)) throw new Error('추천 요청을 처리하고 있습니다.');
-    if (!initial.pendingRecommendation) {
-        if (recommendationUnchanged(initial)) throw new Error('이미 추천한 조건입니다. 추천 조건을 변경해 주세요.');
-        if (chatMessageLength(initial.messages) > CHAT_TOTAL_LIMIT) throw new Error('대화가 10,000자를 초과했습니다. 새 대화를 시작해 주세요.');
-        validateChatRequirements(initial.requirements);
-        if (missingChatRequirements(initial.requirements).length) throw new Error('관심 분야·경력·기간을 선택해 주세요.');
-    }
-    syncing.add(lock);
-    try {
-        // 이력 복원이 끝나기 전에 눌러도 기존 성공 조건으로 새 POST를 만들지 않는다.
-        if (!initial.pendingRecommendation && initial.serverId && !initial.lastRecommendation) {
-            const history = await getAiHistory(initial.serverId);
-            accountGuard(account);
-            const success = history.find(v => v.status === 'SUCCESS');
-            if (success) {
-                const previous = await getAiRecommendation(initial.serverId, success.requestId);
-                accountGuard(account);
-                rememberAiRecommendation(initial.serverId, previous);
-            }
-        }
-        if (!initial.pendingRecommendation && recommendationUnchanged(existingChat(initial.id) || null)) {
-            throw new Error('이미 추천한 조건입니다. 추천 조건을 변경해 주세요.');
-        }
-        // An uncertain network outcome must reuse the original key and input, including after reload.
-        const pending = initial.pendingRecommendation || { key: createMockId(), conditions: toAiConditions(initial.requirements), messageKey: initial.messages.filter(m => m.role === 'user').at(-1)?.id || null };
-        saveConversation({ ...initial, pendingRecommendation: pending });
-        if (!saveHomeState(homeStore.get())) throw new Error('재시도 정보를 저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.');
-        const saved = await syncAiDraft(initial, pending.conditions);
-        accountGuard(account);
-        const current = existingChat(initial.id);
-        if (!current) throw new Error('대화가 삭제되었습니다.');
-        saveConversation(mergeAiConversation(saved, { ...current, pendingRecommendation: pending }));
-        const boundary = pending.messageKey ? saved.messages.find(m => m.clientKey === pending.messageKey || m.id === initial.messages.find(v => v.id === pending.messageKey)?.serverId) : undefined;
-        if (pending.messageKey && !boundary) throw new Error('추천에 반영할 메시지 저장을 확인하지 못했습니다. 다시 시도해 주세요.');
-        const result = await executeAiRecommendation(saved.id, pending.key, boundary?.id);
-        accountGuard(account);
-        const latest = existingChat(initial.id);
-        if (latest && result.status !== 'PENDING') saveConversation({ ...latest, pendingRecommendation: undefined,
-            ...(result.status === 'SUCCESS' ? { lastRecommendation: { requestId: result.requestId, conditions: result.conditions || pending.conditions } } : {}) });
-        return result;
-    } catch (error) {
-        if (getUser() && owner() === account && error instanceof AiApiError && [400, 409].includes(error.status)) {
-            const current = existingChat(initial.id);
-            if (current) saveConversation({ ...current, pendingRecommendation: undefined });
-        }
-        throw error;
-    } finally { syncing.delete(lock); }
-}
-async function deleteAiChat(id: string) {
-    const account = owner();
-    accountGuard(account);
-    const c = existingChat(id);
-    if (!c) return;
-    if (syncing.has(`${account}:${id}`)) throw new Error('추천 처리 후 대화를 삭제해 주세요.');
-    const serverId = c.serverId || (c.pendingRecommendation ? (await listAiConversations()).find(v => v.clientKey === c.id)?.id : undefined);
-    accountGuard(account);
-    if (serverId) {
-        try { await deleteAiConversation(serverId); }
-        catch (error) { if (!(error instanceof AiApiError && error.status === 404)) throw error; }
-    }
-    accountGuard(account);
-    historyRevision.set(account, (historyRevision.get(account) || 0) + 1);
-    deleteChat(id);
-}
-
 const home = derived(homeSources, () => {
     const user = getUser();
     const state = homeStore.get();
@@ -296,17 +162,11 @@ const home = derived(homeSources, () => {
         conversation,
         newChat,
         startHomeChat,
-        resumeLoginPrompt,
         selectChat,
         deleteChat,
         editChat,
         sendChat,
         editChatMessage,
-        loadAiChats,
-        recommendChat,
-        recommendationUnchanged: recommendationUnchanged(conversation),
-        rememberAiRecommendation,
-        deleteAiChat,
     };
 });
 

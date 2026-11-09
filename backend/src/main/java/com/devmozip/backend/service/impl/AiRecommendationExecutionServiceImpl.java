@@ -1,8 +1,6 @@
 package com.devmozip.backend.service.impl;
 
 import com.devmozip.backend.dto.ai.RecommendationResponse;
-import com.devmozip.backend.utils.AiMessageLimits;
-import java.util.stream.Collectors;
 import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
 import com.devmozip.backend.entity.*;
 import com.devmozip.backend.repository.*;
@@ -74,7 +72,6 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 				}
 				return new Execution(response(conversationId, item), false);
 			}
-			AiMessageLimits.validateTotal(AiMessageLimits.length(messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId)));
 			var request = requests.saveAndFlush(new AiRecommendationRequest(conversation, message, mapper.writeValueAsString(conditions), key));
 			return new Execution(response(conversationId, request), true);
 		});
@@ -84,7 +81,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);
-				var calculated = engine.recommend(conditions(request.getConditions()), conversationText(conversationId, request.getMessageId()));
+				var calculated = engine.recommend(conditions(request.getConditions()), request.getMessageContent());
 				int rank = 1;
 				for (var developer : calculated.developers()) results.save(new AiRecommendation(request,
 					entityManager.getReference(Member.class, developer.id()), null, developer.score().total(),
@@ -120,14 +117,6 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 				.orElseThrow(AiRecommendationExecutionServiceImpl::notFound) : request(conversationId, requestId);
 			return response(conversationId, request);
 		});
-	}
-
-	private String conversationText(long conversationId, Long boundaryId) {
-		if (boundaryId == null) return null;
-		var included = messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
-			.filter(m -> m.getRole() == AiMessage.Role.USER && m.getId() <= boundaryId).toList();
-		AiMessageLimits.validateTotal(AiMessageLimits.length(included));
-		return included.stream().map(AiMessage::getContent).collect(Collectors.joining("\n\n"));
 	}
 
 	private AiConversation owned(long id, long userId, boolean lock) {
