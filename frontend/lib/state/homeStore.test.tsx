@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { resetLocalStores } from '@/lib/localStore';
 import { useHome } from '@/lib/state/homeStore';
 import { syncServerSession } from '@/lib/state/authStore';
-import { HOME_KEY, loadHomeState, freshHomeState } from '@/lib/matching/homeService';
+import { HOME_KEY, freshHomeState } from '@/lib/matching/homeService';
 import { newMatchingConversation } from '@/lib/matching/matchingChatService';
 import { signIn } from '@/tests/helpers/session';
 

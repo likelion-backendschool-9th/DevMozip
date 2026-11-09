@@ -1,4 +1,4 @@
-import type { AiAnalysisResponse, AiConditions, AiDraftConditions, AiConversationDetail, AiConversationSummary, AiMessage, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
+import type { AiAnalysisResponse, AiConditions, AiDraftConditions, AiConversationDetail, AiConversationSummary, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 
@@ -34,9 +34,7 @@ export function fromAiConditions(c: Partial<AiConditions>): ChatRequirements {
 }
 export const listAiConversations = () => request<AiConversationSummary[]>('');
 export const createAiConversation = (title: string) => request<AiConversationSummary>('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) });
-const postMessage = (id: number, content: string, clientKey: string, analyze = false) => request<AiMessage | AiAnalysisResponse>(`/${id}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, clientKey, ...(analyze ? { analyze: true } : {}) }) });
-export const saveAiMessage = (id: number, content: string, clientKey: string) => postMessage(id, content, clientKey) as Promise<AiMessage>;
-export const analyzeAiMessage = (id: number, content: string, clientKey: string) => postMessage(id, content, clientKey, true) as Promise<AiAnalysisResponse>;
+export const analyzeAiMessage = (id: number, content: string, clientKey: string) => request<AiAnalysisResponse>(`/${id}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, clientKey, analyze: true }) });
 export const getAiConversation = (id: number) => request<AiConversationDetail>(`/${id}`);
 export const getAiHistory = (id: number) => request<AiRequestSummary[]>(`/${id}/recommendations/history`);
 export const getAiRecommendation = (id: number, requestId?: number) => request<AiRecommendation>(`/${id}/recommendations${requestId ? `?requestId=${requestId}` : ''}`);
@@ -51,10 +49,6 @@ export function executeAiRecommendation(id: number, key: string, messageId?: num
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(messageId ? { messageId } : {}) });
 }
 
-// Keep local unsent edits and match persisted messages by their stable client key.
-export function applySavedUserMessage(local: MatchingConversation, clientKey: string, saved: AiMessage): MatchingConversation {
-    return { ...local, messages: local.messages.map(m => m.id === clientKey ? { ...m, serverId: saved.id, text: saved.content, createdAt: saved.createdAt } : m) };
-}
 export function applyAiAnalysis(local: MatchingConversation, response: AiAnalysisResponse): MatchingConversation {
     const user = response.userMessage;
     const assistant = response.assistantMessage;
