@@ -55,6 +55,9 @@ public class AiRequirementSnapshot {
 		}
 		return List.copyOf(result);
 	}
+	public List<Requirement> current(String conditions) {
+		return requirements(capture(conditions, mapper.writeValueAsString(documents.formal(documents.read(conditions))), null));
+	}
 	public String text(String snapshot) {
 		var text = documents.read(snapshot).path("_requirements").path("comparisonText");
 		return text.isString() ? text.asText() : null;

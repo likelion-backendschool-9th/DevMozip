@@ -260,6 +260,7 @@ async function recommendChat() {
     const lock = `${account}:${initial.id}`;
     if (syncing.has(lock)) throw new Error('추천 요청을 처리하고 있습니다.');
     if (initial.pendingAnalysisKey) throw new Error('추천 전에 이전 메시지 분석을 완료해 주세요.');
+    if (!initial.pendingRecommendation && initial.draft?.trim()) throw new Error('입력 중인 메시지는 아직 추천에 반영되지 않았어요. 먼저 메시지를 보내고 분석을 완료해 주세요.');
     if (!initial.pendingRecommendation) {
         if (recommendationUnchanged(initial)) throw new Error('이미 추천한 조건입니다. 추천 조건을 변경해 주세요.');
         if (chatMessageLength(initial.messages) > CHAT_TOTAL_LIMIT) throw new Error('대화가 10,000자를 초과했습니다. 새 대화를 시작해 주세요.');

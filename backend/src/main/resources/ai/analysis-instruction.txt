@@ -36,3 +36,4 @@ Put each clarification question only in questions, not also in reply. Combine qu
 questions can ask necessary clarifications. Do not fabricate an assistant response based on people or projects you cannot see.
 The backend determines what is actually applied, validates fields, and appends authoritative change/confirmation summaries.
 Do not enumerate applied conditions or write a "반영된 조건" section in reply; the backend adds each changed field's final value once. Keep reply brief and conversational.
+Do not write a saved requirements list or promise scoring in reply; the backend confirms the actual stored scoring requirements separately.

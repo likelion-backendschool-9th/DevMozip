@@ -13,6 +13,12 @@ export function chatTimeline(messages: MatchingMessage[], results: AiRecommendat
         if (index < 0) messages.forEach((m, i) => {
             if (m.serverId && Date.parse(m.createdAt) <= Date.parse(result.createdAt)) index = i;
         });
+        // 같은 USER에 대한 분석 답변까지 먼저 표시한다. 다음 USER나 추천 이후 답변은 이동하지 않는다.
+        while (index >= 0 && index + 1 < messages.length) {
+            const next = messages[index + 1];
+            if (next.role !== 'assistant' || !next.serverId || !(Date.parse(next.createdAt) <= Date.parse(result.createdAt))) break;
+            index++;
+        }
         events.push({ position: index * 2 + 1, event: { kind: 'recommendation', result } });
     }
     return events.sort((a, b) => a.position - b.position).map(v => v.event);

@@ -148,6 +148,14 @@ describe('로그인 필수 AI 로컬 대화', () => {
 });
 
 describe('AI 서버 연동과 재시도', () => {
+    it('미전송 입력이 있으면 추천을 보내지 않고 메시지 분석을 안내한다', async () => {
+        signIn('demo-user'); home().newChat();
+        home().editChat({ interests: ['웹'], career: '경력 무관', duration: '3개월' });
+        home().editChatMessage('결제 구현 경험이 있는 개발자를 선호해요');
+        await expect(home().recommendChat()).rejects.toThrow('먼저 메시지를 보내고 분석');
+        expect(fetch).not.toHaveBeenCalled();
+        expect(home().conversation!.draft).toBe('결제 구현 경험이 있는 개발자를 선호해요');
+    });
     function ready() {
         signIn('demo-user'); home().newChat();
         home().editChat({ interests: ['웹'], career: '경력 무관', duration: '3개월' });

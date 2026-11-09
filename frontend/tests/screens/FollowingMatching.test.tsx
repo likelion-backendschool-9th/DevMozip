@@ -30,6 +30,12 @@ function matched(user=demoAccounts[0]){const state=freshHomeState();const requir
 function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 describe('팔로우·추천 화면 렌더링',()=>{
+ it('미전송 메시지는 추천 미반영 안내와 분석 버튼을 표시한다',()=>{
+  const state=matched();state.chat.conversations['demo-user'][0].draft='결제 구현 경험이 있는 개발자';
+  const html=page('/ai/matching','demo-user',state);
+  expect(html).toContain('입력 중인 메시지는 아직 추천에 반영되지 않았어요');
+  expect(html).toContain('메시지 보내고 분석하기');
+ });
  it('실제 프로젝트 추천은 모달 대신 상세 페이지 링크를 제공한다',()=>{
   const html=renderToStaticMarkup(<RecommendationCards developers={[]} tab="projects" projects={[{id:8,recommendedProjectId:42,recommendedUserId:null,matchScore:80,basicReason:'추천 이유',rank:1,createdAt:now.toISOString()}]}/>);
   expect(html).toContain('href="/projects/42"');expect(html).toContain('프로젝트 상세 보기');expect(html).not.toContain('role="dialog"');
@@ -61,8 +67,9 @@ describe('팔로우·추천 화면 렌더링',()=>{
  it('실제 닉네임·공개 정보와 결과 뒤 새 메시지를 표시하고 이력 선택창은 제거한다',()=>{
   page('/ai/matching','demo-user');
   const result:AiRecommendation={requestId:10,conversationId:7,messageId:8,status:'SUCCESS',createdAt:'2026-11-08T18:01:00',completedAt:'2026-11-08T18:01:01',conditions:{interests:['보안'],stacks:['Java','React'],career:'경력 무관',durationMonths:3},projects:[],developers:[{id:11,recommendedUserId:3,recommendedProjectId:null,matchScore:80,basicReason:'저장된 실제 추천 이유\n요청 기술 2개 중 1개가 일치합니다.',rank:1,createdAt:'2026-11-08T18:01:00',developer:{tag:'real-user',nickname:'실제 회원 닉네임',profileImage:'/api/v1/profile-images/avatar.png',jobCategories:['백엔드 개발자'],skills:['Java'],career:'3년 차',collaborationStatus:'AVAILABLE',trustScore:37.5}}]};
-  const html=renderToStaticMarkup(<SavedRecommendations serverId={7} result={result} messages={[{id:'first',serverId:8,role:'user',text:'첫 요청',createdAt:'2026-11-08T18:00:00'},{id:'next',role:'user',text:'결과 다음에 보낸 메시지',createdAt:'2026-11-08T09:02:00Z'}]}/>);
+  const html=renderToStaticMarkup(<SavedRecommendations serverId={7} result={result} messages={[{id:'first',serverId:8,role:'user',text:'첫 요청',createdAt:'2026-11-08T18:00:00'},{id:'analysis',serverId:9,role:'assistant',text:'저장된 세부 요구사항 확인 답변',createdAt:'2026-11-08T18:00:30'},{id:'next',role:'user',text:'결과 다음에 보낸 메시지',createdAt:'2026-11-08T09:02:00Z'}]}/>);
   expect(html.indexOf('첫 요청')).toBeLessThan(html.indexOf('저장된 실제 추천 이유'));
+  expect(html.indexOf('저장된 세부 요구사항 확인 답변')).toBeLessThan(html.indexOf('저장된 실제 추천 이유'));
   expect(html.indexOf('저장된 실제 추천 이유')).toBeLessThan(html.indexOf('결과 다음에 보낸 메시지'));
   const evaluated=renderToStaticMarkup(<SavedRecommendations result={{...result,developers:result.developers.map(item=>({...item,baseScore:90,requirementScore:50,requirementsApplied:true,requirementAssessments:[{requirementId:'r0',requirement:'결제 경험',mode:'PREFERENCE',status:'UNKNOWN',source:null,field:null,quote:null}]}))}}/>);
   expect(evaluated).toContain('기본 적합도 90.00점');

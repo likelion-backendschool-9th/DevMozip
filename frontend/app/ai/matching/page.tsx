@@ -119,6 +119,11 @@ function MatchingWorkspace() {
     };
     const recommend = async () => {
         if (!user) { login(); return; }
+        if (text.trim() && !conversation?.pendingRecommendation) {
+            setError('입력 중인 메시지는 아직 추천에 반영되지 않았어요. 먼저 메시지를 보내고 분석을 완료해 주세요.');
+            workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+            return;
+        }
         if (busy || recommendationUnchanged) return;
         if (missing.length && !conversation?.pendingRecommendation) { setError(`${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.`); showConditions(); return; }
         const key = chatKey; setBusyKey(key); setTask('recommend'); setError('');
@@ -145,6 +150,7 @@ function MatchingWorkspace() {
                 </div>
                 <div className={styles.execution}><span><i />{conversation?.pendingRecommendation ? '이전 요청을 확인하면 같은 추천을 다시 만들지 않아요.' : recommendationUnchanged ? '같은 조건의 추천이 있어요. 추천 조건을 변경해 주세요.' : missing.length ? '조건을 설정하면 추천을 시작할 수 있어요.' : '조건이 준비됐어요. 새로운 동료를 찾아보세요.'}</span><button type="button" disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={13} />{conversation?.pendingRecommendation ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}</button></div>
                 {(visibleError || conversation?.pendingAnalysisKey && !busy) && <div role="alert" className={styles.error}>{visibleError}{(retryAnalysis || conversation?.pendingAnalysisKey) && <button type="button" onClick={() => void runAnalysis()}>분석 다시 시도</button>}</div>}
+                {user && text.trim() && !conversation?.pendingRecommendation && <div className={styles.conditionHint}><Sparkles size={16} /><div><strong>입력 중인 메시지는 아직 추천에 반영되지 않았어요</strong><button type="button" disabled={busy} onClick={send}>메시지 보내고 분석하기<ArrowRight size={12} /></button></div></div>}
                 <ChatComposer used={chatMessageLength(conversation?.messages || [])} value={text} busy={busy} signedIn={!!user} onChange={changeText} onSend={send} />
             </section>
             <aside id="matching-conditions" aria-label="추천 조건" className={styles.conditions} data-mobile-open={drawer === 'conditions'} role={drawer === 'conditions' ? 'dialog' : undefined} aria-modal={drawer === 'conditions' ? true : undefined}><ChatConditions key={chatKey} busy={busy} signedIn={!!user} retry={!!conversation?.pendingRecommendation} onRecommend={recommend} onClose={() => { setConditions(false); setDrawer(null); }} /></aside>

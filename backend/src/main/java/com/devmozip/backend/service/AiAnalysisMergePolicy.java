@@ -13,7 +13,10 @@ import tools.jackson.databind.node.ObjectNode;
 public class AiAnalysisMergePolicy {
 	private final ObjectMapper mapper;
 	private final AiConditionsDocument documents;
-	public AiAnalysisMergePolicy(ObjectMapper mapper, AiConditionsDocument documents) { this.mapper = mapper; this.documents = documents; }
+	private final AiRequirementSnapshot snapshots;
+	public AiAnalysisMergePolicy(ObjectMapper mapper, AiConditionsDocument documents, AiRequirementSnapshot snapshots) {
+		this.mapper = mapper; this.documents = documents; this.snapshots = snapshots;
+	}
 	public record Merged(String document, String reply) {}
 	public Merged merge(String previous, GeminiAnalysis analysis, String latest, long messageId) {
 		ObjectNode doc = documents.read(previous);
@@ -94,10 +97,22 @@ public class AiAnalysisMergePolicy {
 		metadata.set("appliedChanges", mapper.valueToTree(applied));
 		metadata.set("questions", mapper.valueToTree(questions));
 		doc.set("_analysis", metadata);
+		String document = mapper.writeValueAsString(doc);
+		var before = snapshots.current(previous);
+		var after = snapshots.current(document);
+		String requirementsSummary = "";
+		if (!before.stream().map(r -> List.of(r.kind(), r.value(), r.mode())).toList()
+			.equals(after.stream().map(r -> List.of(r.kind(), r.value(), r.mode())).toList())) {
+			requirementsSummary = after.isEmpty() ? "\n\n저장된 세부 요구사항: 없음\n다음 추천은 정형 조건으로 계산합니다."
+				: "\n\n저장된 세부 요구사항\n" + String.join("\n", after.stream().map(r -> "요구사항: " + r.value()).toList())
+					+ "\n다음 추천을 실행하면 평가에 반영합니다. 자료가 부족한 항목은 미확인으로 처리합니다.";
+			requirementsSummary += "\n기존 추천 결과는 변경되지 않습니다.";
+		}
 		var remainingQuestions = questions.stream().filter(q -> !compact(analysis.reply()).contains(compact(q))).toList();
 		String reply = analysis.reply() + (applied.isEmpty() ? "" : "\n\n반영된 조건\n" + String.join("\n", applied))
+			+ requirementsSummary
 			+ (remainingQuestions.isEmpty() ? "" : "\n\n확인할 내용\n" + String.join("\n", remainingQuestions));
-		return new Merged(mapper.writeValueAsString(doc), reply);
+		return new Merged(document, reply);
 	}
 	private static String compact(String text) { return text.replaceAll("[\\s\\p{P}]+", ""); }
 	private static boolean asksCount(String text, String role) {

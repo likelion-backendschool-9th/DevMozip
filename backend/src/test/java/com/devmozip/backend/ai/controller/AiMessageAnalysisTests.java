@@ -174,6 +174,34 @@ class AiMessageAnalysisTests {
 			.andExpect(jsonPath("$.analysis.appliedChanges[4]").value("예상 기간: 6개월"));
 		verifyNoInteractions(engine);
 	}
+	@Test void confirmsActualStoredRequirementsAndReplacementWithoutRunningRecommendation() throws Exception {
+		long id = create();
+		analysis(List.of(), List.of(new FactChange(Kind.TARGET_EXPERIENCE, Action.ADD, "결제 구현 경험", Origin.EXPLICIT, "결제 구현 경험")));
+		mvc.perform(send(id, "payment-requirement", "결제 구현 경험이 있는 개발자를 선호해요"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.assistantMessage.content").value(org.hamcrest.Matchers.containsString("요구사항: 결제 구현 경험")));
+		analysis(List.of(), List.of(new FactChange(Kind.TARGET_EXPERIENCE, Action.SET, "실시간 채팅 구현 경험", Origin.EXPLICIT, "실시간 채팅 구현 경험")));
+		String json = mvc.perform(send(id, "chat-requirement", "결제 경험 선호는 취소하고 실시간 채팅 구현 경험이 있는 개발자를 선호해요"))
+			.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+		String reply = mapper.readTree(json).path("assistantMessage").path("content").asText();
+		assertTrue(reply.contains("요구사항: 실시간 채팅 구현 경험"));
+		assertTrue(reply.contains("다음 추천을 실행하면 평가에 반영"));
+		assertTrue(reply.contains("기존 추천 결과는 변경되지 않습니다"));
+		assertFalse(reply.contains("요구사항: 결제 구현 경험"));
+		analysis(List.of(), List.of(new FactChange(Kind.TARGET_EXPERIENCE, Action.CLEAR, "모두 취소", Origin.EXPLICIT, "모두 취소")));
+		mvc.perform(send(id, "clear-requirements", "모두 취소해줘"))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.assistantMessage.content").value(org.hamcrest.Matchers.containsString("저장된 세부 요구사항: 없음")));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendation_requests", Integer.class));
+		verifyNoInteractions(engine);
+	}
+	@Test void ownAndInferredFactsAreNotConfirmedAsScoringRequirements() throws Exception {
+		long id = create();
+		analysis(List.of(), List.of(new FactChange(Kind.OWN_SKILL, Action.ADD, "React", Origin.EXPLICIT, "React"),
+			new FactChange(Kind.TARGET_EXPERIENCE, Action.ADD, "멘토링", Origin.INFERRED, "초보")));
+		String json = mvc.perform(send(id, "not-target", "React를 공부하는 초보예요"))
+			.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+		assertFalse(mapper.readTree(json).path("assistantMessage").path("content").asText().contains("저장된 세부 요구사항"));
+		verifyNoInteractions(engine);
+	}
 	@Test void appliedConditionsOmitCancelledChangesAndShowFinalClearOnce() throws Exception {
 		long id = create();
 		conditions(id, "{\"interests\":[\"웹\"],\"stacks\":[\"React\"],\"career\":\"경력 무관\",\"durationMonths\":3}");
