@@ -935,3 +935,15 @@ erDiagram
 - 최신 지원서 Entity가 test DB 테이블을 먼저 생성해 삭제 정책 fixture 3개가 실패했다. 격리 컨테이너에서만 참조 제약 fixture를 재생성해 40개 포트폴리오 통합 테스트 최종 통과. 공유 DB 변경 없음.
 - 일반 ./gradlew test는 develop의 AI 테스트 2곳에서 ProjectJobRole → String 생성자 불일치로 컴파일 실패. 다른 담당 파일은 수정하지 않았다. 포트폴리오 40개 검증은 저장소 외부 임시 Gradle init으로 해당 AI 테스트 소스 2개만 제외하여 수행했으며 전체 성공을 의미하지 않는다.
 - 프론트 전체 827개 및 npm run build, git diff --check 통과. 별도 화면 검증에서는 premium 로그인·등록 ID 3·수정·새로고침·DB 재조회까지 확인했다.
+
+### 2026-11-09 프로젝트 지원 실제 포트폴리오 연결 및 제출 후 수정 제한
+
+- 범위: 사용자 요청에 따라 본인 공개 포트폴리오만 지원에 제출하며 제출 이력 이후 원본을 수정할 수 없도록 구현했다. 기존 삭제 제한을 유지하고 취소·거절 후에도 연결 이력을 보존한다. 별도 스냅샷·다른 도메인 기능·Mock 데이터 이전은 추가하지 않았다.
+- 작업 위치: `.worktrees/project-portfolio-link`, `feat/48-project-portfolio-link`. 최신 develop a04608f를 포함한 포트폴리오 CRUD PR #105(7ae37e0) 기반이며 선행 코드가 필요하다. 원본 작업 디렉터리의 환경 설정·미커밋 변경은 수정하지 않았다. 후속 사용자 요청으로 해당 브랜치 커밋·푸시 및 develop 대상 PR 생성을 진행한다.
+- 주요 파일: ProjectPortfolioRepository / DatabaseProjectPortfolioAccess / ProjectPortfolioAccessConfiguration에서 실제 PUBLIC·소유권·ACTIVE 조건과 행 잠금 연결. ProjectApplicationServiceImpl은 공개 포트폴리오가 없을 때 지원 불가 이유를 제공한다. PortfolioMutationServiceImpl은 제출 원본 PUT/DELETE를 409로 거절한다. PortfolioQueryServiceImpl / PortfolioDetailResponse는 본인에게만 submitted 및 canEdit=false를 반환한다.
+- 프론트: ApiProjectApplications에 공개·제출 후 수정 제한 안내, ApiPortfolioDetail / ApiPortfolioComposer에 제출 안내와 편집 차단, portfolioApi 파서 및 관련 화면 테스트 추가. 기존 디자인·라우팅·Mock 시연은 유지했다.
+- DB: `docs/sql/project-portfolio-reference.sql`로 프로젝트 연결 테이블 portfolio_id FK(ON DELETE RESTRICT, 검증 완료·지연 검사 아님)와 인덱스를 팀 DB에 적용했다. portfolios 3행 / 제출 연결 0행을 전후 유지했고 users·portfolios 데이터 및 컬럼은 변경하지 않았다.
+- 검증: 관련 PostgreSQL 17 통합 테스트 53개 모두 통과(기존 지원 7 + 포트폴리오 CRUD 22 + 조회 18 + 신규 연결 6). 공개·소유권·존재·중복·최대 3개·빈 목록·취소/거절 후 잠금·동시 제출/수정·FK 누락 차단 확인. 격리 컨테이너만 사용했다.
+- `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 662개 중 649 통과, 실패 1, 건너뜀 12. 기존 KakaoClientTest의 오류 로그 검증이 DEBUG HTTP 폼 로그에 테스트용 authorization code가 출력되어 실패했다. 카카오 코드는 수정하지 않았다. 기존 AI 테스트 두 곳의 ProjectRecruitmentSlot 인수를 기존 String 계약에 맞게 `.name()`으로 보완해야 테스트 컴파일이 가능했다.
+- `frontend`의 `npm test -- --maxWorkers=2`: 74개 파일 / 829개 테스트 통과. `npm run build -- --webpack`: 성공(Next.js TypeScript 검사 포함). 빌드가 생성한 next-env.d.ts 변경은 복구했다. `git diff --check` 통과.
+- 한계: 실제 팀 계정 로그인→신규 지원 브라우저 시연과 현재 실행 중 서버 반영은 미실행이다. 수정 제한은 API 정책이며 관리자 SQL 직접 수정과 외부 이미지 URL의 파일 내용 변경까지 보존하지 않는다. 새 서버·배포·다음 이슈 작업은 시작하지 않았다.

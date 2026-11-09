@@ -6,6 +6,15 @@ import { portfolioDetailFixture, portfolioPageFixture } from '@/tests/helpers/po
 const list = (result: PortfolioListState) => renderToStaticMarkup(<PortfolioListResult result={result} onRetry={() => {}} onPage={() => {}} />);
 const detail = (result: PortfolioDetailState) => renderToStaticMarkup(<PortfolioDetailResult result={result} onRetry={() => {}} />);
 describe('API 포트폴리오 화면', () => {
+    it('제출된 본인 포트폴리오는 편집 대신 제출 안내와 본인 목록을 표시한다', () => {
+        const value = { ...portfolioDetailFixture(), canEdit: false, submitted: true };
+        const html = detail({ status: 'ready', value });
+        expect(html).toContain('제출 후에는 수정·삭제할 수 없습니다');
+        expect(html).toContain('/profile/me?tab=portfolio');
+        expect(html).not.toContain('/portfolios/11/edit');
+        expect(html).not.toContain('포트폴리오 삭제');
+    });
+
     it('목록의 로딩·실패·빈 결과를 구별한다', () => {
         expect(list({ status: 'loading' })).toContain('role="status"');
         const error = list({ status: 'error', code: 503, message: '조회할 수 없어요.' });

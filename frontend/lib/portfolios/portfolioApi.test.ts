@@ -9,6 +9,12 @@ afterEach(() => { vi.resetAllMocks(); vi.unstubAllGlobals(); });
 const request = (query = '') => new Request(`http://localhost/api/profiles/me/portfolios${query}`);
 const params = (slug = 'me') => ({ params: Promise.resolve({ slug }) });
 describe('포트폴리오 응답 검증', () => {
+    it('제출 상태는 편집 권한보다 우선하고 잘못된 상태를 거절한다', () => {
+        const value = { ...portfolioDetailFixture(), canEdit: true, submitted: true };
+        expect(parsePortfolioDetail(value)).toMatchObject({ canEdit: false, submitted: true });
+        expect(() => parsePortfolioDetail({ ...value, submitted: 'true' })).toThrow();
+    });
+
     it('기본·상세 공개 필드만 보존한다', () => {
         const p = portfolioPageFixture(); Object.assign(p.items[0], { description: 'private', attachments: ['private'] });
         expect(JSON.stringify(parsePortfolioPage(p))).not.toContain('private');

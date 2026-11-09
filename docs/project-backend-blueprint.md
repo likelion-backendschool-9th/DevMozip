@@ -22,7 +22,7 @@
 - 생성일·수정일은 공통 베이스 상속: created_at(생성 시각), updated_at(수정 시각). 개별 표에서 생략한다. Base는 별도 DB 테이블이 아니다.
 - ERD 시각 표기는 DATETIME, Java는 LocalDateTime, PostgreSQL은 timestamp without time zone이다. 모집·개발 날짜는 DATE/LocalDate다. 기록·비교 기준은 Asia/Seoul로 통일한다.
 - 삭제·종료·승인·투표 등 업무 시각은 필요한 엔티티에 선언한다. version은 초기 설계에서 제외한다.
-- ID는 BIGINT. 외부 회원·포트폴리오의 실제 FK와 권한은 나중에 연결한다. 응답 DTO는 record로 작성한다.
+- ID는 BIGINT. 회원은 기존 인증으로 식별하고, 제출 연결의 portfolio_id는 기존 portfolios.id를 참조한다. 응답 DTO는 record로 작성한다.
 - NULL 표시가 없는 필드는 필수 제안이다. 아래 이름·길이·NULL은 원본 그대로인 항목과 이번에 변경 제안한 항목을 구분해 읽는다.
 
 ## 3. 프로젝트 테이블
@@ -101,15 +101,15 @@
 |---|---|---|
 | id | BIGINT / PK | 제출 연결 ID |
 | application_id | BIGINT / FK | 지원서 ID |
-| portfolio_id | BIGINT / 외부 FK 예정 / NULL | 기존 portfolios.id. 물리 삭제 시 NULL 허용안 |
+| portfolio_id | BIGINT / FK / NOT NULL | 기존 portfolios.id. ON DELETE RESTRICT |
 
 기존 portfolios는 새로 만들지 않는다. 소유자는 portfolios.user_id로 확인한다. 연결 행으로 지원서 하나에 여러 포트폴리오를 제출한다. 포트폴리오 하나도 여러 지원서에 제출될 수 있다.
 
 - application_id+portfolio_id는 유일하다. 제출 당시 제목과 사용자 지정 순서는 별도로 저장하지 않는다.
 - portfolioIds는 1~3개만 허용한다. 존재·지원자 소유·중복을 검증한다.
 - 지원서와 제출 목록은 같은 트랜잭션으로 저장한다. 재지원은 허용하지 않으며 기존 제출 연결을 보존한다.
-- 포트폴리오 제목·내용은 기존 portfolios의 현재 값을 조회한다. 제출 당시 상태를 보존하지 않는다. 삭제 정책은 상대 담당자와 정한다. 논리 삭제 시 참조는 유지하며, 물리 삭제 시 SET NULL을 적용한다면 해당 연결은 삭제된 포트폴리오로 표시한다.
-- 응답은 portfolios 배열에 포트폴리오 ID·현재 제목·참조 가능 여부를 담는다. 표시 순서는 연결 행 id 오름차순으로 일관되게 조회하며, 사용자가 선택한 순서를 보장하지 않는다. 상세 내용 권한은 포트폴리오 기능과 연결한다.
+- 본인 소유 PUBLIC 포트폴리오만 최대 3개 제출한다. 제출 이력이 있는 원본은 수정·삭제를 금지하며 취소·거절 후에도 제한을 유지한다. 별도 스냅샷은 저장하지 않는다. portfolio_id FK는 ON DELETE RESTRICT를 사용한다.
+- 지원 응답은 portfolioIds에 제출 ID 목록을 담고, 선택 정보의 portfolios에는 ID·현재 제목을 담는다. 사용자 지정 순서는 보장하지 않는다. 상세 열람은 기존 포트폴리오 권한을 따른다.
 
 ```json
 {
@@ -428,4 +428,4 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 
 ## #48 구현 반영 (2026-11-06)
 
-지원·승인·취소 API, 기존 지원 연결 테이블, 정원 동시성 및 취소 경계 정책을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 포트폴리오 원본 테이블/소유권 어댑터, 알림·채팅·신뢰 계산 소비자는 미연결이며 실제 신규 지원은 차단한다.
+지원·승인·취소 API, 실제 공개 포트폴리오 선택·소유권 검사·제출 후 수정 제한을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 알림·채팅·신뢰 계산 소비자는 별도 연결 대상이다.

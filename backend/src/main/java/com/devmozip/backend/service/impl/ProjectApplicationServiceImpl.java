@@ -46,7 +46,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		var slot=slot(project,request.jobRole());
 		if(filled(id,slot.roleCode())>=slot.capacity())throw conflict("해당 직군의 정원이 찼습니다.");
 		if(!portfolios.available())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"포트폴리오 연동 준비 후 지원할 수 있습니다.");
-		if(!portfolios.ownsAll(user,request.portfolioIds()))throw forbidden("본인의 존재하는 포트폴리오만 제출할 수 있습니다.");
+		if(!portfolios.ownsAll(user,request.portfolioIds()))throw forbidden("본인의 공개 포트폴리오만 제출할 수 있습니다.");
 		var now=LocalDateTime.now(clock);
 		var application=applications.saveAndFlush(new ProjectApplication(project,user,slot.roleCode(),request.introduction().strip(),now));
 		for(long portfolioId:request.portfolioIds())links.save(new ProjectApplicationPortfolio(application,portfolioId,now));
@@ -65,7 +65,9 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		var roles=project.getRecruitmentSlots().stream().map(s->new ProjectApplicationOptions.Role(s.roleCode(),s.capacity(),filled(id,s.roleCode()),s.minimumYears())).toList();
 		if(reason==null&&roles.stream().noneMatch(s->s.filled()<s.capacity()))reason="모집 정원이 찼습니다.";
 		if(reason==null&&!available)reason="포트폴리오 연동 준비 후 지원할 수 있습니다.";
-		return new ProjectApplicationOptions(roles,available?portfolios.ownedBy(user):List.of(),available,own.map(this::response).orElse(null),reason==null,reason);
+		var owned=available?portfolios.ownedBy(user):List.<ProjectPortfolioAccess.Portfolio>of();
+		if(reason==null&&owned.isEmpty())reason="제출 가능한 공개 포트폴리오를 먼저 등록해 주세요.";
+		return new ProjectApplicationOptions(roles,owned,available,own.map(this::response).orElse(null),reason==null,reason);
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse update(long id,long applicationId,UpdateProjectApplicationRequest request){

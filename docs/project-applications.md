@@ -13,7 +13,7 @@
 | 현재 팀원 (팀원 전용) | GET /api/v1/projects/{projectId}/members?jobRole=SRE |
 | 지원 중인 프로젝트 | GET /api/v1/projects/mine?tab=APPLYING |
 
-지원 본문은 `jobRole`, `portfolioIds`(서로 다른 본인 포트폴리오 1~3개), `introduction`(10~1500자)다. 변경 본문은 `status`(APPROVED/REJECTED/CANCELLED), 거절 시 `rejectionReason`(한 줄 1~200자), 패널티 대상 취소 시 `acknowledgePenalty: true`다. 사용자 ID는 인증 정보로 확인하며 클라이언트 신원을 신뢰하지 않는다. BFF는 허용 필드만 전달한다.
+지원 본문은 `jobRole`, `portfolioIds`(서로 다른 본인 공개 포트폴리오 1~3개), `introduction`(10~1500자)다. 변경 본문은 `status`(APPROVED/REJECTED/CANCELLED), 거절 시 `rejectionReason`(한 줄 1~200자), 패널티 대상 취소 시 `acknowledgePenalty: true`다. 사용자 ID는 인증 정보로 확인하며 클라이언트 신원을 신뢰하지 않는다. BFF는 허용 필드만 전달한다.
 
 ## 정책과 트랜잭션
 
@@ -27,9 +27,13 @@
 
 ## 연결 경계와 미완료 사항
 
-실제 팀 DB 확인 당시 `project_applications`, `project_application_portfolios`, `project_members`는 존재하나 포트폴리오 원본 테이블은 없었다. 기존 ERD/DDL을 유지하고 다른 팀 담당 테이블이나 임의 포트폴리오 ID를 생성하지 않았다.
+`DatabaseProjectPortfolioAccess`가 실제 `portfolios`에서 본인 소유·PUBLIC·작성자 ACTIVE 조건을 확인한다. 선택 정보에는 이 조건을 충족하는 ID와 제목만 제공하며, 실제 지원 때도 다시 검증한다. 선택 가능한 포트폴리오가 없으면 등록 안내와 `canApply=false`를 반환한다.
 
-`ProjectPortfolioAccess`가 본인 포트폴리오 목록·존재·소유권을 확인한다. 기본 어댑터는 사용 불가 상태로 동작하며 선택 정보의 `portfoliosAvailable=false`, `canApply=false`를 반환한다. 실제 신규 지원은 503으로 차단한다. 포트폴리오 담당 계약이 확정되면 이 인터페이스의 실제 어댑터를 연결해야 한다. 기존 지원 이력의 조회·승인·거절·취소는 사용할 수 있다. 포트폴리오 제목·상세 열람도 원본 연동 전까지 제공하지 않는다.
+제출 이력이 있는 원본은 수정·삭제할 수 없다. 지원 취소·거절 이후에도 이력이 유지되므로 제한이 해제되지 않는다. 지원은 포트폴리오 행 잠금을 잡고 연결 행을 저장하며, 수정·삭제도 같은 행 잠금을 사용한다. 상세 응답의 `submitted=true`, `canEdit=false`로 편집 UI를 제한하고 서버에서도 409로 차단한다. 다른 사용자의 상세 응답에는 제출 이력을 공개하지 않는다.
+
+`docs/sql/project-portfolio-reference.sql`로 연결 테이블의 `portfolio_id → portfolios.id` FK(ON DELETE RESTRICT)와 인덱스를 적용한다. 해당 FK가 검증된 상태가 아니면 신규 지원을 503으로 차단한다. 기존 지원 이력의 조회·승인·거절·취소는 유지한다. 제목·본문 스냅샷이나 새 포트폴리오 테이블은 만들지 않는다. 다른 사람의 상세 열람은 기존 포트폴리오의 프리미엄 권한 규칙을 유지한다.
+
+구현과 검증 범위는 [포트폴리오 연결](project-portfolio-link.md)을 참조한다.
 
 `ProjectApplicationChanged` 이벤트는 지원/승인/거절/취소와 고정 eventKey, 패널티 대상 여부를 제공한다. 알림·채팅 소비자와 신뢰 점수 계산기는 아직 연결하지 않았다. 숫자 패널티를 임의 계산하지 않는다. 이벤트는 현재 프로세스 내부 이벤트이며 영속 큐/재전송을 보장하지 않는다. 해당 담당자는 AFTER_COMMIT 소비·중복 제거와 필요 시 outbox를 설계해야 한다. 이번 단계에서 리뷰·강퇴 투표를 새로 구현하지 않는다.
 
@@ -54,4 +58,4 @@
 - 실행용 백엔드 재시작 시 기존 PostgreSQL 스키마 검증 및 기동 성공. 팀 DB 테이블 자동 변경/샘플 추가를 수행하지 않았다.
 - 프로젝트 패키지 재실행: 100개 중 89개 통과, 11개 스킵, 실패 0개.
 - 1440px Chromium: 주최자 지원자 조회 200, 타인 조회 403, 팀원 카드/탭, 지원 선택 정보와 원본 미연동 차단, Mock 복원 확인. 가로 넘침과 pageerror 없음. 실제 공유 DB는 읽기만 수행했다.
-- 실제 신규 지원 전체 흐름은 포트폴리오 원본 미연동으로 검증하지 못했다. 통합 테스트의 포트폴리오 어댑터는 테스트 대역이며 실제 DB 포트폴리오 연동 성공을 의미하지 않는다.
+- #48 초기 검증 당시에는 포트폴리오 어댑터가 테스트 대역이었다. 2026-11-09 추가 작업에서 실제 JDBC 어댑터로 격리 PostgreSQL 통합 테스트를 수행했다. 팀 DB 실제 계정의 지원 시연은 별도 검증 대상이다.

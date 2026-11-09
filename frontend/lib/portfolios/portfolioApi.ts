@@ -37,8 +37,9 @@ export function parsePortfolioDetail(value: unknown): PortfolioDetail {
         || !Array.isArray(v.attachments) || v.attachments.length > 100) throw new Error('포트폴리오 상세 응답 오류');
     const attachments = v.attachments.map(item => { const a = object(item); return { name: text(a.name, 255), url: profileImageUrl(text(a.url, 2048)) || '' }; }).filter(x => x.url);
     if (v.canEdit !== undefined && typeof v.canEdit !== 'boolean') throw new Error('편집 권한 응답 오류');
+    if(v.submitted!==undefined&&typeof v.submitted!=='boolean')throw new Error('제출 상태 응답 오류');
     const document = v.document == null ? null : parsePortfolioDocument(v.document);
-    return { portfolio, canEdit: v.canEdit === true, document, author: { id: author.id, nickname: text(author.nickname, 50), tag: author.tag as string | null,
+    return { portfolio, canEdit: v.canEdit === true && v.submitted !== true, submitted: v.submitted === true, document, author: { id: author.id, nickname: text(author.nickname, 50), tag: author.tag as string | null,
         profileImage: profileImageUrl(text(author.profileImage, 255)) || null }, description: text(v.description), attachments };
 }
 export function portfolioPagination(params: URLSearchParams): { page: number; size: number } | null {

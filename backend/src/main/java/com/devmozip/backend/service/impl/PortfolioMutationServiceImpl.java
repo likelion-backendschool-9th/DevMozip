@@ -33,6 +33,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         var member=viewer(email);
         try{
             var old=owned(id,member);
+            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"프로젝트에 제출한 포트폴리오는 수정할 수 없습니다.");
             if(!Objects.equals(input.expectedUpdatedAt(),old.updatedAt()))throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 곳에서 변경되었습니다. 최신 내용을 다시 불러와 주세요.");
             var value=stored(input);
             if(!old.visibility().equals(value.visibility()))throw new ResponseStatusException(HttpStatus.CONFLICT,"공개 범위 변경 API는 별도 기능입니다. 현재 공개 범위를 유지해 주세요.");
@@ -45,7 +46,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         try{
             owned(id,member);
             if(!repository.referenceConstraintReady())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"지원서 참조 제약이 준비되지 않아 삭제할 수 없습니다.");
-            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"지원서에 제출된 포트폴리오의 삭제 정책은 담당자 협의 전까지 보류됩니다.");
+            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"프로젝트에 제출한 포트폴리오는 삭제할 수 없습니다.");
             repository.delete(id,member.getId());
         }catch(org.springframework.dao.DataIntegrityViolationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 기능에서 참조 중인 포트폴리오는 삭제할 수 없습니다.");}
         catch(DataAccessException e){throw unavailable();}

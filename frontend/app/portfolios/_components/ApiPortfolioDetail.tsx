@@ -21,13 +21,14 @@ export function PortfolioDetailResult({ result, onRetry }: { result: PortfolioDe
         <Link className="button secondary" href="/profile/me?tab=portfolio">내 포트폴리오</Link></section>;
     const { portfolio: item, author, description, attachments } = result.value;
     const profilePath = author.tag && author.tag.toLowerCase() !== 'me' ? `/users/${encodeURIComponent(author.tag)}` : null;
-    const listPath = result.value.canEdit ? '/profile/me?tab=portfolio' : profilePath ? `${profilePath}?tab=portfolio` : '/explore';
+    const listPath = (result.value.canEdit||result.value.submitted) ? '/profile/me?tab=portfolio' : profilePath ? `${profilePath}?tab=portfolio` : '/explore';
     const authorLabel = <><ProfileAvatar name={author.nickname || '작성자'} color="lavender" small image={author.profileImage || undefined} /><span><strong>{author.nickname || '작성자'}</strong><small>{item.role || '역할 미입력'}</small></span></>;
     return <div className={`${styles.page} container`}>
         <div className={styles.topbar}><Link href={listPath}><ArrowLeft size={16} />포트폴리오 목록</Link><div className={styles.actions}>
             {result.value.canEdit && <><Link className="button secondary" href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} /></>}
             <Button variant="secondary" onClick={() => window.print()}><Printer size={15} />인쇄 / PDF</Button>
         </div></div>
+        {result.value.submitted&&<p className="auth-hint" role="status">프로젝트에 제출한 포트폴리오입니다. 제출 후에는 수정·삭제할 수 없습니다.</p>}
         <article className={styles.article}>
             <header className={styles.hero}><div className={styles.heroText}>
                 <div className={styles.kicker}><span className={styles.dot} /><span>DEVELOPER PORTFOLIO</span><span className={styles.field}>{item.topic || '분야 미등록'}</span></div>

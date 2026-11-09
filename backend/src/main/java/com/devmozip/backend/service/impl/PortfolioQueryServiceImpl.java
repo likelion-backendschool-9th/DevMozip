@@ -7,6 +7,7 @@ import com.devmozip.backend.dto.portfolio.*;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.repository.MemberRepository;
 import com.devmozip.backend.repository.PortfolioQueryRepository;
+import com.devmozip.backend.repository.PortfolioMutationRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -25,6 +26,7 @@ import tools.jackson.databind.ObjectMapper;
 public class PortfolioQueryServiceImpl implements PortfolioQueryService {
     private final MemberRepository members;
     private final PortfolioQueryRepository portfolios;
+    private final PortfolioMutationRepository mutations;
     private final ObjectMapper mapper;
     private final PortfolioDocumentPolicy documents;
 
@@ -56,8 +58,9 @@ public class PortfolioQueryServiceImpl implements PortfolioQueryService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,"다른 회원의 상세 포트폴리오는 프리미엄 권한이 필요합니다.");
             var row=portfolios.detail(id).orElseThrow(PortfolioQueryServiceImpl::missing);
             var document=documents.decode(row.description());
+            boolean submitted=own&&mutations.referenced(id);
             return new PortfolioDetailResponse(summary(row.summary()),new PortfolioDetailResponse.Author(access.userId(),
-                    row.nickname(),row.tag(),row.profileImage()),document==null?row.description():documents.plain(document),attachments(row.attachments()),document,own);
+                    row.nickname(),row.tag(),row.profileImage()),document==null?row.description():documents.plain(document),attachments(row.attachments()),document,own&&!submitted,submitted);
         });
     }
     private Member viewer(String email) {

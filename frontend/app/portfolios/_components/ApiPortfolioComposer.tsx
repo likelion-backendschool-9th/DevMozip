@@ -23,12 +23,13 @@ function EditorLoader({ email, id, reload }: { email: string; id?: string; reloa
     useEffect(() => {
         if (!id || !validPortfolioId(id)) return;
         const controller = new AbortController();
-        void fetchPortfolioDetail(id, controller.signal).then(value => { if (!controller.signal.aborted) setResult(value.canEdit ? { status: 'ready', value } : { status: 'error', code: 403, message: '본인 포트폴리오만 수정할 수 있어요.' }); })
+        void fetchPortfolioDetail(id, controller.signal).then(value => { if (!controller.signal.aborted) setResult(value.canEdit ? { status: 'ready', value } : { status: 'error', code: value.submitted?409:403, message: value.submitted?'프로젝트에 제출한 포트폴리오는 수정할 수 없습니다.':'본인 포트폴리오만 수정할 수 있어요.' }); })
             .catch(error => { if (!controller.signal.aborted) setResult({ status: 'error', code: error instanceof PortfolioRequestError ? error.status : 502, message: '편집할 포트폴리오를 불러오지 못했어요.' }); });
         return () => controller.abort();
     }, [id]);
     if (!id) return <EditorSession email={email} reload={reload} />;
     if (!validPortfolioId(id)) return <p role="alert">포트폴리오 ID를 확인해 주세요.</p>;
+    if(result.status==='error'&&result.code===409)return <section className="container planned" role="alert"><h1>제출한 포트폴리오는 수정할 수 없어요.</h1><p>{result.message}</p><Link className="button secondary" href={'/portfolios/'+id}>포트폴리오 보기</Link></section>;
     if (result.status !== 'ready') return <PortfolioDetailResult result={result} onRetry={reload} />;
     return <EditorSession email={email} existing={result.value} reload={reload} />;
 }

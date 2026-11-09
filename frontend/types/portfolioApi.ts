@@ -8,6 +8,6 @@ export interface PortfolioPage { items: PortfolioSummary[]; page: number; size: 
 export interface PortfolioDetail {
     portfolio: PortfolioSummary;
     author: { id: number; nickname: string | null; tag: string | null; profileImage: string | null };
-    document?: PortfolioDocument | null; canEdit?: boolean;
+    document?: PortfolioDocument | null; canEdit?: boolean; submitted?: boolean;
     description: string | null; attachments: { name: string | null; url: string }[];
 }
