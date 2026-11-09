@@ -152,7 +152,7 @@ class ProjectQueryIntegrationTest {
 		mvc.perform(get("/api/v1/me/projects").header("Authorization",token()).param("tab","COMPLETED"))
 			.andExpect(status().isOk()).andExpect(jsonPath("$.items[0].id").value(second));
 		mvc.perform(get("/api/v1/me/projects").header("Authorization",token()).param("tab","APPLYING"))
-			.andExpect(status().isNotImplemented());
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
 		mvc.perform(get(BASE+"/"+first+"/manage").header("Authorization",token())).andExpect(status().isOk());
 		mvc.perform(get(BASE+"/"+second+"/manage").header("Authorization",token())).andExpect(status().isForbidden());
 		mvc.perform(get(BASE+"/"+privateId+"/manage")).andExpect(status().isUnauthorized());
