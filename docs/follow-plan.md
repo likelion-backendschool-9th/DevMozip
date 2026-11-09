@@ -3,7 +3,7 @@
 WBS 9.0 팔로우(9.1~9.5)를 실제 백엔드에 연결하기 위한 단계별 계획이다. ERD의 `follows` 테이블로 백엔드 구조와 API를 먼저 만들고, 그다음 프론트엔드 화면이 그 API를 쓰도록 연결한다.
 
 - 각 단계는 사용자가 그 단계를 요청할 때만 시작한다. 한 단계가 끝나도 다음 단계를 자동으로 시작하지 않는다.
-- 이 문서는 계획이며 구현 승인이 아니다. 팔로우 도메인 구현을 시작할 때 `AGENTS.md`의 승인 범위를 함께 갱신한다.
+- 팔로우 도메인 구현은 2026-11-09 사용자 요청으로 시작했고 `AGENTS.md`의 승인 범위에 반영했다. 구현된 API 계약은 [팔로우 API](follow-api.md)를 따른다.
 - API 경로와 메서드는 WBS를 따른다. WBS에 없는 API를 더하거나 WBS와 다르게 정한 항목은 1절에 적는다.
 
 ## 1. 결정 사항
@@ -52,21 +52,24 @@ erDiagram
 
 기존 계층형 패키지(`backend/src/main/java/com/devmozip/backend`)를 따른다. 탭 들여쓰기와 생성자 주입을 쓰고, 응답 DTO는 record로 만든다. 엔티티를 API 응답으로 직접 쓰지 않는다. Service는 프로젝트 기능처럼 인터페이스와 `service/impl` 구현으로 나눈다.
 
-| 위치 | 파일 (예정) | 역할 |
+| 위치 | 파일 | 역할 |
 |---|---|---|
 | entity | Follow, FollowId | `follows` 매핑. `FollowId`는 `(followerId, followingId)` 복합 키이고, `@MapsId`로 `Member` 두 개와 연결한다 |
-| repository | FollowRepository | 관계 조회·삭제, 수 세기, 목록(검색·필터·페이지) |
-| service | FollowService | 팔로우·언팔로우·알림 설정 (9.1, 9.2, 9.5) |
-| service | FollowQueryService | 팔로워·팔로잉 목록과 팔로우 상태 (9.3, 9.4, 추가 API) |
-| controller | FollowController | `/api/v1/users/{slug}/follow`·`followers`·`following`·`notify` |
-| dto/follow | 요청·응답 record | 팔로우 상태, 목록 항목, 페이지, 알림 설정 |
+| repository | FollowRepository | 관계 조회, 언팔로우·알림 설정 변경(바뀐 행 수 반환), 수 세기 |
+| repository | FollowQueryRepository | 목록(검색·필터·페이지) SQL. 직군·기술 스택을 JSONB로 검색하므로 `LikedPostsQueryRepository`처럼 JDBC로 둔다 |
+| security/member | CurrentMemberProvider | 요청자 식별. 피드·개발자 탐색 계획과 함께 쓴다 |
+| service | FollowTargetFinder | `{slug}`로 대상 사용자 찾기(프로필 조회와 같은 조건) |
+| service | FollowService, impl/FollowServiceImpl | 팔로우·언팔로우·알림 설정 (9.1, 9.2, 9.5) |
+| service | FollowQueryService, impl/FollowQueryServiceImpl | 팔로워·팔로잉 목록과 팔로우 상태 (9.3, 9.4, 추가 API) |
+| controller | FollowController, FollowExceptionHandler | `/api/v1/users/{slug}/follow`·`followers`·`following`·`notify`. 쿼리 형식 오류를 400으로 바꾼다 |
+| dto/follow | 요청·응답 record | 팔로우 상태, 팔로우 결과, 목록 항목, 페이지, 알림 설정 |
 
 `ProfileController`도 `/api/v1/users`를 쓰지만 하위 경로가 겹치지 않는다. `ProfileController`는 고치지 않는다.
 
 ### 요청자 식별
 
 - Spring Security 인증 정보(`Authentication.getName()`의 이메일)로 회원을 찾는다. 요청 본문이나 쿼리로 받은 사용자 ID는 신뢰하지 않는다.
-- [SNS 피드 계획](feed-plan.md) 3단계의 요청자 식별 구성요소와 담당이 같으므로 하나를 함께 쓴다. 먼저 구현하는 쪽에서 만든다. 프로젝트의 `ProjectCurrentUserProvider`는 프로젝트 담당 코드이므로 고치거나 가져다 쓰지 않는다.
+- [SNS 피드 계획](feed-plan.md) 3단계, 개발자 탐색 계획과 담당이 같으므로 하나를 함께 쓴다. 팔로우 3단계에서 `security/member/CurrentMemberProvider`로 먼저 만들었다(`find()`: 공개 조회용, `requireActive()`: 쓰기 요청용). 프로젝트의 `ProjectCurrentUserProvider`는 프로젝트 담당 코드이므로 고치거나 가져다 쓰지 않는다.
 - 쓰기 요청은 `ACTIVE`·`WARNED` 회원만 할 수 있다(프로젝트와 같다). `SUSPENDED` 회원은 JWT 필터에서 이미 막힌다.
 - 공개 GET 요청이라도 토큰이 있으면 JWT 필터가 인증 정보를 채운다. 그래서 로그인한 요청자가 각 사용자를 팔로우하는지(`followed`)를 목록 응답에 함께 담을 수 있다.
 
@@ -167,7 +170,8 @@ WBS 9.x에는 프로필 상단과 목록 탭에 필요한 수와 팔로우 여�
 | `/api/profiles/[slug]/following` | GET | `/api/v1/users/{slug}/following` |
 | `/api/profiles/[slug]/notify` | PUT | `/api/v1/users/{slug}/notify` |
 
-- 응답 해석: `types/followApi.ts`, `lib/profiles/followApi.ts`. Mock 화면이 계속 쓰므로 `types/follow.ts`와 `lib/profiles/followService.ts`는 그대로 둔다. `lib/profiles/profileProxy.ts`의 오류 문구(예: 409 "닉네임 또는 태그가 이미 사용 중이에요.")는 프로필용이므로 팔로우 오류 문구는 따로 둔다.
+- 응답 해석: `types/followApi.ts`, `lib/profiles/followApi.ts`. BFF 공통 처리와 팔로우 오류 문구: `lib/profiles/followProxy.ts`. Mock 화면이 계속 쓰므로 `types/follow.ts`와 `lib/profiles/followService.ts`는 그대로 둔다. `lib/profiles/profileProxy.ts`의 오류 문구(예: 409 "닉네임 또는 태그가 이미 사용 중이에요.")는 프로필용이므로 팔로우 오류 문구는 따로 둔다.
+- 팔로우 버튼은 `components/profile/FollowButton.tsx`에 두고 프로필 상단·목록이 함께 쓴다. 개발자 탐색 계획 5단계의 카드 버튼도 이것을 쓴다.
 
 ### 화면
 
@@ -182,6 +186,7 @@ WBS 9.x에는 프로필 상단과 목록 탭에 필요한 수와 팔로우 여�
 - 목업 프로필 상단(`ProfileHeader.tsx`)은 수를 누르면 미리보기 창을 연다. API 화면은 1절 결정대로 목록 화면으로 바로 이동한다.
 - Mock 목록 화면의 비공개 계정 처리(`canViewProfile`)는 `users`에 공개 여부 컬럼이 없어 API 화면으로 옮기지 않는다. 개인정보 설정(WBS 17.0)이 DB에 연결될 때 함께 맞춘다.
 - 로딩·빈 목록·오류·재시도, 비로그인 안내, 중복 클릭 방지를 처리한다. 버튼 상태는 응답의 최종 상태로 맞춘다.
+- 목록에서 언팔로우해도 그 항목은 바로 빼지 않고 버튼만 "팔로우"로 바꾼다. 다음 페이지를 붙이는 목록에서 항목을 빼면 페이지 위치가 어긋나기 때문이다. 다시 불러오면 목록에서 빠진다. 탭의 수는 팔로우를 바꿀 때마다 다시 받는다.
 
 ### 같은 팔로우 상태를 쓰는 다른 화면
 
@@ -202,34 +207,34 @@ WBS 9.x에는 프로필 상단과 목록 탭에 필요한 수와 팔로우 여�
 
 - [x] API 연동 순서, `follows`의 참조 대상, `/profile/me`에서 여는 목록 경로 결정 (2026-11-09)
 - [x] 팔로우 상태 API 추가, 알림 설정 하나, 목록·수 조건 없음, 중복 요청 처리 결정 (2026-11-09)
-- [ ] ERDCloud의 `follows` NULL·기본값과 `following_id` 인덱스 확인
-- [ ] 실제 DB의 `follows` 테이블과 데이터 유무 확인
+- [ ] ERDCloud의 `follows` NULL·기본값과 `following_id` 인덱스 확인 (구현은 2절 제안값으로 했다. 다르면 엔티티를 맞춘다)
+- [x] 실제 DB의 `follows` 테이블과 데이터 유무 확인 (2026-11-09)
 - [ ] 공유: 프로필 담당자(`ApiProfileHeader`의 팔로우 자리, `SecurityConfig` 공개 GET), 탐색 담당자(6.5·6.6이 쓸 API)
 
 완료 조건: ERD와 DB 확인, 담당자 공유가 끝나 있다.
 
 ### 2단계 — 엔티티·Repository
 
-- [ ] `Follow`·`FollowId` 엔티티와 `FollowRepository`
-- [ ] Testcontainers PostgreSQL로 매핑, 복합 키, 목록 검색(JSONB 직군·기술 스택), 수 세기 테스트
+- [x] `Follow`·`FollowId` 엔티티와 `FollowRepository`·`FollowQueryRepository`
+- [x] Testcontainers PostgreSQL로 매핑, 복합 키, 목록 검색(JSONB 직군·기술 스택), 수 세기 테스트
 - [ ] 개발 서버 재시작 전 DB 반영 시점 공유
 
 완료 조건: `./gradlew test` 통과. Docker가 없으면 Testcontainers 테스트가 건너뛰어지므로 통과로 보고하지 않는다.
 
 ### 3단계 — 팔로우 API (9.1~9.5)
 
-- [ ] 요청자 식별 구성요소(피드와 공유), DTO, `FollowService`·`FollowQueryService`, `FollowController`
-- [ ] 공개 GET 경로를 `SecurityConfig`에 반영 (팀 공유 후)
-- [ ] 테스트: 자기 자신 팔로우, 없거나 조건에 맞지 않는 대상, 중복 요청과 동시 팔로우의 현재 상태 응답, 언팔로우 후 알림 설정 삭제, 태그가 없거나 `ACTIVE`가 아닌 회원의 목록·수 포함, 팔로우 상태 API의 수와 요청자 기준 값, 팔로우하지 않은 사용자의 알림 설정, 비로그인 목록 조회와 쓰기 요청, 요청자 기준 `followed`, 검색·필터·페이지
-- [ ] API 문서 `docs/follow-api.md` 작성
+- [x] 요청자 식별 구성요소(피드와 공유), DTO, `FollowService`·`FollowQueryService`, `FollowController`
+- [x] 공개 GET 경로를 `SecurityConfig`에 반영 (팀 공유는 남음)
+- [x] 테스트: 자기 자신 팔로우, 없거나 조건에 맞지 않는 대상, 중복 요청과 동시 팔로우의 현재 상태 응답, 언팔로우 후 알림 설정 삭제, 태그가 없거나 `ACTIVE`가 아닌 회원의 목록·수 포함, 팔로우 상태 API의 수와 요청자 기준 값, 팔로우하지 않은 사용자의 알림 설정, 비로그인 목록 조회와 쓰기 요청, 요청자 기준 `followed`, 검색·필터·페이지
+- [x] API 문서 `docs/follow-api.md` 작성
 
 ### 4단계 — 프론트엔드 연결
 
-- [ ] BFF Route Handler, 응답 해석, 타입과 테스트
-- [ ] `/users/{slug}/follows` 목록과 알림 설정 창
-- [ ] 프로필 상단의 팔로워·팔로잉 수와 팔로우 버튼 (프로필 담당자 공유 후)
-- [ ] 로딩·빈 목록·오류·비로그인 처리
-- [ ] 실제 백엔드·PostgreSQL로 팔로우 → 목록 → 알림 설정 → 언팔로우, `/profile/me` → 내 목록 이동 확인
+- [x] BFF Route Handler, 응답 해석, 타입과 테스트
+- [x] `/users/{slug}/follows` 목록과 알림 설정 창
+- [x] 프로필 상단의 팔로워·팔로잉 수와 팔로우 버튼 (프로필 담당자 공유는 남음)
+- [x] 로딩·빈 목록·오류·비로그인 처리
+- [x] 실제 백엔드·PostgreSQL로 팔로우 → 목록 → 알림 설정 → 언팔로우, `/profile/me` → 내 목록 이동 확인 (임시 PostgreSQL에 연결한 서버로 BFF 요청까지 확인. 브라우저 화면 조작은 하지 않음)
 
 완료 조건: 빌드·테스트 결과와 실제 서버 연결 확인 여부를 따로 기록한다. Mock 테스트 통과는 실제 DB 검증이 아니다.
 
@@ -239,3 +244,7 @@ WBS 9.x에는 프로필 상단과 목록 탭에 필요한 수와 팔로우 여�
 |---|---|---|
 | 2026-11-09 | 계획 | 이 문서 작성. WBS 9.1~9.5, ERD `follows`, 현재 Mock 화면과 백엔드 코드 대조. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | `GET /api/v1/users/{slug}/follow` 추가, 알림 설정을 체크박스 하나로 통합, 목록·수에 별도 조건 없음, 중복 팔로우·언팔로우 요청에 현재 상태 응답 결정 반영. 코드 변경 없음. |
+| 2026-11-09 | 1단계 | 개발 DB 읽기 확인: `follows` 없음. `users` 10명 중 태그 없는 회원 1명, `ACTIVE`가 아닌 회원 1명. `job_categories`·`skills`는 `jsonb` 배열. ERDCloud 대조와 담당자 공유는 남음. |
+| 2026-11-09 | 2단계 | `Follow`·`FollowId`·`FollowRepository`·`FollowQueryRepository` 추가. NULL·기본값·`following_id` 인덱스는 2절 제안값으로 반영했다. `FollowRepositoryTest` 6개를 Testcontainers PostgreSQL에서 실행해 통과(건너뜀 0). 개발 서버는 재시작하지 않아 공용 개발 DB에는 아직 `follows`가 없다. |
+| 2026-11-09 | 3단계 | `CurrentMemberProvider`, `FollowTargetFinder`, `FollowService`·`FollowQueryService`와 구현, `FollowController`·`FollowExceptionHandler`, DTO, `SecurityConfig` 공개 GET 3개, `docs/follow-api.md`. `FollowApiIntegrationTest` 16개 실행·통과(건너뜀 0). 동시 팔로우 8건 중 7건이 기본 키 충돌을 거쳐 모두 `followed: true`로 응답했다. 백엔드 전체 `./gradlew test`(저장소 밖 복사본): 640개 중 629개 통과, 11개 건너뜀(팀 DB 설정이 필요한 프로젝트 테스트), 실패 0. develop에서 이미 컴파일되지 않는 AI 테스트 2개(`AiRecommendationDatabaseTest`, `AiRecommendationExecutionTests`. `ProjectRecruitmentSlot`의 `roleCode`가 `String`으로 바뀐 뒤 갱신되지 않음)는 복사본에서 빼고 실행했다. |
+| 2026-11-09 | 4단계 | BFF 4개 경로(`follow`·`followers`·`following`·`notify`), `followApi`·`followProxy`, `FollowButton`, `ApiFollowSummary`(`ApiProfileHeader`의 팔로워·팔로잉 자리), `ApiFollowSettings`, `/users/{tag}/follows` API 화면. Mock 목록 화면을 검사하던 테스트 3개를 API 화면 테스트로 바꿨다. 저장소 밖 복사본에서 `npm run build` 성공, `npm run typecheck` 성공, vitest 74개 파일 849개 통과, 변경 파일 eslint 오류 0. 임시 PostgreSQL·Redis에 연결한 백엔드와 `next start`로 BFF를 거쳐 가입 → 태그 설정 → 팔로우(두 번) → 팔로워·팔로잉 목록과 검색·필터 → 알림 켜기 → 자기 자신·비로그인·다른 사이트·팔로우하지 않은 사용자의 알림 설정 거절 → 언팔로우(두 번) → 다시 팔로우 시 알림 꺼짐 → 내 프로필 태그와 목록 화면 응답 200을 확인했다. 브라우저에서 화면을 직접 조작한 확인은 하지 않았다. 담당자 공유는 남음. |
