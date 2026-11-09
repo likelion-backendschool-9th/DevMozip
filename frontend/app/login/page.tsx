@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { AuthShell } from '@/app/_components/AuthShell';
 import { KakaoNotice } from '@/app/_components/KakaoNotice';
 import { KakaoStartButton } from '@/app/_components/KakaoStartButton';
+import { PasswordNotice } from './_components/PasswordNotice';
 import styles from './page.module.css';
 import { startTransition, useState } from 'react';
 import Link from 'next/link';
@@ -54,6 +55,7 @@ function LoginForm() {
                 </div>
             )}
             <KakaoNotice />
+            <PasswordNotice />
             <form className={[styles.scope, 'auth-form'].join(' ')} onSubmit={submit} noValidate>
                 <label htmlFor="login-email">이메일</label>
                 <Input
