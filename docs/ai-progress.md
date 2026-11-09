@@ -1,5 +1,86 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 6B 종료 점검 — 현재 구현 기준
+
+이번 요청은 문서 정리만 수행했다. 브랜치는 `feat/gemini-portfolio-analysis`, 구현 커밋은 `0f4b415`다. 이후 무료 안내·단일 별 UI와 관련 문서는 아직 미커밋 상태이며 보존했다. 아래 날짜별 기록은 작업 당시 이력이고 이 절과 [6B 구현 계약](ai-portfolio-analysis.md)의 최신 정리를 우선한다. 7단계는 시작하지 않았다.
+
+### 완료 기능
+
+- 저장된 SUCCESS 개발자 추천 결과 소유자의 명시 요청으로만 포트폴리오 상세 분석을 생성한다. 현재 DB PREMIUM/ADMIN 역할과 현재 유효 구독을 모두 요구하며 무료·구독 없음·만료·정지·타인 결과·비공개 자료를 차단한다. 회원/포트폴리오/구독 도메인·공통 보안·DDL은 수정하지 않았다.
+- 요청 당시 조건·명시 요구와 현재 PUBLIC 제목/요약/역할/기술을 비교해 관련도 양수인 최대5개를 선택한 뒤 본문을 분석한다. 본문은 자료당6000자, 요구는8개씩 처리하며 정확 인용·허용 출처를 검증한다. 관련 자료가 없으면 개수를 채우거나 Gemini를 호출하지 않는다.
+- 기존 detailed_reason TEXT의 version1 JSON·DB CAS·180초 임대·자료 지문 캐시로 중복 생성과 오래된 저장을 제어한다. 생성/조회/저장 전후 권한·구독·자료를 다시 검사하고 실패/만료 임대는 명시 재시도로 회복한다. 개별 모델 최대60초·전체 예산180초·BFF190초다.
+- 인용을 개발자 이름·출처 포트폴리오 제목 링크로 묶어 읽기 쉬운 문장으로 표시한다. UNKNOWN/자료 부족/빈 평가 목록은 숨기며 PARTIAL·구현 중·명시 차이는 유지한다. 메타데이터 선택 이유는 API에 보존하고 화면은 선택 원칙을 접어서 표시한다.
+- 완료 후 정기 조회·포커스 복귀 조회는 제거했다. PENDING에서만3초 간격 GET을 최대60회 수행하고 완료/오류/취소 시 종료한다. 무료 버튼은 API 호출 없이 프리미엄 안내와 `/subscription` 링크를 표시한다. 프리미엄 화면에서403이면 유효 구독 확인 안내와 같은 링크를 제공한다. 최종 아이콘은 시안색 단일 별28px이며 두 별 시안은 대체됐다.
+- 함께 확정한6A 보완: 프로젝트 summary를 기존 공개 평가 자료에 추가했다. 새 추천은 기술·직군·검증된 세부 요구와 연결되지 않는 개발자, 분야·기술·텍스트·검증된 요구와 연결되지 않는 프로젝트를 제외한다. 고정 점수 하한 없이 부분/진행 중 근거는 유지하며 관련성 평가 후 상위10개를 정한다. 기본80%+요구20%·UNKNOWN0점 분모를 유지하고 저장된 과거 점수/순위/GET/replay는 재계산하지 않는다. 6B 본문은 가산점에 사용하지 않는다.
+- 합성 포트폴리오20개는 앞선 승인 작업에서 기존 데모6명에 연결했다(당시 기존3개 포함 총23개). 전용 seed/cleanup SQL을 제공하며 이번 점검에서는 DB 조회·삽입·정리 작업을 하지 않았다.
+
+### 변경 파일 목록
+
+`0f4b415`의36개 파일과 이후 프론트 변경을 확인했다. 경로가 긴 목록은 공통 루트를 생략해 표기한다.
+
+| 범위/루트 | 파일 |
+|---|---|
+| `backend/src/main/java/com/devmozip/backend/` | `controller/AiPortfolioAnalysisController.java`, `dto/ai/PortfolioAnalysisResponse.java`, `repository/AiPortfolioAnalysisRepository.java`, `service/AiPortfolioAnalysisService.java`, `service/AiPortfolioAnalysisModel.java`, `service/AiPortfolioSelection.java` |
+| 같은 백엔드 루트의6A 보완 | `dto/ai/internal/SimilarProjectCandidate.java`, `repository/AiCandidateRepository.java`, `service/impl/AiRecommendationServiceImpl.java` |
+| `backend/src/main/resources/ai/` | `portfolio-instruction.txt`, `portfolio-schema.json`, `requirements-instruction.txt` |
+| `backend/src/test/java/com/devmozip/backend/ai/` | `portfolio/AiPortfolioAnalysisIntegrationTest.java`, `engine/AiRecommendationServiceTest.java`, `engine/AiRecommendationDatabaseTest.java` |
+| `frontend/app/ai/matching/_components/` | `PortfolioAnalysis.tsx`, `PortfolioAnalysis.module.css`, `PortfolioAnalysisContent.tsx`, `RecommendationCards.tsx` |
+| `frontend/app/api/ai/recommendations/[id]/detailed-analysis/` | `route.ts`, `route.test.ts` |
+| `frontend/lib/matching/` | `portfolioAnalysis.ts`, `portfolioAnalysis.test.ts`, `portfolioPresentation.ts`, `portfolioPresentation.test.tsx`, `recommendationPresentation.ts`, `recommendationPresentation.test.ts` |
+| 프론트 기타 | `frontend/types/aiPortfolioAnalysis.ts`, `frontend/tests/screens/FollowingMatching.test.tsx`, `frontend/public/icons/premium-star.svg` |
+| `docs/` | `ai-matching.md`, `ai-api-spec.md`, `ai-progress.md`, `ai-step6-design.md`, `ai-portfolio-analysis.md`, `sql/ai-portfolio-demo.sql`, `sql/ai-portfolio-demo-cleanup.sql` |
+
+### 확인한 테스트 결과와 검증 범위
+
+이번 문서 작업에서는 테스트·빌드를 재실행하거나 새 테스트를 작성하지 않았다. 직전 실행 로그와 현재 남아 있는 JUnit XML을 직접 대조했다. 아래 숫자는 이번 문서 수정의 신규 실행 결과가 아니다. 문서 수정 후 `git diff --check`를 통과했고, 작업 시작/종료 시 백엔드·프론트 기능 파일845개의 SHA-256을 비교해 이번 작업의 기능 코드 변경0건을 확인했다. 기존 미커밋 UI/SVG는 그대로 보존했다.
+
+| 직전 검증 | 명령/산출물 | 결과 |
+|---|---|---|
+| 백엔드 전체 | `backend`: `DEBUG=false ./gradlew test --no-daemon`; `/tmp/devmozip-relevance-backend-final.log`, `backend/build/test-results/test/TEST-*.xml` | 총726개,714개 통과·12개 opt-in 스킵·실패/오류0,2분38초 |
+| 6B 격리 통합 | 위 실행의 `AiPortfolioAnalysisIntegrationTest` | 19개 통과. 실제 인증/HTTP/서비스/격리 H2 저장 + Gemini 테스트 대역 |
+| 추천 엔진 | 위 실행의 `AiRecommendationServiceTest` | 13개 통과. summary 입력·관련성 제외·2.50점 부분 기술 유지·기본0에서도 구현 중 근거 유지 |
+| 최종 프론트 전체 | `frontend`: `npm test -- --maxWorkers=2`; `/tmp/devmozip-premium-single-star-tests.log` | 79개 파일884개 통과 |
+| 최종 프론트 빌드 | `frontend`: `npm run build`; `/tmp/devmozip-premium-single-star-build.log` | 성공, TypeScript·정적57개 생성 |
+| 변경 TSX 검사 | `npx eslint app/ai/matching/_components/PortfolioAnalysis.tsx`; `/tmp/devmozip-premium-single-star-eslint.log` | 종료0, 오류 출력 없음 |
+
+6B19개는 무료/타인/구독없음/만료/미래시작/해지/기간내취소예정·권한회수·비공개/삭제·본문 변경 캐시 무효화·선택 최대5개·비공개 미전송·위조 인용/ID·429/502/503/504 실패와 재시도·동시 생성 소유자1개/202·임대 회복/오래된 CAS 거절·생성 중 만료/자료 변경·기존 점수/순위/요청 수 보존을 확인한다. 프론트는 완료 후 추가 요청 없음·PENDING 종료/취소·근거 문장/출처 링크·UNKNOWN 숨김·부분 구현 유지 등을 검증한다. 최근 무료 안내 클릭과 단일 별의 브라우저 수동/시각 검증을 이884개 테스트의 통과로 대신 주장하지 않는다.
+
+### 미해결 문제·한계
+
+- 실제 Gemini의 의미 판단·지연·할당량, 공유 PostgreSQL 신규 상세 API/다중 인스턴스 동시성, 실제 계정 브라우저 흐름과 모바일 시각 확인은 미검증이다. 격리 DB·테스트 대역 통과와 구분한다.
+- 사용자가 보고한 Java/Spring 추가 질문 뒤 짧은 “네”에 다시 확인하는 대화 문제는 이번6B에서 수정하지 않았다. 앞선 문서의 본문/summary 입력 차이는 해결했지만 대화 의도·확인 대기 처리와 다른 문제다. 별도 승인 후 재현/수정해야 한다.
+- 자료 선택은 어휘 포함 비교다. 동의어/메타데이터에 없는 본문 경험을 놓칠 수 있고 선택된 상위5개 중 빈 본문을 제거한 뒤6번째 자료로 다시 채우지는 않는다. 본문6000자 이후는 분석하지 않는다.
+- 완료된 상세를 열어 둔 화면의 구독 만료/비공개 전환을 백그라운드로 지우지 않는다. 다음 명시 요청·출처 열람에서는 서버가 현재 권한을 검사한다. UNKNOWN·NO_DATA를 화면에서 숨기므로 빈 결과의 사용자 안내는 향후 검토 대상이다.
+- `/subscription`은 현재 결제 없는 프로토타입이다. 링크 이동이나 로컬 프리미엄 표시는 실제 DB 구독을 활성화하지 않는다. `premium@devmozip.demo`의 구독0건은 앞선 확인 시점 기록이며 이번에 재조회하지 않았다. 실제 사용은 유효 DB 역할/구독을 갖춘 계정이 필요하다.
+- 프론트는403을 유효 구독 안내로 통합하므로 정지 계정·동일 출처 검증 실패 같은 다른403 사유를 세분화하지 않는다. 관련 기능 코드는 이번에 수정하지 않았다.
+- 6B 상세 임대 회복은 기존 기본 추천 요청의 장기 PENDING 자동 복구와 별개다. 기본 추천 자동 복구·월 사용량·포트폴리오 가산점/순위 변경·첨부/PDF/외부URL 분석은 미구현이다.
+
+### 다음 단계 주의사항
+
+- 7단계는 별도 구현 요청 후 시작한다. 무료5/프리미엄100·KST월·성공한 신규 추천만1회·조회/상세 미차감 정책을 유지하고 `GET /api/v1/ai/usage` JSON/초과 오류 계약·현재 실제 DDL·동시/멱등 차감/롤백·대화 삭제 후 사용량 보존을 먼저 확인한다. 구독/결제 도메인까지 자동 확장하지 않는다.
+- 모델·프롬프트·선택/분류 규칙 변경 시 `AiPortfolioAnalysisModel.version()`의 현재 고정 `portfolio-v1`을 함께 올려야 한다. 현재 지문은 모델명·고정 정책 버전과 자료를 반영하지만 프롬프트 파일 내용을 자동 해시하지 않는다.
+- 기존6A 점수/순위/요청 스냅샷과 공개 프로필의 최신 표시를 구분한다. 새 관련성 정책을 과거 결과에 소급 적용하지 않는다. 6B 본문 가산점은 별도 확정 없이 켜지 않는다.
+- 실사용 검증은 유효 구독 계정으로 성공/만료/무료 접근·캐시/비공개 전환·중복 요청·실제 Gemini 품질을 확인한다. 실제 Gemini 결과는 인용 출처와 의미 판단을 사람이 함께 점검한다. 합성 자료를 실제 경력 인증으로 제시하지 않는다.
+- AI 백엔드 변경 반영에는 백엔드 재시작/배포가 필요하고, 최신 단일 별/무료 안내만은 프론트 반영 대상이다. 운영 `npm run start`는 새 빌드로 재시작/배포하며 이번 문서 작업은 앱을 재시작하거나 커밋·푸시하지 않는다.
+
+## 2026-11-10 포트폴리오 추천 버튼 단일 별로 변경
+
+- 최신 사용자 요청으로 두 별 시안을 단일 브랜드 시안색 별로 교체하고 아이콘 영역을24px에서28px로 확대했다. SVG 내부 여백도 줄여 기존 큰 별보다 크게 보이도록 했다. 기존 버튼 문구·프리미엄 안내·분석 동작은 유지한다.
+- 변경: `frontend/public/icons/premium-star.svg`(앞선 미커밋 두 별 SVG 대체), `PortfolioAnalysis.tsx`, 같은 경로 CSS Module, 이 기록. 아래 두 별 적용 기록은 이전 시안이다.
+- 검증: `frontend`의 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 및 변경 TSX ESLint·`git diff --check` 통과. next-env.d.ts 복원. 백엔드 변경이 없어 Gradle 미실행이며 브라우저 수동 시각 검증은 미실행이다. 로그 `/tmp/devmozip-premium-single-star-{tests,build,eslint}.log`. 커밋·푸시는 하지 않았다.
+
+## 2026-11-10 포트폴리오 추천 버튼 브랜드 별 적용
+
+- 사용자 확정 시안에 따라 연결선 없이 독립된 큰 별·작은 별을 문구 왼쪽에 적용했다. 큰 별은 브랜드 시안색, 작은 별은 시안→연보라 그라데이션이며 장식 아이콘은 빈 alt로 처리한다. 래스터 시안 대신24px SVG로 표시해 확대 시 선명도를 유지한다. 버튼은 흰 배경·연보라 테두리·보라 문구를 유지한다.
+- 변경: `frontend/public/icons/premium-sparkles.svg`, `PortfolioAnalysis.tsx`, 같은 경로 CSS Module. 무료 안내·구독 페이지 링크·권한/분석 동작과 앞선 미커밋 변경을 보존한다. 백엔드·점수·DB 변경 없음.
+- 검증: `frontend`에서 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 성공(TypeScript·정적57개), 변경 TSX ESLint·`git diff --check` 통과. next-env.d.ts는 작업 전으로 복원했다. 백엔드 변경이 없어 Gradle 미실행, 브라우저 수동 시각 검증은 미실행이다. 로그 `/tmp/devmozip-premium-stars-{tests,build,eslint}.log`. 이번 디자인/앞선 무료 안내 변경은 아직 커밋·푸시하지 않았다.
+
+## 2026-11-10 6B 무료 사용자 안내 및 구독 페이지 연결
+
+- 사용자 요청으로 무료 사용자에게도 포트폴리오 추천 이유 버튼을 제공하고 클릭 시 API 호출 없이 프리미엄 전용 안내·`/subscription` 링크·닫기를 표시한다. 프리미엄 역할이지만403인 경우 유효 구독 안내와 같은 링크를 표시하며 그 외 오류는 기존 메시지를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/PortfolioAnalysis.tsx`, 같은 경로 CSS Module, AI 정책/API/6B 문서와 이 기록. 백엔드·구독 도메인·결제/사용량 변경 없음.
+- 검증: `frontend`에서 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 성공(TypeScript·정적57개), 변경 TSX ESLint 및 `git diff --check` 통과. 빌드 생성 next-env.d.ts는 변경 전으로 복원했다. 백엔드 변경이 없어 Gradle은 재실행하지 않았다. 브라우저 클릭/실제 계정 수동 검증은 미실행이다. 로그 `/tmp/devmozip-premium-notice-{tests,build,eslint}.log`. 7단계는 시작하지 않았으며 이번 추가 변경은 아직 커밋·푸시하지 않았다.
+
 ## 2026-11-10 6B 최종 정리 및 요청 관련성 필터
 
 - 사용자 확정 기준: 협업 가능/경력/신뢰온도만으로 남던 개발자는 새 추천에서 제외한다. 요청 직군·기술 일치 또는 정확 인용으로 검증된 요구 MET/PARTIAL이면 유지한다. 프로젝트는 분야·기술·텍스트 또는 요구 근거를 사용하고 상태만 맞는 후보를 제외한다. 점수 하한 없이 구현 중·부분 부합은 유지한다. 세부 평가 후 상위10개 전에 적용하며 과거 저장 결과/점수/순위/멱등 재조회는 유지한다.
