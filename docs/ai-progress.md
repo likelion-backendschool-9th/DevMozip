@@ -1,5 +1,60 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 STEP 7 구현·최종 검증
+
+### 완료 범위와 실제 DB 대조
+
+- 브랜치 `feat/gemini-portfolio-analysis`, 기준 HEAD `19a3232`에서 기존 미커밋 문서를 보존했다. Java21/Spring Boot4.1.2/Gradle9.8.2/JPA를 파일로 재확인했다. 회원·프로젝트·포트폴리오·구독 도메인·공통 인증/배포 설정은 수정하지 않았다.
+- 제한 환경의 공유 DB 연결 실패 후 일반 환경에서 **읽기 전용**으로 재조회했다. 공유 PostgreSQL17.11/public에는 `ai_usages`와 추천 요청의 `ai_usage_id`, `reservation_expires_at`가 없다. 제공 ERD의 사용량 컬럼과 현재 구독/요청 DDL을 대조했다. 합의한 `pending_count` 및 비식별 FK/만료 시각만 추가 SQL로 작성했고 공유 DB에는 적용하지 않았다.
+- `AiUsage` 엔티티·월별 UNIQUE·음수 금지, GET `/api/v1/ai/usage` 및 BFF `/api/ai/usage`, 현재 요금제·무료5/프리미엄100·KST 월·응답6개 필드를 구현했다. PREMIUM/ADMIN은 현재 유효 구독을 요구하며 관리자 예외·과거 소급 차감은 없다.
+- 신규 추천 접수는 월별 행 잠금과 처리 중 예약을 사용한다. 기존 대화별 멱등성 키를 먼저 확인하고 신규 요청만 예약한다. 외부 계산은 잠금 밖, 성공은 결과+SUCCESS+used 증가+pending 감소를 같은 트랜잭션, 실패는 결과 롤백 후 FAILED+예약 반환을 별도 트랜잭션으로 처리한다.
+- 요청 최초 수신 KST 월에 귀속하고 구독 변경 시 같은 달 used를 유지한다. 접수 후 구독 종료는 기존 요청 완료를 허용하고 다음 신규 요청부터 현재 한도를 적용한다. 0건 정상 완료는1회, 대화/메시지/조건/GET/6B 상세/실패는 미차감이다.
+- 예약 기본30분(`app.ai.usage.reservation-ttl`, 양수 Duration), usage GET/추천 POST/결과 GET에서 전체 월 만료 정리를 수행한다. 과거 연결 없는 PENDING은 유지한다. 만료와 완료의 상태 전이를 잠금으로 보호해 늦은 결과·중복 정산을 차단한다. 대화 삭제는 예약을 먼저 반환하고 성공 사용량은 보존한다.
+- 프론트는 로컬 Mock/역할 한도 대신 현재 서버 used/limit/remaining/pending/available을 표시한다. 계정·처리 상태 변경/포커스/명시 새로고침에서 조회하며 오류를0회로 숨기지 않는다. 월 한도429의 코드·안내를 BFF에서 유지하고 미생성 요청의 대기 키는 제거한다. 응답 유실 키 재사용은 유지한다.
+
+### 변경 파일
+
+| 범위 | 파일 (각 루트 상대 경로) |
+|---|---|
+| `backend/src/main/java/com/devmozip/backend/` 신규 | `entity/AiUsage.java`, `repository/AiUsageRepository.java`, `service/AiUsageService.java`, `config/AiUsageConfiguration.java`, `dto/ai/AiUsageResponse.java`, `controller/AiUsageController.java` |
+| 같은 루트 수정 | `entity/AiRecommendationRequest.java`, `repository/AiRecommendationRequestRepository.java`, `repository/AiConversationDeletionRepository.java`, `service/impl/AiRecommendationExecutionServiceImpl.java`, `controller/AiRecommendationController.java` |
+| 백엔드 테스트 | 신규 `ai/controller/AiUsageIntegrationTest.java`; 기존 `AiRecommendationExecutionTests.java`, `AiConversationTests.java`, `AiMessageAnalysisTests.java` 및 `src/test/resources/ai/schema.sql` |
+| 프론트 | 신규 `lib/matching/usage.ts`/`usage.test.ts`; `app/ai/matching/_components/ChatConditions.tsx`/CSS, `app/api/ai/[...path]/route.ts`/테스트, `lib/state/homeStore.ts`/테스트, `tests/screens/FollowingMatching.test.tsx` |
+| 문서·AI SQL | `sql/ai-usages.sql`, `ai-usage-api.md`, `ai-step7-concurrency-notes.md`, `ai-matching.md`, `ai-api-spec.md`, 이 기록 |
+
+### 이번에 실행한 검증
+
+| 검증 | 명령·환경 | 실제 결과 |
+|---|---|---|
+| 격리 PostgreSQL 동시성·기존 실행 | `backend`: `DEVMOZIP_AI_USAGE_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:18547/ai_usage_test DEVMOZIP_AI_EXECUTION_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:18547/ai_usage_test DEBUG=false ./gradlew test --tests '*AiUsageIntegrationTest' --tests '*AiRecommendationExecutionTests' --no-daemon` | PostgreSQL18.6, 사용량16개+추천 실행17개=33개 모두 통과·스킵0. SQL 재실행 포함.53초 |
+| 백엔드 전체 회귀 | `backend`: `DEBUG=false ./gradlew test --no-daemon` | 명령 성공. JUnit XML67개에서 총709개,598개 통과·111개 스킵·실패/오류0.1분26초. Docker 비가용 Testcontainers·팀DB opt-in·PG 선택 검증 조건의 스킵이며 전체709개 실행 통과로 표현하지 않음 |
+| 프론트 전체 | `frontend`: `npm test -- --maxWorkers=2` | 80개 파일897개 통과 |
+| 최종 프론트 빌드 | `frontend`: `npm run build` | 일반 환경에서 성공, TypeScript·정적57개 생성. 생성 next-env.d.ts는 작업 전으로 복원 |
+| 변경 프론트 제품 검사 | `npx eslint app/ai/matching/_components/ChatConditions.tsx 'app/api/ai/[...path]/route.ts' lib/matching/usage.ts lib/matching/usage.test.ts lib/state/homeStore.ts` | 종료0·오류 출력 없음 |
+
+주요 경쟁 실험: 무료 used=4에서 서로 다른8개 대화의 동시 요청은201 한 개/429 일곱 개, 최종 used=5/pending=0. 월 행 없는8개 동시 요청은 월 행1개/성공5개/거절3개다. 같은 키 처리 중 재전송은202·추가 계산 없음, 완료 후1회다. 무료6번째/프리미엄101번째 차단, 실패·저장 롤백 미차감, 월 경계, 구독 전환/만료·ADMIN, 사용자 격리, 대화 삭제, 만료/완료/중복 정리 경합, DB 제약을 확인했다.6B 테스트 대역 통합은 전체 회귀에서 유지한다.
+
+초기 검증 실패도 구분한다. Gradle 캐시 읽기 전용·제한 환경 Next TypeScript 설정 조회 실패는 일반 환경 재실행으로 해결했다. 최초 백엔드 회귀의 조회 경로/fixture 기대 실패, PostgreSQL DO 블록 분리 오류, 신규 테스트의 인증 없는 서비스 직접 호출·Mockito 재설정 오류, native DELETE 후 JPA 잔여 요청 참조 문제를 수정한 뒤 위 최종 검증을 실행했다. 실제 제품 문제의 원인·수정은 [학습 기록](ai-step7-concurrency-notes.md)에 남겼다.
+
+로그: `/tmp/devmozip-step7-postgres-final.log`, `/tmp/devmozip-step7-pg-results/TEST-*.xml`, `/tmp/devmozip-step7-backend-final.log`, `/tmp/devmozip-step7-frontend-final.log`, `/tmp/devmozip-step7-build-final.log`, `/tmp/devmozip-step7-eslint.log`. 기존 단계 수치를 이번 결과로 대신 쓰지 않았다.
+
+최종 `git diff --check`와 신규 문서 상대 링크 검사를 통과했다. 변경31개 파일의 업무 범위를 확인했고, 빌드 생성 파일 변경은 남기지 않았다. 검증 전용 `/tmp/devmozip-step7-pg` PostgreSQL 서버는 종료했으며 로그·테스트 결과는 보존했다.
+
+### 남은 적용·검증 경계
+
+- 공유 DB에 [AI 전용 SQL](sql/ai-usages.sql)을 검토·적용한 뒤 새 서버를 반영해야 한다. 현재 실행 중 서비스 재시작·공유 데이터/DDL 변경·운영 배포·커밋·푸시·main/develop 병합은 하지 않았다. 기존 공통 ddl-auto 설정은 그대로이며 자동 update만으로 모든 SQL 제약을 보장하지 않는다.
+- 실제 Gemini 호출, 공유 PostgreSQL17에서의 신규 API 쓰기/동시성, 여러 JVM/서버 인스턴스·프로세스 강제 종료 실험, 브라우저 수동·모바일 시각 검증은 하지 않았다. 이번 동시성은 단일 JVM의 독립 HTTP 요청/트랜잭션/커넥션과 격리 PostgreSQL18.6+추천 엔진 테스트 대역이다.
+- 만료 정리는 접근 시 수행하고 별도 스케줄러는 없다.30분은 설정 가능한 초기값이며 전체 후보/실제 모델 지연 측정 후 조정할 수 있다. 만료가 외부 호출을 즉시 취소하지는 않는다. 기존 연결 없는 과거 PENDING 자동 복구는 포함하지 않는다.
+- 짧은 ‘네’ 대화 문제·6B 가산점·결제 구현 등 다른 범위는 진행하지 않는다. API/시간/잠금 상세는 [구현 계약](ai-usage-api.md)을 따른다.
+
+## 2026-11-10 STEP 7 정책·동시성 학습 기록 — 문서 작업
+
+- 사용자 합의한 무료5/프리미엄100, 현재 유효 구독 판정, KST 접수 월 귀속, 0건 성공 차감, 실패 미차감, 처리 중 구독 변경·기존 사용 횟수 유지 정책을 기록했다. 처리 중 자리 예약과 짧은 DB 잠금, 결과/상태/사용량 원자 저장 방향을 정리했다.
+- 신규 `docs/ai-step7-concurrency-notes.md`: 쉬운 용어, 경쟁 상황 예시, 현재 코드 경계, ERD 비식별관계·추가 컬럼안, API 계산값, 대안 비교, 만료/삭제/월 경계, 검증 계획, 트러블슈팅 양식과 포트폴리오 작성 예시. 실제 장애·실험 결과와 설계 가설을 구분했다.
+- `docs/ai-matching.md`, `docs/ai-api-spec.md`에 최신 설계 합의·예정 API 링크를 추가하고 현재 단계 설명을 보완했다. 이 문서의 전체 단계 표도6A/6B 구현 상태로 갱신했다. 이후 무료 안내·별 아이콘은 현재 f4d313e에 커밋됐으며 HEAD는19a3232다. 아래 과거 미커밋 기록은 당시 상태다.
+- 미완료: 실제 DB DDL 대조·마이그레이션, AiUsage/API/예약·차감 구현, 기본 추천 예약 만료 시간·회복 실행 방식, PostgreSQL 동시성 실험. 코드·SQL·DB·실행 환경 변경·커밋·푸시는 하지 않는다.
+- 이번 검증: `frontend`에서 `npm run build` 성공(TypeScript·정적57개 생성), 생성된 next-env.d.ts는 작업 전 내용으로 복원했다. `git diff --check` 및 신규 문서의 상대 파일 링크 존재 확인 통과. 문서만 변경했으므로 프론트/백엔드 기능 테스트·실제 DB/Gemini 검증은 실행하지 않았고 새 테스트도 작성하지 않았다. 기존 테스트 결과를 이번 성공으로 보고하지 않는다.
+
 ## 2026-11-10 6B 불필요 코드·로그 점검
 
 - PR 정리 요청으로6B 및 함께 변경된 AI 제품 코드를 점검했다. `AiRecommendationServiceImpl`의 미사용 `Transactional` import1개를 제거했다. 정책·트랜잭션 경계·실제 동작은 변경하지 않았다.
@@ -629,9 +684,9 @@
 | 3. 추천 엔진 | 실제 DB 후보 조회·필터링, 개발자/프로젝트 적합도·순위·기본 이유 계산 | 동일 입력·데이터로 일관된 0~100점·순위 산출 | **내부 엔진 구현 완료**. H2·격리 PostgreSQL 18 검증, 팀 DB 17 대조 미완료 |
 | 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | **백엔드 및 프론트 연동 코드 구현**. 신규 sync 스키마 적용 성공·실제 연동 검토 완료(사용자 확인). UI 개선은 남음 |
 | 5. Gemini 조건 분석 | 자연어 조건 추출·변경·병합, 추가 질문, 응답 저장, 장애 처리 | 검증된 조건 JSON을 선택 UI와 동기화 | **백엔드·프론트/BFF 분석 연동 구현**. Postman 실제 Gemini 성공 사용자 확인. 관련 프론트 58개 통과·빌드 성공. 부분 UI 조건 전달·브라우저 전체 통합 검증은 남음 |
-| 6A. 자연어 요구사항 추천 반영 | 확정된 세부 요구사항을 실제 후보 대조·점수/순위·기본 이유에 연결 | 스냅샷·재추천·재시도 일관성, 기존 필터 보존 | 사전 설계만 수행, 정책 답변 대기·미구현 |
-| 6B. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 사전 설계만 수행·미구현, 6A 후 자동 착수하지 않음 |
-| 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 미구현 |
+| 6A. 자연어 요구사항 추천 반영 | 확정된 세부 요구사항을 실제 후보 대조·점수/순위·기본 이유에 연결 | 스냅샷·재추천·재시도 일관성, 기존 필터 보존 | 구현 완료. 80:20 평가·summary·관련성 필터 반영. 실제 모델 품질·전체 통합 검증 한계는 상단 기록 참조 |
+| 6B. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 구현 완료. 유효 구독·인용 검증·캐시·임대 제어 및 프론트/BFF 연결. 실제 Gemini·공유 DB 신규 상세 API 검증은 남음 |
+| 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 코드·BFF/표시 구현, 격리 PostgreSQL 동시성 검증 완료. 공유 SQL 적용·배포 및 실사용 검증은 남음 |
 
 2단계는 초기 빈 조건과 PUT 전체 교체를 유지하고 최신 사용자 확정으로 분야를 interests에 통합했다. 현재 입력 계약과 후속 후보 데이터 비교 규칙은 API 명세에서 구분한다. 3단계의 종전 예시 배점은 2026-11-06 정책으로 대체한다. 직군 30/기술 30/경험 20/신뢰 온도 10이며 협업 배점·후기는 제거한다. 포트폴리오 연동 전 경험은 미산정으로 표시하고 평가 가능한 배점으로 100점 환산한다. 기본 추천에서 상세 포트폴리오는 사용하지 않는다.
 

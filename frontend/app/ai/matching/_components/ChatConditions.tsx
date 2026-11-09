@@ -1,5 +1,5 @@
 'use client';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ArrowRight, Check, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { chatCareerOptions, chatDurationOptions, chatInterestOptions, chatRequirementLabels, chatRoleOptions, emptyChatRequirements } from '@/mocks/matchingChat';
 import { stackOptions } from '@/mocks/home';
@@ -7,6 +7,7 @@ import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
 import { addChatStack, missingChatRequirements } from '@/lib/matching/matchingChatService';
 import styles from './ChatConditions.module.css';
+import { fetchAiUsage, type AiUsage } from '@/lib/matching/usage';
 export function ChatConditions({ onRecommend, onClose, busy = false, retry = false, signedIn = true }: {
     onRecommend: () => void; onClose?: () => void; busy?: boolean; retry?: boolean; signedIn?: boolean;
 }) {
@@ -21,7 +22,27 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
     const errorId = useId();
     const missing = missingChatRequirements(r);
     const message = error || (showMissing && !retry && missing.length ? `${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.` : '');
-    const limit = user?.role === 'premium' || user?.role === 'admin' ? 100 : 5;
+    const account = signedIn && user ? `${user.id}:${user.email}:${user.role}` : '';
+    const [usage, setUsage] = useState<{ account: string; value?: AiUsage; failed?: boolean }>();
+    const [usageVersion, setUsageVersion] = useState(0);
+    useEffect(() => {
+        if (!account) return;
+        const controller = new AbortController();
+        const load = async () => {
+            try {
+                const value = await fetchAiUsage(controller.signal);
+                if (!controller.signal.aborted) setUsage({ account, value });
+            } catch {
+                if (!controller.signal.aborted) setUsage({ account, failed: true });
+            }
+        };
+        void load();
+        const focus = () => setUsageVersion(v => v + 1);
+        window.addEventListener('focus', focus);
+        return () => { controller.abort(); window.removeEventListener('focus', focus); };
+    }, [account, busy, usageVersion]);
+    const currentUsage = usage?.account === account ? usage : undefined;
+    const used = currentUsage?.value;
     const tags = (key: 'interests' | 'stacks', options: string[]) => <div className={styles.chips}>{options.map(value => <button type="button" key={value} aria-pressed={r[key].includes(value)} onClick={() => {
         try { editChat({ [key]: r[key].includes(value) ? r[key].filter(v => v !== value) : key === 'stacks' ? addChatStack(r.stacks, value) : [...r[key], value] }); setError(''); }
         catch (e) { setError(e instanceof Error ? e.message : '조건을 확인해 주세요.'); }
@@ -68,7 +89,9 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
             {message && <p id={errorId} role="alert" className={styles.error}>{message}</p>}
         </fieldset>
         <footer className={styles.footer}>
-            <div className={styles.usage}><span>월간 추천</span><strong>— <small>/ {limit}회</small></strong></div><p>서버 사용량 집계 준비 중 · 현재 차감되지 않습니다.</p>
+            <div className={styles.usage}><span>월간 추천</span><strong>{used?.usedCount ?? '—'} <small>/ {used?.limit ?? '—'}회</small></strong></div>
+            <p>{!account ? '로그인 후 사용량을 확인할 수 있습니다.' : used ? `${used.usageMonth} · 남은 ${used.remainingCount}회 · 처리 중 ${used.pendingCount}회 · 지금 실행 가능 ${used.availableCount}회` : currentUsage?.failed ? '사용량을 불러오지 못했습니다.' : '사용량 확인 중입니다.'}
+                {account && <button type="button" onClick={() => setUsageVersion(v => v + 1)}>사용량 새로고침</button>}</p>
             <button type="button" className={styles.recommend} disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={16} />{busy ? '추천 처리 중…' : retry ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}<ArrowRight size={15} /></button>
             <small>{recommendationUnchanged ? '추천 조건을 변경하면 다시 추천받을 수 있어요.' : signedIn ? '대화·조건 변경은 추천 횟수에 영향을 주지 않아요.' : '로그인 후 추천을 실행할 수 있어요.'}</small>
         </footer>

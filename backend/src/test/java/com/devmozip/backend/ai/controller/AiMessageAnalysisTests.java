@@ -55,6 +55,7 @@ class AiMessageAnalysisTests {
 	}
 	@BeforeEach void reset() {
 		jdbc.update("DELETE FROM ai_recommendations"); jdbc.update("DELETE FROM ai_recommendation_requests");
+		jdbc.update("DELETE FROM ai_usages");
 		jdbc.update("DELETE FROM ai_messages"); jdbc.update("DELETE FROM ai_conversations"); jdbc.update("DELETE FROM users");
 		jdbc.update("INSERT INTO users(id) VALUES (101),(202)");
 		when(gemini.analyze(anyString())).thenReturn(new GeminiAnalysis("어떤 프로젝트를 원하시나요?", List.of("원하는 기간은 얼마인가요?"), List.of(), List.of()));

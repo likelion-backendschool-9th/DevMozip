@@ -40,11 +40,13 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	private final TransactionTemplate read;
 	private final AiConditionsDocument documents;
 	private final AiRequirementSnapshot snapshots;
+	private final com.devmozip.backend.service.AiUsageService usage;
 
 	public AiRecommendationExecutionServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
 		AiMessageRepository messages, AiRecommendationRequestRepository requests, AiRecommendationRepository results,
 		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager,
-		AiConditionsDocument documents, AiRequirementSnapshot snapshots) {
+		AiConditionsDocument documents, AiRequirementSnapshot snapshots, com.devmozip.backend.service.AiUsageService usage) {
+		this.usage = usage;
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
@@ -70,6 +72,8 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	public Execution execute(long conversationId, Long messageId, String key, boolean replay) {
 		long userId = currentUser.getCurrentUserId();
 		if (key == null || !key.matches("[A-Za-z0-9._:-]{1,128}")) throw bad("Idempotency-Key는 영문·숫자·._:-로 1~128자여야 합니다.");
+		usage.expire(userId);
+		var admission = replay ? null : usage.prepare(userId);
 		var started = transaction.execute(tx -> {
 			var conversation = owned(conversationId, userId, true);
 			if (replay) {
@@ -96,7 +100,9 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 				return new Execution(response(conversationId, item), false);
 			}
 			AiMessageLimits.validateTotal(AiMessageLimits.length(messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId)));
-			var request = requests.saveAndFlush(new AiRecommendationRequest(conversation, message, captured, key));
+			var request = new AiRecommendationRequest(conversation, message, captured, key);
+			usage.reserve(request, admission, userId);
+			requests.saveAndFlush(request);
 			return new Execution(response(conversationId, request), true);
 		});
 		if (!started.created()) return started;
@@ -109,6 +115,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);
+				if (!usage.lockActive(request)) return new Execution(response(conversationId, request), false);
 				int rank = 1;
 				for (var developer : calculated.developers()) results.save(new AiRecommendation(request,
 					entityManager.getReference(Member.class, developer.id()), null, developer.score().total(),
@@ -118,7 +125,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 					entityManager.getReference(Project.class, project.id()), project.score().total(),
 					AiStoredEvaluation.encode(project.score()), rank++));
 				results.flush();
-				request.complete(AiRecommendationRequest.Status.SUCCESS);
+				usage.settle(request, true);
 				requests.flush();
 				return new Execution(response(conversationId, request), true);
 			});
@@ -127,7 +134,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);
-				request.complete(AiRecommendationRequest.Status.FAILED);
+				if (usage.lockActive(request)) usage.settle(request, false);
 				requests.flush();
 				return new Execution(response(conversationId, request), true);
 			});
@@ -137,6 +144,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	@Override
 	public RecommendationResponse find(long conversationId, Long requestId) {
 		long userId = currentUser.getCurrentUserId();
+		usage.expire(userId);
 		return read.execute(tx -> {
 			owned(conversationId, userId, false);
 			if (requestId != null && requestId <= 0) throw bad("추천 요청 ID를 확인해 주세요.");

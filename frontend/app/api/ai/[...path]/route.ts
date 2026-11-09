@@ -25,7 +25,7 @@ async function handle(request: Request, context: Context) {
         } catch { return error(502, '프로젝트 정보를 불러올 수 없습니다.'); }
     }
     const allowed = request.method === 'GET'
-        ? new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
+        ? route === 'usage' || new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
         : request.method === 'DELETE' ? new RegExp(`^conversations/${id}$`).test(route)
         : request.method === 'POST' && (route === 'conversations' || route === 'conversations/sync'
             || new RegExp(`^conversations/${id}/(?:messages|recommendations)$`).test(route));
@@ -66,6 +66,9 @@ async function handle(request: Request, context: Context) {
         // Recommendation FAILED responses contain the public result DTO; never forward server error details.
         if (response.ok || response.status === 500 && body?.status === 'FAILED' && Number.isSafeInteger(body?.requestId)) {
             return NextResponse.json(body, { status: response.status, headers });
+        }
+        if (response.status === 429 && route.endsWith('/recommendations') && body?.code === 'AI_MONTHLY_LIMIT_EXCEEDED') {
+            return NextResponse.json({ code: body.code, message: '이번 달 추천 가능 횟수가 부족하거나 남은 횟수를 처리 중입니다. 사용량을 확인해 주세요.' }, { status: 429, headers });
         }
         const status = [400, 401, 403, 404, 409].includes(response.status) ? response.status : 502;
         return error(status, ({ 400: '입력 내용을 확인해 주세요.', 401: '로그인이 만료되었습니다. 다시 로그인해 주세요.',
