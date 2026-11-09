@@ -1,4 +1,6 @@
 'use client';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { ApiProjectList } from '@/app/projects/_components/api/ApiProjectList';
 import styles from './page.module.css';
 import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 import Link from 'next/link';
@@ -10,7 +12,7 @@ import { myProjects } from '@/lib/projects/myProjectsService';
 import { myProjectTabs } from '@/mocks/projectWorkspace';
 import { ProjectDateSimulator } from '@/components/projects/ProjectDateSimulator';
 import { Card } from '@/components/common/Card';
-export default function MyProjectsPage() {
+function MockMyProjectsPage() {
     const { user } = useAuth();
     const { state, now } = useProjects();
     const { state: profiles } = useProfiles();
@@ -144,3 +146,5 @@ export default function MyProjectsPage() {
         </div>
     );
 }
+
+export default function MyProjectsPage(){const {enabled}=useMockVisibility();return enabled?<MockMyProjectsPage/>:<ApiProjectList mine/>;}

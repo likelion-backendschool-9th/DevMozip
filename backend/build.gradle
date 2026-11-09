@@ -24,6 +24,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	// 리프레시 토큰 저장소 (local 프로필은 메모리 저장소를 쓴다)
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// 비밀번호 재설정 메일 발송
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// 헬스체크(/actuator/health) - 프론트 /api/health와 블루그린 배포가 사용한다
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// 요청 값 검증 (@Valid)
@@ -38,8 +40,8 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	// PostgreSQL
 	runtimeOnly 'org.postgresql:postgresql'
-	// H2
-	runtimeOnly 'com.h2database:h2'
+	// 기존 H2 기반 테스트 전용. 실제 애플리케이션은 PostgreSQL을 사용한다.
+	testRuntimeOnly 'com.h2database:h2'
 	// JWT 관련 라이브러리 (JJWT)
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
@@ -58,7 +60,7 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// 로컬에서 ./gradlew bootRun만 실행해도 local(H2) 프로필로 뜨게 한다.
+// 로컬에서 ./gradlew bootRun만 실행해도 local(PostgreSQL) 프로필로 뜨게 한다.
 // SPRING_PROFILES_ACTIVE 환경변수가 있으면(compose 개발 컨테이너 등) 그 값을 따른다. 운영 jar 실행에는 영향이 없다.
 tasks.named('bootRun') {
 	if (!System.getenv('SPRING_PROFILES_ACTIVE')) {

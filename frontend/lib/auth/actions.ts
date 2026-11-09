@@ -1,7 +1,8 @@
 'use server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { normalizeEmail } from '@/lib/account/authService';
-import type { KakaoAccountStatus, KakaoIntent, PasswordSetInput, SignupInput, SignupOptions } from '@/types/auth';
+import type { PasswordChangeInput } from '@/types/account';
+import type { KakaoAccountStatus, KakaoIntent, PasswordResetInput, PasswordSetInput, SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
 import { ACCESS_COOKIE, REFRESH_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_FLOW_MAX_AGE, KAKAO_SIGNUP_COOKIE, cookieOptions } from './cookies';
 import { isKakaoIntent, serializeKakaoFlow } from './kakao';
@@ -133,6 +134,53 @@ export async function setPasswordAction({ newPassword, confirmPassword }: Passwo
     return response.ok ? null : { error: await readErrorMessage(response) };
 }
 
+async function clearSessionCookies() {
+    const jar = await cookies();
+    jar.set(ACCESS_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+    jar.set(REFRESH_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+}
+
+// 로그인한 회원의 비밀번호 변경. 성공하면 모든 기기에서 로그아웃되므로 쿠키를 지운다. 화면 이동은 호출한 쪽이 맡는다.
+export async function changePasswordAction({ currentPassword, newPassword, confirmPassword }: PasswordChangeInput): Promise<{ error: string } | null> {
+    let response: Response;
+    try {
+        response = await backendFetch('/api/v1/users/me/password', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+        });
+    } catch { return { error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' }; }
+    if (!response.ok) return { error: await readErrorMessage(response) };
+    await clearSessionCookies();
+    return null;
+}
+
+// 재설정 메일 요청. 백엔드의 IP 제한에 쓰도록 사용자 IP를 함께 넘긴다.
+export async function requestPasswordResetAction(email: string): Promise<{ error: string } | null> {
+    const clientIp = (await headers()).get('x-real-ip');
+    let response: Response;
+    try {
+        response = await backendFetch('/api/v1/auth/password/reset-request', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...(clientIp ? { 'X-Real-IP': clientIp } : {}) },
+            body: JSON.stringify({ email: normalizeEmail(email) }),
+        });
+    } catch { return { error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' }; }
+    return response.ok ? null : { error: await readErrorMessage(response) };
+}
+
+// 메일 링크로 새 비밀번호를 저장한다. 화면 이동은 호출한 쪽이 맡는다. 401이면 링크가 쓸 수 없는 상태이므로 expired로 알린다.
+export async function resetPasswordAction({ token, newPassword, confirmPassword }: PasswordResetInput): Promise<{ error: string; expired?: boolean } | null> {
+    let response: Response;
+    try {
+        response = await backendFetch('/api/v1/auth/password/reset', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, newPassword, confirmPassword }),
+        });
+    } catch { return { error: '인증 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' }; }
+    if (response.status === 401) return { error: await readErrorMessage(response), expired: true };
+    if (!response.ok) return { error: await readErrorMessage(response) };
+    // 이 브라우저에 다른 계정으로 로그인되어 있어도 새 비밀번호로 다시 로그인하게 한다.
+    await clearSessionCookies();
+    return null;
+}
+
 // 화면 이동은 호출한 쪽(헤더 로그아웃 버튼)이 맡는다. 여기서 redirect하면 클라이언트 이동과 겹쳐 결과를 받지 못한다.
 export async function logoutAction(): Promise<{ error: string } | null> {
     const jar = await cookies();
@@ -145,7 +193,6 @@ export async function logoutAction(): Promise<{ error: string } | null> {
             if (!response.ok) return { error: await readErrorMessage(response) };
         } catch { return { error: '로그아웃을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.' }; }
     }
-    jar.set(ACCESS_COOKIE, '', { ...cookieOptions, maxAge: 0 });
-    jar.set(REFRESH_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+    await clearSessionCookies();
     return null;
 }

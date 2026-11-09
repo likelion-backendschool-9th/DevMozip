@@ -1,4 +1,6 @@
 'use client';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -213,7 +215,7 @@ function ProjectDetail({ projectId }: { projectId: string }) {
         </div>
     );
 }
-export default function ProjectDetailPage() {
+function MockProjectDetailPage() {
     const { projectId = '' } = useParams<{
         projectId: string;
         postId: string;
@@ -223,3 +225,5 @@ export default function ProjectDetailPage() {
         ? <PublicProjectDetail key={projectId} projectId={Number(projectId)} />
         : <ProjectDetail key={projectId} projectId={projectId} />;
 }
+
+export default function ProjectDetailPage(){const {enabled}=useMockVisibility();return enabled?<MockProjectDetailPage/>:<ApiProjectDetail/>;}

@@ -2,14 +2,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/lib/state/authStore';
 import { fetchOwnProfile } from '@/lib/profiles/profileUpdate';
-import type { ProfileDetail } from '@/types/profileDetail';
-type OwnState = { profile: ProfileDetail | null; loading: boolean; error: string; retry: () => void; update: (profile: ProfileDetail) => void };
+import type { OwnProfileDetail } from '@/types/profileDetail';
+type OwnState = { profile: OwnProfileDetail | null; loading: boolean; error: string; retry: () => void; update: (profile: OwnProfileDetail) => void };
 const OwnProfileContext = createContext<OwnState>({ profile: null, loading: false, error: '', retry: () => {}, update: () => {} });
 export const useOwnProfile = () => useContext(OwnProfileContext);
 export function OwnProfileProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
     const email = user?.email;
-    const [state, setState] = useState<{ email?: string; profile: ProfileDetail | null; loading: boolean; error: string }>({ profile: null, loading: false, error: '' });
+    const [state, setState] = useState<{ email?: string; profile: OwnProfileDetail | null; loading: boolean; error: string }>({ profile: null, loading: false, error: '' });
     const [attempt, setAttempt] = useState(0);
     useEffect(() => {
         if (!email) return;

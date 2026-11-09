@@ -1,0 +1,6 @@
+import {projectGuard,projectError,proxyProject,readProjectBody} from '@/lib/projects/projectProxy';
+import {pickProjectRequest,parseProjectDetail,parseProject,validProjectId} from '@/lib/projects/projectApiContract';
+type Context={params:Promise<{projectId:string}>};
+export async function GET(_request:Request,{params}:Context){const {projectId}=await params;return validProjectId(projectId)?proxyProject('/api/v1/projects/'+projectId,{},parseProjectDetail):projectError(400,'프로젝트 ID를 확인해 주세요.');}
+export async function PUT(request:Request,{params}:Context){const blocked=await projectGuard(request);if(blocked)return blocked;const {projectId}=await params;if(!validProjectId(projectId))return projectError(400,'프로젝트 ID를 확인해 주세요.');let body;try{body=pickProjectRequest(await readProjectBody(request));}catch{return projectError(400,'입력 내용을 확인해 주세요.');}return proxyProject('/api/v1/projects/'+projectId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},parseProject);}
+export async function DELETE(request:Request,{params}:Context){const blocked=await projectGuard(request);if(blocked)return blocked;const {projectId}=await params;return validProjectId(projectId)?proxyProject('/api/v1/projects/'+projectId,{method:'DELETE'}):projectError(400,'프로젝트 ID를 확인해 주세요.');}

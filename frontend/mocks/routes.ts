@@ -13,7 +13,7 @@ export const routes: RouteDefinition[] = [
  {path:'/settings/privacy',title:'개인정보 및 계정 설정',description:'Mock 계정·연동·결제·보안',stage:2,group:'계정'},
  { path: '/', title: '홈', description: '새로운 동료와 프로젝트를 발견하는 공간', stage: 1, group: '시작' },
  { path: '/login', title: '로그인', description: '서버 계정 이메일 로그인', stage: 2, group: '계정' },
- { path: '/forgot-password', title: '비밀번호 찾기', description: 'Mock 비밀번호 복구 안내', stage: 2, group: '계정' },
+ { path: '/forgot-password', title: '비밀번호 찾기', description: '메일 링크로 비밀번호 재설정', stage: 2, group: '계정' },
  { path: '/signup', title: '회원가입', description: '개발 직군, 기술 스택과 관심 분야 등록', stage: 2, group: '계정' },
  { path: '/explore', title: '통합 검색', description: '기술과 관심사가 맞는 개발자와 프로젝트 탐색', stage: 2, group: '탐색' },
  { path: '/users/:userId', title: '개발자 프로필', description: '소개 · 포트폴리오 · 포스팅 · 활동 · 리뷰의 5개 가로 탭', stage: 2, group: '탐색' },

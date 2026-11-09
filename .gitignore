@@ -15,6 +15,7 @@ build/
 .vscode/
 *.iml
 .DS_Store
+*:Zone.Identifier
 # Logs
 *.log
 
@@ -32,10 +33,7 @@ build/
 .next/
 out/
 
-# Deployment configuration is source-controlled; secrets and certificates are not.
-!.github/workflows/*.yml
-!/compose.prod.yaml
-!/backend/src/main/resources/application.yaml
+# Existing tracked configuration files remain unchanged; new YAML files are ignored.
 certs/
 
 # Local profile image uploads

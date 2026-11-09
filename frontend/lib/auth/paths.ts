@@ -2,7 +2,7 @@ const protectedPrefixes = ['/my-projects', '/onboarding', '/profile/me', '/bookm
 export const hasPrefix = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 export function isProtectedPath(path: string) {
     return protectedPrefixes.some(prefix => hasPrefix(path, prefix))
-        || /^\/projects\/(new|[^/]+\/(manage|reviews(?:\/write)?))(?:\/|$)/.test(path)
+        || /^\/projects\/(new|[^/]+\/(manage|edit|reviews(?:\/write)?))(?:\/|$)/.test(path)
         || /^\/(?:posts|feeds)\/(new|[^/]+\/edit)(?:\/|$)/.test(path);
 }
 export function safeNext(value: unknown) {
