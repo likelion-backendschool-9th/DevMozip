@@ -17,13 +17,14 @@ public class AiAnalysisMergePolicy {
 	public record Merged(String document, String reply) {}
 	public Merged merge(String previous, GeminiAnalysis analysis, String latest, long messageId) {
 		ObjectNode doc = documents.read(previous);
+		ObjectNode initial = documents.formal(doc);
 		ObjectNode metadata = doc.has("_analysis") ? doc.withObject("_analysis").deepCopy() : mapper.createObjectNode();
 		var sources = metadata.withObject("sources");
 		for (String field : AiConditionsDocument.FIELDS) if (doc.has(field) && !sources.has(field)) {
 			sources.set(field, mapper.valueToTree(Map.of("origin", "MANUAL")));
 		}
 		var questions = new LinkedHashSet<>(analysis.questions());
-		var applied = new ArrayList<String>();
+		var changedFields = new LinkedHashSet<Field>();
 		var suggestions = new ArrayList<Change>();
 		var factChanges = new ArrayList<>(analysis.facts());
 		var resolvedRoles = new HashSet<String>();
@@ -60,8 +61,11 @@ public class AiAnalysisMergePolicy {
 				resolvedRoles.add(change.values().getFirst().strip() + " (인원 미정)");
 			}
 			sources.set(change.field().name(), mapper.valueToTree(Map.of("origin", "EXPLICIT", "messageId", messageId, "evidence", change.evidence())));
-			applied.add(label(change.field()) + ": " + display(doc, change.field()));
+			changedFields.add(change.field());
 		}
+		var applied = changedFields.stream()
+			.filter(field -> !Objects.equals(initial.get(field.name()), doc.get(field.name())))
+			.map(field -> label(field) + ": " + display(doc, field)).toList();
 		var facts = new ArrayList<ObjectNode>();
 		if (metadata.path("facts").isArray()) for (var fact : metadata.path("facts")) facts.add((ObjectNode) fact.deepCopy());
 		for (var change : factChanges) {

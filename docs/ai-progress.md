@@ -1,5 +1,10 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-09 전체 조건 요약 중복 제거
+
+- 중복 출력 지점을 검색해 `AiAnalysisMergePolicy`의 변경별 누적 요약이 직군뿐 아니라 모든 정형 조건에 공통인 원인임을 확인했다. 조건 적용 로직은 유지하고, 최종값이 달라진 필드만 한 번씩 `appliedChanges`·ASSISTANT에 요약하도록 변경했다. `analysis-instruction.txt`에 모델의 중복 조건 열거를 생략하도록 한 줄 추가했다. 추가 Gemini 호출·프론트/도메인 변경은 없다.
+- `AiMessageAnalysisTests`에 다섯 필드의 연속 변경·중복 추가와 변경 취소·최종 해제 회귀 테스트2개를 추가했다. `DEBUG=false ./gradlew test --no-daemon` 성공(1분57초), 총457개 중456개 통과·별도 PostgreSQL URL이 필요한 기존 검증1개 스킵·실패/오류0. 프론트 `npm run build` 성공(50개 페이지), 생성된 next-env.d.ts만 복원했다. `git diff --check` 통과. 로그 `/tmp/devmozip-summary-dedup-{backend,build}.log`. AI 문서3개 외 불필요한 영역은 수정하지 않았다. 실제 Gemini 호출·기존 저장 대화 재작성·커밋·푸시는 수행하지 않는다.
+
 ## 2026-11-09 STEP 6A 작업 통합·커밋
 
 - 사용자 요청으로 `feat/gemini-recommend`의 지금까지 구현한 6A·인원 미정 대화·주석 정리와 이번 중복 질문/프로젝트 이동 보완을 함께 커밋한다. 푸시는 요청 범위가 아니며 6B를 시작하지 않는다. 아래 커밋 미실행 기록은 각 작업 당시 이력이다.

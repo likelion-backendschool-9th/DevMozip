@@ -150,6 +150,45 @@ class AiMessageAnalysisTests {
 		assertFalse(reply.contains("동료는 몇 명"));
 		verifyNoInteractions(engine);
 	}
+	@Test void appliedConditionsShowOnlyFinalValueOnceForEveryField() throws Exception {
+		long id = create();
+		String text = "웹 커뮤니티에 React Spring Boot로 프론트엔드 백엔드 디자이너 각각 1명, 경력 무관에서 1년 이상, 3개월에서 6개월로 정리해줘";
+		analysis(List.of(change(Field.roles, Action.ADD, List.of("프론트엔드"), 1, text),
+			change(Field.roles, Action.ADD, List.of("백엔드"), 1, text),
+			change(Field.roles, Action.ADD, List.of("디자이너"), 1, text),
+			change(Field.interests, Action.ADD, List.of("웹"), null, text),
+			change(Field.interests, Action.ADD, List.of("커뮤니티"), null, text),
+			change(Field.stacks, Action.ADD, List.of("React"), null, text),
+			change(Field.stacks, Action.ADD, List.of("Spring Boot"), null, text),
+			change(Field.stacks, Action.ADD, List.of("React"), null, text),
+			change(Field.career, Action.SET, List.of("경력 무관"), null, text),
+			change(Field.career, Action.SET, List.of("1년 이상"), null, text),
+			change(Field.durationMonths, Action.SET, List.of("3"), null, text),
+			change(Field.durationMonths, Action.SET, List.of("6"), null, text)), List.of());
+		mvc.perform(send(id, "final-summary", text)).andExpect(status().isCreated())
+			.andExpect(jsonPath("$.analysis.appliedChanges.length()").value(5))
+			.andExpect(jsonPath("$.analysis.appliedChanges[0]").value("모집 직군: 프론트엔드 1명, 백엔드 1명, 디자이너 1명"))
+			.andExpect(jsonPath("$.analysis.appliedChanges[1]").value("관심 분야: 웹, 커뮤니티"))
+			.andExpect(jsonPath("$.analysis.appliedChanges[2]").value("요구 기술: React, Spring Boot"))
+			.andExpect(jsonPath("$.analysis.appliedChanges[3]").value("요구 경력: 1년 이상"))
+			.andExpect(jsonPath("$.analysis.appliedChanges[4]").value("예상 기간: 6개월"));
+		verifyNoInteractions(engine);
+	}
+	@Test void appliedConditionsOmitCancelledChangesAndShowFinalClearOnce() throws Exception {
+		long id = create();
+		conditions(id, "{\"interests\":[\"웹\"],\"stacks\":[\"React\"],\"career\":\"경력 무관\",\"durationMonths\":3}");
+		String text = "관심 분야에 커뮤니티 추가했다가 다시 삭제하고 기술은 Java로 바꿨다가 모두 해제해줘";
+		analysis(List.of(change(Field.interests, Action.ADD, List.of("커뮤니티"), null, text),
+			change(Field.interests, Action.REMOVE, List.of("커뮤니티"), null, text),
+			change(Field.stacks, Action.SET, List.of("Java"), null, text),
+			change(Field.stacks, Action.CLEAR, List.of(), null, text)), List.of());
+		mvc.perform(send(id, "clear-summary", text)).andExpect(status().isCreated())
+			.andExpect(jsonPath("$.analysis.appliedChanges.length()").value(1))
+			.andExpect(jsonPath("$.analysis.appliedChanges[0]").value("요구 기술: 선택 해제"))
+			.andExpect(jsonPath("$.currentConditions.interests[0]").value("웹"))
+			.andExpect(jsonPath("$.currentConditions.stacks").doesNotExist());
+		verifyNoInteractions(engine);
+	}
 	@Test void emptyDraftClearsSelectionsWithoutErasingFactsOrRequiringCompleteConditions() throws Exception {
 		long id = create(); conditions(id, COMPLETE);
 		analysis(List.of(), List.of(new FactChange(Kind.FEATURE, Action.ADD, "로그인", Origin.EXPLICIT, "로그인")));
