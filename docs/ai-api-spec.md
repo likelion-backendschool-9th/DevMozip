@@ -1,5 +1,7 @@
 # AI API 명세
 
+- 2026-11-09 최신 프로젝트 API 통합: 추천 상세 링크 `/projects/{recommendedProjectId}`는 develop의 기존 API 상세 화면을 재사용하며 별도 간이 페이지는 제거했다. 숫자 DB ID와 문자열/UUID 로컬 공고의 ID를 임의 변환하지 않는다. AI 카드 공개 projection은 최신 `recruitmentSlots[].roleCode`를 기존 프로젝트 직군 라벨로 표시한다. 기존 role 필드는 더 이상 최신 계약이 아니다.
+
 - 2026-11-09 프론트 타임라인은 추천의 messageId와 createdAt을 이용해 해당 사용자 메시지의 분석 답변 뒤에 결과를 표시한다. 기존 API/저장 순서·스냅샷·점수는 유지하고 재조회에서도 동일하게 배치한다.
 
 - 2026-11-09 표시/입력 보완: 분석 후 평가 대상 요구가 바뀌면 ASSISTANT content에 서버 저장 기준 요구사항 목록과 다음 추천 반영 예정 안내를 포함한다. `AiRequirementSnapshot`의 실제 추천 추출 규칙을 재사용하며 응답 필드·DB 변경은 없다. 미전송 draft가 있으면 프론트의 새 추천 요청을 막고 전송/분석을 안내한다. 기존 pending 요청 복구는 기존 스냅샷으로 수행한다. 분석만으로 추천·점수 재계산은 실행하지 않는다.

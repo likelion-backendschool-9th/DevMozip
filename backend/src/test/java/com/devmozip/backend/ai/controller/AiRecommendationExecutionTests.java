@@ -83,7 +83,7 @@ class AiRecommendationExecutionTests {
 		authorization = "Bearer " + jwt.createAccessToken("owner@example.com", "USER");
 		var start = LocalDate.of(2026, 1, 31);
 		projectId = projects.saveAndFlush(new Project(ownerId, "교육 플랫폼", null, "교육 Java", null, "https://example.com/a.png",
-			true, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND, 1, 3)), List.of("Java"), List.of("교육"),
+			true, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND.name(), 1, 3)), List.of("Java"), List.of("교육"),
 			start, start, start, start.plusMonths(3), LocalDateTime.now())).getId();
 		var conversation = new AiConversation(ownerId, "추천", LocalDateTime.now());
 		conversation.replaceConditions(CONDITIONS, LocalDateTime.now());

@@ -1,5 +1,13 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-09 최신 develop 병합·프로젝트 상세 연결 통합
+
+- 사용자 승인으로 기존 미커밋 AI 개선을 `9fe8017`에 먼저 커밋했다. 최신 `origin/develop` `a04608f`를 `feat/gemini-recommend`에 병합한 커밋은 `8341ad6`이며 충돌은 없었다. 푸시는 하지 않았다. develop의 프로젝트·인증·포트폴리오 등 팀 변경은 그대로 병합했으며 별도 도메인을 새로 구현하지 않았다.
+- 현재 개발 프로젝트의 정식 API 식별자도 숫자 Long임을 확인했다. 프로젝트 상세 페이지가 Mock ON에서도 숫자 ID는 기존 `ApiProjectDetail`로 연결하도록 최소 수정하고 AI 전용 `PublicProjectDetail.tsx`를 제거했다. 문자열 Mock 페이지는 유지하며 UUID 브라우저 공고를 DB 공고에 임의 매칭하지 않는다. AI 카드 BFF의 모집 직군은 최신 `roleCode`와 기존 라벨 계약으로 맞췄다. 화면·BFF 테스트를 갱신했다.
+- develop에 실제 포트폴리오 조회 구현이 추가됐다. 앞선 본문 조회 도메인 부재 기록은 병합 이전 상태이며, 6B 착수 전에 최신 조회/권한·구독 계약을 다시 확인해야 한다. 이번에는 포트폴리오 AI 연결·6B를 시작하지 않는다.
+- 병합 후 프론트 `npm test -- --maxWorkers=2` 전체76개 파일850개 테스트 통과, `npm run build` 성공(57개 페이지), 변경 제품2개 파일 ESLint 통과. 빌드 생성 next-env.d.ts만 복원했다. 백엔드 최초 실행은 기존 AI 테스트2곳의 직군 생성자 enum→String 계약 차이로 컴파일 실패해 fixture의 `ProjectJobRole.BACKEND`를 `.name()`으로 맞췄다. 제품 프로젝트 도메인은 수정하지 않았다. 최종 `DEBUG=false ./gradlew test --no-daemon` 성공(6분2초): 전체699개 중687개 통과·12개 스킵·실패/오류0. 검증 로그 `/tmp/devmozip-develop-project-{backend-final,frontend,build,eslint}.log`. `git diff --check` 통과. 이번 상세 연결 수정은 미커밋이며 푸시는 하지 않았다.
+- 기존 스크립트로 공유 DB recruitment_slots의 키별 건수만 읽기 전용 확인했다. 이전 role 전용0개·현재 roleCode21개라 해당 데이터 변환은 필요하지 않다. 실제 Gemini·공유 DB 쓰기·브라우저 수동 검증은 수행하지 않는다.
+
 ## 2026-11-09 분석 답변을 추천 결과 앞에 표시
 
 - `chatTimeline.ts`가 연결된 USER 직후에 결과를 삽입해 이미 생성된 ASSISTANT 분석 답변이 결과 아래로 밀리던 문제를 확인했다. 같은 USER 뒤의 저장된 분석 답변 중 추천 요청 시각 이전 답변까지 먼저 표시하고 결과를 배치하도록 수정했다. 다음 USER/나중에 생성된 답변은 넘지 않으며 과거 NULL 연결·미전송 메시지·중복 결과 처리도 유지한다.

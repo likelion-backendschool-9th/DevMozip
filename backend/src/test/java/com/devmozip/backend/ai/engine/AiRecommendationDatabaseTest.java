@@ -65,7 +65,7 @@ class AiRecommendationDatabaseTest {
 	Project project(boolean visible) {
 		var start = LocalDate.of(2026, 1, 31);
 		return projects.saveAndFlush(new Project(999, "교육 플랫폼", null, "교육 플랫폼", null, "https://example.com/a.png",
-			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND, 1, 3)), List.of("Java", "React"), List.of("교육"),
+			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND.name(), 1, 3)), List.of("Java", "React"), List.of("교육"),
 			start.minusDays(2), start, start, start.plusMonths(1), LocalDateTime.of(2026, 1, 1, 0, 0)));
 	}
 

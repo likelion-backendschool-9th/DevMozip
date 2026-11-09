@@ -15,7 +15,7 @@ import { Button } from '@/components/common/Button';
 import { ApplicationModal, CancelApplicationModal } from '@/app/projects/[projectId]/_components/ApplicationModal';
 import { ProjectActions } from '@/app/projects/[projectId]/_components/ProjectActions';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
-import { PublicProjectDetail } from './_components/PublicProjectDetail';
+import { validProjectId } from '@/lib/projects/projectApiContract';
 function ProjectDetail({ projectId }: { projectId: string }) {
     const { projects, state, now } = useProjects();
     const { state: profiles } = useProfiles();
@@ -221,9 +221,7 @@ function MockProjectDetailPage() {
         postId: string;
         userId: string;
     }>();
-    return /^[1-9][0-9]*$/.test(projectId) && Number.isSafeInteger(Number(projectId))
-        ? <PublicProjectDetail key={projectId} projectId={Number(projectId)} />
-        : <ProjectDetail key={projectId} projectId={projectId} />;
+    return <ProjectDetail key={projectId} projectId={projectId} />;
 }
 
-export default function ProjectDetailPage(){const {enabled}=useMockVisibility();return enabled?<MockProjectDetailPage/>:<ApiProjectDetail/>;}
+export default function ProjectDetailPage(){const {enabled}=useMockVisibility();const {projectId=''}=useParams<{projectId:string}>();return enabled&&!validProjectId(projectId)?<MockProjectDetailPage/>:<ApiProjectDetail/>;}
