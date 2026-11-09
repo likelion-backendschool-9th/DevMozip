@@ -40,6 +40,7 @@ class AiRecommendationDatabaseTest {
 	@Autowired EntityManager entityManager;
 	@Autowired JdbcTemplate jdbc;
 	@Autowired AiScoringProperties properties;
+	@Autowired com.devmozip.backend.repository.AiCandidateRepository candidates;
 	@MockitoBean CurrentUserProvider requester;
 	@MockitoBean RefreshTokenStore tokens;
 
@@ -106,6 +107,21 @@ class AiRecommendationDatabaseTest {
 		assertEquals(n("100.00"), result.projects().getFirst().score().total());
 		assertEquals(0L, result.projects().getFirst().duration().differenceDays());
 		assertEquals(3, projects.count());
+	}
+
+	@Test void publicProjectSummaryProjectionUsesStoredValueAndKeepsNullWithoutExposingPrivateProjects() {
+		var visible = project(true);
+		var noSummary = project(true);
+		var hidden = project(false);
+		jdbc.update("UPDATE projects SET summary=? WHERE id=?", "개발자들이 함께 공부하는 스터디 커뮤니티", visible.getId());
+		jdbc.update("UPDATE projects SET summary=? WHERE id=?", "비공개 한줄 소개", hidden.getId());
+		entityManager.clear();
+		var rows = candidates.projects(0, 200);
+		assertEquals(2, rows.size());
+		assertEquals("개발자들이 함께 공부하는 스터디 커뮤니티", rows.stream()
+			.filter(row -> row.id() == visible.getId()).findFirst().orElseThrow().summary());
+		assertNull(rows.stream().filter(row -> row.id() == noSummary.getId()).findFirst().orElseThrow().summary());
+		assertTrue(rows.stream().noneMatch(row -> row.id() == hidden.getId()));
 	}
 
 	@Test void unavailableRequestedJobsReturnNoDevelopersWhileProjectsRemainAndStackMismatchDoesNotFilter() {

@@ -30,10 +30,22 @@ function matched(user=demoAccounts[0]){const state=freshHomeState();const requir
 function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 describe('팔로우·추천 화면 렌더링',()=>{
- it('빈 개발자 결과는 실제 필터를 안내하고 기술 스택 변경을 권하지 않는다',()=>{
+ it('6A는 미확인 항목을 숨겨도 프로젝트와 구현 중인 부분 근거는 유지한다',()=>{
+  const items=[{id:8,recommendedProjectId:42,recommendedUserId:null,matchScore:80,basicReason:'모집·진행 상태: IN_PROGRESS\n세부 요구사항을 20% 반영했습니다. 자료가 없는 항목은 미확인입니다.',rank:1,createdAt:now.toISOString(),requirementAssessments:[
+   {requirementId:'r0',requirement:'보이지 않을 자료 부재 요구',mode:'PREFERENCE',status:'UNKNOWN' as const,source:null,field:null,quote:null},
+   {requirementId:'r1',requirement:'결제 기능',mode:'PREFERENCE',status:'PARTIAL' as const,source:'project:42:description',field:'description',quote:'결제 기능은 구현 중입니다.'},
+  ]}];
+  const html=renderToStaticMarkup(<RecommendationCards developers={[]} tab="projects" projects={items}/>);
+  expect(html).not.toContain('미확인');expect(html).not.toContain('보이지 않을 자료 부재 요구');
+  expect(html).not.toContain('요구사항별 평가 보기');expect(html).toContain('일부 부합');
+  expect(html).toContain('결제 기능은 구현 중입니다.');expect(html).toContain('프로젝트 상태: 개발 진행 중');
+  expect(html).toContain('href="/projects/42"');expect(items[0].matchScore).toBe(80);
+ });
+
+ it('빈 개발자 결과는 자격과 요청 관련성 기준을 안내한다',()=>{
   const html=renderToStaticMarkup(<RecommendationCards developers={[]} projects={[]} tab="developers"/>);
-  expect(html).toContain('모집 직군이나 경력 조건을 확인');
-  expect(html).toContain('세부 요구사항은 점수에 반영하며 후보를 제외하지 않습니다');
+  expect(html).toContain('모집 직군·경력 조건을 통과');
+  expect(html).toContain('요청한 기술·직군·세부 요구와 연결되는 근거');
   expect(html).not.toContain('기술 스택이나 모집 직군의 범위를 넓혀');
  });
  it('미전송 메시지는 추천 미반영 안내와 분석 버튼을 표시한다',()=>{
@@ -78,10 +90,10 @@ describe('팔로우·추천 화면 렌더링',()=>{
   expect(html.indexOf('저장된 세부 요구사항 확인 답변')).toBeLessThan(html.indexOf('저장된 실제 추천 이유'));
   expect(html.indexOf('저장된 실제 추천 이유')).toBeLessThan(html.indexOf('결과 다음에 보낸 메시지'));
   const evaluated=renderToStaticMarkup(<SavedRecommendations result={{...result,developers:result.developers.map(item=>({...item,baseScore:90,requirementScore:50,requirementsApplied:true,requirementAssessments:[{requirementId:'r0',requirement:'결제 경험',mode:'PREFERENCE',status:'UNKNOWN',source:null,field:null,quote:null}]}))}}/>);
-  expect(evaluated).toContain('기본 적합도 90.00점');
-  expect(evaluated).toContain('요구사항 충족도 50.00점');
-  expect(evaluated).toContain('미확인');
-  expect(evaluated).toContain('경험이 없다는 뜻은 아닙니다');
+  expect(evaluated).not.toContain('요구사항별 평가 보기');
+  expect(evaluated).not.toContain('미확인');
+  expect(evaluated).not.toContain('요청 조건과 연결되는 내용');
+  expect(evaluated).toContain('80.00');
   expect(html).toContain('실제 회원 닉네임');expect(html).toContain('/users/real-user');expect(html).toContain('백엔드 개발자');expect(html).toContain('Java');expect(html).toContain('/api/v1/profile-images/avatar.png');
   expect(html).toContain('제시하신 조건 중 Java 기술 스택이 현재 프로필에 등록되어 있습니다.');expect(html).not.toContain('Java, React 기술 스택이');expect(html).toContain('신뢰 온도 37.5도');expect(html).toContain('37.5°C');expect(html).toContain('현재 협업 상태: 협업 가능');expect(html).toContain('3년 차');expect(html).toContain('data-status="AVAILABLE"');expect(html).toContain('<dt>직군</dt>');expect(html).toContain('<dt>경력</dt>');
   const changed=renderToStaticMarkup(<SavedRecommendations serverId={7} result={{...result,developers:result.developers.map(item=>({...item,developer:{...item.developer!,career:null,collaborationStatus:'BUSY'}}))}}/>);

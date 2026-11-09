@@ -2,27 +2,22 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight, BriefcaseBusiness, FolderKanban, LockKeyhole, UserRound } from 'lucide-react';
-import { developerReason } from '@/lib/matching/recommendationPresentation';
+import { ArrowUpRight, BriefcaseBusiness, FolderKanban, UserRound } from 'lucide-react';
+import { developerReason, projectReason } from '@/lib/matching/recommendationPresentation';
 import { getAiPublicProject } from '@/lib/matching/aiApi';
 import { collaborationLabel, formatCareer, profileImageUrl, validProfileSlug } from '@/lib/profiles/profileDetail';
-import { useAuth } from '@/lib/state/authStore';
+import { PortfolioAnalysis } from './PortfolioAnalysis';
 import type { AiRecommendationItem, AiPublicProject } from '@/types/aiRecommendation';
 import styles from './SavedRecommendations.module.css';
 function RequirementEvaluation({ item }: { item: AiRecommendationItem }) {
-    const labels = { MET: '충족', PARTIAL: '부분 충족', UNKNOWN: '미확인', MISMATCH: '명시적 불일치' };
+    const assessments = (item.requirementAssessments || []).filter(a => a.status !== 'UNKNOWN' && a.quote && a.source);
+    if (!assessments.length) return null;
     return <div className={styles.reason}>
-        <span>기본 적합도 {typeof item.baseScore === 'number' ? item.baseScore.toFixed(2) : item.matchScore.toFixed(2)}점</span>
-        <p>{item.requirementsApplied && typeof item.requirementScore === 'number'
-            ? `요구사항 충족도 ${item.requirementScore.toFixed(2)}점 · 최종 점수에 20% 반영`
-            : '세부 요구사항 평가 미적용'}</p>
-        {!!item.requirementAssessments?.length && <details><summary>요구사항별 평가 보기</summary>
-            <p>미확인은 자료가 부족하다는 뜻이며, 경험이 없다는 뜻은 아닙니다.</p>
-            <ul>{item.requirementAssessments.map(a => <li key={a.requirementId}>
-                {a.requirement} — {labels[a.status]}{a.mode === 'MANDATORY_UNENFORCED' && ' · 필수 표현(후보 제외 미적용)'}
-                {a.source && <p>공개 자료: {a.source}{a.quote && ` · ${a.quote}`}</p>}
-            </li>)}</ul>
-        </details>}
+        <span>요청 조건과 연결되는 내용</span>
+        {assessments.map(a => <p key={a.requirementId}>
+            {a.status === 'MISMATCH' ? '확인할 차이' : a.status === 'PARTIAL' ? '일부 부합 · 구현 범위 확인' : '조건에 맞는 근거'}: {a.requirement}
+            <br />“{a.quote}”
+        </p>)}
     </div>;
 }
 function PublicProjectCard({ item }: { item: AiRecommendationItem }) {
@@ -36,19 +31,21 @@ function PublicProjectCard({ item }: { item: AiRecommendationItem }) {
         return () => controller.abort();
     }, [item.recommendedProjectId]);
     const image = profileImageUrl(project?.imageUrl || null);
+    const reason = projectReason(item.basicReason);
     return <article className={styles.card}>
         <div className={styles.projectCover}>{image ? <Image src={image} alt="" fill unoptimized onError={e => { e.currentTarget.style.display = 'none'; }} /> : <FolderKanban size={26} />}<span>{item.rank}번째 추천</span></div>
         <div className={styles.cardBody}>
             <div className={styles.cardTitle}><h4>{project?.title || `프로젝트 #${item.recommendedProjectId}`}</h4><strong>{item.matchScore.toFixed(2)}<small>%</small></strong></div>
             <p className={styles.summary}>{project?.summary || (failed ? '공개 프로젝트 정보를 불러오지 못했어요.' : '프로젝트 정보를 불러오는 중…')}</p>
             {project && <><div className={styles.tags}>{project.stacks.map(v => <span key={v}>{v}</span>)}</div><p className={styles.roles}><BriefcaseBusiness size={12} />{project.roles.join(' · ') || '모집 직군 미등록'}</p></>}
-            <RequirementEvaluation item={item} /><div className={styles.reason}><span>추천 이유</span><p>{item.basicReason}</p></div>
+            <RequirementEvaluation item={item} />{reason && <div className={styles.reason}><span>추천 이유</span><p>{reason}</p></div>}
             <Link className={styles.detail} href={`/projects/${item.recommendedProjectId}`}>프로젝트 상세 보기<ArrowUpRight size={13} /></Link>
         </div>
     </article>;
 }
-function DeveloperCard({ item, premium, requestedStacks }: { item: AiRecommendationItem; premium: boolean; requestedStacks: string[] }) {
+function DeveloperCard({ item, requestedStacks }: { item: AiRecommendationItem; requestedStacks: string[] }) {
     const developer = item.developer;
+    const reason = developerReason(item.basicReason, developer?.skills, requestedStacks);
     const image = profileImageUrl(developer?.profileImage || null);
     const trust = developer?.trustScore;
     const hasTrust = typeof trust === 'number' && Number.isFinite(trust);
@@ -64,16 +61,14 @@ function DeveloperCard({ item, premium, requestedStacks }: { item: AiRecommendat
                 </dl>
             </> : <p className={styles.summary}>현재 공개 프로필 정보를 확인할 수 없어요.</p>}
             {developer && <div className={styles.tags}>{developer.skills.length ? developer.skills.map(v => <span key={v}>{v}</span>) : <span>기술 스택 미등록</span>}</div>}
-            <RequirementEvaluation item={item} /><div className={styles.reason}><span>추천 이유</span><p>{developerReason(item.basicReason, developer?.skills, requestedStacks)}</p></div>
+            <RequirementEvaluation item={item} />{reason && <div className={styles.reason}><span>추천 이유</span><p>{reason}</p></div>}
             {href ? <Link className={styles.detail} href={href}>프로필 상세 보기<ArrowUpRight size={13} /></Link> : <button type="button" disabled className={styles.detail}>프로필 상세 보기<ArrowUpRight size={13} /></button>}
         </div>
-        <div className={styles.locked}><LockKeyhole size={12} />{premium ? '상세 분석·포트폴리오 연결 준비 중' : <Link href="/subscription">상세 분석·포트폴리오는 프리미엄에서</Link>}</div>
+        <div className={styles.locked}><PortfolioAnalysis recommendationId={item.id} nickname={developer?.nickname} /></div>
     </article>;
 }
 export function RecommendationCards({ developers, projects, tab, requestedStacks = [] }: { requestedStacks?: string[]; developers: AiRecommendationItem[]; projects: AiRecommendationItem[]; tab: 'developers' | 'projects' }) {
-    const { user } = useAuth();
-    const premium = user?.role === 'premium' || user?.role === 'admin';
     const items = tab === 'developers' ? developers : projects;
-    if (!items.length) return <div className={styles.empty}><FolderKanban size={24} /><strong>조건에 맞는 {tab === 'developers' ? '개발자가' : '프로젝트가'} 아직 없어요</strong><p>{tab === 'developers' ? '추천 당시 공개·협업 가능 상태이며 선택한 모집 직군·경력에 맞는 다른 회원이 없었습니다. 모집 직군이나 경력 조건을 확인해 주세요. 기술 스택과 세부 요구사항은 점수에 반영하며 후보를 제외하지 않습니다.' : '추천 당시 공개된 프로젝트가 없었습니다.'}</p></div>;
-    return <div className={styles.grid}>{items.map(item => tab === 'projects' ? <PublicProjectCard key={item.id} item={item} /> : <DeveloperCard key={item.id} item={item} premium={premium} requestedStacks={requestedStacks} />)}</div>;
+    if (!items.length) return <div className={styles.empty}><FolderKanban size={24} /><strong>조건에 맞는 {tab === 'developers' ? '개발자가' : '프로젝트가'} 아직 없어요</strong><p>{tab === 'developers' ? '공개·협업 가능 상태와 모집 직군·경력 조건을 통과하고, 요청한 기술·직군·세부 요구와 연결되는 근거가 있는 개발자를 찾지 못했습니다. 추천 조건을 확인해 주세요.' : '공개 프로젝트 중 요청한 분야·기술·내용과 연결되는 근거가 있는 프로젝트를 찾지 못했습니다.'}</p></div>;
+    return <div className={styles.grid}>{items.map(item => tab === 'projects' ? <PublicProjectCard key={item.id} item={item} /> : <DeveloperCard key={item.id} item={item} requestedStacks={requestedStacks} />)}</div>;
 }
