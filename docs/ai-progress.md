@@ -630,6 +630,28 @@ erDiagram
 - 기능 코드의 텍스트 충돌은 없었다. 자동 병합된 SecurityConfig의 공개 프로젝트 조회 규칙과 프로필 options 인증 우선순위, AppLayout의 Mock 표시 기능 및 OwnProfileProvider를 함께 확인했다.
 - 이번 검증: frontend npm test 562개 통과, npm run build 통과. backend ./gradlew test 217개 중 201개 통과·16개 건너뜀·실패/오류 0. 실제 PostgreSQL 및 이번 병합의 브라우저 수동 검증은 미실행. 외부 링크 기능은 별도 feat/64-profile-external-links에 보존했다.
 
+## #75 내 좋아요한 글 목록 조회·화면 연동
+
+- feat/75-liked-posts에서 인증 이메일 → 기존 MemberRepository → 읽기 전용 LikedPostsQueryRepository로 연결했다. GET /api/v1/users/me/liked-posts 및 BFF GET /api/profiles/me/liked-posts를 추가하고 기존 /profile/me/likes의 Mock 목록을 API 목록으로 교체했다. 기존 사이드바·개인 화면 틀을 보존했다.
+- 사용자가 ERD를 제공하고 값은 추정해서 진행하도록 요청하여 PUBLIC, POST, REPOST 및 한국 시각 DATETIME을 가정했다. 공개 여부 미확정·삭제·제재 작성자·열람 불가 원본·중첩 퍼가기는 제외한다. 실제 SNS 값 확정 시 조정이 필요하다. 상세 계약: docs/liked-posts-api.md.
+- 공유 개발 DB에는 확인 당시 posts/post_likes가 없어 실데이터 목록은 미확인이다. 운영 Entity·DDL·테스트 데이터·좋아요 추가/취소 API는 생성하지 않았다. 테이블 미준비/조회 실패를 503으로 표시하고 빈 목록으로 숨기지 않는다. 테스트용 DDL·샘플은 격리된 PostgreSQL Testcontainers 안에서만 사용했다.
+- 검증: backend 전체 테스트 374개 통과(건너뜀·실패·오류 0), 이 중 신규 PostgreSQL 통합 테스트 12개. frontend 신규 테스트 26개 통과, 전체는 653개 중 652개 통과·기존 프로젝트 모집 테스트 1개 실패. 실패는 11월 5일 마감인 고정 fixture를 현재 날짜로 모집 중 필터에 넣는 기존 테스트의 날짜 의존성이다. 해당 프로젝트 소스/테스트는 수정하지 않았다. npm run build 및 git diff --check 통과.
+- 빌드 중 중지한 프론트 개발 서버 3000/5173을 다시 실행했다. 실제 공유 DB 데이터를 사용한 브라우저 수동 검증 및 SNS 상세/좋아요 변경 연동은 미실행이다. 현재 변경은 미커밋·미푸시다.
+
+
+### 2026-11-09 좋아요 조회의 실제 피드 스키마 정합성
+- feeds/feed_likes/feed_id/original_feed_id, VISIBLE/HIDDEN 기준으로 SQL 변경. 외부 liked-posts/originalPost 계약은 유지. 카테고리 코드를 한국어로 표시.
+- PostgreSQL 17 통합 테스트 13개 통과(의견 NULL인 퍼가기 포함), 프론트 관련 테스트 32개 통과, 수정 프론트 파일 ESLint 통과, diff check 통과.
+- npm run build는 worktree node_modules 외부 심볼릭 링크를 Turbopack이 허용하지 않아 실패. 동일 소스로 next build --webpack은 TypeScript 포함 완료. 전체 테스트 재실행 및 실제 공유 SNS 데이터 화면 검증은 미실행.
+- 공유 개발 DB 테이블 생성은 root feat/88-portfolio-crud의 docs/sql에 기록. 기존 공유 데이터 변경 및 샘플 삽입 없음. 이 worktree 변경은 미커밋·미푸시.
+
+
+### 2026-11-09 공통 likes 조회로 변경
+- 팀의 likes 통일 요청 및 새 ERD SQL 대조. 첨부는 아직 posts/post_likes/Key 복합 키로 실제 공유 DB와 다름을 확인했다.
+- 실제 공유 DB의 likes(id PK,user_id,project_id,post_id,created_at,updated_at)를 기준으로 likes.post_id → feeds.id를 조회하고 project_id IS NULL 조건으로 프로젝트 좋아요를 제외한다. 기존 API 경로·응답 계약은 유지한다.
+- 실제 likes.post_id에는 피드 FK가 없으므로 테스트도 FK를 가정하지 않고 잘못된 피드 참조와 프로젝트 좋아요 제외를 검증한다.
+- 공유 DB는 읽기 전용 확인만 수행. 기존 feed_likes 삭제·데이터 이관·스키마 변경 없음. 피드 좋아요 쓰기 담당도 같은 likes.post_id 계약으로 맞춰야 한다.
+- 검증: 백엔드 전체 376개, 실패 0, 오류 0, 건너뜀 0. 프론트 npm run build -- --webpack 및 git diff --check 통과. 실제 공유 데이터 브라우저 검증은 미실행. 이번 변경은 미커밋·미푸시.
 ## #84 포트폴리오 목록·상세 조회 및 기존 화면 연결
 
 - 사용자 요청으로 origin/develop에서 feat/84-portfolio-query를 생성했다. PortfolioQueryController → PortfolioQueryService → PortfolioQueryRepository(JDBC 조회 전용) 및 record 응답 DTO를 추가했다. GET /api/v1/users/me/portfolios, /api/v1/users/{slug}/portfolios, /api/v1/portfolios/{id}와 대응 BFF를 구현했다.
@@ -853,3 +875,10 @@ erDiagram
 - 양쪽 인증 규칙과 기능·문서 이력을 보존해 해결했다. 외부 링크·NULL 태그 본인 조회 보완·중복 key 수정과 포트폴리오 목록·상세가 함께 유지된다. 공유 DB·ERD 및 AI 엔진은 변경하지 않았다.
 - 병합 후 frontend 전체 688개 중 687개 통과, 기존 프로젝트 모집의 날짜 의존 테스트 1개 실패. npm run build 및 git diff --check 통과. backend 최초 실행은 PostgreSQL 테스트 컨테이너 시작 시간 초과로 422개 중 1개 실패했다. 개발 백엔드를 잠시 중지해 자원을 확보한 뒤 전체 재실행했고 최종 422개 통과(실패·오류·스킵 0)를 확인했다.
 - API 정상 실데이터·브라우저 수동 확인은 여전히 미실행이며 portfolios 테이블 및 잠정 데이터/권한 계약 확인은 필요하다. 기존 개발 서버는 검증 후 복구한다.
+
+
+### 2026-11-09 PR #82 최신 develop 충돌 해결
+- origin/develop 5b3719b 병합. SecurityConfig에서 좋아요 인증 경로와 포트폴리오·외부 링크 경로가 같은 위치에 추가되어 충돌했고, 모든 규칙을 유지했다. 진행 문서도 양쪽 기록을 보존했다.
+- 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
+- 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
+- npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
