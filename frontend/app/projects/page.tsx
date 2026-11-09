@@ -1,4 +1,7 @@
 'use client';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import {TagsInput} from './_components/api/ApiCommon';
+import { ApiProjectList } from '@/app/projects/_components/api/ApiProjectList';
 import styles from './page.module.css';
 import { ProjectCreateButton } from '@/components/projects/ProjectCreateButton';
 import { useState } from 'react';
@@ -13,7 +16,7 @@ import { filterProjectList, parseProjectListFilters } from '@/lib/projects/proje
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { RecruitmentCard } from '@/components/projects/RecruitmentCard';
-export default function ProjectsPage() {
+function MockProjectsPage() {
     const { projects, now } = useProjects();
     const [params, setParams] = useSearchParams();
     const filters = parseProjectListFilters(params);
@@ -62,28 +65,10 @@ export default function ProjectsPage() {
                 <Button type="submit">검색</Button>
             </form>
             <div className={[styles.scope, 'project-list-filters'].join(' ')}>
-                {(
-                    [
-                        { key: 'role', label: '모집 직군', options: recruitmentRoles },
-                        { key: 'field', label: '분야', options: projectFields },
-                        { key: 'status', label: '모집 상태', options: projectStatusOptions },
-                        { key: 'stack', label: '기술 스택', options: stackOptions },
-                    ] as const
-                ).map(f => (
-                    <label key={f.key}>
-                        {f.label}
-                        <select
-                            className={[styles.scope, 'form-input'].join(' ')}
-                            value={filters[f.key]}
-                            onChange={e => update(f.key, e.target.value)}
-                        >
-                            <option value="">전체</option>
-                            {f.options.map(o => (
-                                <option key={o}>{o}</option>
-                            ))}
-                        </select>
-                    </label>
-                ))}
+                <TagsInput compact label="모집 직군" max={1} options={recruitmentRoles} values={filters.role?[filters.role]:[]} onChange={v=>update('role',v[0]??'')}/>
+                <TagsInput compact label="분야" max={1} options={projectFields} values={filters.field?[filters.field]:[]} onChange={v=>update('field',v[0]??'')}/>
+                <label>모집 상태<select className={[styles.scope,'form-input'].join(' ')} value={filters.status} onChange={e=>update('status',e.target.value)}><option value="">전체</option>{projectStatusOptions.filter(s=>s!=='모집 마감').map(s=><option key={s}>{s}</option>)}</select></label>
+                <TagsInput compact label="기술 스택" max={1} options={stackOptions} values={filters.stack?[filters.stack]:[]} onChange={v=>update('stack',v[0]??'')}/>
                 <Button
                     variant="secondary"
                     onClick={() => {
@@ -136,3 +121,5 @@ export default function ProjectsPage() {
         </div>
     );
 }
+
+export default function ProjectsPage(){const {enabled}=useMockVisibility();return enabled?<MockProjectsPage/>:<ApiProjectList/>;}

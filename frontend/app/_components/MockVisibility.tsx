@@ -21,5 +21,5 @@ export function MockDataWorkspace({ children }: { children: ReactNode }) {
 
 export function MockDataNote() {
     const { enabled } = useMockVisibility();
-    return <>{enabled ? '기획 발표용 Mock 프로토타입 · 추천 점수와 콘텐츠는 데모 데이터입니다.' : '샘플 데이터 없이 보기 · 화면과 기능은 유지되며 직접 입력한 데이터는 별도로 저장됩니다.'}</>;
+    return <>{enabled ? '기획 발표용 Mock 프로토타입 · 추천 점수와 콘텐츠는 데모 데이터입니다.' : '프로젝트는 실제 DB·API로 연결됩니다. 다른 미연결 영역은 샘플 없이 표시됩니다.'}</>;
 }

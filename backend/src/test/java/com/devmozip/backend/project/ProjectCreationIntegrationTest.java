@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 class ProjectCreationIntegrationTest {
+	@MockitoBean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy;
 	@Container @ServiceConnection
 	static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc;
@@ -90,7 +91,7 @@ class ProjectCreationIntegrationTest {
 		long id = mapper.readTree(result.getResponse().getContentAsString()).get("id").asLong();
 		assertEquals(BASE + "/" + id, result.getResponse().getHeader("Location"));
 		var restored = projects.findById(id).orElseThrow();
-		assertEquals(com.devmozip.backend.entity.enums.ProjectJobRole.FRONTEND, restored.getRecruitmentSlots().getFirst().roleCode());
+		assertEquals("FRONTEND", restored.getRecruitmentSlots().getFirst().roleCode());
 		assertEquals(List.of("React", "Svelte"), restored.getTechStacks());
 		assertEquals(4, restored.getTotalCapacity());
 		assertEquals("jsonb", jdbc.queryForObject("SELECT pg_typeof(recruitment_slots)::text FROM projects WHERE id=?", String.class, id));
@@ -118,9 +119,9 @@ class ProjectCreationIntegrationTest {
 		var body = valid(); body.remove(field);
 		create(body).andExpect(status().isBadRequest()); assertEmpty();
 	}
-	@Test void rejectsDuplicatesUnknownRolesAndInvalidNumbers() throws Exception {
+	@Test void rejectsDuplicatesBlankRolesAndInvalidNumbers() throws Exception {
 		for (var slots : List.of(
-			List.of(Map.of("roleCode", "UNKNOWN", "capacity", 1, "minimumYears", 0)),
+			List.of(Map.of("roleCode", " ", "capacity", 1, "minimumYears", 0)),
 			List.of(Map.of("roleCode", "BACKEND", "capacity", 0, "minimumYears", 0)),
 			List.of(Map.of("roleCode", "BACKEND", "capacity", 11, "minimumYears", 0)),
 			List.of(Map.of("roleCode", "BACKEND", "capacity", 1, "minimumYears", 6)),
@@ -165,4 +166,28 @@ class ProjectCreationIntegrationTest {
 		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM projects", Integer.class));
 		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM project_members", Integer.class));
 	}
+	@Test
+	@org.springframework.test.context.jdbc.Sql("classpath:project/lifecycle-applications.sql")
+	void customRolesRoundTripThroughCreateSearchAndUpdate() throws Exception {
+		var body=valid();body.put("isPublic",true);
+		body.put("recruitmentSlots",List.of(Map.of("roleCode"," ＳＲＥ ","capacity",2,"minimumYears",0),Map.of("roleCode","프론트엔드","capacity",1,"minimumYears",1)));
+		var response=create(body).andExpect(status().isCreated()).andExpect(jsonPath("$.recruitmentSlots[0].roleCode").value("SRE"))
+			.andExpect(jsonPath("$.recruitmentSlots[1].roleCode").value("FRONTEND")).andReturn().getResponse().getContentAsString();
+		long id=mapper.readTree(response).get("id").asLong();
+		assertEquals("SRE",projects.findById(id).orElseThrow().getRecruitmentSlots().getFirst().roleCode());
+		mvc.perform(get(BASE).param("jobRole","sre")).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+		mvc.perform(get(BASE).param("jobRole","백엔드")).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
+		body.put("recruitmentSlots",List.of(Map.of("roleCode","보안 엔지니어","capacity",2,"minimumYears",0)));
+		jdbc.update("INSERT INTO project_applications(project_id,applicant_member_id,job_role,status,applied_at,created_at,updated_at) VALUES (?,202,'sre','PENDING',localtimestamp,localtimestamp,localtimestamp)",id);
+		try {
+			mvc.perform(put(BASE+"/"+id).header("Authorization",token()).contentType("application/json").content(mapper.writeValueAsString(body))).andExpect(status().isConflict());
+		} finally { jdbc.update("DELETE FROM project_applications WHERE project_id=?",id); }
+		mvc.perform(put(BASE+"/"+id).header("Authorization",token()).contentType("application/json").content(mapper.writeValueAsString(body)))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.recruitmentSlots[0].roleCode").value("보안 엔지니어"));
+	}
+	@Test void rejectsNormalizedCustomRoleDuplicates() throws Exception {
+		var body=valid();body.put("recruitmentSlots",List.of(Map.of("roleCode","SRE","capacity",1,"minimumYears",0),Map.of("roleCode","ｓｒｅ","capacity",1,"minimumYears",0)));
+		create(body).andExpect(status().isBadRequest());assertEmpty();
+	}
+
 }

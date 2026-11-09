@@ -32,7 +32,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 	}
 	@Override public ProjectPageResponse search(ProjectSearchRequest request) { return page(request, null, null); }
 	@Override public ProjectPageResponse mine(ProjectSearchRequest request, MyProjectsTab tab) {
-		if (tab == MyProjectsTab.APPLYING) throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "지원 중 목록은 #48 지원 기능에서 연결합니다.");
 		return page(request, currentUser.getCurrentUserId(), tab);
 	}
 	private ProjectPageResponse page(ProjectSearchRequest request, Long userId, MyProjectsTab tab) {
@@ -51,22 +50,29 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 		Project project = projects.findLiveForUpdate(id).orElseThrow(this::notFound);
 		if (!project.isPublic() && (!signedIn || !members.existsByProjectIdAndUserIdAndStatus(id, currentUser.getCurrentUserId(), ProjectMember.Status.ACTIVE))) throw notFound();
 		project.recordView();
-		return response(project);
+		return response(project, signedIn);
 	}
 	@Override public ProjectDetailResponse manage(long id) {
 		Project project = existing(id);
 		long userId = currentUser.getCurrentUserId();
 		if (project.getHostMemberId() != userId || !members.existsByProjectIdAndUserIdAndStatus(id, userId, ProjectMember.Status.ACTIVE))
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "주최자만 관리 정보를 조회할 수 있습니다.");
-		return response(project);
+		return response(project, true);
 	}
 	private Project existing(long id) {
 		if (id<=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "프로젝트 ID를 확인해 주세요.");
 		return projects.findByIdAndDeletedAtIsNull(id).orElseThrow(this::notFound);
 	}
-	private ProjectDetailResponse response(Project project) {
+	private ProjectDetailResponse response(Project project, boolean signedIn) {
 		boolean closed = project.getStatus()!=ProjectStatus.RECRUITING || project.getRecruitmentEnd().isBefore(LocalDate.now(clock));
-		return new ProjectDetailResponse(ProjectResponse.from(project), members.countByProjectIdAndStatus(project.getId(), ProjectMember.Status.ACTIVE), closed);
+		long count=members.countByProjectIdAndStatus(project.getId(),ProjectMember.Status.ACTIVE);
+		ProjectDetailResponse.Membership membership=null;
+		if(signedIn){
+			var actor=members.findByProjectIdAndUserIdAndStatus(project.getId(),currentUser.getCurrentUserId(),ProjectMember.Status.ACTIVE);
+			if(actor.isPresent())membership=new ProjectDetailResponse.Membership(actor.get().getRole().name(),actor.get().getEndRequestedAt()!=null,
+				members.countByProjectIdAndStatusAndEndRequestedAtIsNotNull(project.getId(),ProjectMember.Status.ACTIVE),count/2+1);
+		}
+		return new ProjectDetailResponse(ProjectResponse.from(project),count,closed,membership,queries.host(project.getHostMemberId()));
 	}
 	private ResponseStatusException notFound() { return new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."); }
 }

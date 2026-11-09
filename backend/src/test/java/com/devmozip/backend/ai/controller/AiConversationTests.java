@@ -141,7 +141,7 @@ class AiConversationTests {
 			.content("{\"content\":\"hello\",\"role\":\"ASSISTANT\",\"userId\":202}"))
 			.andExpect(status().isCreated()).andExpect(jsonPath("$.role").value("USER"));
 	}
-	@Test void deleteRemovesOnlyOwnedConversationAndItsMessagesWithoutRecommendationTables() throws Exception {
+	@Test void deleteRemovesOnlyOwnedConversationAndItsMessagesWithoutUsageTable() throws Exception {
 		long id = create("delete"), mid = message(id, "first");
 		message(id, "second");
 		long retained = create("retain");
@@ -149,7 +149,7 @@ class AiConversationTests {
 		otherConversation(9001);
 		jdbc.update("INSERT INTO ai_messages(conversation_id,role,content,created_at) VALUES (9001,'USER','other',CURRENT_TIMESTAMP)");
 		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables "
-			+ "WHERE table_name IN ('AI_RECOMMENDATIONS','AI_RECOMMENDATION_REQUESTS','AI_USAGES')", Integer.class));
+			+ "WHERE table_name = 'AI_USAGES'", Integer.class));
 		mvc.perform(authenticated(delete(BASE + "/" + id))).andExpect(status().isNoContent());
 		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations WHERE id=?", Integer.class, id));
 		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));

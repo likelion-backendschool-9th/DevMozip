@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Map;
+import java.util.Set;
 import javax.sql.DataSource;
 import jakarta.persistence.EntityManagerFactory;
 import com.devmozip.backend.controller.ProjectController;
@@ -12,6 +13,8 @@ import com.devmozip.backend.entity.ProjectMember;
 import com.devmozip.backend.repository.ProjectRepository;
 import com.devmozip.backend.repository.ProjectMemberRepository;
 import com.devmozip.backend.security.project.ProjectCurrentUserProvider;
+import com.devmozip.backend.service.ProjectApplicationUsage;
+import com.devmozip.backend.service.ProjectPeriodPolicy;
 import com.devmozip.backend.service.ProjectQueryService;
 import com.devmozip.backend.service.ProjectService;
 import com.devmozip.backend.service.impl.ProjectServiceImpl;
@@ -95,7 +98,7 @@ class ProjectTeamDatabaseIntegrationTest {
 
 	@TestConfiguration(proxyBeanMethods = false)
 	@EnableTransactionManagement
-	@Import(ProjectServiceImpl.class)
+	@Import({ProjectServiceImpl.class, ProjectPeriodPolicy.class})
 	static class ProjectOnlyConfiguration {
 		@Bean DataSource dataSource() {
 			String url = required("PROJECT_TEAM_DB_URL");
@@ -122,9 +125,11 @@ class ProjectTeamDatabaseIntegrationTest {
 		@Bean ProjectMemberRepository projectMemberRepository(EntityManagerFactory factory) {
 			return new JpaRepositoryFactory(SharedEntityManagerCreator.createSharedEntityManager(factory)).getRepository(ProjectMemberRepository.class);
 		}
+		@Bean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy() { return org.mockito.Mockito.mock(com.devmozip.backend.service.ProjectCreationPolicy.class); }
 		@Bean LocalValidatorFactoryBean validator() { return new LocalValidatorFactoryBean(); }
 		@Bean JdbcTemplate jdbcTemplate(DataSource source) { return new JdbcTemplate(source); }
 		@Bean ProjectCurrentUserProvider currentUser() { return () -> 101L; }
+		@Bean ProjectApplicationUsage applications() { return id -> Set.of(); }
 		@Bean("projectClock") Clock clock() { return Clock.system(ZoneId.of("Asia/Seoul")); }
 	}
 }

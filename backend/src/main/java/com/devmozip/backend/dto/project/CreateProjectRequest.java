@@ -2,7 +2,6 @@ package com.devmozip.backend.dto.project;
 
 import java.time.LocalDate;
 import java.util.List;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -22,7 +21,7 @@ public record CreateProjectRequest(
 	@NotNull LocalDate developmentEnd
 ) {
 	public record RecruitmentSlot(
-		@NotNull ProjectJobRole roleCode,
+		@NotBlank @Size(max = 30) String roleCode,
 		@NotNull @Min(1) @Max(10) Integer capacity,
 		@NotNull @Min(0) @Max(5) Integer minimumYears
 	) {}

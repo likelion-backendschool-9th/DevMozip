@@ -40,6 +40,8 @@ class PortfolioMutationIntegrationTest {
             title VARCHAR(255),thumbnail_url VARCHAR(2048),topic VARCHAR(255),summary TEXT,description TEXT,role VARCHAR(100),tech_stack JSONB,
             attachments JSONB,visibility VARCHAR(20),created_at TIMESTAMP,updated_at TIMESTAMP)
             """);
+        // Recreate only this isolated test fixture: the application Entity has no portfolio FK.
+        jdbc.execute("DROP TABLE IF EXISTS project_application_portfolios");
         jdbc.execute("CREATE TABLE IF NOT EXISTS project_application_portfolios(id BIGINT PRIMARY KEY,portfolio_id BIGINT REFERENCES portfolios(id) ON DELETE RESTRICT)");
         jdbc.update("DELETE FROM project_application_portfolios");jdbc.update("DELETE FROM portfolios");jdbc.update("DELETE FROM users");
         for(int id=1;id<=5;id++)jdbc.update("INSERT INTO users(id,email,nickname,tag,role,status) VALUES(?,?,?,?,?,?)",id,"crud"+id+"@test.local","작성자"+id,id==5?null:"crud-"+id,id==3?"ADMIN":"USER",id==4?"SUSPENDED":id==5?"WARNED":"ACTIVE");

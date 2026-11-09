@@ -9,6 +9,7 @@ export { validateProjectInput } from '@/lib/projects/projectValidation';
 import { allProjects, teamFor } from '@/lib/projects/projectSelectors';
 import { addNotice, manageProject, syncProjectState } from '@/lib/projects/projectManagementService';
 import type { ManagementAction } from '@/types/project';
+import {validProjectChoice} from './projectChoices';
 import { cancellationPolicy, initialRecruitmentState, projectFields, recruitmentProjects, recruitmentRoles, reportReasons } from '@/mocks/project';
 import { stackOptions } from '@/mocks/home';
 import { collaborations } from '@/mocks/profile';
@@ -60,7 +61,7 @@ export function applyRecruitmentAction(state:RecruitmentState,action:Recruitment
  if(user&&action.type==='cancel')addNotice(result.state,allProjects(result.state).find(p=>p.id===action.projectId)!.hostId,action.projectId,'프로젝트 지원 취소',`${user.nickname}님이 지원을 취소했습니다. 팀원·채팅 준비 상태를 반영했습니다.`,now);
  return {...result,state:syncProjectState(result.state,now,profiles)};
 }
-export function parseProjectListFilters(params:URLSearchParams):ProjectListFilters{return {q:(params.get('q')||'').slice(0,100),role:recruitmentRoles.includes(params.get('role')||'')?params.get('role')!:'',field:projectFields.includes(params.get('field')||'')?params.get('field')!:'',status:['모집 중','모집 마감','모집 완료','프로젝트 진행 중','프로젝트 종료'].includes(params.get('status')||'')?params.get('status')!:'',stack:stackOptions.includes(params.get('stack')||'')?params.get('stack')!:'',sort:['popular','deadline'].includes(params.get('sort')||'')?params.get('sort') as 'popular'|'deadline':'latest'};}
+export function parseProjectListFilters(params:URLSearchParams):ProjectListFilters{return {q:(params.get('q')||'').slice(0,100),role:validProjectChoice(params.get('role')||'')?params.get('role')!:'',field:validProjectChoice(params.get('field')||'')?params.get('field')!:'',status:['모집 중','모집 마감','모집 완료','프로젝트 진행 중','프로젝트 종료'].includes(params.get('status')||'')?params.get('status')!:'',stack:validProjectChoice(params.get('stack')||'')?params.get('stack')!:'',sort:['popular','deadline'].includes(params.get('sort')||'')?params.get('sort') as 'popular'|'deadline':'latest'};}
 export function filterProjectList(projects:RecruitmentProject[],f:ProjectListFilters,now=new Date()){const terms=f.q.normalize('NFKC').toLowerCase().trim().split(/\s+/).filter(Boolean);return projects.filter(p=>terms.every(t=>`${p.title} ${p.stacks.join(' ')}`.normalize('NFKC').toLowerCase().includes(t))&&(!f.role||p.roles.includes(f.role))&&(!f.field||p.field===f.field)&&(!f.stack||p.stacks.includes(f.stack))&&(!f.status||projectStatus(p,now)===f.status)).sort((a,b)=>f.sort==='popular'?b.views-a.views||b.createdAt.localeCompare(a.createdAt):f.sort==='deadline'?Number(projectStatus(b,now)==='모집 중')-Number(projectStatus(a,now)==='모집 중')||a.deadline.localeCompare(b.deadline)||b.createdAt.localeCompare(a.createdAt):b.createdAt.localeCompare(a.createdAt));}
 export function parseRecruitmentState(raw:string|null):RecruitmentState{
  try{const v=JSON.parse(raw||'null');if(v?.version!==1||!Array.isArray(v.created)||!Array.isArray(v.applications)||!v.bookmarks||typeof v.bookmarks!=='object'||Array.isArray(v.bookmarks)||!Array.isArray(v.reports))return freshRecruitmentState();

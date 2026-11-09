@@ -1,5 +1,10 @@
 # 프로젝트 생성 API — #44
 
+현재 실제 회원·프리미엄 인가와 프론트 모드별 연결은 [프로젝트 API 통합 계약](project-api-integration.md)을 기준으로 합니다. 아래 과거 단계의 미연결 항목은 해당 통합 문서의 최신 범위와 함께 확인합니다.
+
+> 2026-11-05 후속 변경: 기본 프로젝트 사용자 공급을 실제 JWT 이메일→users.id로 연결했다. 과거 개발용 고정 ID/실회원 미연결 설명은 당시 기록이며 현재 동작은 [실제 회원 ID 연결](project-authenticated-user.md)을 따른다. 프론트 API 활성화·백엔드 프리미엄 인가는 별도다.
+
+
 2026-11-04. 기존 controller / service / service/impl / repository / entity / dto 구조를 따른다. 응답은 record이며 기존 회원·인증·AI 코드는 변경하지 않는다.
 
 ## 범위
@@ -48,7 +53,7 @@
 
 - title·description·imageUrl 필수. title/summary 최대 255자, imageUrl 최대 2048자. 선택 summary/goal은 null 허용. 상세·목표 최대 길이는 정책 미확정으로 별도 제한을 추가하지 않았다.
 - 이미지 1장 HTTP(S) URL만 허용한다. URL을 서버에서 다운로드하거나 파일 업로드하지 않는다. isPublic 누락은 거절한다.
-- 직군은 ProjectJobRole의 코드 중 중복 없이 선택한다. 직군별 정원 1~10, 최소 경력 0~5. 주최자는 role=HOST/job_role=NULL이며 전체 정원은 1+모집 정원 합이다.
+- 직군은 ProjectJobRole 기본 후보 또는 직접 입력(1~30자)을 사용한다. 기본 라벨·코드는 기존 코드로 정규화하고 직접 입력은 같은 roleCode JSON 문자열로 저장한다. NFKC·공백·대소문자 기준 중복은 거절한다. 직군별 정원 1~10, 최소 경력 0~5. 주최자는 role=HOST/job_role=NULL이며 전체 정원은 1+모집 정원 합이다.
 - techStacks/interests 각각 최대 5개. 배열 필수, 빈 배열은 허용한다. 최소 1개 강제는 미확정이므로 추가하지 않았다. 직접 입력 문자열은 NFKC·앞뒤 공백 정리 후 1~30자, 대소문자 무시 중복을 거절한다. 회원 enum은 기본 후보로만 재사용하고 프로젝트 직접 입력을 제한하지 않는다.
 - 모집 시작≤모집 종료, 개발 시작≤개발 종료, 모집 종료≤개발 종료. 생성 시 서울 기준 오늘보다 지난 모집 마감은 거절하며 오늘은 허용한다. 모집·개발 기간의 중첩은 별도 금지하지 않는다.
 - 주최자 ID·초기 상태(RECRUITING)는 서버가 결정한다. body의 hostMemberId/status를 신원·상태 지정에 사용하지 않는다.
