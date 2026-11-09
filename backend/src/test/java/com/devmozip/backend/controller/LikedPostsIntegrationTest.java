@@ -38,29 +38,36 @@ class LikedPostsIntegrationTest {
     @Autowired ObjectMapper mapper;
     static final String PATH="/api/v1/users/me/liked-posts";
     @DynamicPropertySource static void properties(DynamicPropertyRegistry r) {
-        r.add("spring.jpa.hibernate.ddl-auto",()->"create-drop");r.add("spring.sql.init.mode",()->"never");
+        r.add("spring.jpa.hibernate.ddl-auto",()->"create");r.add("spring.sql.init.mode",()->"never");
     }
     @BeforeEach void fixtures() {
         assertNotEquals(5442,postgres.getMappedPort(5432));
-        jdbc.execute("CREATE TABLE IF NOT EXISTS posts(id BIGINT PRIMARY KEY,author_id BIGINT REFERENCES users(id),original_post_id BIGINT REFERENCES posts(id),type VARCHAR(20),category VARCHAR(30),content TEXT,visibility VARCHAR(20),created_at TIMESTAMP,updated_at TIMESTAMP,deleted_at TIMESTAMP)");
-        jdbc.execute("CREATE TABLE IF NOT EXISTS post_likes(user_id BIGINT REFERENCES users(id),post_id BIGINT REFERENCES posts(id),created_at TIMESTAMP,PRIMARY KEY(user_id,post_id))");
-        jdbc.update("DELETE FROM post_likes");jdbc.update("DELETE FROM posts");jdbc.update("DELETE FROM users");
+        jdbc.execute("CREATE TABLE IF NOT EXISTS feeds(id BIGINT PRIMARY KEY,author_id BIGINT REFERENCES users(id),original_feed_id BIGINT REFERENCES feeds(id),type VARCHAR(20),category VARCHAR(30),content TEXT,visibility VARCHAR(20),title VARCHAR(150),tech_stacks JSONB NOT NULL DEFAULT '[]',interests JSONB NOT NULL DEFAULT '[]',image_urls JSONB NOT NULL DEFAULT '[]',view_count BIGINT NOT NULL DEFAULT 0,created_at TIMESTAMP NOT NULL,updated_at TIMESTAMP NOT NULL,deleted_at TIMESTAMP)");
+        jdbc.execute("CREATE TABLE IF NOT EXISTS feed_likes(user_id BIGINT REFERENCES users(id),feed_id BIGINT REFERENCES feeds(id),created_at TIMESTAMP NOT NULL,PRIMARY KEY(user_id,feed_id))");
+        jdbc.update("DELETE FROM feed_likes");jdbc.update("DELETE FROM feeds");jdbc.update("DELETE FROM users");
         for(int id=1;id<=9;id++) jdbc.update("INSERT INTO users(id,email,nickname,tag,role,status) VALUES (?,?,?,?,?,?)",id,"liked"+id+"@test.local","작성자"+id,id==4?null:"liked-user-"+id,"USER",id==5?"WARNED":id==6||id==7?"SUSPENDED":"ACTIVE");
-        post(10,3,null,"POST","PUBLIC",false);post(20,4,null,"POST","PUBLIC",false);post(21,3,null,"POST","PUBLIC",false);
-        post(30,3,null,"POST","PRIVATE",false);post(31,3,null,"POST","PUBLIC",true);post(32,7,null,"POST","PUBLIC",false);
-        post(33,3,null,"POST","UNLISTED",false);post(34,3,null,"NORMAL","PUBLIC",false);
-        post(40,8,null,"POST","PUBLIC",false);post(41,3,40L,"REPOST","PUBLIC",false);
-        post(42,3,30L,"REPOST","PUBLIC",false);post(43,3,31L,"REPOST","PUBLIC",false);post(44,3,32L,"REPOST","PUBLIC",false);
-        post(45,3,34L,"REPOST","PUBLIC",false);post(46,3,41L,"REPOST","PUBLIC",false);post(47,3,null,"REPOST","PUBLIC",false);
-        post(50,3,null,"POST","PUBLIC",false);post(60,3,null,"POST","PUBLIC",false);
-        for(long id:new long[]{10,20,21,30,31,32,33,34,41,42,43,44,45,46,47}) jdbc.update("INSERT INTO post_likes VALUES (?,?,?::timestamp)",1,id,"2026-11-"+(id==41?"03":id==20||id==21?"02":"01")+" 12:00:00");
-        jdbc.update("INSERT INTO post_likes VALUES(1,60,NULL),(2,50,'2026-11-04 12:00:00'),(5,10,'2026-11-04 12:00:00')");
-        jdbc.update("UPDATE posts SET content=? WHERE id=21","가".repeat(400));
+        post(10,3,null,"POST","VISIBLE",false);post(20,4,null,"POST","VISIBLE",false);post(21,3,null,"POST","VISIBLE",false);
+        post(30,3,null,"POST","HIDDEN",false);post(31,3,null,"POST","VISIBLE",true);post(32,7,null,"POST","VISIBLE",false);
+        post(33,3,null,"POST","UNLISTED",false);post(34,3,null,"NORMAL","VISIBLE",false);
+        post(40,8,null,"POST","VISIBLE",false);post(41,3,40L,"REPOST","VISIBLE",false);
+        post(42,3,30L,"REPOST","VISIBLE",false);post(43,3,31L,"REPOST","VISIBLE",false);post(44,3,32L,"REPOST","VISIBLE",false);
+        post(45,3,34L,"REPOST","VISIBLE",false);post(46,3,41L,"REPOST","VISIBLE",false);post(47,3,null,"REPOST","VISIBLE",false);
+        post(50,3,null,"POST","VISIBLE",false);post(60,3,null,"POST","VISIBLE",false);
+        for(long id:new long[]{10,20,21,30,31,32,33,34,41,42,43,44,45,46,47}) jdbc.update("INSERT INTO feed_likes VALUES (?,?,?::timestamp)",1,id,"2026-11-"+(id==41?"03":id==20||id==21?"02":"01")+" 12:00:00");
+        jdbc.update("INSERT INTO feed_likes VALUES(1,60,'2026-10-31 12:00:00'),(2,50,'2026-11-04 12:00:00'),(5,10,'2026-11-04 12:00:00')");
+        jdbc.update("UPDATE feeds SET content=? WHERE id=21","가".repeat(400));
     }
     void post(long id,long author,Long original,String type,String visibility,boolean deleted) {
-        jdbc.update("INSERT INTO posts(id,author_id,original_post_id,type,category,content,visibility,created_at,deleted_at) VALUES(?,?,?,?,?,?,?,'2026-10-31 10:00:00',?::timestamp)",id,author,original,type,"정보","본문 "+id,visibility,deleted?"2026-11-01 00:00:00":null);
+        jdbc.update("INSERT INTO feeds(id,author_id,original_feed_id,type,category,content,visibility,created_at,updated_at,deleted_at) VALUES(?,?,?,?,?,?,?,'2026-10-31 10:00:00','2026-10-31 10:00:00',?::timestamp)",id,author,original,type,"INFO","본문 "+id,visibility,deleted?"2026-11-01 00:00:00":null);
     }
     String token(int id){return "Bearer "+jwt.createAccessToken("liked"+id+"@test.local","USER");}
+    @Test void repostWithoutOpinionKeepsOriginal() throws Exception {
+        jdbc.update("UPDATE feeds SET content=NULL WHERE id=41");
+        mvc.perform(get(PATH).header("Authorization",token(1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].contentPreview").isEmpty())
+                .andExpect(jsonPath("$.items[0].originalPost.id").value(40));
+    }
     @Test void authenticationAndUserIsolation() throws Exception {
         mvc.perform(get(PATH)).andExpect(status().isUnauthorized());
         mvc.perform(get(PATH).header("Authorization","Bearer invalid")).andExpect(status().isUnauthorized());
@@ -70,14 +77,14 @@ class LikedPostsIntegrationTest {
     @Test void stablePagesAndVisibility() throws Exception {
         mvc.perform(get(PATH).header("Authorization",token(1)).param("size","2")).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(5)).andExpect(jsonPath("$.totalPages").value(3)).andExpect(jsonPath("$.items[0].id").value(41)).andExpect(jsonPath("$.items[1].id").value(21));
         mvc.perform(get(PATH).header("Authorization",token(1)).param("size","2").param("page","1")).andExpect(jsonPath("$.items[0].id").value(20)).andExpect(jsonPath("$.items[1].id").value(10));
-        mvc.perform(get(PATH).header("Authorization",token(1)).param("size","2").param("page","2")).andExpect(jsonPath("$.items[0].id").value(60)).andExpect(jsonPath("$.items[0].likedAt").isEmpty());
+        mvc.perform(get(PATH).header("Authorization",token(1)).param("size","2").param("page","2")).andExpect(jsonPath("$.items[0].id").value(60)).andExpect(jsonPath("$.items[0].likedAt").value("2026-10-31T12:00:00+09:00"));
         mvc.perform(get(PATH).header("Authorization",token(1)).param("page","99")).andExpect(jsonPath("$.items").isEmpty()).andExpect(jsonPath("$.totalElements").value(5));
     }
     @Test void emptyAndUnavailableAreDifferent() throws Exception {
         mvc.perform(get(PATH).header("Authorization",token(9))).andExpect(status().isOk()).andExpect(jsonPath("$.totalPages").value(0)).andExpect(jsonPath("$.items").isEmpty());
-        jdbc.execute("ALTER TABLE post_likes RENAME TO post_likes_unavailable");
-        try {var r=mvc.perform(get(PATH).header("Authorization",token(1))).andExpect(status().isServiceUnavailable()).andReturn().getResponse();assertFalse(r.getContentAsString().contains("post_likes"));}
-        finally {jdbc.execute("ALTER TABLE post_likes_unavailable RENAME TO post_likes");}
+        jdbc.execute("ALTER TABLE feed_likes RENAME TO feed_likes_unavailable");
+        try {var r=mvc.perform(get(PATH).header("Authorization",token(1))).andExpect(status().isServiceUnavailable()).andReturn().getResponse();assertFalse(r.getContentAsString().contains("feed_likes"));}
+        finally {jdbc.execute("ALTER TABLE feed_likes_unavailable RENAME TO feed_likes");}
     }
     @Test void safeSummaryAndSeoulDatesWithoutMutation() throws Exception {
         var r=mvc.perform(get(PATH).header("Authorization",token(1))).andExpect(status().isOk()).andExpect(jsonPath("$.items[0].originalPost.id").value(40)).andExpect(jsonPath("$.items[0].author.email").doesNotExist()).andExpect(jsonPath("$.items[0].author.passwordHash").doesNotExist()).andExpect(jsonPath("$.items[0].title").doesNotExist()).andReturn().getResponse();
@@ -85,8 +92,8 @@ class LikedPostsIntegrationTest {
         assertEquals(ZoneOffset.ofHours(9),OffsetDateTime.parse(body.get("items").get(0).get("likedAt").asText()).getOffset());
         assertEquals(300,body.get("items").get(1).get("contentPreview").asText().length());
         assertTrue(body.get("items").get(2).get("author").get("tag").isNull());
-        assertEquals(400,jdbc.queryForObject("SELECT length(content) FROM posts WHERE id=21",Integer.class));
-        assertEquals(16,jdbc.queryForObject("SELECT count(*) FROM post_likes WHERE user_id=1",Integer.class));
+        assertEquals(400,jdbc.queryForObject("SELECT length(content) FROM feeds WHERE id=21",Integer.class));
+        assertEquals(16,jdbc.queryForObject("SELECT count(*) FROM feed_likes WHERE user_id=1",Integer.class));
     }
     @ParameterizedTest @ValueSource(strings={"page=-1","page=1000001","size=0","size=101","page=abc","size=oops"})
     void invalidPagination(String query) throws Exception {mvc.perform(get(PATH+"?"+query).header("Authorization",token(1))).andExpect(status().isBadRequest());}
@@ -96,7 +103,7 @@ class LikedPostsIntegrationTest {
         mvc.perform(get(PATH).header("Authorization",token(99))).andExpect(status().isNotFound());
     }
     @Test void originalHiddenAndLikeRemovedReflectNextRequest() throws Exception {
-        jdbc.update("UPDATE posts SET visibility='PRIVATE' WHERE id=40");jdbc.update("DELETE FROM post_likes WHERE user_id=1 AND post_id=10");
+        jdbc.update("UPDATE feeds SET visibility='HIDDEN' WHERE id=40");jdbc.update("DELETE FROM feed_likes WHERE user_id=1 AND feed_id=10");
         mvc.perform(get(PATH).header("Authorization",token(1))).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(3));
     }
 }

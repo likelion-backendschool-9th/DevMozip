@@ -2,7 +2,7 @@
 
 ## 범위와 흐름
 
-`/profile/me/likes` → Next BFF `GET /api/profiles/me/liked-posts` → Spring `GET /api/v1/users/me/liked-posts` → `LikedPostsService` → `LikedPostsQueryRepository` → `post_likes`, `posts`, `users` 조회.
+`/profile/me/likes` → Next BFF `GET /api/profiles/me/liked-posts` → Spring `GET /api/v1/users/me/liked-posts` → `LikedPostsService` → `LikedPostsQueryRepository` → `feed_likes`, `feeds`, `users` 조회.
 
 인증 필터가 검증한 `Authentication.getName()`의 이메일로 기존 `MemberRepository.findByEmail()`을 사용한다. 요청에 회원 ID를 받지 않으며 타인 목록은 제공하지 않는다. 현재 계정 상태 ACTIVE·WARNED만 허용한다. 조회용 SNS Entity, 운영 DDL, 데이터 입력, 좋아요 추가·취소 및 SNS 글 작성 API는 추가하지 않는다.
 
@@ -13,7 +13,7 @@
 - 인증: 기존 HttpOnly 쿠키/BFF → 백엔드 Bearer 인증 방식 유지
 - `page`: 0부터 시작, 기본 0, 최대 1,000,000
 - `size`: 기본 20, 1~100
-- 좋아요 시각 내림차순, 동일 시각은 게시글 ID 내림차순, NULL 시각은 마지막
+- 좋아요 시각 내림차순, 동일 시각은 게시글 ID 내림차순
 - 공개 가능한 게시글만 집계한 `totalElements`, `totalPages` 제공
 - 두 조회는 read-only REPEATABLE_READ 트랜잭션으로 같은 스냅샷 사용
 - BFF 응답은 `Cache-Control: no-store`
@@ -25,7 +25,7 @@
   "items": [{
     "id": 12,
     "type": "POST",
-    "category": "정보",
+    "category": "INFO",
     "contentPreview": "글 본문 최대 300자",
     "author": { "id": 3, "nickname": "개발자", "tag": null, "profileImage": null },
     "createdAt": "2026-11-01T12:00:00+09:00",
@@ -39,17 +39,17 @@
 }
 ```
 
-REPOST의 `originalPost`에는 원본의 `id`, `contentPreview`, `author`를 제공한다. 제목·첨부 이미지·반응 수는 전달받은 ERD에 없어 응답/화면에 생성하지 않는다. 카드의 전체 글 링크는 기존 `/feeds/{id}`를 사용하며 SNS 상세 API 연결은 별도 담당 범위다.
+REPOST의 `originalPost`에는 원본의 `id`, `contentPreview`, `author`를 제공한다. 피드 확장 컬럼인 제목·첨부 이미지와 반응 수는 이번 목록 응답 범위에서 제외한다. 카드의 전체 글 링크는 기존 `/feeds/{id}`를 사용하며 SNS 상세 API 연결은 별도 담당 범위다.
 
-## 사용자의 추정 진행 요청에 따른 가정
+## 피드 설계와 조회 정책
 
-SNS 담당자의 실제 저장 값 확인 전 아래를 가정했다. 다른 값이면 조회 SQL 및 계약 테스트를 함께 조정해야 한다.
+feat/91-feeds의 feed-plan.md와 사용자 위임에 따라 feeds/feed_likes 명칭 및 VISIBLE/HIDDEN을 적용했다. API 경로 liked-posts와 응답 originalPost는 기존 프론트 계약을 유지한다. category 코드는 화면에서 한국어로 표시한다.
 
 | 항목 | 가정 |
 | --- | --- |
-| 공개 범위 | `PUBLIC`만 표시. PRIVATE·미확정 값 제외 |
-| 일반 글 | `type=POST`, `original_post_id IS NULL` |
-| 퍼간 글 | `type=REPOST`. 원본이 삭제되지 않은 PUBLIC POST이고 원본 작성자가 ACTIVE일 때만 표시 |
+| 공개 범위 | `VISIBLE`만 표시. HIDDEN·미확정 값 제외 |
+| 일반 글 | `type=POST`, `original_feed_id IS NULL` |
+| 퍼간 글 | `type=REPOST`. 원본이 삭제되지 않은 VISIBLE POST이고 원본 작성자가 ACTIVE일 때만 표시 |
 | 작성자 상태 | ACTIVE만 표시. 제재·기타 상태 제외 |
 | 중첩 퍼가기 | 제외 |
 | ERD DATETIME | PostgreSQL timestamp without time zone에 저장한 한국 시각으로 가정, +09:00으로 응답 |
@@ -66,7 +66,7 @@ SNS 담당자의 실제 저장 값 확인 전 아래를 가정했다. 다른 값
 | 503 | SNS 테이블 미준비 또는 목록 DB 조회 실패 |
 | BFF 502 | 백엔드 연결 실패·응답 형식/페이지 불일치 |
 
-실패를 빈 목록으로 바꾸지 않으며 DB 오류 문구·SQL을 브라우저에 전달하지 않는다. 공유 개발 DB에는 확인 당시 posts/post_likes 테이블이 없었다. ERD에 정의되어 있다는 사실과 DB에 실제 생성되어 있다는 사실은 구별한다. 공유 DB의 스키마와 데이터는 변경하지 않았다. 실제 데이터 목록 확인은 SNS 담당자의 테이블 준비와 위 저장 값 확인 후 가능하다.
+실패를 빈 목록으로 바꾸지 않으며 DB 오류 문구·SQL을 브라우저에 전달하지 않는다. 2026-11-09 공유 개발 DB에 feeds/feed_likes/portfolios를 생성했다. 기존 공통 likes 테이블은 변경하지 않았다. 테스트 데이터는 공유 DB에 넣지 않았다. 실제 데이터 목록 확인은 피드 데이터 생성 후 필요하다.
 
 ## 검증
 

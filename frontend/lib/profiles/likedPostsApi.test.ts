@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchLikedPosts, likedPostsPagination, parseLikedPostsPage } from './likedPostsApi';
+import { fetchLikedPosts, likedPostCategoryLabel, likedPostsPagination, parseLikedPostsPage } from './likedPostsApi';
 import { GET } from '@/app/api/profiles/me/liked-posts/route';
 import { backendFetch } from '@/lib/auth/backend';
 vi.mock('@/lib/auth/backend', () => ({ backendFetch: vi.fn() }));
@@ -61,4 +61,8 @@ describe('좋아요 목록 BFF', () => {
         vi.mocked(backendFetch).mockResolvedValueOnce(Response.json({ items: [] }));
         expect((await GET(new Request('http://localhost/api/profiles/me/liked-posts'))).status).toBe(502);
     });
+});
+
+it.each([['INFO', '정보'], ['FEEDBACK', '피드백'], ['PROMO', '홍보'], ['COMMUNITY', '자유'], [null, '분류 없음'], ['기존 분류', '기존 분류']])('카테고리 %s를 화면 이름으로 표시한다', (value, label) => {
+    expect(likedPostCategoryLabel(value)).toBe(label);
 });

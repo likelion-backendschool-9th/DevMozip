@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { likedPostCategoryLabel } from '@/lib/profiles/likedPostsApi';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
@@ -29,7 +30,7 @@ export function LikedPostsResult({ result, onRetry, onPage }: { result: LikedPos
                     <header className={`${postStyles.scope} sns-author`}>
                         <ProfileAvatar name={post.author.nickname || '작성자'} color="lavender" small image={profileImageUrl(post.author.profileImage)} />
                         <div><AuthorName author={post.author} />{post.createdAt && <span><time dateTime={post.createdAt}>{date(post.createdAt)}</time></span>}</div>
-                        <span className={`${postStyles.scope} sns-category`}>{post.category || '분류 없음'}{post.type === 'REPOST' ? ' · 퍼온 글' : ''}</span>
+                        <span className={`${postStyles.scope} sns-category`}>{likedPostCategoryLabel(post.category)}{post.type === 'REPOST' ? ' · 퍼온 글' : ''}</span>
                     </header>
                     {post.contentPreview && <p className={`${postStyles.scope} preserve-text sns-post-body post-excerpt`}>{post.contentPreview}</p>}
                     {post.originalPost && <blockquote className={local.quote}><AuthorName author={post.originalPost.author} /><p className="preserve-text">{post.originalPost.contentPreview || '내용 없음'}</p></blockquote>}

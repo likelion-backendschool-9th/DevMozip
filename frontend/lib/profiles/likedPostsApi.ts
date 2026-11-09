@@ -51,3 +51,8 @@ export async function fetchLikedPosts(page: number, size: number, signal?: Abort
     if (result.page !== page || result.size !== size) throw new Error('요청한 페이지와 응답이 일치하지 않아요.');
     return result;
 }
+
+export function likedPostCategoryLabel(value: string | null): string {
+    const labels: Record<string, string> = { INFO: '정보', FEEDBACK: '피드백', PROMO: '홍보', COMMUNITY: '자유' };
+    return value ? labels[value] || value : '분류 없음';
+}
