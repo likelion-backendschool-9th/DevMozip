@@ -1,0 +1,8 @@
+.page{width:100%;max-width:760px;margin:36px auto 70px;padding:0 24px}
+.header{margin:26px 0}.header h1{font-size:28px;letter-spacing:-.7px;margin:12px 0}.header p{color:var(--muted);font-size:15px;line-height:1.7}
+.panel{background:#fff;border:1px solid var(--border);border-radius:18px;padding:30px}
+.project{background:#f8f6fc;border:1px solid #ebe5f4;border-radius:12px;padding:18px 20px;margin-bottom:26px}.project h2{font-size:20px;margin:0 0 7px;overflow-wrap:anywhere}.project p{color:var(--muted);font-size:14px;margin:0;line-height:1.7;overflow-wrap:anywhere}
+.form{display:grid;gap:24px}.form fieldset{border:0;padding:0;margin:0;min-width:0}.form legend{font-weight:700;margin-bottom:12px;font-size:16px}.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.option{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);font-size:14px}.option:has(input:checked){border-color:var(--purple);background:#f8f4ff}.option input{accent-color:var(--purple)}
+.detail{display:grid;gap:10px;font-size:15px;font-weight:600}.detail textarea{font-weight:400;line-height:1.8;resize:vertical;min-height:150px}.counter{text-align:right;font-size:13px;font-weight:400;color:var(--muted)}
+.hint{font-size:14px;line-height:1.8;color:var(--muted);background:#f8f9fb;border-radius:10px;padding:14px 16px;margin:0}.error{font-size:14px;color:#b13c5b;line-height:1.7;margin:0}.actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}.success{text-align:center;padding:24px 0}.success>svg{color:var(--purple)}.success h2{font-size:23px;margin:18px 0 10px}.success p{color:var(--muted);line-height:1.8;margin-bottom:24px}
