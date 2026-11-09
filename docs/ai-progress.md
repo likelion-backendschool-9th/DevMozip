@@ -591,3 +591,11 @@ erDiagram
 - PostgreSQL 17 통합 테스트 13개 통과(의견 NULL인 퍼가기 포함), 프론트 관련 테스트 32개 통과, 수정 프론트 파일 ESLint 통과, diff check 통과.
 - npm run build는 worktree node_modules 외부 심볼릭 링크를 Turbopack이 허용하지 않아 실패. 동일 소스로 next build --webpack은 TypeScript 포함 완료. 전체 테스트 재실행 및 실제 공유 SNS 데이터 화면 검증은 미실행.
 - 공유 개발 DB 테이블 생성은 root feat/88-portfolio-crud의 docs/sql에 기록. 기존 공유 데이터 변경 및 샘플 삽입 없음. 이 worktree 변경은 미커밋·미푸시.
+
+
+### 2026-11-09 공통 likes 조회로 변경
+- 팀의 likes 통일 요청 및 새 ERD SQL 대조. 첨부는 아직 posts/post_likes/Key 복합 키로 실제 공유 DB와 다름을 확인했다.
+- 실제 공유 DB의 likes(id PK,user_id,project_id,post_id,created_at,updated_at)를 기준으로 likes.post_id → feeds.id를 조회하고 project_id IS NULL 조건으로 프로젝트 좋아요를 제외한다. 기존 API 경로·응답 계약은 유지한다.
+- 실제 likes.post_id에는 피드 FK가 없으므로 테스트도 FK를 가정하지 않고 잘못된 피드 참조와 프로젝트 좋아요 제외를 검증한다.
+- 공유 DB는 읽기 전용 확인만 수행. 기존 feed_likes 삭제·데이터 이관·스키마 변경 없음. 피드 좋아요 쓰기 담당도 같은 likes.post_id 계약으로 맞춰야 한다.
+- 검증: 백엔드 전체 376개, 실패 0, 오류 0, 건너뜀 0. 프론트 npm run build -- --webpack 및 git diff --check 통과. 실제 공유 데이터 브라우저 검증은 미실행. 이번 변경은 미커밋·미푸시.

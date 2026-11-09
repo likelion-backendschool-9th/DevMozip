@@ -21,12 +21,12 @@ public class LikedPostsQueryRepository {
 
     // 피드 설계 기준 값: VISIBLE, POST, REPOST. 다른 값·공개 여부 불명인 원본은 노출하지 않는다.
     private static final String SOURCE = """
-            FROM feed_likes l
-            JOIN feeds p ON p.id=l.feed_id
+            FROM likes l
+            JOIN feeds p ON p.id=l.post_id
             JOIN users a ON a.id=p.author_id
             LEFT JOIN feeds o ON o.id=p.original_feed_id
             LEFT JOIN users oa ON oa.id=o.author_id
-            WHERE l.user_id=:userId AND p.deleted_at IS NULL AND p.visibility='VISIBLE'
+            WHERE l.user_id=:userId AND l.project_id IS NULL AND p.deleted_at IS NULL AND p.visibility='VISIBLE'
               AND a.status='ACTIVE'
               AND ((p.type='POST' AND p.original_feed_id IS NULL)
                 OR (p.type='REPOST' AND o.id IS NOT NULL AND o.type='POST'
@@ -43,7 +43,7 @@ public class LikedPostsQueryRepository {
                   o.id AS original_id,left(o.content,300) AS original_preview,
                   oa.id AS original_author_id,oa.nickname AS original_author_nickname,
                   oa.tag AS original_author_tag,oa.profile_image AS original_author_image
-                """ + SOURCE + " ORDER BY l.created_at DESC NULLS LAST,l.feed_id DESC LIMIT :limit OFFSET :offset";
+                """ + SOURCE + " ORDER BY l.created_at DESC NULLS LAST,l.post_id DESC LIMIT :limit OFFSET :offset";
         return new Result(jdbc.query(sql, params, (rs, index) -> row(rs)), total == null ? 0 : total);
     }
     private Row row(ResultSet rs) throws SQLException {

@@ -2,7 +2,7 @@
 
 ## 범위와 흐름
 
-`/profile/me/likes` → Next BFF `GET /api/profiles/me/liked-posts` → Spring `GET /api/v1/users/me/liked-posts` → `LikedPostsService` → `LikedPostsQueryRepository` → `feed_likes`, `feeds`, `users` 조회.
+`/profile/me/likes` → Next BFF `GET /api/profiles/me/liked-posts` → Spring `GET /api/v1/users/me/liked-posts` → `LikedPostsService` → `LikedPostsQueryRepository` → `likes`, `feeds`, `users` 조회.
 
 인증 필터가 검증한 `Authentication.getName()`의 이메일로 기존 `MemberRepository.findByEmail()`을 사용한다. 요청에 회원 ID를 받지 않으며 타인 목록은 제공하지 않는다. 현재 계정 상태 ACTIVE·WARNED만 허용한다. 조회용 SNS Entity, 운영 DDL, 데이터 입력, 좋아요 추가·취소 및 SNS 글 작성 API는 추가하지 않는다.
 
@@ -43,7 +43,7 @@ REPOST의 `originalPost`에는 원본의 `id`, `contentPreview`, `author`를 제
 
 ## 피드 설계와 조회 정책
 
-feat/91-feeds의 feed-plan.md와 사용자 위임에 따라 feeds/feed_likes 명칭 및 VISIBLE/HIDDEN을 적용했다. API 경로 liked-posts와 응답 originalPost는 기존 프론트 계약을 유지한다. category 코드는 화면에서 한국어로 표시한다.
+feat/91-feeds의 feed-plan.md와 사용자 위임에 따라 feeds와 VISIBLE/HIDDEN을 적용했다. 이후 팀의 좋아요 공통화 요청과 실제 DB를 기준으로 likes.post_id를 feeds.id에 연결하며 project_id IS NULL 조건으로 프로젝트 좋아요를 제외한다. API 경로 liked-posts와 응답 originalPost는 기존 프론트 계약을 유지한다. category 코드는 화면에서 한국어로 표시한다.
 
 | 항목 | 가정 |
 | --- | --- |
@@ -66,10 +66,14 @@ feat/91-feeds의 feed-plan.md와 사용자 위임에 따라 feeds/feed_likes 명
 | 503 | SNS 테이블 미준비 또는 목록 DB 조회 실패 |
 | BFF 502 | 백엔드 연결 실패·응답 형식/페이지 불일치 |
 
-실패를 빈 목록으로 바꾸지 않으며 DB 오류 문구·SQL을 브라우저에 전달하지 않는다. 2026-11-09 공유 개발 DB에 feeds/feed_likes/portfolios를 생성했다. 기존 공통 likes 테이블은 변경하지 않았다. 테스트 데이터는 공유 DB에 넣지 않았다. 실제 데이터 목록 확인은 피드 데이터 생성 후 필요하다.
+실패를 빈 목록으로 바꾸지 않으며 DB 오류 문구·SQL을 브라우저에 전달하지 않는다. 2026-11-09 공유 개발 DB에 feeds/feed_likes/portfolios를 생성했다. 공통 likes를 조회하도록 수정했다. 기존 feed_likes는 삭제·병합하지 않았으며 신규 조회에서는 사용하지 않는다. 테스트 데이터는 공유 DB에 넣지 않았다. 실제 데이터 목록 확인은 피드 데이터 생성 후 필요하다.
 
 ## 검증
 
 - 격리된 PostgreSQL 17 Testcontainers에서 JWT·Controller·Service·SQL 통합 테스트: 인증, 사용자 격리, 공개 범위, 원본 접근 조건, 페이지 정렬, NULL, 300자 요약, 데이터 미변경, 테이블 미준비 503.
 - 프론트 parser·BFF·표시 테스트: 민감 필드 제거, 쿼리 검증, 취소 신호, 오류와 빈 목록 구별, 본문 이스케이프, 한국 시각, 원본 표시.
 - 공유 DB에 좋아요 테스트 데이터 삽입 및 브라우저에서 실제 SNS 데이터 확인은 미실행.
+
+## 최신 ERD 대조 (2026-11-09)
+
+사용자가 추가 제공한 SQL에는 아직 posts/post_likes 및 Key 복합 키가 남아 있다. 팀의 likes 통일 요청과 실제 공유 DB(likes.id PK, user_id, project_id, post_id, created_at, updated_at)를 우선해 조회를 수정했다. 현재 실제 피드 테이블은 feeds이며 posts는 없다. likes.post_id에는 피드 FK가 없어 잘못된 참조는 INNER JOIN에서 제외된다. 공유 DB 스키마나 데이터를 변경하지 않았고 기존 feed_likes 데이터의 이관·삭제도 수행하지 않았다. 피드 좋아요 쓰기 담당자도 같은 likes.post_id 계약으로 맞춰야 한다.
