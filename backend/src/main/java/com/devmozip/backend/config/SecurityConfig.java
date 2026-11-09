@@ -64,6 +64,8 @@ public class SecurityConfig {
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me/portfolios", "/api/v1/portfolios/{id}").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/portfolios").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/links").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/links").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/options").authenticated()
