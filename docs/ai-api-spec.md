@@ -1,5 +1,19 @@
 # AI API 명세
 
+## 2026-11-09 부분 선택값 전달 선행 계약 (현재)
+
+이번 구현은 6A 전 부분 UI 선택값 전달이다. 6A 의미 대조·80:20 점수와 6B 상세 분석은 아직 구현하지 않았다. 확정 정책과 남은 데이터 계약은 [설계 검토](ai-step6-design.md)를 참조한다.
+
+- 기존 `POST /api/v1/ai/conversations/sync`의 conditions 타입을 `DraftConditionsRequest`로 확장했다. conditions 객체는 필수이며 `{}`도 허용한다. 최상위 필드와 새 API/DB 컬럼은 추가하지 않는다.
+- conditions는 화면의 **현재 전체 초안 스냅샷**이다. 필드를 생략하면 기존 값 보존이 아니라 선택 해제이며, 배열의 null/빈 배열과 career/durationMonths의 null도 선택 해제다. 빈 career 문자열, 0/문자열/소수 기간, 허용되지 않은 값·추가 키·클라이언트 `_analysis`는 400이다. 전달된 항목의 값/길이/개수/직군 인원 검증·정규화는 기존 조건 규칙과 같다.
+- 저장 JSON에서는 미선택 키를 생략하고 임의 관심 분야·경력·기간을 채우지 않는다. `_analysis.facts`는 보존하고 기존 수동 교체와 같이 sources는 MANUAL, 오래된 questions/suggestions는 제거한다(기존 분석 메타데이터가 있을 때).
+- 예: `conditions:{"stacks":["Java"],"roles":[{"name":"백엔드","count":2}]}`로 관심 분야·경력·기간이 없어도 sync와 이후 analyze를 허용한다. `readyForRecommendation:false`는 대화 차단 사유가 아니다.
+- 프론트는 최초 분석 전에 빈/부분/완전 초안을 sync한다. 재시도 키를 보존하고, pendingAnalysisKey가 있으면 sync를 다시 실행하지 않고 동일 메시지를 분석한다. 분석 실패는 저장된 수동 초안과 USER를 보존하며, 분석 결과로 오래된 조건을 덮어쓰지 않는 기존 보호를 유지한다.
+- 추천 실행은 기존 완전 DTO로 검증하고 빠진 항목만 질문형 400을 반환한다. 누락 시 추천 요청/결과·사용량·추가 Gemini 호출은 생성하지 않는다. 기존 `PUT /{id}/conditions`는 완전 조건 계약을 유지한다.
+- 인증·소유권·메시지 키·원자 저장·응답 DTO·BFF 경로는 기존 sync 계약을 유지한다. 이번에는 스키마·실제 DB 쓰기·외부 Gemini 검증을 하지 않았다.
+
+6A 정책 확정: 공개 후보 정보의 Gemini 근거 추출·서버 점수 계산, 무료/프리미엄 공통 개발자·프로젝트 적용, 요구사항이 있으면 80:20(미확인도 0점 포함), 필터 통과 전체 후보 배치 분석, 분석 실패 시 새 성공 결과 없음. 무료도 허용된 포트폴리오 본문을 내부 점수에 사용하되 원문·상세 근거는 숨긴다. 본인 맥락을 상대 조건으로 바꾸지 않으며 목적별 새 필터·관심 제한 없음 실행 정책은 보류한다. 이 정책은 **확정·미구현**이며 포트폴리오 실제 자료/읽기 계약과 6B 상세 DTO·자격·자료 버전 계약은 남아 있다.
+
 ## 2026-11-09 STEP 5 — 자연어 분석 API (최신 계약)
 
 5단계 분석 API는 백엔드에 구현되어 있고, 2026-11-09 프론트 연동으로 `/ai/matching` 로그인 전송이 `analyze:true`를 호출한다. 이 절은 아래 과거의 USER 저장 전용·Gemini 미구현 설명에 우선한다. 기존 추천 엔진·조건 키·필수값·점수식·사용량 계약은 변경하지 않는다. 분석은 추천을 실행하지 않는다.
@@ -641,7 +655,8 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 구현: 대화 소유권·저장 조건 검증, 선택 메시지·멱등성 키, 요청/결과 저장 |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 구현: 최신 요청 또는 requestId로 과거 요청 조회. 재계산 없음 |
 | 5 | 기존 messages POST의 analyze=true 모드 | 2026-11-09 백엔드 분석·조건 병합·추가 질문·ASSISTANT 저장. 세부 계약은 문서 상단 참조 |
-| 6 | POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 추천 결과의 개발자 상세 분석. 서버 프리미엄·소유권·포트폴리오 열람권 확인 |
+| 6A | 기존 추천 실행·조회 확장 검토 | 자연어 세부 요구사항의 실제 추천 반영. 점수·스냅샷·중복 입력 비교는 정책 확정 전이며 미구현 |
+| 6B | POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 추천 결과의 개발자 상세 분석. 서버 프리미엄·소유권·포트폴리오 열람권 확인. 미구현 |
 | 7 | GET `/api/v1/ai/usage` | 한국 시간 현재 월의 사용/한도/잔여 횟수. JSON 키·한도 오류 계약 미확정 |
 
 4단계 결과는 `recommended_user_id`/`recommended_project_id` 중 정확히 하나, `match_score`·`basic_reason`·`rank`, 초기 `detailed_reason` null 방향이다. `recommendation_type`은 추가하지 않는다. 실제 DDL과의 일치는 해당 단계에서 확인한다. 첨부의 논리 관계 `conversation_id/message_id`를 현재 물리 컬럼명과 혼동하지 않는다.
@@ -661,8 +676,8 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 ### POST `/api/v1/ai/conversations/sync`
 
 - 로그인 필수. `conversationId`를 보내면 본인 대화인지 잠금 조회하며 타인/미존재는 404다. ID는 요청자의 신원으로 사용하지 않는다.
-- 본문: `{conversationId?: number, clientKey: string, title?: string, messages: [{clientKey: string, content: string}], conditions: UpdateConditionsRequest}`.
-- clientKey는 영문·숫자·`._:-` 1~128자다. 제목은 기존과 같이 null 또는 255자 이하다. 새 동기화 메시지는 비어 있지 않은 1~1500자 USER만 받는다. 원래 작성 시각·역할·사용자 ID는 받지 않는다. 조건은 기존 PUT DTO를 재사용한다.
+- 본문: `{conversationId?: number, clientKey: string, title?: string, messages: [{clientKey: string, content: string}], conditions: DraftConditionsRequest}`.
+- clientKey는 영문·숫자·`._:-` 1~128자다. 제목은 기존과 같이 null 또는 255자 이하다. 새 동기화 메시지는 비어 있지 않은 1~1500자 USER만 받는다. 원래 작성 시각·역할·사용자 ID는 받지 않는다. 조건은 현재 문서 상단의 부분 초안 계약(DraftConditionsRequest)을 따른다. 기존 완전 초안도 동일하게 수락한다.
 - `conversationId`가 없으면 인증 사용자+clientKey로 기존 대화를 재사용하거나 생성한다. 메시지는 대화+clientKey로 기존 행을 재사용한다. 기존 메시지 키에 다른 내용은 409이며 전체 동기화를 롤백한다. 동시 최초 업로드의 UNIQUE 충돌은 새 트랜잭션에서 한 번 재조회한다.
 - 대화·메시지·조건은 한 트랜잭션이다. 응답 유실 후 같은 키로 재전송해도 행이 중복되지 않는다. 기존 메시지 삭제·수정·추천 실행은 동기화에 포함하지 않는다. 빈 messages는 허용한다.
 - 200 ConversationDetailResponse. 기존 대화 요약/상세 및 MessageResponse에 nullable `clientKey`를 추가했다. 기존 단건 API로 만든 행은 null이다. 서버 ID와 clientKey를 연결해 새 메시지와 기존 메시지를 구분한다.

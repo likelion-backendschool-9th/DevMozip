@@ -74,6 +74,78 @@ class AiMessageAnalysisTests {
 	void analysis(List<Change> changes, List<FactChange> facts) {
 		doReturn(new GeminiAnalysis("말씀하신 요구사항을 정리했습니다.", List.of(), changes, facts)).when(gemini).analyze(anyString());
 	}
+	org.springframework.test.web.servlet.ResultActions draft(long id, String conditions) throws Exception {
+		return mvc.perform(auth(post(BASE + "/sync")).contentType("application/json")
+			.content("{\"conversationId\":" + id + ",\"clientKey\":\"partial-draft\",\"messages\":[],\"conditions\":" + conditions + "}"));
+	}
+	@Test void partialManualSelectionsReachAnalysisAndAreNotOverwrittenByDescriptivePreferences() throws Exception {
+		long id = create();
+		draft(id, "{\"stacks\":[\" java \"],\"roles\":[{\"name\":\"백엔드\",\"count\":2}]}")
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.stacks[0]").value("Java"))
+			.andExpect(jsonPath("$.currentConditions.career").doesNotExist())
+			.andExpect(jsonPath("$.currentConditions.durationMonths").doesNotExist());
+		when(gemini.analyze(anyString())).thenAnswer(call -> {
+			var context = mapper.readTree((String) call.getArgument(0)).path("currentConditions");
+			assertEquals("Java", context.path("stacks").get(0).asText());
+			assertEquals(2, context.path("roles").get(0).path("count").asInt());
+			assertFalse(context.has("interests")); assertFalse(context.has("career")); assertFalse(context.has("durationMonths"));
+			return new GeminiAnalysis("기존 선택을 유지하고 변경 여부를 확인할게요.", List.of(),
+				List.of(new Change(Field.stacks, Action.SET, List.of("Python"), null, Origin.EXPLICIT, "Python", false)), List.of());
+		});
+		mvc.perform(send(id, "partial", "Python도 좋아 보여")).andExpect(status().isCreated())
+			.andExpect(jsonPath("$.currentConditions.stacks[0]").value("Java"))
+			.andExpect(jsonPath("$.analysis.suggestions[0].field").value("stacks"))
+			.andExpect(jsonPath("$.readyForRecommendation").value(false));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendation_requests", Integer.class));
+		verifyNoInteractions(engine);
+	}
+	@Test void emptyDraftClearsSelectionsWithoutErasingFactsOrRequiringCompleteConditions() throws Exception {
+		long id = create(); conditions(id, COMPLETE);
+		analysis(List.of(), List.of(new FactChange(Kind.FEATURE, Action.ADD, "로그인", Origin.EXPLICIT, "로그인")));
+		mvc.perform(send(id, "fact", "로그인을 만들고 싶어")).andExpect(status().isCreated());
+		draft(id, "{\"interests\":[],\"stacks\":[],\"roles\":[],\"career\":null,\"durationMonths\":null}")
+			.andExpect(status().isOk()).andExpect(jsonPath("$.currentConditions.interests").doesNotExist())
+			.andExpect(jsonPath("$.currentConditions.career").doesNotExist())
+			.andExpect(jsonPath("$.currentConditions.durationMonths").doesNotExist())
+			.andExpect(jsonPath("$.currentConditions._analysis.facts[0].value").value("로그인"));
+		analysis(List.of(), List.of());
+		mvc.perform(send(id, "empty", "편하게 얘기하고 싶어")).andExpect(status().isCreated())
+			.andExpect(jsonPath("$.analysis.questions").isEmpty()).andExpect(jsonPath("$.readyForRecommendation").value(false));
+		String error = mvc.perform(auth(post(BASE + "/" + id + "/recommendations")).header("Idempotency-Key", "partial-missing"))
+			.andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+		String message = mapper.readTree(error).path("message").asText();
+		assertTrue(message.contains("관심 분야")); assertTrue(message.contains("경력")); assertTrue(message.contains("몇 개월"));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_recommendation_requests", Integer.class));
+		verifyNoInteractions(engine);
+		mvc.perform(auth(put(BASE + "/" + id + "/conditions")).contentType("application/json").content("{}"))
+			.andExpect(status().isBadRequest());
+	}
+	@Test void partialDraftStillRejectsInvalidValuesAndMetadataBeforeWriting() throws Exception {
+		long id = create(); conditions(id, COMPLETE);
+		for (String invalid : List.of("{\"interests\":[\"invalid\"]}", "{\"interests\":[true]}",
+			"{\"career\":\"\"}", "{\"durationMonths\":\"3\"}", "{\"durationMonths\":1.5}",
+			"{\"durationMonths\":0}", "{\"durationMonths\":37}", "{\"durationMonths\":true}",
+			"{\"roles\":[{\"name\":\"백엔드\",\"count\":0}]}", "{\"roles\":[null]}",
+			"{\"stacks\":[\"\"]}", "{\"_analysis\":{\"facts\":[]}}", "{\"extra\":true}")) {
+			draft(id, invalid).andExpect(status().isBadRequest());
+		}
+		mvc.perform(auth(get(BASE + "/" + id))).andExpect(jsonPath("$.currentConditions.durationMonths").value(3));
+		assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM ai_messages", Integer.class));
+		verifyNoInteractions(gemini, engine);
+	}
+	@Test void partialDraftSurvivesProviderFailureAndSameMessageRetryWithoutDefaults() throws Exception {
+		long id = create(); draft(id, "{\"durationMonths\":6}").andExpect(status().isOk());
+		when(gemini.analyze(anyString())).thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "분석 불가"));
+		mvc.perform(send(id, "partial-retry", "선택한 기간을 참고해줘")).andExpect(status().isServiceUnavailable());
+		mvc.perform(auth(get(BASE + "/" + id))).andExpect(jsonPath("$.currentConditions.durationMonths").value(6))
+			.andExpect(jsonPath("$.currentConditions.interests").doesNotExist());
+		analysis(List.of(), List.of());
+		mvc.perform(send(id, "partial-retry", "선택한 기간을 참고해줘")).andExpect(status().isCreated())
+			.andExpect(jsonPath("$.currentConditions.durationMonths").value(6))
+			.andExpect(jsonPath("$.currentConditions.career").doesNotExist());
+		assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM ai_messages", Integer.class));
+		verifyNoInteractions(engine);
+	}
 	@Test void extractsStructuredIntentAndOwnSkillsWithoutConvertingThemToTargetSkills() throws Exception {
 		long id = create();
 		String text = "초보 개발자야. Java와 Spring, PostgreSQL을 할 줄 알고 JavaScript를 배우고 있어. 결제 경험자와 배우며 웹 프로젝트에 참여하고 로그인, 회원가입을 1개월 동안 구현하고 싶어. 주제는 상관없어.";

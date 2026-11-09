@@ -1,5 +1,5 @@
 import { readLoginPrompt, clearLoginPrompt } from '@/lib/matching/loginPrompt';
-import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, applySavedUserMessage, createAiConversation, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, saveAiMessage, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
+import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, applySavedUserMessage, createAiConversation, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, saveAiMessage, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, toAiDraftConditions, mergeAiConversation } from '@/lib/matching/aiApi';
 import { CHAT_TOTAL_LIMIT, chatMessageLength, sortChatConversations, missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
 import { createMockId } from '@/lib/utils/createMockId';
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
@@ -231,10 +231,10 @@ async function analyzeChat() {
             if (!current) throw new Error('대화가 삭제되었습니다.');
             saveConversation({ ...current, serverId });
         }
-        // Reuse the existing full-condition contract so Gemini sees UI selections.
-        if (!initial.pendingAnalysisKey && !missingChatRequirements(initial.requirements).length) {
+        // Sync the complete draft before analysis; missing required selections are allowed here.
+        if (!initial.pendingAnalysisKey) {
             validateChatRequirements(initial.requirements);
-            const saved = await syncAiDraft({ ...initial, serverId }, toAiConditions(initial.requirements));
+            const saved = await syncAiDraft({ ...initial, serverId }, toAiDraftConditions(initial.requirements));
             accountGuard(account);
             const latest = existingChat(initial.id);
             if (!latest) throw new Error('대화가 삭제되었습니다.');

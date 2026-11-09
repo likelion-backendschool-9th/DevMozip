@@ -1,4 +1,4 @@
-import type { AiAnalysisResponse, AiConditions, AiConversationDetail, AiConversationSummary, AiMessage, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
+import type { AiAnalysisResponse, AiConditions, AiDraftConditions, AiConversationDetail, AiConversationSummary, AiMessage, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 
@@ -15,6 +15,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export function toAiConditions(r: ChatRequirements): AiConditions {
     return { interests: r.interests, stacks: r.stacks, roles: r.roles, career: r.career, durationMonths: Number(r.duration.replace('개월', '')) };
+}
+export function toAiDraftConditions(r: ChatRequirements): AiDraftConditions {
+    return { interests: r.interests, stacks: r.stacks, roles: r.roles,
+        ...(r.career ? { career: r.career } : {}),
+        ...(r.duration ? { durationMonths: Number(r.duration.replace('개월', '')) } : {}) };
 }
 // 선택 순서는 추천 조건의 변경이 아니다. 기술명 대소문자·앞뒤 공백도 비교 시 정규화한다.
 export function aiConditionsKey(c: AiConditions): string {
@@ -36,7 +41,7 @@ export const getAiConversation = (id: number) => request<AiConversationDetail>(`
 export const getAiHistory = (id: number) => request<AiRequestSummary[]>(`/${id}/recommendations/history`);
 export const getAiRecommendation = (id: number, requestId?: number) => request<AiRecommendation>(`/${id}/recommendations${requestId ? `?requestId=${requestId}` : ''}`);
 export const deleteAiConversation = (id: number) => request<void>(`/${id}`, { method: 'DELETE' });
-export function syncAiDraft(c: MatchingConversation, conditions: AiConditions) {
+export function syncAiDraft(c: MatchingConversation, conditions: AiDraftConditions) {
     return request<AiConversationDetail>('/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversationId: c.serverId, clientKey: c.id, title: c.title, conditions,
             messages: c.messages.filter(m => m.role === 'user' && !m.serverId).map(m => ({ clientKey: m.id, content: m.text })) }) });

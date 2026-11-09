@@ -1,6 +1,7 @@
 package com.devmozip.backend.service;
 
 import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
+import com.devmozip.backend.dto.ai.DraftConditionsRequest;
 import java.util.List;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
@@ -39,7 +40,12 @@ public class AiConditionsDocument {
 		return List.copyOf(questions);
 	}
 	public String manual(String previous, UpdateConditionsRequest input) {
-		ObjectNode result = mapper.valueToTree(input);
+		return mergeManual(previous, mapper.valueToTree(input));
+	}
+	public String manualDraft(String previous, DraftConditionsRequest input) {
+		return mergeManual(previous, mapper.valueToTree(input));
+	}
+	private String mergeManual(String previous, ObjectNode result) {
 		var old = read(previous);
 		if (old.has("_analysis")) {
 			var metadata = old.withObject("_analysis").deepCopy();

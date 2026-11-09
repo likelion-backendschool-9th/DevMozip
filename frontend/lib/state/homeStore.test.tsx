@@ -1,4 +1,4 @@
-import { toAiConditions } from '@/lib/matching/aiApi';
+import { toAiConditions, toAiDraftConditions } from '@/lib/matching/aiApi';
 import { matchingLoginPath, readLoginPrompt } from '@/lib/matching/loginPrompt';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -315,6 +315,7 @@ describe('AI 메시지 분석 재시도', () => {
         const userMessage = { id: 72, role: 'USER', clientKey: message.id, content: message.text, createdAt: message.createdAt };
         const fetch = vi.mocked(globalThis.fetch);
         fetch.mockResolvedValueOnce(Response.json(summary))
+            .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: {}, messages: [userMessage] }))
             .mockResolvedValueOnce(Response.json({ message: '자연어 분석이 설정되지 않았습니다.' }, { status: 503 }));
         await expect(home().analyzeChat()).rejects.toThrow('자연어 분석이 설정되지 않았습니다.');
         expect(home().conversation!.pendingAnalysisKey).toBe(message.id);
@@ -331,8 +332,8 @@ describe('AI 메시지 분석 재시도', () => {
         expect(home().conversation!.pendingAnalysisKey).toBeUndefined();
         expect(home().conversation!.messages).toHaveLength(2);
         const posts = fetch.mock.calls.filter(([, init]) => init?.method === 'POST');
-        expect(posts.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/71/messages', '/api/ai/conversations/71/messages']);
-        expect(JSON.parse(posts[1][1]!.body as string)).toEqual(JSON.parse(posts[2][1]!.body as string));
+        expect(posts.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/71/messages', '/api/ai/conversations/71/messages']);
+        expect(JSON.parse(posts[2][1]!.body as string)).toEqual(JSON.parse(posts[3][1]!.body as string));
     });
 });
 
@@ -355,4 +356,29 @@ it('완성된 UI 조건은 분석 전에 기존 sync로 서버에 전달한다',
     await home().analyzeChat();
     expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/81/messages']);
     expect(JSON.parse(fetch.mock.calls[1][1]!.body as string).conditions).toEqual(toAiConditions(c.requirements));
+});
+
+
+it.each([{}, { stacks: ['Java'] }, { duration: '3개월', roles: [{ name: '백엔드', count: 2 }] }])('부분 선택값 %j도 분석에 전달하고 추천은 실행하지 않는다', async (selection) => {
+    signIn('demo-user');
+    home().newChat();
+    home().editChat(selection);
+    home().sendChat('선택한 조건을 보고 조언해 주세요.');
+    const c = home().conversation!;
+    const message = c.messages[0];
+    const summary = { id: 81, title: c.title, createdAt: c.createdAt, updatedAt: c.updatedAt };
+    const conditions = toAiDraftConditions(c.requirements);
+    const userMessage = { id: 82, clientKey: message.id, role: 'USER', content: message.text, createdAt: message.createdAt };
+    const fetch = vi.mocked(globalThis.fetch);
+    fetch.mockResolvedValueOnce(Response.json(summary))
+        .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: conditions, messages: [userMessage] }))
+        .mockResolvedValueOnce(Response.json({ userMessage,
+            assistantMessage: { id: 83, role: 'ASSISTANT', content: '선택값을 참고할게요.', createdAt: message.createdAt },
+            currentConditions: conditions, analysis: {}, replayed: false, readyForRecommendation: false }));
+    await home().analyzeChat();
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/81/messages']);
+    expect(JSON.parse(fetch.mock.calls[1][1]!.body as string).conditions).toEqual(conditions);
+    expect(home().conversation!.requirements).toEqual(c.requirements);
+    await expect(home().recommendChat()).rejects.toThrow('관심 분야·경력·기간');
+    expect(fetch).toHaveBeenCalledTimes(3);
 });

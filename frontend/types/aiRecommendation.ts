@@ -5,6 +5,8 @@ export interface AiConditions {
     career: string;
     durationMonths: number;
 }
+// Sync replaces the complete draft; omitted fields represent unselected values.
+export type AiDraftConditions = Partial<AiConditions>;
 export interface AiConversationSummary { clientKey?: string | null; id: number; title: string | null; createdAt: string; updatedAt: string }
 export interface AiMessage { clientKey?: string | null; id: number; role: 'USER' | 'ASSISTANT'; content: string; createdAt: string }
 export interface AiAnalysisResponse { userMessage: AiMessage; assistantMessage: AiMessage; currentConditions: Partial<AiConditions>; analysis: unknown; readyForRecommendation: boolean; replayed: boolean }

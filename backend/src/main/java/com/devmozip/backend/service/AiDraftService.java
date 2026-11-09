@@ -75,7 +75,7 @@ public class AiDraftService {
 				messages.save(message);
 			}
 		}
-		conversation.replaceConditions(documents.manual(conversation.getCurrentConditions(), request.conditions()), LocalDateTime.now());
+		conversation.replaceConditions(documents.manualDraft(conversation.getCurrentConditions(), request.conditions()), LocalDateTime.now());
 		messages.flush();
 		return new ConversationDetailResponse(conversation.getId(), conversation.getTitle(), conversation.getCurrentConditions(),
 			conversation.getCreatedAt(), conversation.getUpdatedAt(), messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId())

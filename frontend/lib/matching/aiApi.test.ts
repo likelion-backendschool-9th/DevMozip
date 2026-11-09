@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions } from './aiApi';
+import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions, toAiDraftConditions } from './aiApi';
 import { newMatchingConversation, sendMatchingMessage } from './matchingChatService';
 import type { AiConversationDetail } from '@/types/aiRecommendation';
 const remote: AiConversationDetail = { id: 7, clientKey: 'local-chat', title: '팀원', createdAt: '2026-11-07T10:00:00', updatedAt: '2026-11-07T10:00:00',
@@ -87,4 +87,16 @@ it('서버 CLEAR의 출처가 있는 조건만 비우고 미동기화 로컬 조
     expect(result.requirements.duration).toBe('');
     expect(result.requirements.stacks).toEqual([]);
     expect(result.requirements.interests).toEqual(['웹']);
+});
+
+
+it('초안에서 미선택 경력·기간은 생략하고 빈 목록은 삭제 의미로 보낸다', async () => {
+    const c = newMatchingConversation();
+    c.requirements.stacks = ['Java'];
+    const conditions = toAiDraftConditions(c.requirements);
+    expect(conditions).toEqual({ interests: [], stacks: ['Java'], roles: [] });
+    const fetch = vi.fn().mockResolvedValue(Response.json({})); vi.stubGlobal('fetch', fetch);
+    await syncAiDraft(c, conditions);
+    expect(JSON.parse(fetch.mock.calls[0][1].body).conditions).toEqual(conditions);
+    expect(toAiDraftConditions({ ...c.requirements, duration: '6개월', career: '경력 무관' })).toMatchObject({ durationMonths: 6, career: '경력 무관' });
 });
