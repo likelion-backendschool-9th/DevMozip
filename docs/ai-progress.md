@@ -1,5 +1,11 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 6B 불필요 코드·로그 점검
+
+- PR 정리 요청으로6B 및 함께 변경된 AI 제품 코드를 점검했다. `AiRecommendationServiceImpl`의 미사용 `Transactional` import1개를 제거했다. 정책·트랜잭션 경계·실제 동작은 변경하지 않았다.
+- 제품 코드에 console 출력·System.out·printStackTrace·디버그 로그는 없었다. `AiPortfolioAnalysisService`의 실패 상태 저장 불가 경고1개는 임대 회복/저장소 장애 진단에 필요해 유지했다. 인용·본문·API키·예외 스택을 이 경고에 기록하지 않는다. 테스트/문서/정상 예외 처리와 운영에 필요한 상태 정보는 삭제하지 않았다.
+- 검증: `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(4분34초), 총726개 중714개 통과·12개 스킵·실패/오류0. `frontend`의 `npm run build` 성공. 프론트 기능 코드는 바꾸지 않아 직전 통과한 프론트 테스트/ESLint는 반복 실행하지 않았다. 빌드 생성 next-env.d.ts 복원 및 `git diff --check` 통과. 로그 `/tmp/devmozip-6b-cleanup-{backend,build}.log`. 실제 Gemini·브라우저 수동 검증·새 기능 테스트는 추가하지 않았다. 기능 추가·커밋·푸시는 하지 않았다.
+
 ## 2026-11-10 6B 종료 점검 — 현재 구현 기준
 
 이번 요청은 문서 정리만 수행했다. 브랜치는 `feat/gemini-portfolio-analysis`, 구현 커밋은 `0f4b415`다. 이후 무료 안내·단일 별 UI와 관련 문서는 아직 미커밋 상태이며 보존했다. 아래 날짜별 기록은 작업 당시 이력이고 이 절과 [6B 구현 계약](ai-portfolio-analysis.md)의 최신 정리를 우선한다. 7단계는 시작하지 않았다.
