@@ -149,7 +149,7 @@ class AiRecommendationServiceTest {
 			String payload = call.getArgument(0);
 			assertFalse(payload.contains("candidate-1")); assertFalse(payload.contains("tag-1"));
 			var fields = mapper.readTree(payload).path("candidates").get(0).path("sources");
-			assertEquals(java.util.Set.of("skills", "jobCategories", "career", "summary"),
+			assertEquals(java.util.Set.of("skills", "jobCategories", "career", "trustScore", "summary"),
 				java.util.stream.StreamSupport.stream(fields.spliterator(), false).map(n -> n.path("field").asText()).collect(java.util.stream.Collectors.toSet()));
 			return mapper.valueToTree(java.util.Map.of("evaluations", List.of(java.util.Map.of("candidate", "developer:1",
 				"requirement", "r0", "status", "MET", "source", "developer:1:summary", "quote", "결제 구현 경험"))));

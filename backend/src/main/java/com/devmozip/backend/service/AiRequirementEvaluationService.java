@@ -75,6 +75,7 @@ public class AiRequirementEvaluationService {
 		return result;
 	}
 	private static boolean eligibleSource(String kind, String field) {
+		if ("trustScore".equals(field)) return "PROJECT_PREFERENCE".equals(kind);
 		if ("TARGET_SKILL".equals(kind)) return Set.of("skills", "techStacks", "description", "summary").contains(field);
 		// 경력 연수·기술 목록만으로 기능 구현 경험이나 멘토링 역량을 인정하지 않는다.
 		return Set.of("description", "title", "summary").contains(field);

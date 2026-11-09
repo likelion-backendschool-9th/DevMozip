@@ -92,6 +92,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 						requirementsEvaluator.source(ref + ":skills", "skills", String.join(", ", c.skills() == null ? List.of() : c.skills())),
 						requirementsEvaluator.source(ref + ":roles", "jobCategories", String.join(", ", c.jobCategories())),
 						requirementsEvaluator.source(ref + ":career", "career", c.career()),
+						requirementsEvaluator.source(ref + ":trustScore", "trustScore", c.trustScore() == null ? null : c.trustScore().toPlainString()),
 						requirementsEvaluator.source(ref + ":summary", "summary", c.summary())));
 				}).toList();
 				var bases = new java.util.HashMap<String, RecommendationResult.Score>();

@@ -74,6 +74,6 @@ export function RecommendationCards({ developers, projects, tab, requestedStacks
     const { user } = useAuth();
     const premium = user?.role === 'premium' || user?.role === 'admin';
     const items = tab === 'developers' ? developers : projects;
-    if (!items.length) return <div className={styles.empty}><FolderKanban size={24} /><strong>조건에 맞는 {tab === 'developers' ? '개발자가' : '프로젝트가'} 아직 없어요</strong><p>기술 스택이나 모집 직군의 범위를 넓혀 다시 찾아보세요.</p></div>;
+    if (!items.length) return <div className={styles.empty}><FolderKanban size={24} /><strong>조건에 맞는 {tab === 'developers' ? '개발자가' : '프로젝트가'} 아직 없어요</strong><p>{tab === 'developers' ? '추천 당시 공개·협업 가능 상태이며 선택한 모집 직군·경력에 맞는 다른 회원이 없었습니다. 모집 직군이나 경력 조건을 확인해 주세요. 기술 스택과 세부 요구사항은 점수에 반영하며 후보를 제외하지 않습니다.' : '추천 당시 공개된 프로젝트가 없었습니다.'}</p></div>;
     return <div className={styles.grid}>{items.map(item => tab === 'projects' ? <PublicProjectCard key={item.id} item={item} /> : <DeveloperCard key={item.id} item={item} premium={premium} requestedStacks={requestedStacks} />)}</div>;
 }

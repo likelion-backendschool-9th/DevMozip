@@ -47,6 +47,7 @@ class AiRecommendationExecutionTests {
 	@Autowired AiMessageRepository messages;
 	@Autowired AiRecommendationRequestRepository requestRepository;
 	@MockitoBean RefreshTokenStore tokens;
+	@MockitoBean com.devmozip.backend.client.GeminiAnalysisClient gemini;
 	@MockitoSpyBean AiRecommendationService engine;
 	long ownerId, developerId, projectId, conversationId;
 	String authorization;
@@ -128,6 +129,51 @@ class AiRecommendationExecutionTests {
 			.andExpect(jsonPath("$.developers").isEmpty());
 		mvc.perform(auth(get(path()).param("requestId", String.valueOf(old)))).andExpect(status().isOk())
 			.andExpect(jsonPath("$.conditions.career").value("3년 이상")).andExpect(jsonPath("$.developers.length()").value(1));
+	}
+
+	@Test void naturalLanguagePreferenceChangesNewScoresButSavedEvaluationAndReplayStayFixed() throws Exception {
+		var conversation = conversations.findById(conversationId).orElseThrow();
+		var conditions = (tools.jackson.databind.node.ObjectNode) mapper.readTree(CONDITIONS);
+		conditions.set("_analysis", mapper.valueToTree(java.util.Map.of("facts", List.of(java.util.Map.of(
+			"kind", "PROJECT_PREFERENCE", "value", "신뢰온도 40도 이상인 사용자 선호", "origin", "EXPLICIT",
+			"evidence", "신뢰온도 40도 이상", "messageId", 1)))));
+		conversation.replaceConditions(mapper.writeValueAsString(conditions), LocalDateTime.now());
+		conversations.saveAndFlush(conversation);
+		when(gemini.generate(anyString(), anyString(), any())).thenAnswer(call -> {
+			var rows = mapper.createArrayNode();
+			for (var candidate : mapper.readTree((String) call.getArgument(0)).path("candidates")) {
+				for (var source : candidate.path("sources")) {
+					if (!"trustScore".equals(source.path("field").asText())) continue;
+					String quote = source.path("text").asText();
+					rows.add(mapper.valueToTree(java.util.Map.of("candidate", candidate.path("ref").asText(),
+						"requirement", "r0", "source", source.path("ref").asText(), "quote", quote,
+						"status", new BigDecimal(quote).compareTo(new BigDecimal("40")) >= 0 ? "MET" : "MISMATCH")));
+				}
+			}
+			return mapper.createObjectNode().set("evaluations", rows);
+		});
+		long old = execute("trust-old");
+		jdbc.update("UPDATE users SET trust_score=36.5 WHERE id=?", developerId);
+		long latest = execute("trust-new");
+		mvc.perform(auth(get(path()).param("requestId", String.valueOf(latest)))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].baseScore").value(75.0))
+			.andExpect(jsonPath("$.developers[0].requirementScore").value(0.0))
+			.andExpect(jsonPath("$.developers[0].matchScore").value(60.0))
+			.andExpect(jsonPath("$.developers[0].requirementAssessments[0].status").value("MISMATCH"));
+		conversation = conversations.findById(conversationId).orElseThrow();
+		conversation.replaceConditions(CONDITIONS, LocalDateTime.now());
+		conversations.saveAndFlush(conversation);
+		clearInvocations(engine, gemini);
+		for (var request : List.of(auth(get(path()).param("requestId", String.valueOf(old))),
+			auth(post(path())).header("Idempotency-Key", "trust-old").contentType("application/json").content("{\"replay\":true}"))) {
+			mvc.perform(request).andExpect(status().isOk())
+				.andExpect(jsonPath("$.developers[0].matchScore").value(100.0))
+				.andExpect(jsonPath("$.developers[0].requirementScore").value(100.0))
+				.andExpect(jsonPath("$.developers[0].requirementAssessments[0].status").value("MET"))
+				.andExpect(jsonPath("$.developers[0].requirementAssessments[0].quote").value("50.00"))
+				.andExpect(jsonPath("$.developers[0].developer.trustScore").value(36.5));
+		}
+		verifyNoInteractions(engine, gemini);
 	}
 
 	@Test void sameKeyReplaysAndDifferentInputConflicts() throws Exception {

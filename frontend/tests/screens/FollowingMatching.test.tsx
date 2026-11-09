@@ -30,6 +30,12 @@ function matched(user=demoAccounts[0]){const state=freshHomeState();const requir
 function page(url:string,userId?:string,home:HomeState=freshHomeState(),profiles:ProfileState=freshProfileState()){const data=new Map<string,string>();data.set(HOME_KEY,JSON.stringify(home));data.set(PROFILE_KEY,JSON.stringify(profiles));vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key)||null});vi.stubGlobal('sessionStorage',{getItem:()=>null});return resetLocalStores(),signIn(userId),renderToStaticMarkup(<><MemoryRouter initialEntries={[url]}><Routes><Route element={<AppLayout/>}><Route element={<AccountLayout>{null}</AccountLayout>}><Route path="/users/:userId/follows" element={<FollowingPage/>}/></Route><Route path="/ai/matching" element={<MatchingPage/>}/><Route path="/projects/:projectId" element={<ProjectDetailPage/>}/><Route path="/" element={<HomePage/>}/><Route path="/notifications" element={<ProjectNotificationsPage/>}/><Route path="/settings" element={<FollowSettings targetId="yuna" onClose={()=>{}}/>}/></Route></Routes></MemoryRouter></>);}
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);});afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 describe('팔로우·추천 화면 렌더링',()=>{
+ it('빈 개발자 결과는 실제 필터를 안내하고 기술 스택 변경을 권하지 않는다',()=>{
+  const html=renderToStaticMarkup(<RecommendationCards developers={[]} projects={[]} tab="developers"/>);
+  expect(html).toContain('모집 직군이나 경력 조건을 확인');
+  expect(html).toContain('세부 요구사항은 점수에 반영하며 후보를 제외하지 않습니다');
+  expect(html).not.toContain('기술 스택이나 모집 직군의 범위를 넓혀');
+ });
  it('미전송 메시지는 추천 미반영 안내와 분석 버튼을 표시한다',()=>{
   const state=matched();state.chat.conversations['demo-user'][0].draft='결제 구현 경험이 있는 개발자';
   const html=page('/ai/matching','demo-user',state);

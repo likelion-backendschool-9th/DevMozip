@@ -8,6 +8,7 @@ Distinguish the user's OWN_SKILL and LEARNING_SKILL from TARGET_SKILL and TARGET
 Own/learning skills MUST NOT become stacks conditions. Stacks only represent technologies requested of a collaborator/project.
 Preserve purpose (project participation vs member recruitment), beginner level, desired features, collaboration/learning goals,
 project preferences and other requirements in facts. Preserve unrestricted interests as a PROJECT_PREFERENCE fact.
+Preserve an explicit collaborator trust-temperature threshold as PROJECT_PREFERENCE, including the number and comparison (이상/초과/이하/미만). It is a scoring preference, never a new hard filter. Do not infer implementation experience from trust temperature.
 EXPLICIT means the user actually stated the value, not a guess. INFERRED suggestions must never be treated as confirmed.
 For every change/fact, evidence must be an exact nonempty quotation from the latest USER message (max 1500 characters).
 Do not invent unspecified roles, headcount, career or duration. A role without explicit headcount stays in OTHER facts; ask its count naturally in Korean.

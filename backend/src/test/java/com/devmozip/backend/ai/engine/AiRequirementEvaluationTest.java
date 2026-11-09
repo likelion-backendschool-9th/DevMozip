@@ -68,6 +68,18 @@ class AiRequirementEvaluationTest {
 		assertEquals(com.devmozip.backend.dto.ai.RequirementEvaluation.Status.UNKNOWN,
 			service.evaluate(List.of(developer), required, Map.of(developer.ref(), base)).get(developer.ref()).assessments().getFirst().status());
 	}
+	@Test void trustTemperatureCanSupportPreferenceButCannotProveExperienceAndMissingValueIsUnknown() {
+		var trust = new AiRequirementEvaluationService.Candidate("project:1", List.of(
+			new AiRequirementEvaluationService.Source("trust", "trustScore", "36.50")));
+		output("project:1", "MET", "trust", "36.50");
+		var preference = List.of(new AiRequirementSnapshot.Requirement("r0", "PROJECT_PREFERENCE", "신뢰온도 36.5도 이상", "36.5도 이상", 1));
+		assertEquals(new BigDecimal("100.00"), service.evaluate(List.of(trust), preference, Map.of(trust.ref(), base)).get(trust.ref()).requirementScore());
+		var experience = List.of(new AiRequirementSnapshot.Requirement("r0", "TARGET_EXPERIENCE", "결제 구현 경험", "결제 경험", 1));
+		assertEquals(new BigDecimal("0.00"), service.evaluate(List.of(trust), experience, Map.of(trust.ref(), base)).get(trust.ref()).requirementScore());
+		var absent = new AiRequirementEvaluationService.Candidate("project:1", List.of(service.source("trust", "trustScore", null)));
+		assertEquals(com.devmozip.backend.dto.ai.RequirementEvaluation.Status.UNKNOWN,
+			service.evaluate(List.of(absent), preference, Map.of(absent.ref(), base)).get(absent.ref()).assessments().getFirst().status());
+	}
 	@Test void unrestrictedAndExplicitlyWaivedRequirementsRemainContextWithoutScoring() {
 		var snapshots = new AiRequirementSnapshot(mapper, new AiConditionsDocument(mapper));
 		String current = mapper.writeValueAsString(Map.of("_analysis", Map.of("facts", List.of(

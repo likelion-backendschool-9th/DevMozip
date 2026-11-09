@@ -7,4 +7,5 @@ Use only candidate refs, requirement IDs and that candidate's exact source refs.
 Do not confuse possessing a technology with having implemented a feature professionally or mentoring capability.
 Respect negation and unrestricted preferences: they are not positive feature/experience requirements.
 User OWN_SKILL/LEARNING_SKILL/USER_LEVEL and inferred suggestions are not target requirements.
+For an explicit developer trust-temperature preference, compare its numeric threshold and operator against that developer's trustScore source (degrees Celsius). Quote the exact supplied number. A missing trustScore is UNKNOWN; it never proves experience or skill. Projects have no developer trustScore and remain UNKNOWN for this preference.
 Return each candidate/requirement pair at most once. Provide no prose or extra fields.

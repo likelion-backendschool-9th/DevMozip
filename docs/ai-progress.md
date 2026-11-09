@@ -1,5 +1,21 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-09 6A 보완 커밋
+
+- 사용자 요청으로 직전 6A 재검증·신뢰온도 평가 누락 보완·빈 결과 안내·회귀 테스트·6B 준비 문서 변경을 `feat/gemini-recommend`에 커밋한다. 직전 절의 커밋 미실행 기록은 해당 작업 당시 상태다. 제품 코드는 추가 변경하지 않아 직전 검증 결과를 유지하고 `git diff --check`를 다시 확인했다. 푸시·6B 브랜치 생성·6B 구현은 수행하지 않는다. 6B 브랜치명 후보는 `feat/gemini-portfolio-analysis`다.
+
+## 2026-11-09 6A 개발자 0건 조사·신뢰온도 누락 보완·6B 준비
+
+- 범위: 사용자 요청에 따라 문서/실제 구현/팀 DB를 대조하고 6A 문제 조사·누락 보완·회귀 검증과 6B 사전 준비만 수행한다. 6B 본문 분석·상세 API·사용량·다른 팀 도메인을 새로 구현하지 않는다. 작업 브랜치 `feat/gemini-recommend`, 시작 HEAD `abb6585`, 시작 작업 트리 깨끗함. `git fetch origin develop` 결과 `a04608f`는 이미 HEAD의 조상이라 추가 병합/pull할 변경이 없다. 최신 develop 포함 상태에서 검증하며 main·커밋·푸시는 수행하지 않는다.
+- 원인(실제 공유 DB 읽기 전용): 문제 요청 #36은 SUCCESS, roles=게임1/모바일1/UI/UX1, 개발자0·프로젝트9다. 공개·ACTIVE·AVAILABLE·tag 보유 후보7명의 직군은 프론트엔드2/백엔드2/풀스택2/AI1이며 요청자는 추가 제외된다. 게임/모바일/디자인 후보가 없다. 직전 #29~32는 개발자3·프로젝트9, #33~35는 개발자6·프로젝트9로 전체 개발자 추천 장애가 아니다. 기술 스택은 점수 항목이므로 이를 넓히라는 빈 결과 안내를 실제 직군/경력/공개·협업 가능 기준 안내로 수정했다. 직군·경력 필터를 임의 완화하거나 다른 회원을 조건과 무관하게 추천하지 않는다.
+- 요구사항 반영: 6A facts 스냅샷→배치 근거 평가→기본80%+요구20%→저장 경로는 이미 구현됐다. 실제 #32의 개발자 결과도 requirementScore=0인 평가 JSON과 최종 점수가 저장되어 있었다. '미적용'이 아니라 확인 자료가 부족해 UNKNOWN/0점일 수 있다. #36 facts는 결제 구현 경험 선호·신뢰온도36.5도 이상 선호 두 PROJECT_PREFERENCE다. 온도는 공개 프로필에 있으나 후보 평가 source에는 빠져 있어 누락 보완했다.
+- 수정: AI 개발자 공개 source에 실행 시 `trustScore`를 추가한다(NULL은 빈 자료). PROJECT_PREFERENCE의 신뢰온도 비교에만 허용하며 기술/구현 경험 증거로는 거부한다. 분석 프롬프트는 명시 온도·연산자를 PROJECT_PREFERENCE로 보존하고, 평가 프롬프트는 해당 숫자·연산 비교와 프로젝트/자료 부재 UNKNOWN을 안내한다. 서버는 정확 source/인용과 80:20 점수를 검증한다. 수치 조건의 모델 분류가 항상 정확하다는 보장은 없으며 실제 Gemini 품질 검증과 격리 응답 테스트를 구분한다. 새 하드 필터·DDL·API 필드 변경은 없다.
+- 과거 결과: GET/동일 키 replay는 당시 점수·기본 이유·조건·요구별 평가·순위를 재계산하지 않는다. 현재 공개 프로필/기술 안내는 최신 값으로 바뀔 수 있다. 새 요청은 현재 DB와 모델 분류를 사용해 점수가 달라질 수 있다. 이미 UNKNOWN으로 저장된 온도 평가는 자동 갱신하지 않고 신규 요청부터 새 source를 사용한다.
+- 포트폴리오 확인: 실제 DB portfolios3건(PUBLIC1/PRIVATE2), 모두 description 비NULL. JDBC Repository·목록/상세 API가 develop에서 이미 들어왔고 타인 상세는 현재 DB 역할 PREMIUM/ADMIN·작성자ACTIVE·PUBLIC을 검사한다. 본문 원문/첨부는 이번에 읽거나 AI로 전송하지 않았다. subscriptions 테이블은 있으나 기간 유효성 판정 서비스는 없다. 원본 ERD는 없어 전사/코드/실제 메타데이터만 대조했다. Java21/Boot4.1.2/Gradle9.8.2/JPA 유지, 기본 PostgreSQL 설정·개인 local H2 설정과 팀 DB 직접 실행 스크립트의 validate/never를 구분했다. [6B 준비 목록](ai-step6-design.md#2026-11-09-6b-구현-준비-재점검)에 자격·읽기 권한·대상 연결·DTO·자료 버전/캐시·동시성·검증 계약을 기록했다. 과거 문서의 포트폴리오 테이블/API 부재는 병합 전 이력이며 현재에 맞게 우선 절을 추가했다.
+- 변경 파일: `AiRecommendationServiceImpl`, `AiRequirementEvaluationService`, `ai/analysis-instruction.txt`, `ai/requirements-instruction.txt`, `RecommendationCards.tsx`; 회귀 테스트 `AiRecommendationDatabaseTest`, `AiRecommendationServiceTest`, `AiRequirementEvaluationTest`, `AiRecommendationExecutionTests`, `FollowingMatching.test.tsx`; 문서 `ai-matching.md`, `ai-api-spec.md`, `ai-step6-design.md`, 이 파일.
+- 검증: 프론트 `npm test -- --maxWorkers=2` 전체76개 파일851개 통과. `npm run build` 최초 샌드박스 실행은 TypeScript --showConfig 출력 파싱 실패, 권한 확장 동일 명령 재실행은 성공. 변경 제품 ESLint 통과. 빌드 생성 `next-env.d.ts`만 작업 전 상태로 복원했다. `backend`의 `DEBUG=false ./gradlew test --no-daemon` 최종 성공(4분28초): 총702개 중690개 통과·12개 스킵·실패/오류0. 스킵은 팀 DB 쓰기 opt-in11개와 별도 PostgreSQL DDL 검증1개다. 최초 일반 샌드박스 시도는 Gradle 캐시 잠금 파일 쓰기 권한 오류로 테스트 실행 전에 실패해 권한 확장 재실행했다. 새 격리 DB 테스트에서 요청 직군 후보 없음→개발자0/프로젝트유지, 직군 변경→스택 불일치 후보도 반환을 검증했다. 가짜 Gemini 응답을 쓰는 실제 엔진/API/저장 통합에서 온도40도 이상 선호로 50도 후보는 기본100/요구100/최종100, 36.5도로 변경한 새 요청은 기본75/요구0/최종60을 검증했다. 이후 대화 facts를 지워도 과거 GET/replay는 최종100/과거MET/인용50.00을 유지하고 현재 프로필 온도만36.5이며 엔진/모델 재호출0임을 확인했다. `git diff --check` 통과. 로그 `/tmp/devmozip-6a-audit-{backend,frontend,build,build-final,eslint}.log`.
+- 미완료/다음 작업: 실제 Gemini 호출·변경 코드의 브라우저 검증·공유 DB 쓰기/운영 배포는 수행하지 않았다. 변경 적용에는 백엔드 재시작과 새 추천 요청이 필요하며 현재 실행 중 앱을 대신 재시작하지 않았다. 원하는 개발자 추천을 위해서는 사용자가 실제 후보가 있는 직군으로 조건을 바꾸거나 해당 직군의 실제 가입/공개·협업 가능 자료가 필요하다. 데이터/과거 이력을 고치지 않는다. 6B·월 사용량·PENDING 자동 복구는 남아 있으며 다음 구현 프롬프트를 기다린다.
+
 ## 2026-11-09 최신 develop 병합·프로젝트 상세 연결 통합
 
 - 사용자 승인으로 기존 미커밋 AI 개선을 `9fe8017`에 먼저 커밋했다. 최신 `origin/develop` `a04608f`를 `feat/gemini-recommend`에 병합한 커밋은 `8341ad6`이며 충돌은 없었다. 푸시는 하지 않았다. develop의 프로젝트·인증·포트폴리오 등 팀 변경은 그대로 병합했으며 별도 도메인을 새로 구현하지 않았다.
