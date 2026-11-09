@@ -1,5 +1,64 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-09 STEP 5 — Google 400 INVALID_ARGUMENT 스키마 복잡도 대응
+
+- 현재 상태(사용자 인수인계 반영): **Cursor의 대응 코드 반영과 자동 테스트 성공 보고를 확인했으며, 실제 Gemini 호출 성공·기존 400의 원인 확정은 아직 아니다.** 이번 요청은 문서 갱신만 수행한다. 아래 코드 변경은 파일로 대조했고 테스트 수치는 Cursor 실행 결과를 사용자가 전달한 기록으로 구분한다.
+- 사용자 제보: 대화 8번 analyze POST가 앱 502로 변환된 `Google HTTP 400 / INVALID_ARGUMENT`를 반환. 허용된 ErrorInfo.reason은 없었고, 키 인증 실패만으로 단정하지 않았다. 이 환경에는 `GEMINI_API_KEY`가 없어 실제 Google 호출 진단은 실행하지 못했다.
+- 근거: 공식 structured output 문서는 스키마를 출력 문법 상태 기계로 컴파일하며, `maxItems`/`minimum`/`maximum` 등이 상태 공간을 키워 `400 INVALID_ARGUMENT`를 유발할 수 있다고 안내한다. 기존 `analysis-schema.json`은 객체 배열 `maxItems` 30·50과 수치 한계를 Google에 그대로 보내고 있었다.
+- 변경: `GeminiAnalysisClient`가 전송용 `wireSchema`에서 `maxItems`/`minItems`/`minimum`/`maximum` 등 한계 키만 제거하고, 앱 검증용 전체 스키마는 유지한다. BadRequest `fieldViolations`의 허용된 필드 경로만 오류 메시지에 포함한다. 원문 message/description·키·사용자 입력은 노출하지 않는다. 자동 재시도·모델 교체·유료 전환 없음.
+- 진단 도구: `scripts/gemini-diagnose.py`는 프로세스 환경의 키로 최소 텍스트·JSON MIME·작은 스키마·전체 스키마·단순화 스키마를 비교하고 HTTP/status/reason/허용 필드만 출력한다. 키·본문·자유 텍스트는 출력하지 않는다. 이번 에이전트 셸에는 키가 없어 스크립트 실행을 건너뛰었다.
+- 변경 파일: `client/GeminiAnalysisClient.java`, `client/GeminiAnalysisClientTest.java`, `scripts/gemini-diagnose.py`, AI 문서 3개. 기존 미커밋 STEP 5 변경은 보존했다.
+- Cursor 검증 기록(사용자 전달, 이번 문서 작업에서 백엔드 재실행 안 함): `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(종료 0), **437개 중 436개 통과·1개 스킵·실패/오류 0**. Gemini 호출부 **15개 모두 통과**(와이어 스키마에서 한계 제거·로컬 maxItems 검증 유지, fieldViolations 허용 목록 포함). 스킵은 기존 PostgreSQL 운영 DDL 검증이다. `frontend`에서 `npm run build` 성공(종료 0, 50개 페이지). 당시 로그 `/tmp/devmozip-step5-schema-backend.log`, `/tmp/devmozip-step5-schema-frontend.log`, `/tmp/devmozip-step5-schema-client.log`. 생성 next-env.d.ts만 복원. 당시 `git diff --check` 통과.
+- 한계: 가짜 응답 테스트 성공이며 **실제 Gemini 분석 성공은 아직 확인되지 않았다**. 사용자가 키를 export한 터미널에서 `python3 scripts/gemini-diagnose.py`로 full vs simplified를 비교하고, 변경 코드로 백엔드를 재시작한 뒤 같은 clientKey·본문으로 analyze를 재시도해야 한다. 커밋·푸시·배포·다음 단계는 없다.
+
+### 재확인 순서와 완료 판단
+
+1. 키를 export한 프로젝트 루트 터미널에서 `python3 scripts/gemini-diagnose.py`를 실행한다. 합성 입력으로 다섯 요청을 비교하며 실제 사용자 대화·DB를 사용하지 않는다. 키/본문/오류 자유 텍스트는 출력하지 않는다.
+2. `full_schema_current_file`이 400이고 `simplified_wire_schema`가 200이면 전송 스키마의 한계 제거가 효과 있다는 가설을 지지한다. 최소 요청부터 실패하거나 두 스키마가 모두 실패하면 그 결과의 HTTP/status/reason/허용 필드를 기준으로 추가 진단한다. 이 비교 결과 자체는 아직 전달받지 않았다.
+3. 스크립트는 한 case라도 비성공이면 종료 코드 1을 반환한다. 원본 스키마만 실패하는 비교 실험에서는 종료 코드 1 자체를 단순화 스키마 실패로 해석하지 않는다. 각 case의 HTTP 결과를 읽는다.
+4. 기존 백엔드를 종료하고 같은 환경에서 `python3 scripts/dev-postgres.py backend`로 변경 코드를 실행한다. 같은 clientKey·본문으로 기존 analyze POST를 재시도한다.
+5. 진단 스크립트의 HTTP 200은 모델 호출 수락 여부만 의미한다. 실제 API의 검증된 분석 응답·ASSISTANT·조건 저장까지 확인한 뒤 실제 5단계 연동 검증 성공을 기록한다. 프론트 연결과 6~7단계는 이번 범위가 아니다.
+
+- 이번 문서 변경·검증: `docs/ai-progress.md`, `docs/ai-api-spec.md`, `docs/ai-matching.md`만 보완했다. Cursor 코드·테스트·진단 스크립트·기존 미커밋 변경은 보존했다. 이번 `frontend`의 `npm run build` 성공(종료 0), 로그 `/tmp/devmozip-step5-cursor-handoff-docs-build.log`. 생성 next-env.d.ts만 작업 전 내용으로 복원했다. `git diff --check`·AI 문서 상대 링크 대상·재확인 절 제목 확인 통과. 문서만 변경했으므로 새 기능 테스트·Gradle·실제 Gemini/DB 검증은 실행하지 않았다. 커밋·푸시·후속 단계는 진행하지 않았다.
+
+## 2026-11-09 STEP 5 — 백엔드 구현·자동 검증, 실제 Gemini 미검증
+
+- 최신 승인: STEP 5 요청으로 Gemini Developer API 연결을 승인했다. 후속 답변은 백엔드 API/테스트만 구현, 기존 current_conditions JSON에 `_analysis` 확장이다. 프론트/BFF·공통 회원/인증·추천 점수식·배포 설정·6~7단계는 변경하지 않는다. 첫 질문의 사용자 최종 답변(2026-11-09): 기존 필수 조건/엔진 유지, 일반 AI 대화는 필수 조건 없이 자유롭게 허용, 실제 추천 실행 시 필수 검증·누락 질문 안내, ‘주제 상관없음’ 의도 보존이다. 질문 대기는 해소됐다.
+- 작업 전 확인: 브랜치 feat/frontend-run-ai-recommendation, HEAD c4582b5, 시작 시 작업 트리 깨끗함. 로컬 develop의 모든 커밋을 포함하고 9커밋 앞선 기존 feature 브랜치를 유지한다. Java 21/Boot 4.1.2/Gradle 9.8.2/JPA/compose PostgreSQL 17을 파일로 재확인했다. 신규 브랜치 통합·커밋·푸시는 하지 않는다.
+- DB: 기존 읽기 전용 도구로 실제 개발 DB의 ai_conversations.current_conditions **jsonb**와 ai_messages의 role/content/client_key를 조회했다. 최초 샌드박스 DNS 실패 후 권한 확장한 동일 읽기 조회에 성공했다. 후속 읽기 조회에서 USER/ASSISTANT 역할 CHECK·메시지→대화 FK·대화/메시지 client_key 복합 UNIQUE 인덱스도 확인했다. 실제 테이블/데이터 쓰기는 없으며 새 DDL도 없다. 원본 ERD 이미지는 없어 문서 전사·기존 엔티티/SQL과 대조했다.
+- 구현: 기존 POST messages의 명시적 analyze 모드, 자연어 분석 DTO/JSON Schema/프롬프트, 출처·근거·보유/학습/대상 기술 구분, 정형 조건 ADD/SET/REMOVE/CLEAR, facts 영속 보존, 수동 선택 충돌 질문, 명시적 변경, ASSISTANT 저장, 키 재전송·실패 재시도·분석 중 변경 보호. 후보/점수·사용량 API와 분리했다. 부분 조건의 엔진 필수값을 임의로 채우지 않는다.
+- 저장 호환: 기존 조건 키와 DTO JSON 형식을 유지한다. PUT/sync는 `_analysis` 보존, 추천 실행은 예약 키만 제외하고 기존 DTO·엔진·정형 조건 스냅샷을 사용한다. 기존 저장 전용 메시지 호출은 Gemini를 호출하지 않는다. 기존 프론트 입력 정책/코드는 변경하지 않는다.
+- 변경 파일: backend의 `client/GeminiAnalysisClient`, `config/GeminiProperties`·`GeminiConfiguration`, `dto/ai/GeminiAnalysis`·`MessageAnalysisResponse`·`CreateMessageRequest`, `service/AiConditionsDocument`·`AiAnalysisMergePolicy`·`AiMessageAnalysisService`, `utils/AiInputPrivacy`·`StrictBooleanDeserializer`, `controller/AiConversationController`, `entity/AiMessage`, `service/AiDraftService`·`impl/AiConversationServiceImpl`·`impl/AiRecommendationExecutionServiceImpl`, `resources/ai/`의 설정/프롬프트/스키마, `resources/application.yaml`의 AI 설정 import, `.env.example`; 신규 테스트 `GeminiAnalysisClientTest`·`AiInputPrivacyTest`·`AiMessageAnalysisTests`; AI 문서 3개.
+- Gemini 무료 모델: Google 공식 가격/모델/REST 문서를 확인해 gemini-3.5-flash-lite를 기본 설정했다. 검색 도구가 공식 Markdown 문서 형식을 열지 못해 공식 URL 원문을 직접 읽었다. 키는 환경변수·인증 헤더만 사용하며 원문 로그·자동 재시도·모델 대체·결제 전환은 없다. 현재 Gemini 키가 없어 실제 호출은 미검증이다. 설정 방법과 과금/데이터 처리 경계는 API 문서 최신 절을 따른다.
+- 최초 5단계 자동 검증(아래 필수 정책 최종 보완 전): `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(종료 0, BUILD SUCCESSFUL). JUnit XML **427개 중 426개 통과·1개 스킵·실패/오류 0**. 신규 5단계 **23개 모두 통과**(호출부 7·개인정보 제외 1·분석 API 통합 15). 사용자 정보/대상 조건 분리, 부분 조건, 사실 보존/문맥/모집 목적, 명시적 추가·수정·삭제, UI 충돌, 모델 JSON 타입/추가 필드/차단·잘림/429/장애/타임아웃, 실패 재시도·동시 동일 키 상대 인원 변경 1회 적용, 인증·소유권, 분석 중 수동 변경 보호, 기존 엔진 분리를 검증했다. 스킵은 `AiRecommendationExecutionTests.postgresProductionSchemaEnforcesUniqueRanksAndNumericBounds`이며 별도 PostgreSQL URL이 필요하다. `/tmp/devmozip-step5-final-backend.log`. 초기 새 통합 테스트 10개 중 재시도 fixture 재설정 1건이 실패해 Mockito 재설정을 수정했고 후속 실행에 통과했다. 제품 오류 수정으로 오인하지 않는다.
+- 프론트 검증: `frontend`에서 `npm run build` 성공(종료 0, 50개 페이지), `/tmp/devmozip-step5-frontend-build.log`. 프론트 코드 변경이 없어 단위·브라우저 테스트는 이번에 실행하지 않았다. 최초 Gradle 실행은 캐시 잠금 파일 쓰기 제한, 최초 Next 빌드는 TypeScript --showConfig 하위 프로세스 출력 문제로 실패했고 각각 권한 확장 후 성공했다. 빌드 생성 next-env.d.ts 변화만 작업 전 내용으로 복원했으며 최종 frontend 추적 변경은 없다. `git diff --check`, AI 문서 3개의 상대 링크 대상 존재·신규 제목 앵커 확인 통과.
+- 남은 항목: 실제 Gemini 키/무료 프로젝트 할당량·실제 모델 추출/정정/대화 품질, 실제 PostgreSQL 분석 쓰기/다중 사용자 통합은 미검증이다. 현재 분석 테스트는 모델 응답을 가짜로 제공한 H2/HTTP client 격리 검증이며 실제 Gemini 정확도를 뜻하지 않는다. 필수 조건 정책은 사용자 답변으로 확정됐으며 일반 대화와 추천 실행 검증을 분리했다. 새 프론트 연결과 6~7단계는 다음 사용자 요청을 기다린다. 사용자 앱 재시작·공유 DB 변경·배포·커밋·푸시는 수행하지 않았다.
+
+### 필수 조건 최종 답변 반영 (2026-11-09)
+
+- 변경 이유: 일반 대화에 필수 조건이 없어도 자유롭게 대화하고 실제 추천 실행 시 검증하라는 사용자 답변을 반영했다. 기존 미커밋 5단계 변경을 보존했다.
+- 변경 파일: `AiAnalysisMergePolicy`의 매 대화 필수 질문 자동 추가 제거, `AiConditionsDocument`의 누락 항목별 질문 안내, `AiMessageAnalysisService`의 대화 수락과 무관한 선택 상태 안내, `AiRecommendationExecutionServiceImpl`의 누락 시 질문형 400 메시지, `analysis-instruction.txt`의 자유 대화/추천 준비 질문 정책, `AiMessageAnalysisTests`의 회귀 2개, AI 문서 3개.
+- 일반 대화는 빈 조건·부분 조건을 허용하고 누락만으로 차단하거나 필수 질문 목록을 강제하지 않는다. 추천 준비 시 AI의 자연스러운 추가 질문은 유지한다. ‘주제 상관없음’은 facts로 유지하며 관심 분야를 임의로 채우지 않는다.
+- 추천 실행은 기존 DTO/필수 정책을 유지하고 누락 항목만 기존 ErrorResponse.message에 질문형으로 안내한다. 추가 Gemini 호출·ASSISTANT/추천 요청·사용량 저장은 없다. 기존 PUT/sync 완전 DTO·프론트/BFF·DB/엔진/점수식·6~7단계는 변경하지 않는다.
+- 이번 최종 검증: `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(종료 0), **429개 중 428개 통과·1개 스킵·실패/오류 0**, 신규 5단계 **25개 모두 통과**(호출부 7·개인정보 제외 1·분석 API 통합 17). 자유 대화에서 필수 질문 자동 추가 없음, 주제 제한 없음의 다음 대화 보존·임의 분야 미지정, 실제 추천 실행 시 누락 항목만 질문형 400 안내·추천/추가 Gemini 호출 없음까지 검증했다. 스킵은 직전과 같은 PostgreSQL 운영 DDL 검증이다. `/tmp/devmozip-step5-required-policy-backend.log`. 위 427개 결과는 직전 구현 기준으로 구분한다.
+- 프론트 `npm run build` 성공(종료 0, 50개 페이지), `/tmp/devmozip-step5-required-policy-frontend.log`. 프론트 소스 변경 없음·생성 next-env.d.ts만 원상 복원했다. `git diff --check`·AI 문서 상대 링크 확인 통과. 실제 Gemini 키 미설정·모델 품질과 PostgreSQL 분석 쓰기는 미검증 상태를 유지한다. 커밋·푸시·다음 단계 진행은 없다.
+
+### Gemini 설정 503·키 형식 호환 보완 (2026-11-09)
+
+- 사용자 제보: `자연어 분석 설정을 확인해 주세요.` 503 응답. 이 메시지는 외부 호출 전 설정 검사에서만 발생한다. 키 미설정과는 다른 분기다. 이 환경에 대응하는 사용자 Java 프로세스는 없어 실제 키/실행 설정의 어느 항목이 실패했는지는 확정하지 못했다. 키 원문·프로세스 환경값은 출력하지 않았다.
+- 코드 결함: 이전 `[A-Za-z0-9_-]{10,256}` 키 정규식이 점 포함 키 등 발급 형식을 불필요하게 제한했다. Google 공식 키 문서의 Auth key 전환을 확인하고 키를 opaque credential로 취급하도록 수정했다. 공백/제어문자/비 ASCII·4096자 초과는 로컬에서 차단하고, 키 유효성은 Google에서 판정한다. 사용자 오류의 실제 원인 확정이나 실제 키 호출 성공을 의미하지 않는다.
+- 변경 파일: `client/GeminiAnalysisClient.java`, `client/GeminiAnalysisClientTest.java`, AI 문서 3개. 모델·타임아웃·토큰 설정 오류를 개별 503 안내로 분리하고 값을 노출하지 않는다. 인증·DB·프론트·기타 미커밋 작업은 유지한다.
+- 검증: `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(종료 0), **432개 중 431개 통과·1개 스킵·실패/오류 0**. 키 형식/헤더 전달·안전하지 않은 키 차단·설정 항목별 안내 신규 3개를 포함한 Gemini 호출부 10개 모두 통과했다. 스킵은 기존 PostgreSQL 운영 DDL 검증이다. `frontend`에서 `npm run build` 성공(종료 0, 50개 페이지). 로그 `/tmp/devmozip-step5-key-format-backend.log`, `/tmp/devmozip-step5-key-format-frontend.log`. 생성 next-env.d.ts만 원상 복원했다. `git diff --check` 통과. 실제 사용자 키·Gemini 호출은 미검증이며 키를 채팅/로그로 받지 않는다. 키를 입력한 동일 터미널에서 변경 코드로 백엔드를 재시작해야 수정이 적용된다. 사용자 앱/공유 DB/커밋/푸시는 변경하지 않았다.
+
+### Google 거절 응답 502 진단 보완 (2026-11-09)
+
+- 사용자 제보: 올바른 POST `/api/v1/ai/conversations/8/messages` 호출에서 `AI 분석 서버가 요청을 완료하지 못했습니다.` 502. 기존 코드에서 이 메시지는 Google 비성공 HTTP 응답(429 제외) 분기다. 실제 upstream HTTP 코드가 버려져 인증/모델/요청 형식 등을 확정할 수 없었다. 로컬 키 형식 오류 503과 구분하며, 실제 사용자 환경의 원인은 아직 미확정이다.
+- 확인: 키 없이 Google 공개 REST discovery 정의를 읽어 GenerateContentRequest의 systemInstruction/contents/generationConfig 및 GenerationConfig의 responseMimeType/responseJsonSchema 지원을 확인했다. 이 확인만으로 실제 요청/계정/모델의 동작 성공을 주장하지 않는다. 공식 API 오류 문서도 대조했다.
+- 변경 파일: `client/GeminiAnalysisClient.java`, `client/GeminiAnalysisClientTest.java`, AI 문서 3개. Google HTTP 코드와 허용 목록의 표준 status/ErrorInfo.reason만 기존 ErrorResponse.message에 제공한다. 임의 message/metadata/알 수 없는 코드·키·입력 원문은 반환/로그하지 않는다. 외부 429는 앱 429, 그 밖의 비성공 응답은 앱 502를 유지하고 상태/원인별 안내를 구분한다. 모델 자동 교체·유료 전환·재시도·공통 인증/DB 변경은 없다.
+- 검증: `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(종료 0), **435개 중 434개 통과·1개 스킵·실패/오류 0**. 외부 400/401/403/404/500/503 상태 구분·개인 정보가 담긴 원문/알 수 없는 코드 제외, 허용된 사유별 안내, HTML 오류 처리 신규 3개를 포함한 Gemini 호출부 13개 모두 통과했다. 스킵은 기존 PostgreSQL 운영 DDL 검증이다. `frontend`에서 `npm run build` 성공(종료 0, 50개 페이지). 로그 `/tmp/devmozip-step5-upstream-errors-backend.log`, `/tmp/devmozip-step5-upstream-errors-frontend.log`. 생성 next-env.d.ts만 복원했다. `git diff --check` 통과. 실제 사용자 키·외부 호출은 미검증이다. 재시작 후 같은 키/본문 재시도의 안전한 오류 코드가 필요하며, 이번 변경을 원래 502 원인의 해결 완료로 표시하지 않는다. 사용자 앱·공유 DB·커밋·푸시는 변경하지 않았다.
+
+아래는 2026-11-08 이전 구현·검증 이력이다. 현재 5단계 계약은 이 절과 API 문서의 2026-11-09 절을 우선한다.
+
 기준일: 2026-11-08. 현재 작업 브랜치는 `feat/frontend-run-ai-recommendation`이다. 백엔드 1~4단계를 유지하고 사용자 승인으로 프론트 동기화·추천 실행·저장 결과 조회 코드를 구현했다. 사용자가 공유 DB 적용 성공과 실제 연동 검토 완료를 확인했다. 이번 사용자 요청으로 채팅 UI/UX를 재구성했으며 새 화면의 사용자 최종 검토는 별도다. 공유 DB 신규 스키마 적용과 실제 계정 통합 검증은 아래 최신 기록에서 구분한다. 5~7단계는 시작하지 않는다. 과거 기록의 미완료·실행 상태는 당시 기준이다.
 
 ## PR 전 미사용 코드·로그 점검 (2026-11-08, 최신)

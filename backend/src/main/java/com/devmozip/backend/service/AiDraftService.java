@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class AiDraftService {
@@ -21,18 +20,18 @@ public class AiDraftService {
 	private final AiConversationRepository conversations;
 	private final AiMessageRepository messages;
 	private final AiRecommendationRequestRepository requests;
-	private final ObjectMapper mapper;
 	private final TransactionTemplate transaction;
+	private final AiConditionsDocument documents;
 
 	public AiDraftService(CurrentUserProvider currentUser, AiConversationRepository conversations,
-		AiMessageRepository messages, AiRecommendationRequestRepository requests, ObjectMapper mapper,
-		PlatformTransactionManager manager) {
+		AiMessageRepository messages, AiRecommendationRequestRepository requests,
+		PlatformTransactionManager manager, AiConditionsDocument documents) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
 		this.requests = requests;
-		this.mapper = mapper;
 		transaction = new TransactionTemplate(manager);
+		this.documents = documents;
 	}
 
 	public ConversationDetailResponse sync(SyncDraftRequest request) {
@@ -76,7 +75,7 @@ public class AiDraftService {
 				messages.save(message);
 			}
 		}
-		conversation.replaceConditions(mapper.writeValueAsString(request.conditions()), LocalDateTime.now());
+		conversation.replaceConditions(documents.manual(conversation.getCurrentConditions(), request.conditions()), LocalDateTime.now());
 		messages.flush();
 		return new ConversationDetailResponse(conversation.getId(), conversation.getTitle(), conversation.getCurrentConditions(),
 			conversation.getCreatedAt(), conversation.getUpdatedAt(), messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversation.getId())

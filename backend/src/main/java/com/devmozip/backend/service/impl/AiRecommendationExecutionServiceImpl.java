@@ -9,6 +9,7 @@ import com.devmozip.backend.repository.*;
 import com.devmozip.backend.security.ai.CurrentUserProvider;
 import com.devmozip.backend.service.AiRecommendationExecutionService;
 import com.devmozip.backend.service.AiRecommendationService;
+import com.devmozip.backend.service.AiConditionsDocument;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Objects;
@@ -35,10 +36,12 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	private final EntityManager entityManager;
 	private final TransactionTemplate transaction;
 	private final TransactionTemplate read;
+	private final AiConditionsDocument documents;
 
 	public AiRecommendationExecutionServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
 		AiMessageRepository messages, AiRecommendationRequestRepository requests, AiRecommendationRepository results,
-		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager) {
+		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager,
+		AiConditionsDocument documents) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
@@ -47,6 +50,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		this.engine = engine;
 		this.mapper = mapper;
 		this.entityManager = entityManager;
+		this.documents = documents;
 		transaction = new TransactionTemplate(manager);
 		transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		read = new TransactionTemplate(manager);
@@ -139,8 +143,13 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		return requests.findByIdAndConversationId(requestId, conversationId).orElseThrow(AiRecommendationExecutionServiceImpl::notFound);
 	}
 	private UpdateConditionsRequest conditions(String json) {
-		try { return Objects.requireNonNull(mapper.readValue(json, UpdateConditionsRequest.class)); }
-		catch (RuntimeException invalid) { throw bad("저장된 추천 조건을 확인해 주세요."); }
+		try { return Objects.requireNonNull(documents.recommendation(json)); }
+		catch (RuntimeException invalid) {
+			List<String> questions;
+			try { questions = documents.missingRequiredQuestions(json); }
+			catch (RuntimeException unreadable) { questions = List.of(); }
+			throw bad(questions.isEmpty() ? "저장된 추천 조건을 확인해 주세요." : String.join("\n", questions));
+		}
 	}
 	private RecommendationResponse response(long conversationId, AiRecommendationRequest request) {
 		List<RecommendationResponse.Item> items = results.findByRequestIdOrderByRankAscIdAsc(request.getId())
