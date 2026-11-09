@@ -1,8 +1,10 @@
 # AI API 명세
 
+7단계 최종 상태·테스트 증거·남은 운영 검증은 [종료 점검](ai-progress.md#2026-11-10-step-7-종료-점검--현재-구현-기준)을 따른다. 응답6개 필드·429 계약·요금제·차감 기준은 기존 합의와 동일하다. 사용자 공유 SQL 적용 확인과 CHAR 매핑 수정은 새 API 정책 변경이 아니다. 기본 추천/6B 점수·순위·응답도 이번 문서 작업에서 변경하지 않았다.
+
 ## 2026-11-10 STEP 7 구현 계약
 
-GET `/api/v1/ai/usage`와 BFF GET `/api/ai/usage`를 구현했다. 응답은 `usageMonth`, `usedCount`, `limit`, `remainingCount`, `pendingCount`, `availableCount`다. 월별 행 잠금·처리 중 예약·성공 원자 차감·실패/만료/삭제 정산을 기존 멱등성 구조에 연결했다. 429/AI_MONTHLY_LIMIT_EXCEEDED·현재 구독·수신 월 귀속·기본30분 예약·접근 시 만료 회복·SQL 적용 조건은 [7단계 구현 계약](ai-usage-api.md)을 따른다. 공유 PostgreSQL17.11의 테이블 부재를 읽기 전용으로 확인했으며 공유 DDL 적용·배포는 하지 않았다. 아래 날짜별 미구현 설명은 과거 이력이다.
+GET `/api/v1/ai/usage`와 BFF GET `/api/ai/usage`를 구현했다. 응답은 `usageMonth`, `usedCount`, `limit`, `remainingCount`, `pendingCount`, `availableCount`다. 월별 행 잠금·처리 중 예약·성공 원자 차감·실패/만료/삭제 정산을 기존 멱등성 구조에 연결했다. 429/AI_MONTHLY_LIMIT_EXCEEDED·현재 구독·수신 월 귀속·기본30분 예약·접근 시 만료 회복·SQL 적용 조건은 [7단계 구현 계약](ai-usage-api.md)을 따른다. 최초 테이블 부재 확인 이후 사용자가 공유 SQL을 실행했다. 재조회로 테이블·컬럼·주요 제약을 확인했으며 CHAR(7) JDBC 매핑 오류를 수정했다. 에이전트의 공유 DDL 실행·배포는 하지 않았다. 아래 날짜별 미구현 설명은 과거 이력이다.
 
 ## 2026-11-10 6B 종료 시점 계약 정리
 
@@ -217,7 +219,7 @@ python3 scripts/dev-postgres.py backend
 | 6B | GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 프리미엄 포트폴리오 상세 분석 | 200/202, PortfolioAnalysisResponse |
 | 7 | GET `/api/v1/ai/usage` | 현재 월 사용량·한도·예약·실행 가능 횟수 | 200, AiUsageResponse |
 
-5단계 분석은 기존 메시지 POST의 `analyze:true`로 구현돼 있다. 6A는 기존 추천 실행에 연결돼 있고, 6B GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis`와7단계 GET `/api/v1/ai/usage`도 구현돼 있다. 7단계의 공유 DB 적용은 배포 전 별도 필요하다.
+5단계 분석은 기존 메시지 POST의 `analyze:true`로 구현돼 있다. 6A는 기존 추천 실행에 연결돼 있고, 6B GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis`와7단계 GET `/api/v1/ai/usage`도 구현돼 있다.7단계 공유 SQL은 사용자가 적용해 생성 결과를 확인했으며 실제 서버 재기동·실사용 검증은 남아 있다. 새 환경은 명시 SQL 적용과 validate 확인이 필요하다.
 
 ### 추가 제공 API 표 반영 (2026-11-04)
 
@@ -728,7 +730,7 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 ## API 단계별 개요
 
-4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다. 6A 요구사항 반영·6B 상세 분석·7단계 월 사용량 코드를 구현했다.7단계의 공유 DB 적용·배포는 별도다.
+4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다.6A 요구사항 반영·6B 상세 분석·7단계 월 사용량 및 CHAR 매핑 보완을 구현했다.7단계 사용자 공유 SQL 적용은 확인했으며 실제 서버 재기동·실사용·배포 확인은 별도다.
 
 | 단계 | Method·URL | 역할·남은 계약 |
 |---|---|---|

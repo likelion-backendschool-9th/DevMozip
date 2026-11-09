@@ -3,6 +3,8 @@ package com.devmozip.backend.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.Check;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "ai_usages", uniqueConstraints = @UniqueConstraint(name = "uk_ai_usage_month", columnNames = {"user_id", "usage_month"}))
@@ -12,7 +14,8 @@ public class AiUsage {
 	private Long id;
 	@Column(name = "user_id", nullable = false)
 	private long userId;
-	@Column(name = "usage_month", nullable = false, columnDefinition = "char(7)")
+	@JdbcTypeCode(SqlTypes.CHAR)
+	@Column(name = "usage_month", nullable = false, length = 7, columnDefinition = "char(7)")
 	private String usageMonth;
 	@Column(name = "used_count", nullable = false)
 	private int usedCount;
