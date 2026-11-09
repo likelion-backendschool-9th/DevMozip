@@ -9,15 +9,15 @@ import { notify } from '@/lib/state/prototypeStore';
 import { changeOwnImage, fetchJobCategories, saveOwnProfile } from '@/lib/profiles/profileUpdate';
 import { careerOptions } from '@/mocks/auth';
 import { useOwnProfile } from '../../../_components/OwnProfileProvider';
-import type { ProfileDetail, ProfileImageKind } from '@/types/profileDetail';
+import type { OwnProfileDetail, ProfileImageKind } from '@/types/profileDetail';
 import styles from './ProfileEditor.module.css';
 
-export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: ProfileDetail; onClose: () => void; onSaved: (profile: ProfileDetail) => void }) {
+export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: OwnProfileDetail; onClose: () => void; onSaved: (profile: OwnProfileDetail) => void }) {
     const own = useOwnProfile();
     const router = useRouter();
     const pathname = usePathname();
     const [nickname, setNickname] = useState(profile.nickname);
-    const [tag, setTag] = useState(profile.tag);
+    const [tag, setTag] = useState(profile.tag || '');
     const [summary, setSummary] = useState(profile.summary || '');
     const [career, setCareer] = useState(profile.career || '');
     const [job, setJob] = useState(profile.jobCategories[0] || '');
@@ -58,7 +58,7 @@ export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: Profi
                 const saved = await saveOwnProfile({ nickname, tag, jobCategories: [job], summary,
                     career: career || null, contactHours: contact, collaborationStatus: collaboration || null });
                 own.update(saved); onSaved(saved); onClose(); notify('프로필을 저장했어요.');
-                if (pathname.startsWith('/users/') && saved.tag !== profile.tag) router.replace(`/users/${encodeURIComponent(saved.tag)}`);
+                if (pathname.startsWith('/users/') && saved.tag && saved.tag !== profile.tag) router.replace(`/users/${encodeURIComponent(saved.tag)}`);
             } catch (error) { setError(error instanceof Error ? error.message : '저장하지 못했어요.'); }
             finally { setSaving(false); }
         }}>
@@ -73,6 +73,7 @@ export function ApiProfileEditor({ profile, onClose, onSaved }: { profile: Profi
                     <label>태그<Input required minLength={2} maxLength={30} pattern="[a-zA-Z0-9_-]+" value={tag} onChange={e => setTag(e.target.value)} /></label>
                 </div>
                 <p className="auth-hint">닉네임 2~20자 · 태그 2~30자, 영문·숫자·밑줄·하이픈. @ 없이 입력해 주세요.</p>
+                {profile.tag === null && <p className="auth-hint">사용자 아이디를 설정하면 공개 프로필 주소가 만들어져요.</p>}
                 <label>한 줄 소개<Input maxLength={150} value={summary} onChange={e => setSummary(e.target.value)} /></label>
                 <div className="auth-two-columns">
                     <label>직군<select required className="form-input" value={job} onChange={e => setJob(e.target.value)}><option value="">직군 선택</option>{jobs.map(option => <option key={option}>{option}</option>)}</select></label>

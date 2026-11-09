@@ -42,7 +42,11 @@ describe('API 프로필 화면', () => {
         const html = render(<MemoryRouter initialEntries={[`/users/api-developer?tab=${tab}`]}><ProfileApiResult result={{ status: 'ready', profile: apiProfileFixture }} onRetry={() => {}} /></MemoryRouter>);
         expect(html).toContain(`id="profile-panel-${tab}"`);
         expect((html.match(/role="tab"/g) || [])).toHaveLength(5);
-        expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
+        if (tab === 'about') {
+            expect(html).toContain('외부 링크를 불러오는 중…');
+            expect(html).not.toContain('외부 링크는 아직 조회 API에 연결되지 않았습니다.');
+        } else if (tab === 'portfolio') expect(html).toContain('포트폴리오를 불러오는 중');
+        else expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
         expect(html).toContain('38.5');
     });
     it('미입력 정보는 빈 값을 명확히 표시한다', () => {
@@ -67,4 +71,16 @@ describe('API 프로필 화면', () => {
         expect(html).toContain('프로필 정보를 불러오고 있어요');
         expect(html).not.toContain('초기화된 Mock');
     });
+});
+
+
+it('사용자 아이디 미설정 본인도 프로필과 편집 창을 열 수 있다', () => {
+    const profile = { ...apiProfileFixture, tag: null };
+    const html = render(<ProfileApiResult result={{ status: 'ready', profile }} onRetry={() => {}} onEdit={() => {}} />);
+    expect(html).toContain('사용자 아이디 미설정'); expect(html).toContain('프로필 수정');
+    expect(html).toContain('자기소개를 불러오고 있어요'); expect(html).toContain('외부 링크를 불러오는 중');
+    expect(html).not.toContain('@null'); expect(html).not.toContain('/users/null');
+    const form = render(<ApiProfileEditor profile={profile} onClose={() => {}} onSaved={() => {}} />);
+    expect(form).toContain('사용자 아이디를 설정하면 공개 프로필 주소가 만들어져요.');
+    expect(form).not.toContain('value="null"');
 });

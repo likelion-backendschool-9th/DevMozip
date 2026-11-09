@@ -1,7 +1,7 @@
-import { parseProfileDetail } from '@/lib/profiles/profileDetail';
+import { parseProfileDetail, parseOwnProfileDetail } from '@/lib/profiles/profileDetail';
 import { profileRequestGuard, profileError, proxyProfile } from '@/lib/profiles/profileProxy';
 export async function GET() {
-    return profileRequestGuard() ?? proxyProfile('/api/v1/users/me/profile', {}, parseProfileDetail);
+    return profileRequestGuard() ?? proxyProfile('/api/v1/users/me/profile', {}, parseOwnProfileDetail);
 }
 export async function PUT(request: Request) {
     const blocked = profileRequestGuard(request);
