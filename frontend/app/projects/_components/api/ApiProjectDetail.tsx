@@ -14,6 +14,10 @@ import {projectRoleLabel} from '@/lib/projects/projectChoices';
 import {statusLabels,roleLabels,validProjectId} from '@/lib/projects/projectApiContract';
 import type {ProjectDetailResult,ProjectIdentity} from '@/types/projectApi';
 import {ApiError} from './ApiCommon';
+import {ProjectLikeButton} from '@/components/projects/ProjectLikeButton';
+import {ProjectShareButton} from '@/components/projects/ProjectShareButton';
+import {ProjectIconActions} from '@/components/projects/ProjectIconActions';
+import {ProjectBookmarkButton} from '@/components/projects/ProjectBookmarkButton';
 import styles from './ApiCommon.module.css';
 export function ApiProjectDetail({manage=false}:{manage?:boolean}){
  const {projectId=''}=useParams<{projectId:string}>();const router=useRouter();
@@ -33,10 +37,10 @@ export function ApiProjectDetail({manage=false}:{manage?:boolean}){
  const state=resource.data.recruitmentClosed&&p.status==='RECRUITING'?'모집 마감':statusLabels[p.status];
  return <section className={cls('container project-detail-page')}>
   <Link className="text-link" href={manage?'/my-projects':'/projects'}><ArrowLeft size={14}/>{manage?'내 프로젝트':'프로젝트 모집'}</Link>
-  <header className={cls('project-detail-heading')}>
+  <header className={[cls('project-detail-heading'),original.heading].join(' ')}>
    <div className={cls('project-detail-labels')}><span className="outline-badge">{p.interests.join(' · ')||'프로젝트'}</span><span className="availability-badge">{state}</span>{!p.isPublic&&<span className="outline-badge">팀원 공개</span>}</div>
    <h1>{p.title}</h1><p>{p.summary}</p>
-   <div className={styles.actions}>{own&&!manage&&<Link className="button" href={'/projects/'+p.id+'/manage'}>주최자 관리</Link>}{own&&!completed&&<Link className="button secondary" href={'/projects/'+p.id+'/edit'}>공고 수정</Link>}<span className={styles.muted}>조회 {p.viewCount}</span></div>
+   <div className={original.headerActions}><ProjectIconActions><ProjectLikeButton projectId={p.id}/><ProjectShareButton projectId={p.id}/><ProjectBookmarkButton projectId={p.id}/></ProjectIconActions></div><div className={[styles.actions,original.headerMeta].join(' ')}>{own&&!manage&&<Link className="button" href={'/projects/'+p.id+'/manage'}>주최자 관리</Link>}{own&&!completed&&<Link className="button secondary" href={'/projects/'+p.id+'/edit'}>공고 수정</Link>}<span className={styles.muted}>조회 {p.viewCount}</span></div>
   </header>
   {manage&&own&&<div className={managementCls('manage-metrics')}>
    <Card><span>현재 참여 인원</span><strong>{resource.data.memberCount}<small>/ {p.totalCapacity}명</small></strong></Card>

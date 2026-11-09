@@ -3,6 +3,45 @@
 기준일: 2026-11-05. **최신 develop의 로그인 필수 동작과 2단계 서버 조건 PUT·DTO 검증을 통합했다.** 서버 대화·메시지 API 5개와 로컬 초안 동작은 유지한다. 현재 작업 브랜치는 `feat/ai-conditions`다. 최신 develop `f6ce13e` 통합은 `61a0318`로 커밋해 origin/feat/ai-conditions에 푸시 완료했다. 관심 분야 통합·직군 자유 입력 보완은 a437c7e로 로컬 커밋되어 있다. 기술 스택 직접 입력·필수 표시·누락 안내/이동은 79dc907로 로컬 커밋되어 있다. 직접 추가한 기술 태그 위치 변경은 63276fc에 반영되어 있다. 이번에는 PR 리뷰에 따라 AI 타입의 패키지와 DTO 이름을 정리한다. 실제 PostgreSQL 스키마 확인·통합 검증은 남아 있으며 서버 동기화는 4단계 후속 계약이다.
 
 
+## 2026-11-09 북마크·좋아요 PR 준비
+
+- 사용자 요청으로 `feat/56-project-bookmarks`의 현재 변경을 커밋·푸시하고 develop 대상 PR을 준비한다. 이 브랜치는 미병합 PR #81을 기반으로 하므로 선행 의존성을 PR에 명시한다. YAML·실제 환경 설정은 이번 변경에 포함하지 않는다.
+- 푸시 대상 작업 폴더에서 `npm run build -- --webpack` 및 TypeScript 성공, 프론트 전체 테스트 70개 파일 736개 통과. `./backend/gradlew -p backend test --tests '*ProjectBookmarkIntegrationTest' --tests '*ProjectLikeIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`으로 PostgreSQL/JWT 통합 테스트 8개 통과. 실행 폴더에서 기록했던 프로필 테스트 실패와 구분한 결과다. 이전 1440px Mock/API 화면 캡처와 측정 결과를 `docs/artifacts/project-bookmarks`에 첨부한다.
+- 실계정 로그인 401로 팀 DB 인증 후 저장·취소는 미검증이며 개발 서버의 테스트 브라우저 초기화 대기도 기존 기록대로 남긴다. 백엔드 전체 테스트의 기존 카카오 로그 검증 실패를 이번 PR에서 수정하지 않는다.
+
+
+## 2026-11-09 프로젝트 카드·상세 액션 배치 정리
+
+- 기능 변경 없이 카드 북마크를 제목 옆에서 커버 오른쪽 위(상단·우측 12px)로 이동했다. 제목은 20px/750 굵기, 한 줄 소개는 14px로 구분했다. 상세는 제목과 소개를 왼쪽, 좋아요·공유·북마크를 같은 헤더 오른쪽 끝으로 배치했다. Mock·API에 동일하게 반영했다.
+- 변경 파일: `RecruitmentCard.tsx/module.css`, `ProjectSummaryCard.tsx/module.css`, `app/projects/[projectId]/page.tsx/module.css`, `ProjectActions.module.css`, `ApiProjectDetail.tsx`. 실행 폴더와 북마크 작업 브랜치에 함께 반영했다. 백엔드·DB 스키마·API 코드는 수정하지 않았다.
+- `npm run build -- --webpack` 및 TypeScript 성공. 프로젝트 화면·Mock 동작·북마크/좋아요 공통 상태 관련 테스트 4개 파일 40개 통과. 기능이 바뀌지 않아 백엔드 테스트는 재실행하지 않았다.
+- 실제 Chrome 1440×1100에서 빌드 프리뷰(임시 3101)로 Mock/API 목록과 상세를 확인했다. 두 모드 모두 제목20px/소개14px, 북마크 커버 내부 우측·상단12px, 상세 그룹 우측 여백0px·컨트롤3개·가로 넘침 없음을 측정하고 캡처를 확인했다. 개발 서버(3000)는 테스트 브라우저에서 초기화 대기가 지속돼 프론트만 재시작했으며, 해당 개발 서버의 시각 검증 성공으로 보고하지 않는다.
+- 임시 프리뷰와 검증 브라우저는 검증 후 종료한다. 커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 프로젝트 좋아요·공유·북마크 아이콘
+
+- 상세 화면의 좋아요·공유·북마크를 아이콘 그룹으로 묶고 북마크 크기를 확대했다. Mock 좋아요는 기존 모집 상태에 계정별로 보존하며, Mock 끄기는 실제 좋아요 API·공통 상태를 사용한다. 사용자 승인대로 bookmarks와 같은 `likes` 공통 테이블을 팀 DB에 생성하고 컬럼·FK·중복·대상 CHECK를 확인했다. 변경 파일·API는 [프로젝트 아이콘 액션](project-icon-actions.md)을 참조한다.
+- 실행 폴더에서 `npm run build -- --webpack` 및 TypeScript 검사 성공. 프론트 전체 테스트 682개 중 681개 통과·1개 실패. 실패는 기존 `ProfilePage.test.tsx`의 리뷰 버블 개수 기대 4/실제 14 불일치다. 첫 실행의 CSS 코로케이션 실패는 공통 ProjectIconActions 컴포넌트로 정리해 재실행에서 해결했다.
+- 임시 Gradle 설정으로 기존 테스트의 직군 타입 컴파일 오류와 실행 서버 잠금을 분리하고 좋아요·북마크 PostgreSQL/JWT 통합 테스트 8개를 실행해 모두 통과했다. 실행 서버 프로젝트 페이지 200, 프론트/백 좋아요 목록 비로그인 401을 확인했다. 계정 로그인 401로 팀 DB 인증 후 좋아요 저장·취소는 검증하지 못했다. 브라우저 시각 검증·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 실행 화면의 프로젝트 북마크 누락 수정
+
+- Docker 실행 소스는 이 브랜치가 아닌 `.worktrees/project-api`여서 화면에 북마크가 없었다. 실행 폴더에 북마크 변경만 반영하고 백엔드를 재시작했다. 기존 지원·리뷰 및 YAML은 유지한다.
+- 해당 실행 소스에서 프론트 빌드·TypeScript와 관련 테스트 26개, 분리 실행한 북마크 통합 테스트 4개 통과. 기존 프로젝트 테스트 직군 타입 컴파일 오류 6건 및 실제 로그인 401은 남아 있다. 상세는 [프로젝트 북마크](project-bookmarks.md)를 참조한다. 커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 프로젝트 북마크 #56
+
+- `feat/56-project-bookmarks`의 별도 worktree에서 작업했다. 기존 Mock 화면과 실제 API 전환을 유지하며 공통 `bookmarks` 엔티티·저장소·서비스·컨트롤러·응답 record, BFF와 공통 화면 상태를 추가했다. 상세·탐색·내 북마크함에 저장·해제를 연결했다. 변경 파일은 [프로젝트 북마크](project-bookmarks.md)를 참조한다.
+- 사용자 승인으로 `docs/sql/project-bookmarks.sql`을 팀 PostgreSQL에 실행했다. 컬럼 6개, 사용자/프로젝트 FK, 두 중복 제약과 대상 CHECK를 확인했다. 회원·프로젝트 데이터를 변경하거나 별도 프로젝트 북마크 테이블을 만들지 않았다.
+- `frontend`: `npm test -- --maxWorkers=1` 68개 파일·728개 통과. `npm run build -- --webpack` 성공(TypeScript 포함). 제한 환경의 최초 빌드는 TypeScript --showConfig 파싱 오류로 실패해 일반 실행 환경에서 재검증했다.
+- `backend`: `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m` 567개 중 555개 통과·11개 스킵·1개 실패. 북마크 PostgreSQL/JWT 통합 테스트 4개(동시 저장 포함)는 통과했다. 실패는 기존 `KakaoClientTest.java:153` 로그 검증이며 이번 변경에서 수정하지 않았다.
+- 임시 18081 서버를 DDL 자동 변경 없이 팀 DB에 연결하고 프로젝트 목록 HTTP 200을 확인했다. 실제 데모 로그인은 401이므로 팀 DB의 인증 후 저장·해제는 검증하지 못했다. 계정·비밀번호는 수정하지 않았고 임시 서버는 종료했다.
+- 브라우저 시각 검증은 실행하지 않았다. 게시글 실제 북마크 API와 post_id FK는 공통 SNS 담당 범위다. 커밋·푸시·PR과 다음 이슈는 진행하지 않았다.
+
+
 ## 2026-11-08 PR #81 충돌 해결
 
 - 사용자 요청으로 .worktrees/pr81-conflicts의 feat/project-api-integration-no-yaml에서 develop 058397e를 반영했다. 프로젝트 초기/후속 구현이 겹친 24개 충돌을 비교하고 직군 직접 입력·실제 DB 조회·생성 권한·Mock 디자인을 보존했다. 최신 인증/프로필 변경과 양쪽 문서 기록도 유지한다.

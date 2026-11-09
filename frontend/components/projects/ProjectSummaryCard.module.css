@@ -2,3 +2,8 @@
 .imageLabel{position:relative;z-index:1;background:#ffffffe8;border-radius:5px;padding:3px 7px}
 .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:10px}
 .meta a{color:var(--purple)}
+.title{display:flex;align-items:flex-start;gap:6px}
+.title>a:first-child{min-width:0;overflow-wrap:anywhere}
+.title h3{font-size:20px;font-weight:750;line-height:1.45;letter-spacing:-.5px;margin:0 0 10px}
+
+.field{position:relative;display:inline-block;max-width:calc(100% - 46px);overflow-wrap:anywhere;font-size:14px}
