@@ -75,6 +75,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/options").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/introduction").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/introduction").permitAll()
+                // 팔로우 상태와 팔로워·팔로잉 목록은 공개한다. 팔로우·언팔로우·알림 설정은 아래 기본 규칙대로 로그인이 필요하다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/follow", "/api/v1/users/{slug}/followers", "/api/v1/users/{slug}/following").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}").permitAll()
                 // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
