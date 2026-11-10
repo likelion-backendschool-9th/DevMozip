@@ -34,6 +34,12 @@ public class AiMessage {
 		this.createdAt = now;
 	}
 	public Long getId() { return id; }
+	public static AiMessage assistant(AiConversation conversation, String content, String key, LocalDateTime now) {
+		var message = new AiMessage(conversation, content, now);
+		message.role = Role.ASSISTANT;
+		message.clientKey = key;
+		return message;
+	}
 	public Role getRole() { return role; }
 	public String getContent() { return content; }
 	public LocalDateTime getCreatedAt() { return createdAt; }

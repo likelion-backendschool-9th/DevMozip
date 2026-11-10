@@ -1,11 +1,11 @@
-import { toAiConditions } from '@/lib/matching/aiApi';
+import { toAiConditions, toAiDraftConditions } from '@/lib/matching/aiApi';
 import { matchingLoginPath, readLoginPrompt } from '@/lib/matching/loginPrompt';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { resetLocalStores } from '@/lib/localStore';
 import { useHome } from '@/lib/state/homeStore';
 import { syncServerSession } from '@/lib/state/authStore';
-import { HOME_KEY, loadHomeState, freshHomeState } from '@/lib/matching/homeService';
+import { HOME_KEY, freshHomeState } from '@/lib/matching/homeService';
 import { newMatchingConversation } from '@/lib/matching/matchingChatService';
 import { signIn } from '@/tests/helpers/session';
 
@@ -93,7 +93,7 @@ describe('로그인 필수 AI 로컬 대화', () => {
         home().editChatMessage('전송 전 입력문');
         resetLocalStores(); signIn('demo-user');
         expect(home().conversation).toMatchObject({ id, draft: '전송 전 입력문', requirements: { duration: '3개월' } });
-        expect(home().sendChat('추천해 주세요.')).toEqual({ ok: true });
+        expect(home().sendChat('추천해 주세요.')).toEqual({ ok: true, conversationId: id });
         expect(home().conversation!.messages.map(m => m.role)).toEqual(['user']);
         expect(home().conversation!.requirements.stacks).toEqual(['React']);
         expect(home().conversation!.draft).toBe('');
@@ -302,4 +302,83 @@ describe('로그인 프롬프트를 실제 계정 로컬 메시지로 인계', (
         expect(home().conversations).toHaveLength(0);
         expect(home().resumeLoginPrompt(token).ok).toBe(true);
     });
+});
+
+
+describe('AI 메시지 분석 재시도', () => {
+    it('503 뒤 새로고침·서버 이력 복원 후에도 동일 메시지 키로 분석하며 추천하지 않는다', async () => {
+        signIn('demo-user');
+        const sent = home().sendChat('개발 초보인데 함께 배우고 싶어요.');
+        expect(sent.conversationId).toBe(home().conversation!.id);
+        const message = home().conversation!.messages[0];
+        const summary = { id: 71, title: '대화', createdAt: message.createdAt, updatedAt: message.createdAt };
+        const userMessage = { id: 72, role: 'USER', clientKey: message.id, content: message.text, createdAt: message.createdAt };
+        const fetch = vi.mocked(globalThis.fetch);
+        fetch.mockResolvedValueOnce(Response.json(summary))
+            .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: {}, messages: [userMessage] }))
+            .mockResolvedValueOnce(Response.json({ message: '자연어 분석이 설정되지 않았습니다.' }, { status: 503 }));
+        await expect(home().analyzeChat()).rejects.toThrow('자연어 분석이 설정되지 않았습니다.');
+        expect(home().conversation!.pendingAnalysisKey).toBe(message.id);
+        expect(home().sendChat('다음 질문').ok).toBe(false);
+        resetLocalStores(); signIn('demo-user');
+        fetch.mockResolvedValueOnce(Response.json([summary]))
+            .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: {}, messages: [userMessage] }));
+        await home().loadAiChats();
+        expect(home().conversation!.messages[0].serverId).toBe(72);
+        fetch.mockResolvedValueOnce(Response.json({ userMessage,
+            assistantMessage: { id: 73, role: 'ASSISTANT', content: '어떤 경험을 쌓고 싶으세요?', createdAt: message.createdAt },
+            currentConditions: {}, analysis: {}, readyForRecommendation: false, replayed: false }));
+        await home().analyzeChat();
+        expect(home().conversation!.pendingAnalysisKey).toBeUndefined();
+        expect(home().conversation!.messages).toHaveLength(2);
+        const posts = fetch.mock.calls.filter(([, init]) => init?.method === 'POST');
+        expect(posts.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/71/messages', '/api/ai/conversations/71/messages']);
+        expect(JSON.parse(posts[2][1]!.body as string)).toEqual(JSON.parse(posts[3][1]!.body as string));
+    });
+});
+
+
+it('완성된 UI 조건은 분석 전에 기존 sync로 서버에 전달한다', async () => {
+    signIn('demo-user');
+    home().newChat();
+    home().editChat({ interests: ['웹'], career: '경력 무관', duration: '3개월' });
+    home().sendChat('개발 초보라 조언이 필요해요.');
+    const c = home().conversation!;
+    const message = c.messages[0];
+    const summary = { id: 81, title: c.title, createdAt: c.createdAt, updatedAt: c.updatedAt };
+    const userMessage = { id: 82, clientKey: message.id, role: 'USER', content: message.text, createdAt: message.createdAt };
+    const fetch = vi.mocked(globalThis.fetch);
+    fetch.mockResolvedValueOnce(Response.json(summary))
+        .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: toAiConditions(c.requirements), messages: [userMessage] }))
+        .mockResolvedValueOnce(Response.json({ userMessage,
+            assistantMessage: { id: 83, role: 'ASSISTANT', content: '어떤 것을 배우고 싶으세요?', createdAt: message.createdAt },
+            currentConditions: toAiConditions(c.requirements), analysis: {}, replayed: false, readyForRecommendation: true }));
+    await home().analyzeChat();
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/81/messages']);
+    expect(JSON.parse(fetch.mock.calls[1][1]!.body as string).conditions).toEqual(toAiConditions(c.requirements));
+});
+
+
+it.each([{}, { stacks: ['Java'] }, { duration: '3개월', roles: [{ name: '백엔드', count: 2 }] }])('부분 선택값 %j도 분석에 전달하고 추천은 실행하지 않는다', async (selection) => {
+    signIn('demo-user');
+    home().newChat();
+    home().editChat(selection);
+    home().sendChat('선택한 조건을 보고 조언해 주세요.');
+    const c = home().conversation!;
+    const message = c.messages[0];
+    const summary = { id: 81, title: c.title, createdAt: c.createdAt, updatedAt: c.updatedAt };
+    const conditions = toAiDraftConditions(c.requirements);
+    const userMessage = { id: 82, clientKey: message.id, role: 'USER', content: message.text, createdAt: message.createdAt };
+    const fetch = vi.mocked(globalThis.fetch);
+    fetch.mockResolvedValueOnce(Response.json(summary))
+        .mockResolvedValueOnce(Response.json({ ...summary, currentConditions: conditions, messages: [userMessage] }))
+        .mockResolvedValueOnce(Response.json({ userMessage,
+            assistantMessage: { id: 83, role: 'ASSISTANT', content: '선택값을 참고할게요.', createdAt: message.createdAt },
+            currentConditions: conditions, analysis: {}, replayed: false, readyForRecommendation: false }));
+    await home().analyzeChat();
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/ai/conversations', '/api/ai/conversations/sync', '/api/ai/conversations/81/messages']);
+    expect(JSON.parse(fetch.mock.calls[1][1]!.body as string).conditions).toEqual(conditions);
+    expect(home().conversation!.requirements).toEqual(c.requirements);
+    await expect(home().recommendChat()).rejects.toThrow('관심 분야·경력·기간');
+    expect(fetch).toHaveBeenCalledTimes(3);
 });

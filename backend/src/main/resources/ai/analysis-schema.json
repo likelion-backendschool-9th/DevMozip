@@ -1,0 +1,143 @@
+{
+  "type": "object",
+  "properties": {
+    "reply": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "interests",
+              "stacks",
+              "roles",
+              "career",
+              "durationMonths"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ADD",
+              "SET",
+              "REMOVE",
+              "CLEAR"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30
+          },
+          "count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 20
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT",
+              "INFERRED"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "explicitChange": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field",
+          "action",
+          "values",
+          "count",
+          "origin",
+          "evidence",
+          "explicitChange"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 30
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "OWN_SKILL",
+              "LEARNING_SKILL",
+              "TARGET_SKILL",
+              "TARGET_EXPERIENCE",
+              "PURPOSE",
+              "USER_LEVEL",
+              "FEATURE",
+              "COLLABORATION_GOAL",
+              "LEARNING_GOAL",
+              "PROJECT_PREFERENCE",
+              "OTHER"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ADD",
+              "SET",
+              "REMOVE",
+              "CLEAR"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT",
+              "INFERRED"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "action",
+          "value",
+          "origin",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 50
+    }
+  },
+  "required": [
+    "reply",
+    "questions",
+    "changes",
+    "facts"
+  ],
+  "additionalProperties": false
+}

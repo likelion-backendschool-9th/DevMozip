@@ -26,7 +26,8 @@ async function handle(request: Request, context: Context) {
     const allowed = request.method === 'GET'
         ? new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
         : request.method === 'DELETE' ? new RegExp(`^conversations/${id}$`).test(route)
-        : request.method === 'POST' && (route === 'conversations/sync' || new RegExp(`^conversations/${id}/recommendations$`).test(route));
+        : request.method === 'POST' && (route === 'conversations' || route === 'conversations/sync'
+            || new RegExp(`^conversations/${id}/(?:messages|recommendations)$`).test(route));
     if (!allowed) return error(404, '지원하지 않는 AI API 경로입니다.');
     const url = new URL(request.url);
     if ([...url.searchParams.keys()].some(key => key !== 'requestId') ||
@@ -34,7 +35,8 @@ async function handle(request: Request, context: Context) {
         url.searchParams.getAll('requestId').length !== 1 || !/^[1-9][0-9]*$/.test(url.searchParams.get('requestId') || '')))) {
         return error(400, '조회 조건을 확인해 주세요.');
     }
-    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(60000) };
+    const messages = /\/messages$/.test(route);
+    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : 60000) };
     if (request.method !== 'GET') {
         if (request.headers.get('origin') !== `${url.protocol}//${request.headers.get('host') || url.host}`) return error(403, '같은 사이트에서 요청해 주세요.');
         if (request.method === 'POST') {
@@ -53,6 +55,13 @@ async function handle(request: Request, context: Context) {
         const response = await backendFetch(`/api/v1/ai/${route}${url.search}`, init);
         if (response.status === 204) return new Response(null, { status: 204, headers });
         const body = await response.json().catch(() => null);
+        if (messages) {
+            if (response.ok) return NextResponse.json(body, { status: response.status, headers });
+            const allowedStatus = [400, 401, 403, 404, 409, 429, 502, 503, 504].includes(response.status);
+            const status = allowedStatus ? response.status : 502;
+            const message = allowedStatus && typeof body?.message === 'string' ? body.message : '메시지 분석을 완료하지 못했습니다. 다시 시도해 주세요.';
+            return error(status, message);
+        }
         // Recommendation FAILED responses contain the public result DTO; never forward server error details.
         if (response.ok || response.status === 500 && body?.status === 'FAILED' && Number.isSafeInteger(body?.requestId)) {
             return NextResponse.json(body, { status: response.status, headers });

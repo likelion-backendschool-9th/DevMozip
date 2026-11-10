@@ -6,7 +6,7 @@ import java.util.List;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 public record SyncDraftRequest(@JsonDeserialize(using = StrictLongDeserializer.class) Long conversationId,
-	String clientKey, String title, List<Message> messages, UpdateConditionsRequest conditions) {
+	String clientKey, String title, List<Message> messages, DraftConditionsRequest conditions) {
 	public SyncDraftRequest {
 		if (conversationId != null && conversationId <= 0) throw new IllegalArgumentException("대화 ID를 확인해 주세요.");
 		if (clientKey == null || !clientKey.matches("[A-Za-z0-9._:-]{1,128}")) throw new IllegalArgumentException("초안 키를 확인해 주세요.");

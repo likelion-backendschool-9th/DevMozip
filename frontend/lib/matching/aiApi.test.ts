@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AiApiError, aiConditionsKey, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions } from './aiApi';
+import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, deleteAiConversation, executeAiRecommendation, fromAiConditions, getAiRecommendation, mergeAiConversation, syncAiDraft, toAiConditions, toAiDraftConditions } from './aiApi';
 import { newMatchingConversation, sendMatchingMessage } from './matchingChatService';
 import type { AiConversationDetail } from '@/types/aiRecommendation';
 const remote: AiConversationDetail = { id: 7, clientKey: 'local-chat', title: '팀원', createdAt: '2026-11-07T10:00:00', updatedAt: '2026-11-07T10:00:00',
@@ -32,6 +32,27 @@ describe('AI API 및 초안 매핑', () => {
         expect(merged.draft).toBe('작성 중');
         expect(mergeAiConversation(remote, merged).messages).toHaveLength(2);
     });
+    it('분석 응답의 답변과 정형 조건을 반영하고 로컬 설명은 유지한다', () => {
+        let c = newMatchingConversation();
+        c = sendMatchingMessage(c, '백엔드 1명', c.requirements);
+        c.messages[0].id = 'message-key';
+        c.requirements.description = '로컬 설명';
+        c.requirements.interests = ['게임'];
+        const next = applyAiAnalysis(c, { replayed: false, readyForRecommendation: false, analysis: {}, currentConditions: { interests: ['웹'], career: '경력 무관', durationMonths: 6 },
+            userMessage: { id: 3, clientKey: 'message-key', role: 'USER', content: '백엔드 1명', createdAt: '2026-11-09T01:00:00' },
+            assistantMessage: { id: 4, clientKey: 'analysis:abc', role: 'ASSISTANT', content: '기간을 확인할게요.', createdAt: '2026-11-09T01:00:01' } });
+        expect(next.messages.map(m => [m.role, m.serverId, m.text])).toEqual([['user', 3, '백엔드 1명'], ['assistant', 4, '기간을 확인할게요.']]);
+        expect(next.requirements).toMatchObject({ interests: ['웹'], career: '경력 무관', duration: '6개월', description: '로컬 설명' });
+        expect(applyAiAnalysis(next, { replayed: true, readyForRecommendation: false, analysis: {}, currentConditions: next.requirements.career ? { interests: ['웹'], career: '경력 무관', durationMonths: 6 } : {},
+            userMessage: { id: 3, clientKey: 'message-key', role: 'USER', content: '백엔드 1명', createdAt: '2026-11-09T01:00:00' },
+            assistantMessage: { id: 4, role: 'ASSISTANT', content: '기간을 확인할게요.', createdAt: '2026-11-09T01:00:01' } }).messages).toHaveLength(2);
+    });
+    it('마지막 메시지만 분석 모드로 전송한다', async () => {
+        const fetch = vi.fn().mockResolvedValue(Response.json({})); vi.stubGlobal('fetch', fetch);
+        await analyzeAiMessage(8, '기간은 6개월', 'message-key');
+        expect(fetch.mock.calls[0][0]).toBe('/api/ai/conversations/8/messages');
+        expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ content: '기간은 6개월', clientKey: 'message-key', analyze: true });
+    });
     it('동기화 시 미저장 USER 메시지만 안정적인 키로 전송한다', async () => {
         const c = mergeAiConversation(remote);
         c.messages.push({ id: 'next-message', role: 'user', text: '다음', createdAt: new Date().toISOString() });
@@ -51,4 +72,31 @@ describe('AI API 및 초안 매핑', () => {
         expect(fetch.mock.calls[0][1].headers['Idempotency-Key']).toBe('same-key');
         await expect(deleteAiConversation(7)).rejects.toBeInstanceOf(AiApiError);
     });
+});
+
+
+it('서버 CLEAR의 출처가 있는 조건만 비우고 미동기화 로컬 조건은 보존한다', () => {
+    let c = newMatchingConversation();
+    c = sendMatchingMessage(c, '기간 삭제', c.requirements);
+    c.requirements.duration = '6개월'; c.requirements.interests = ['웹'];
+    c.requirements.stacks = ['Java'];
+    const result = applyAiAnalysis(c, { userMessage: { id: 31, clientKey: c.messages[0].id, role: 'USER', content: '기간 삭제', createdAt: c.createdAt },
+        assistantMessage: { id: 32, role: 'ASSISTANT', content: '기간을 삭제했어요.', createdAt: c.createdAt },
+        currentConditions: {}, analysis: { sources: { durationMonths: { origin: 'EXPLICIT' }, stacks: { origin: 'EXPLICIT' } } },
+        readyForRecommendation: false, replayed: false });
+    expect(result.requirements.duration).toBe('');
+    expect(result.requirements.stacks).toEqual([]);
+    expect(result.requirements.interests).toEqual(['웹']);
+});
+
+
+it('초안에서 미선택 경력·기간은 생략하고 빈 목록은 삭제 의미로 보낸다', async () => {
+    const c = newMatchingConversation();
+    c.requirements.stacks = ['Java'];
+    const conditions = toAiDraftConditions(c.requirements);
+    expect(conditions).toEqual({ interests: [], stacks: ['Java'], roles: [] });
+    const fetch = vi.fn().mockResolvedValue(Response.json({})); vi.stubGlobal('fetch', fetch);
+    await syncAiDraft(c, conditions);
+    expect(JSON.parse(fetch.mock.calls[0][1].body).conditions).toEqual(conditions);
+    expect(toAiDraftConditions({ ...c.requirements, duration: '6개월', career: '경력 무관' })).toMatchObject({ durationMonths: 6, career: '경력 무관' });
 });

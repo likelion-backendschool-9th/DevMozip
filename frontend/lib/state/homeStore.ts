@@ -1,5 +1,5 @@
 import { readLoginPrompt, clearLoginPrompt } from '@/lib/matching/loginPrompt';
-import { AiApiError, aiConditionsKey, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, mergeAiConversation } from '@/lib/matching/aiApi';
+import { AiApiError, aiConditionsKey, analyzeAiMessage, applyAiAnalysis, createAiConversation, getAiHistory, getAiRecommendation, listAiConversations, getAiConversation, syncAiDraft, executeAiRecommendation, deleteAiConversation, toAiConditions, toAiDraftConditions, mergeAiConversation } from '@/lib/matching/aiApi';
 import { CHAT_TOTAL_LIMIT, chatMessageLength, sortChatConversations, missingChatRequirements, validateChatRequirements } from '@/lib/matching/matchingChatService';
 import { createMockId } from '@/lib/utils/createMockId';
 import { createLocalStore, derived, useStore, type Source } from '@/lib/localStore';
@@ -15,7 +15,7 @@ import type { HomeState } from '@/types/home';
 import type { AiRecommendation } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 
-type ChatResult = { ok: boolean; error?: string };
+type ChatResult = { ok: boolean; error?: string; conversationId?: string };
 
 // 메인 추천 입력 · AI 추천 대화 기록 · 월별 추천 사용량.
 const homeStore = createLocalStore(loadHomeState, true);
@@ -158,8 +158,9 @@ function sendChat(text: string): ChatResult {
     if (!getUser()) return { ok: false, error: '로그인 후 AI 추천 대화를 이용해 주세요.' };
     try {
         const c = activeConversation();
+        if (c.pendingAnalysisKey) throw new Error('이전 메시지 분석을 먼저 다시 시도해 주세요.');
         saveConversation(sendMatchingMessage(c, text, c.requirements));
-        return { ok: true };
+        return { ok: true, conversationId: c.id };
     } catch (e) {
         return fail(e);
     }
@@ -208,6 +209,49 @@ function rememberAiRecommendation(conversationId: number, result: AiRecommendati
     const chat = structuredClone(current.chat);
     chat.conversations[owner()] = items.map(v => v.id === c.id ? { ...v, lastRecommendation: { requestId: result.requestId, conditions: result.conditions } } : v);
     commit({ ...current, chat });
+}
+async function analyzeChat() {
+    const account = owner();
+    accountGuard(account);
+    const initial = activeConversation();
+    const lock = `${account}:${initial.id}`;
+    if (syncing.has(lock)) throw new Error('이전 요청을 처리하고 있습니다.');
+    const pending = initial.pendingAnalysisKey
+        ? initial.messages.filter(m => m.role === 'user' && m.id === initial.pendingAnalysisKey)
+        : initial.messages.filter(m => m.role === 'user' && !m.serverId);
+    const message = pending.at(-1);
+    if (!message) return;
+    syncing.add(lock);
+    try {
+        let serverId = initial.serverId;
+        if (!serverId) {
+            const created = await createAiConversation(initial.title);
+            accountGuard(account);
+            serverId = created.id;
+            const current = existingChat(initial.id);
+            if (!current) throw new Error('대화가 삭제되었습니다.');
+            saveConversation({ ...current, serverId });
+        }
+        // Sync the complete draft before analysis; missing required selections are allowed here.
+        if (!initial.pendingAnalysisKey) {
+            validateChatRequirements(initial.requirements);
+            const saved = await syncAiDraft({ ...initial, serverId }, toAiDraftConditions(initial.requirements));
+            accountGuard(account);
+            const latest = existingChat(initial.id);
+            if (!latest) throw new Error('대화가 삭제되었습니다.');
+            saveConversation(mergeAiConversation(saved, latest));
+        }
+        // sync already persisted all pending USER messages; only the latest needs analysis.
+        const current = existingChat(initial.id);
+        if (!current) throw new Error('대화가 삭제되었습니다.');
+        saveConversation({ ...current, serverId, pendingAnalysisKey: message.id });
+        if (!saveHomeState(homeStore.get())) throw new Error('재시도 정보를 저장할 수 없습니다. 브라우저 저장 공간을 확인해 주세요.');
+        const analysis = await analyzeAiMessage(serverId, message.text, message.id);
+        accountGuard(account);
+        const latest = existingChat(initial.id);
+        if (!latest) throw new Error('대화가 삭제되었습니다.');
+        saveConversation({ ...applyAiAnalysis(latest, analysis), serverId, pendingAnalysisKey: undefined });
+    } finally { syncing.delete(lock); }
 }
 async function recommendChat() {
     const account = owner();
@@ -301,6 +345,7 @@ const home = derived(homeSources, () => {
         deleteChat,
         editChat,
         sendChat,
+        analyzeChat,
         editChatMessage,
         loadAiChats,
         recommendChat,
