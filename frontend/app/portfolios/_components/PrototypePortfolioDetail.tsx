@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import {
     ExternalLink,
     Printer,
@@ -131,7 +132,7 @@ export function PrototypePortfolioDetail() {
                                 <i />
                                 <span>PROJECT PREVIEW</span>
                             </div>
-                            <img
+                            <NextImage unoptimized width={960} height={600}
                                 className={styles.cover}
                                 src={item.coverImage || item.images?.[0]?.src || '/portfolio-cover.svg'}
                                 alt={`${item.title} 대표 이미지`}

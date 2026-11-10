@@ -65,7 +65,7 @@ class AiRecommendationDatabaseTest {
 	Project project(boolean visible) {
 		var start = LocalDate.of(2026, 1, 31);
 		return projects.saveAndFlush(new Project(999, "교육 플랫폼", null, "교육 플랫폼", null, "https://example.com/a.png",
-			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND, 1, 3)), List.of("Java", "React"), List.of("교육"),
+			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND.name(), 1, 3)), List.of("Java", "React"), List.of("교육"),
 			start.minusDays(2), start, start, start.plusMonths(1), LocalDateTime.of(2026, 1, 1, 0, 0)));
 	}
 
@@ -106,6 +106,22 @@ class AiRecommendationDatabaseTest {
 		assertEquals(n("100.00"), result.projects().getFirst().score().total());
 		assertEquals(0L, result.projects().getFirst().duration().differenceDays());
 		assertEquals(3, projects.count());
+	}
+
+	@Test void unavailableRequestedJobsReturnNoDevelopersWhileProjectsRemainAndStackMismatchDoesNotFilter() {
+		when(requester.getCurrentUserId()).thenReturn(999L);
+		member("backend", Member.MemberStatus.ACTIVE, Member.CollaborationStatus.AVAILABLE, List.of("백엔드 개발자"));
+		project(true);
+		var missingJobs = conditions(List.of(new RecruitmentRoleConditionDto("게임", 1),
+			new RecruitmentRoleConditionDto("모바일", 1), new RecruitmentRoleConditionDto("UI/UX", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		var empty = engine.recommend(missingJobs, null);
+		assertTrue(empty.developers().isEmpty());
+		assertEquals(1, empty.projects().size());
+		assertTrue(empty.roleCoverage().stream().allMatch(role -> role.eligibleCount() == 0));
+		var matchingJob = conditions(List.of(new RecruitmentRoleConditionDto("백엔드", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		assertEquals(1, engine.recommend(matchingJob, null).developers().size());
 	}
 
 	@Test void keysetScanScoresCandidatesAfterFirstDatabaseBatchBeforeLimitingToTen() {

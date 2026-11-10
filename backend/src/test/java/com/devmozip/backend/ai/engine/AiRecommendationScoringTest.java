@@ -38,6 +38,8 @@ class AiRecommendationScoringTest {
 	@Test void partialSkillsAndBaseTemperatureProduceExactNormalizedScoreWithoutExperience() {
 		var score = scoring.developer(developer(1, List.of("백엔드 개발자"), List.of("Java"), "3년 차", "36.5"), defaults());
 		assertEquals(n("64.29"), score.total()); // (30 + 15 + 0) / 70 * 100
+		assertTrue(score.basicReasons().contains("Java 기술 스택을 활용할 수 있습니다."));
+		assertFalse(score.basicReasons().stream().anyMatch(reason -> reason.contains("모집 직군") || reason.contains("요청 기술") || reason.contains("신뢰 온도")));
 		var experience = score.items().stream().filter(item -> item.name().equals("experience")).findFirst().orElseThrow();
 		assertEquals(Evaluation.UNASSESSED, experience.evaluation());
 		assertTrue(score.basicReasons().stream().anyMatch(reason -> reason.contains("경험은 미산정")));

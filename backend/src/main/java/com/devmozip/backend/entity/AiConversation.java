@@ -6,7 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "ai_conversations")
+@Table(name = "ai_conversations", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "client_key"}))
 public class AiConversation {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +22,11 @@ public class AiConversation {
 	private LocalDateTime createdAt;
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
+
+	@Column(name = "client_key", length = 128)
+	private String clientKey;
+	public void setClientKey(String key) { this.clientKey = key; }
+	public String getClientKey() { return clientKey; }
 
 	protected AiConversation() {
 	}

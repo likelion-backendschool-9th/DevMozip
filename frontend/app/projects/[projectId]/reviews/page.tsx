@@ -1,5 +1,7 @@
 'use client';
 import styles from './page.module.css';
+import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
+import {ApiProjectReviewForm} from './_components/ApiProjectReviewForm';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -164,13 +166,14 @@ function ReviewForm() {
                                             </div>
                                         </fieldset>
                                         <fieldset disabled={!editable}>
-                                            <legend>리뷰 키워드 · 선택사항</legend>
+                                            <legend>리뷰 키워드 · 선택사항 · {selected.keywords.length}/5개</legend>
                                             <div className={[styles.scope, 'chips'].join(' ')}>
                                                 {administration.keywords.map(k => (
                                                     <button
                                                         type="button"
                                                         key={k}
                                                         aria-label={`${profile?.nickname || id} 키워드 ${k}`}
+                                                        disabled={!selected.keywords.includes(k) && selected.keywords.length >= 5}
                                                         aria-pressed={selected.keywords.includes(k)}
                                                         className={[
                                                             styles.scope,
@@ -214,6 +217,7 @@ function ReviewForm() {
     );
 }
 export default function ProjectReviewWritePage() {
+    const {enabled}=useMockVisibility();
     const { user } = useAuth();
     const { projectId = '' } = useParams<{
         projectId: string;
@@ -221,5 +225,6 @@ export default function ProjectReviewWritePage() {
         userId: string;
     }>();
     const [params] = useSearchParams();
+    if(!enabled)return <ApiProjectReviewForm key={`${projectId}:${user?.id}`} projectId={projectId}/>;
     return <ReviewForm key={`${projectId}:${user?.id || 'guest'}:${params.get('request')}:${params.get('token')}`} />;
 }

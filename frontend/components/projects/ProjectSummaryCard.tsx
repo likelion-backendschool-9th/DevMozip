@@ -9,6 +9,7 @@ import {roleLabels,statusLabels} from '@/lib/projects/projectApiContract';
 import recruitment from './RecruitmentCard.module.css';
 import home from '@/app/_components/ProjectPreview.module.css';
 import styles from './ProjectSummaryCard.module.css';
+import {ProjectBookmarkButton} from './ProjectBookmarkButton';
 
 /** API 데이터를 기존 모집 카드의 시각 구조로 표시한다. 참여 인원을 추정하지 않는다. */
 export function ProjectSummaryCard({project:p,index=0,compact=false}:{project:ProjectListRecord;index?:number;compact?:boolean}){
@@ -21,13 +22,14 @@ export function ProjectSummaryCard({project:p,index=0,compact=false}:{project:Pr
  return <Card className={cls(compact?'project-preview':'recruitment-card')}>
   <div className={cls('project-cover',color)}>
    {showImage&&<img className={styles.image} src={p.imageUrl} alt={p.title+' 대표 이미지'} onError={()=>setFailedImage(p.imageUrl)}/>}
-   <span className={showImage?styles.imageLabel:''}>{p.interests.join(' · ')}</span>
+   <div className={recruitment.bookmark}><ProjectBookmarkButton projectId={p.id} compact/></div>
+   <span className={[styles.field,showImage?styles.imageLabel:''].join(' ')}>{p.interests.join(' · ')}</span>
    {!showImage&&<div className={cls('cover-glyph')} aria-hidden="true">{p.title.trim().charAt(0)}<span>↗</span></div>}
    <span className={cls('recruit-badge')}>{state}</span>
   </div>
   <div className={cls('project-content')}>
    {compact&&<div className={cls('project-meta')}>{p.recruitmentSlots.map(s=>projectRoleLabel(s.roleCode)).join(' · ')} · {state}</div>}
-   <div className={cls('recruitment-card-title')}><Link href={'/projects/'+p.id}><h3>{p.title}</h3></Link></div>
+   <div className={[cls('recruitment-card-title'),styles.title].join(' ')}><Link href={'/projects/'+p.id}><h3>{p.title}</h3></Link></div>
    <p>{p.summary}</p>
    <div className="tags">{p.techStacks.map(s=><span key={s}>{s}</span>)}</div>
    {compact?<div className={cls('project-facts')}><span><Users size={13}/>{p.memberCount}/{p.totalCapacity}명</span><span><CalendarDays size={13}/>{p.developmentStart} — {p.developmentEnd}</span></div>:<>

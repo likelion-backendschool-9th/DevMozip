@@ -49,7 +49,6 @@ public class AiRecommendationRequest {
 	}
 	public Long getId() { return id; }
 	public Long getMessageId() { return message == null ? null : message.getId(); }
-	public String getMessageContent() { return message == null ? null : message.getContent(); }
 	public String getConditions() { return conditions; }
 	public Status getStatus() { return status; }
 	public LocalDateTime getCreatedAt() { return createdAt; }

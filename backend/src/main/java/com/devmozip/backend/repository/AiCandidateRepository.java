@@ -19,7 +19,7 @@ public class AiCandidateRepository {
 	public List<DeveloperCandidate> developers(long requesterId, long afterId, int batchSize) {
 		return entityManager.createQuery("""
 			select new com.devmozip.backend.dto.ai.internal.DeveloperCandidate(
-				m.id, m.nickname, m.tag, m.jobCategories, m.skills, m.interests, m.career, m.trustScore)
+				m.id, m.nickname, m.tag, m.jobCategories, m.skills, m.interests, m.career, m.trustScore, m.summary)
 			from Member m where m.id <> :requester and m.id > :afterId
 				and m.status = :status and m.collaborationStatus = :available
 				and m.tag is not null and trim(m.tag) <> ''

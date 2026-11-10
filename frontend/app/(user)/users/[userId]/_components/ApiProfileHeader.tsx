@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { CalendarDays, Clock3, Pencil, Star } from 'lucide-react';
+import { StartChatButton } from './StartChatButton';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { collaborationLabel, formatCareer, profileImageUrl } from '@/lib/profiles/profileDetail';
 import { starColor } from '@/lib/profiles/profileService';
@@ -23,6 +24,7 @@ export function ApiProfileHeader({ profile, onEdit }: { profile: OwnProfileDetai
         <div className={scope('profile-identity')}>
             <ProfileAvatar name={profile.nickname} color="lavender" image={!avatarFailed ? avatar : undefined} onImageError={() => setAvatarFailed(true)} />
             <div className={scope('profile-top-actions')}>
+                {!onEdit && profile.tag && <StartChatButton slug={profile.tag} />}
                 <button className="button secondary" disabled={!onEdit} onClick={onEdit} title={onEdit ? undefined : "본인 프로필에서 수정할 수 있어요."}><Pencil size={14} />프로필 수정</button>
             </div>
             <div className={scope('profile-heading')}>
