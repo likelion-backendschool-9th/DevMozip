@@ -52,7 +52,8 @@ class PortfolioFileIntegrationTest {
         var file=upload();String url="/api/v1/files/"+file.get("id").asString();
         jdbc.update("INSERT INTO portfolios(id,user_id,thumbnail_url,visibility) VALUES(1,1,?,'PUBLIC')",file.get("url").asString());
         mvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentType("image/png"));
-        jdbc.update("UPDATE portfolios SET visibility='PRIVATE' WHERE id=1");mvc.perform(get(url)).andExpect(status().isNotFound());
+        mvc.perform(patch("/api/v1/portfolios/1/visibility").header("Authorization",auth(1)).contentType("application/json").content("{\"visibility\":\"PRIVATE\",\"expectedUpdatedAt\":null}")).andExpect(status().isOk());
+        mvc.perform(get(url)).andExpect(status().isNotFound());
         mvc.perform(get(url).header("Authorization",auth(1))).andExpect(status().isOk());
     }
     @Test void publicBodyRequiresPremiumAndOriginalUploaderReference()throws Exception{

@@ -54,6 +54,10 @@ public class PortfolioMutationRepository {
         return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM project_application_portfolios WHERE portfolio_id=:id)",
                 new MapSqlParameterSource("id",id),Boolean.class));
     }
+    public void changeVisibility(long id,long userId,String visibility,LocalDateTime now) {
+        jdbc.update("UPDATE portfolios SET visibility=:visibility,updated_at=:now WHERE id=:id AND user_id=:userId",
+                new MapSqlParameterSource("id",id).addValue("userId",userId).addValue("visibility",visibility).addValue("now",now));
+    }
     public void delete(long id,long userId) {
         jdbc.update("DELETE FROM portfolios WHERE id=:id AND user_id=:userId",new MapSqlParameterSource("id",id).addValue("userId",userId));
     }

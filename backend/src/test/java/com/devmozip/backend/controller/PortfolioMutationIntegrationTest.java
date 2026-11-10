@@ -137,4 +137,61 @@ class PortfolioMutationIntegrationTest {
         mvc.perform(post(PATH).header("Authorization",token(1)).contentType("application/json").content(mapper.writeValueAsString(p))).andExpect(status().isBadRequest());
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM portfolios",Integer.class));
     }
+    org.springframework.test.web.servlet.ResultActions visibility(long id,int user,JsonNode old,String value)throws Exception{
+        var body=new LinkedHashMap<String,Object>();body.put("visibility",value);
+        body.put("expectedUpdatedAt",old.path("portfolio").path("updatedAt").isNull()?null:old.path("portfolio").path("updatedAt").asString());
+        return mvc.perform(patch(PATH+"/"+id+"/visibility").header("Authorization",token(user)).contentType("application/json").content(mapper.writeValueAsString(body)));
+    }
+    @Test void ownerCanChangeVisibilityAndRevokePublicAccess()throws Exception{
+        var created=create(input(),1);long id=id(created);
+        mvc.perform(get("/api/v1/users/crud-1/portfolios")).andExpect(jsonPath("$.totalElements").value(0));
+        var publicValue=mapper.readTree(visibility(id,1,created,"PUBLIC").andExpect(status().isOk()).andExpect(jsonPath("$.portfolio.visibility").value("PUBLIC")).andReturn().getResponse().getContentAsString());
+        assertNotEquals(created.path("portfolio").path("updatedAt"),publicValue.path("portfolio").path("updatedAt"));
+        mvc.perform(get("/api/v1/users/crud-1/portfolios")).andExpect(jsonPath("$.totalElements").value(1));
+        mvc.perform(get(PATH+"/"+id).header("Authorization",token(3))).andExpect(status().isOk());
+        visibility(id,1,publicValue,"PRIVATE").andExpect(status().isOk());
+        mvc.perform(get("/api/v1/users/crud-1/portfolios")).andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get(PATH+"/"+id).header("Authorization",token(3))).andExpect(status().isNotFound());
+        mvc.perform(get(PATH+"/"+id).header("Authorization",token(1))).andExpect(status().isOk());
+    }
+    @Test void visibilityValidatesIdentityValueAndVersion()throws Exception{
+        var created=create(input(),1);long id=id(created);
+        mvc.perform(patch(PATH+"/"+id+"/visibility").contentType("application/json").content("{}" )).andExpect(status().isUnauthorized());
+        visibility(id,2,created,"PUBLIC").andExpect(status().isNotFound());
+        visibility(id,3,created,"PUBLIC").andExpect(status().isNotFound());
+        visibility(id,1,created,"public").andExpect(status().isBadRequest());
+        visibility(id,1,created,null).andExpect(status().isBadRequest());
+        visibility(id,1,created,"PUBLIC").andExpect(status().isOk());
+        visibility(id,1,created,"PRIVATE").andExpect(status().isConflict());
+        var stale=input();stale.put("expectedUpdatedAt",created.path("portfolio").path("updatedAt").asString());
+        mvc.perform(put(PATH+"/"+id).header("Authorization",token(1)).contentType("application/json").content(mapper.writeValueAsString(stale))).andExpect(status().isConflict());
+    }
+    @Test void sameVisibilityDoesNotInvalidateEditorAndLegacyNullVersionCanChange()throws Exception{
+        var created=create(input(),1);long id=id(created);
+        var same=mapper.readTree(visibility(id,1,created,"PRIVATE").andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertEquals(created.path("portfolio").path("updatedAt"),same.path("portfolio").path("updatedAt"));
+        jdbc.update("UPDATE portfolios SET updated_at=NULL WHERE id=?",id);
+        var legacy=mapper.readTree(mvc.perform(get(PATH+"/"+id).header("Authorization",token(1))).andReturn().getResponse().getContentAsString());
+        visibility(id,1,legacy,"PUBLIC").andExpect(status().isOk()).andExpect(jsonPath("$.portfolio.updatedAt").isNotEmpty());
+    }
+    @Test void submittedVisibilityIsHeldAndMissingReferenceStoreFailsClosed()throws Exception{
+        var created=create(input(),1);long id=id(created);
+        jdbc.update("INSERT INTO project_application_portfolios(id,portfolio_id) VALUES(1,?)",id);
+        visibility(id,1,created,"PUBLIC").andExpect(status().isConflict());
+        assertEquals("PRIVATE",jdbc.queryForObject("SELECT visibility FROM portfolios WHERE id=?",String.class,id));
+        jdbc.execute("ALTER TABLE project_application_portfolios RENAME TO project_application_portfolios_unavailable");
+        try{visibility(id,1,created,"PUBLIC").andExpect(status().isServiceUnavailable());}
+        finally{jdbc.execute("ALTER TABLE project_application_portfolios_unavailable RENAME TO project_application_portfolios");}
+    }
+    @Test void concurrentVisibilityChangesOnlyAcceptOneVersion()throws Exception{
+        var created=create(input(),1);long id=id(created);var executor=java.util.concurrent.Executors.newFixedThreadPool(2);
+        var start=new java.util.concurrent.CountDownLatch(1);
+        try{
+            var a=executor.submit(()->{start.await();return visibility(id,1,created,"PUBLIC").andReturn().getResponse().getStatus();});
+            var b=executor.submit(()->{start.await();return visibility(id,1,created,"PUBLIC").andReturn().getResponse().getStatus();});
+            start.countDown();var statuses=java.util.stream.Stream.of(a.get(15,java.util.concurrent.TimeUnit.SECONDS),b.get(15,java.util.concurrent.TimeUnit.SECONDS)).sorted().toList();
+            assertEquals(java.util.List.of(200,409),statuses);
+        }finally{executor.shutdownNow();}
+    }
+
 }

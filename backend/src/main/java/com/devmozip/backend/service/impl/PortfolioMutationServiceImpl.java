@@ -51,6 +51,20 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         }catch(org.springframework.dao.DataIntegrityViolationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 기능에서 참조 중인 포트폴리오는 삭제할 수 없습니다.");}
         catch(DataAccessException e){throw unavailable();}
     }
+    @Override public PortfolioDetailResponse changeVisibility(String email,long id,PortfolioVisibilityRequest input){
+        var member=viewer(email);
+        try{
+            var old=owned(id,member);
+            if(!Objects.equals(input.expectedUpdatedAt(),old.updatedAt()))throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 곳에서 변경되었습니다. 최신 내용을 다시 불러와 주세요.");
+            String visibility=input.visibility().name();
+            if(old.visibility().equals(visibility))return queries.detail(email,id);
+            // 제출 상태를 바꾸거나 원본 공개 정책을 임의로 결정하지 않는다.
+            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"지원서에 제출된 포트폴리오의 공개 범위 변경은 담당자 협의 전까지 보류됩니다.");
+            var time=now();if(old.updatedAt()!=null&&!time.isAfter(old.updatedAt()))time=old.updatedAt().plusNanos(1000);
+            repository.changeVisibility(id,member.getId(),visibility,time);
+            return queries.detail(email,id);
+        }catch(DataAccessException e){throw unavailable();}
+    }
     private PortfolioMutationRepository.Locked owned(long id,Member member){
         if(id<=0)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"ID를 확인해 주세요.");
         var old=repository.lock(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"포트폴리오를 찾을 수 없습니다."));

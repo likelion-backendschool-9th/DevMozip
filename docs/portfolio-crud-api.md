@@ -114,3 +114,7 @@ ERD에 blocks·기간·팀 규모용 컬럼이 없어 **기존 TEXT description 
 ### 후속 파일 업로드 #113
 
 feat/113-portfolio-file-upload에서 POST /api/v1/files 및 기존 이미지·PDF 첨부 화면 연동을 추가했다. 저장 위치·비공개 접근·파일 크기·보존 및 검증은 docs/portfolio-files-api.md를 따른다. 삭제 API·공개 범위 PATCH·제출 스냅샷은 해당 범위를 확장하지 않았다.
+
+### 후속 공개 범위 변경 #116
+
+PATCH /api/v1/portfolios/{id}/visibility는 docs/portfolio-visibility-api.md를 따른다. 일반 수정 PUT은 기존 공개 범위를 유지하며 PATCH에서 변경한 수정 버전으로 오래된 초안의 덮어쓰기를 차단한다.

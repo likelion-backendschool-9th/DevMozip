@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PortfolioDeleteButton } from './PortfolioDeleteButton';
+import { PortfolioVisibilityControl } from './PortfolioVisibilityControl';
 import { PortfolioContent } from './PortfolioContent';
 import { portfolioInputFromDetail } from '@/lib/portfolios/portfolioApiDraft';
 import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, CalendarDays, Code2, Printer } from 'lucide-react';
@@ -14,7 +15,7 @@ import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import styles from '../[portfolioId]/page.module.css';
 import content from './PortfolioContent.module.css';
 export type PortfolioDetailState = { status: 'loading' } | { status: 'error'; code: number; message: string } | { status: 'ready'; value: PortfolioDetail };
-export function PortfolioDetailResult({ result, onRetry }: { result: PortfolioDetailState; onRetry: () => void }) {
+export function PortfolioDetailResult({ result, onRetry, onChanged, notice }: { result: PortfolioDetailState; onRetry: () => void; onChanged?: (value: PortfolioDetail) => void; notice?: string }) {
     if (result.status === 'loading') return <section className="container planned" role="status">포트폴리오를 불러오는 중…</section>;
     if (result.status === 'error') return <section className="container planned" role="alert"><h1>{result.code === 404 ? '포트폴리오를 볼 수 없어요.' : '포트폴리오를 불러오지 못했어요.'}</h1><p>{result.message}</p>
         {result.code === 401 ? <Link className="button" href="/login">로그인하기</Link> : result.code === 403 ? <Link className="button" href="/subscription">프리미엄 안내</Link> : <Button variant="secondary" onClick={onRetry}>다시 시도</Button>}
@@ -28,6 +29,8 @@ export function PortfolioDetailResult({ result, onRetry }: { result: PortfolioDe
             {result.value.canEdit && <><Link className="button secondary" href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} /></>}
             <Button variant="secondary" onClick={() => window.print()}><Printer size={15} />인쇄 / PDF</Button>
         </div></div>
+        {result.value.canEdit && onChanged && <PortfolioVisibilityControl key={`${item.id}:${item.updatedAt}`} detail={result.value} onChanged={onChanged} onReload={onRetry} />}
+        {notice && <p role="status">{notice}</p>}
         <article className={styles.article}>
             <header className={styles.hero}><div className={styles.heroText}>
                 <div className={styles.kicker}><span className={styles.dot} /><span>DEVELOPER PORTFOLIO</span><span className={styles.field}>{item.topic || '분야 미등록'}</span></div>
@@ -59,6 +62,7 @@ export function ApiPortfolioDetail({ id }: { id: string }) {
 }
 function PortfolioDetailLoader({ id, retry }: { id: string; retry: () => void }) {
     const [result, setResult] = useState<PortfolioDetailState>({ status: 'loading' });
+    const [notice, setNotice] = useState('');
     useEffect(() => {
         const controller = new AbortController();
         void fetchPortfolioDetail(id, controller.signal).then(value => {
@@ -69,5 +73,5 @@ function PortfolioDetailLoader({ id, retry }: { id: string; retry: () => void })
         });
         return () => controller.abort();
     }, [id]);
-    return <PortfolioDetailResult result={result} onRetry={retry} />;
+    return <PortfolioDetailResult result={result} onRetry={retry} notice={notice} onChanged={value => { setResult({ status: 'ready', value }); setNotice('공개 범위를 변경했습니다.'); }} />;
 }
