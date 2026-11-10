@@ -152,3 +152,9 @@
 
 
 #47의 실제 서버 계약은 [프로젝트 상태·기간 API](project-lifecycle.md)를 따른다. /complete·/extend-period·/period 별도 API는 구현하지 않았다. 기존 후보 경로는 확정 계약으로 사용하지 않는다.
+
+### 프로젝트 지원 포트폴리오 제출본 (2026-11-10 확정)
+
+- GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`: 지원 당시 보관본 조회. 본인 지원자 또는 프리미엄/관리자 주최자에게만 제공한다. 수정·삭제 API 없음.
+- POST `/api/v1/projects/{projectId}/applications`는 공개 원본 1~3개 검증 후 지원서·연결·제출본을 함께 저장한다. 응답의 submittedPortfolios는 제출본 ID·원본 ID·당시 제목을 제공한다.
+- 원본 수정·삭제는 허용하며 제출본을 변경하지 않는다. 원본 삭제 시 연결 ID만 SET NULL로 처리한다. 상세는 docs/project-portfolio-snapshots.md를 따른다.

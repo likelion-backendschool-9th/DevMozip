@@ -41,6 +41,7 @@ class PortfolioMutationIntegrationTest {
             attachments JSONB,visibility VARCHAR(20),created_at TIMESTAMP,updated_at TIMESTAMP)
             """);
         // Recreate only this isolated test fixture: the application Entity has no portfolio FK.
+        jdbc.execute("DROP TABLE IF EXISTS project_application_portfolio_snapshots");
         jdbc.execute("DROP TABLE IF EXISTS project_application_portfolios");
         jdbc.execute("CREATE TABLE IF NOT EXISTS project_application_portfolios(id BIGINT PRIMARY KEY,portfolio_id BIGINT REFERENCES portfolios(id) ON DELETE RESTRICT)");
         jdbc.update("DELETE FROM project_application_portfolios");jdbc.update("DELETE FROM portfolios");jdbc.update("DELETE FROM users");

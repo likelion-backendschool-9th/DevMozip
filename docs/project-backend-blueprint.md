@@ -9,7 +9,8 @@
 | projects | 모집 직군 JSONB 유지, 이미지 1장 필수, 공개 여부 boolean |
 | project_applications | 기존 지원 테이블 유지, rejection_reason 추가 |
 | project_applicants | 제거 제안. 지원 명단은 project_applications 조회 |
-| project_application_portfolios | 새 연결 테이블. 기존 portfolios를 여러 개 제출 |
+| project_application_portfolios | 지원서·원본 연결. 원본 삭제 시 portfolio_id는 SET NULL |
+| project_application_portfolio_snapshots | 제출 당시 내용을 별도 JSONB 보관, 원본 수정·삭제와 독립 |
 | project_members | 기존 테이블 유지, 실제 담당 직군 job_role 추가 |
 | member_removal_votes / member_removal_ballots | 기존 이름 유지, 미투표·종료 시각 보완 |
 | reviews | 요청·평가·임시 링크를 한 테이블에서 관리, 재알림 시각 보완 |
@@ -17,7 +18,7 @@
 | review_keyword_selections | 리뷰-키워드 연결, 리뷰당 선택 0~5개 |
 | reports / bookmarks | 기존 공통 테이블 사용. 프로젝트 전용 테이블 중복 생성 안 함 |
 
-프로젝트 관련 7개 테이블에 리뷰 키워드 원본 review_keywords와 연결 review_keyword_selections를 별도로 둔다(총 9개). 공통 신고·북마크와 외부 users·portfolios·chat_members는 결합 지점이다. 2026-11-06 사용자 요청으로 기존 ERD의 review_keywords 생성·연결을 이번 범위에 포함했다.
+프로젝트 관련 8개 테이블에 리뷰 키워드 원본 review_keywords와 연결 review_keyword_selections를 별도로 둔다(총 10개). 공통 신고·북마크와 외부 users·portfolios·chat_members는 결합 지점이다. 2026-11-06 사용자 요청으로 기존 ERD의 review_keywords 생성·연결을 이번 범위에 포함했다.
 
 ## 2. 공통 기준
 
@@ -103,15 +104,28 @@
 |---|---|---|
 | id | BIGINT / PK | 제출 연결 ID |
 | application_id | BIGINT / FK | 지원서 ID |
-| portfolio_id | BIGINT / 외부 FK 예정 / NULL | 기존 portfolios.id. 물리 삭제 시 NULL 허용안 |
+| portfolio_id | BIGINT / FK / NULL | 기존 portfolios.id. ON DELETE SET NULL |
 
 기존 portfolios는 새로 만들지 않는다. 소유자는 portfolios.user_id로 확인한다. 연결 행으로 지원서 하나에 여러 포트폴리오를 제출한다. 포트폴리오 하나도 여러 지원서에 제출될 수 있다.
 
-- application_id+portfolio_id는 유일하다. 제출 당시 제목과 사용자 지정 순서는 별도로 저장하지 않는다.
-- portfolioIds는 1~3개만 허용한다. 존재·지원자 소유·중복을 검증한다.
+- application_id+portfolio_id는 유일하다. 제출 당시 제목·내용은 별도 스냅샷에 보관하며 사용자 지정 순서는 저장하지 않는다.
+- portfolioIds는 1~3개만 허용한다. 존재·지원자 소유·PUBLIC·중복을 검증한다.
 - 지원서와 제출 목록은 같은 트랜잭션으로 저장한다. 재지원은 허용하지 않으며 기존 제출 연결을 보존한다.
-- 포트폴리오 제목·내용은 기존 portfolios의 현재 값을 조회한다. 제출 당시 상태를 보존하지 않는다. 삭제 정책은 상대 담당자와 정한다. 논리 삭제 시 참조는 유지하며, 물리 삭제 시 SET NULL을 적용한다면 해당 연결은 삭제된 포트폴리오로 표시한다.
-- 응답은 portfolios 배열에 포트폴리오 ID·현재 제목·참조 가능 여부를 담는다. 표시 순서는 연결 행 id 오름차순으로 일관되게 조회하며, 사용자가 선택한 순서를 보장하지 않는다. 상세 내용 권한은 포트폴리오 기능과 연결한다.
+- 지원 시 원본 행을 잠그고 제출본을 복사한다. 원본 수정·삭제는 허용하며 원본 삭제 후에도 지원 내역에서 제출본을 조회한다. 제출본은 수정할 수 없다. 취소·거절 후에도 보존한다.
+- 응답의 submittedPortfolios는 제출본 ID·sourcePortfolioId·제출 당시 제목을 담는다. 상세는 제출본 전용 경로를 사용하며 본인 지원자 또는 프리미엄/관리자 주최자만 조회한다. 원본 조회 권한을 우회해 타인에게 공개하지 않는다.
+
+### project_application_portfolio_snapshots — 제출본 보관
+
+| 필드 | 타입 | 의미 |
+|---|---|---|
+| id | BIGINT / PK | 제출본 ID |
+| application_portfolio_id | BIGINT / FK / UNIQUE | 기존 제출 연결 ID, 연결당 보관본 1개 |
+| source_portfolio_id | BIGINT / NOT NULL | 제출 당시 원본 ID. portfolios FK 없음 |
+| title | VARCHAR(255) / NOT NULL | 제출 당시 제목, 목록 조회용 |
+| content | JSONB / NOT NULL | 당시 요약·본문·문서·스택·분야·이미지 URL·링크·작성자 표시 정보 |
+| created_at / updated_at | DATETIME | 공통 BaseEntity 시각 |
+
+지원서·연결·보관본을 원자적으로 저장한다. 생성 시각 기준의 복사이며 스냅샷 없는 과거 이력을 현재 내용으로 자동 채우지 않는다. 이미지 파일 바이너리를 복제하지 않으므로 외부 URL의 내용 변경·삭제까지 보장하지 않는다. 상세 계약은 [제출본 보관](project-portfolio-snapshots.md)을 따른다.
 
 ```json
 {
@@ -266,7 +280,8 @@ erDiagram
 erDiagram
     PROJECTS ||--o{ PROJECT_APPLICATIONS : "지원과 명단"
     PROJECT_APPLICATIONS ||--|{ PROJECT_APPLICATION_PORTFOLIOS : "복수 제출"
-    PORTFOLIOS o|--o{ PROJECT_APPLICATION_PORTFOLIOS : "기존 포트폴리오"
+    PORTFOLIOS o|--o{ PROJECT_APPLICATION_PORTFOLIOS : "원본 삭제 시 SET NULL"
+    PROJECT_APPLICATION_PORTFOLIOS ||--o| PROJECT_APPLICATION_PORTFOLIO_SNAPSHOTS : "제출 당시 보관본"
     PROJECTS ||--|{ PROJECT_MEMBERS : "주최자와 팀원"
     PROJECTS ||--o{ MEMBER_REMOVAL_VOTES : "강퇴 투표"
     PROJECT_MEMBERS ||--o{ MEMBER_REMOVAL_VOTES : "요청자 또는 대상자"
@@ -467,7 +482,7 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 
 ## #48 구현 반영 (2026-11-06)
 
-지원·승인·취소 API, 기존 지원 연결 테이블, 정원 동시성 및 취소 경계 정책을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 포트폴리오 원본 테이블/소유권 어댑터, 알림·채팅·신뢰 계산 소비자는 미연결이며 실제 신규 지원은 차단한다.
+지원·승인·취소 API, 기존 지원 연결 테이블, 정원 동시성 및 취소 경계 정책을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 실제 공개 포트폴리오 선택·소유권 검사와 제출 스냅샷 보관을 연결했다. DB에 스냅샷 구조가 준비되지 않으면 신규 지원을 차단한다.
 
 
 ## #50 현재 구현 상태 (2026-11-06)

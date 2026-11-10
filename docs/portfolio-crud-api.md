@@ -36,9 +36,9 @@
 ### DELETE /api/v1/portfolios/{id}
 
 - 본인 기록만 처리. 미존재·타인·미확정 공개 상태는 404.
-- **프로젝트 제출 포트폴리오의 최종 삭제 정책은 미확정이다.** 사용자가 프로젝트 담당자와 합의 후 결정하도록 답했다. 현재 참조 중이면 변경 없이 409로 보류한다.
-- 고아 참조 경쟁을 막을 project_application_portfolios.portfolio_id → portfolios.id의 검증된 비지연 NO ACTION/RESTRICT FK가 없으면 삭제를 503으로 보류한다. 임의 연쇄 삭제/SET NULL을 하지 않는다.
-- FK 준비 및 참조 없는 경우만 실제 삭제, 204. 그 외 FK 참조 충돌도 409로 보존한다.
+- 프로젝트 제출 후에도 원본 수정·삭제를 허용한다(2026-11-10 사용자 확정). 제출본은 별도 project_application_portfolio_snapshots에 보관한다. 참조 중인데 보관본이 없으면 409로 차단한다.
+- 검증된 비지연 portfolio_id FK가 없으면 삭제를 503으로 보류한다. 스냅샷 전환 SQL은 ON DELETE SET NULL을 사용하며 원본 삭제 시 연결 ID만 비운다. 스냅샷 자체에는 원본 FK를 두지 않아 보관본을 삭제하지 않는다.
+- FK 준비 및 제출본 보관을 확인한 뒤 원본을 삭제하고 204를 반환한다. 다른 FK 참조 충돌은 409로 보존한다. 신규 구조는 docs/project-portfolio-snapshots.md를 따른다.
 
 ## 쓰기 요청 예시
 

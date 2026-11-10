@@ -29,7 +29,7 @@ public class PortfolioFileServiceImpl implements PortfolioFileService {
             try {
                 boolean cover = meta.contentType().startsWith("image/") && access.publicReference(meta.ownerId(), meta.response().url(), true);
                 boolean premium = member != null && (member.getRole() == Member.MemberRole.PREMIUM || member.getRole() == Member.MemberRole.ADMIN);
-                if (!cover && !(premium && access.publicReference(meta.ownerId(), meta.response().url(), false))) throw failure(404, "파일을 찾을 수 없습니다.");
+                if (!cover && !(premium && (access.publicReference(meta.ownerId(), meta.response().url(), false) || access.submittedReference(meta.ownerId(),member.getId(),meta.response().url())))) throw failure(404, "파일을 찾을 수 없습니다.");
             } catch (DataAccessException e) { throw failure(503, "파일 접근 정보를 확인할 수 없습니다."); }
         }
         return new FileContent(meta, storage.read(meta));
