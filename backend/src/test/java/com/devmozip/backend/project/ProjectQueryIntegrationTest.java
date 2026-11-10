@@ -73,6 +73,43 @@ class ProjectQueryIntegrationTest {
 	private void participant(long id, long userId, String status) {
 		jdbc.update("INSERT INTO project_members(project_id,user_id,role,job_role,status,joined_at,created_at,updated_at) VALUES (?,?,'PARTICIPANT','BACKEND',?,?,?,?)", id,userId,status,now,now,now);
 	}
+	@Test void publicProfileActivitiesExcludePrivateDeletedAndApplications() throws Exception {
+		jdbc.update("INSERT INTO users(id,email,tag,role,status) VALUES (101,'activity@project.test','activity-host','USER','ACTIVE') ON CONFLICT(id) DO UPDATE SET tag='activity-host',status='ACTIVE'");
+		participant(second,101,"LEFT");
+		mvc.perform(get("/api/v1/users/activity-host/projects"))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2))
+			.andExpect(jsonPath("$.items[0].projectId").value(second))
+			.andExpect(jsonPath("$.items[0].role").value("PARTICIPANT"))
+			.andExpect(jsonPath("$.items[0].membershipStatus").value("LEFT"))
+			.andExpect(jsonPath("$.items[1].role").value("HOST"));
+	}
+	@Test void ownActivitiesUseAuthenticatedIdentityAndPaginateWithoutRecordingViews() throws Exception {
+		mvc.perform(get("/api/v1/users/me/projects")).andExpect(status().isUnauthorized());
+		mvc.perform(get("/api/v1/users/me/projects").header("Authorization",token()).param("size","1").param("page","1").param("userId","202"))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2))
+			.andExpect(jsonPath("$.totalPages").value(2)).andExpect(jsonPath("$.items[0].projectId").value(first));
+		assertEquals(0,projects.findById(first).orElseThrow().getViewCount());
+	}
+	@Test void privateActivitiesRequireCurrentViewerMembership() throws Exception {
+		jdbc.update("INSERT INTO users(id,email,tag,role,status) VALUES (101,'activity@project.test','activity-host','USER','ACTIVE') ON CONFLICT(id) DO UPDATE SET tag='activity-host',status='ACTIVE'");
+		when(currentUser.getCurrentUserId()).thenReturn(202L);
+		mvc.perform(get("/api/v1/users/activity-host/projects").header("Authorization",token()))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+		participant(privateId,202,"ACTIVE");
+		mvc.perform(get("/api/v1/users/activity-host/projects").header("Authorization",token()))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
+		jdbc.update("UPDATE project_members SET status='LEFT' WHERE project_id=? AND user_id=202",privateId);
+		mvc.perform(get("/api/v1/users/activity-host/projects").header("Authorization",token()))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+	}
+	@Test void activitiesRejectUnknownInactiveTargetsAndInvalidPages() throws Exception {
+		mvc.perform(get("/api/v1/users/unknown-profile/projects")).andExpect(status().isNotFound());
+		jdbc.update("INSERT INTO users(id,email,tag,role,status) VALUES (101,'activity@project.test','activity-host','USER','SUSPENDED') ON CONFLICT(id) DO UPDATE SET tag='activity-host',status='SUSPENDED'");
+		mvc.perform(get("/api/v1/users/activity-host/projects")).andExpect(status().isNotFound());
+		mvc.perform(get("/api/v1/users/me/projects").header("Authorization",token()).param("page","-1")).andExpect(status().isBadRequest());
+		mvc.perform(get("/api/v1/users/me/projects").header("Authorization",token()).param("size","51")).andExpect(status().isBadRequest());
+	}
+
 	@Test void anonymousListHasOnlyPublicNonDeletedAndStablePagination() throws Exception {
 		mvc.perform(get(BASE).param("size","1"))
 			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2))

@@ -68,6 +68,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/liked-posts").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/portfolios", "/api/v1/portfolios/{id}").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me/projects").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/projects").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/portfolios").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/links").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/links").permitAll()

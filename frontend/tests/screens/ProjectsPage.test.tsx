@@ -33,3 +33,5 @@ describe('모집 목록·상세·지원 화면',()=>{
  it('API 모드에서만 대표 이미지와 공개 범위 입력을 표시한다',()=>{const apiHtml=render('/projects/new','demo-premium',freshRecruitmentState(),undefined,true);expect(apiHtml).toContain('대표 이미지 URL');expect(apiHtml).toContain('팀원만 공개');expect(render('/projects/new','demo-premium')).not.toContain('대표 이미지 URL');});
  it('존재하지 않는 프로젝트와 빈 검색 결과를 안내한다',()=>{expect(render('/projects/missing')).toContain('프로젝트를 찾을 수 없어요.');expect(render('/projects?q=없는프로젝트')).toContain('조건에 맞는 프로젝트가 없습니다.');});
 });
+
+describe('Mock 프로젝트 역할 자동 진입',()=>{it('주최자는 상세에서도 관리 화면을 보고 일반 사용자는 조회 화면을 본다',()=>{expect(render('/projects/pocket','demo-premium')).toContain('지원자 목록');expect(render('/projects/pocket','demo-premium')).not.toMatch(/<a[^>]*>\s*주최자 관리\s*<\/a>/);expect(render('/projects/pocket','demo-user')).not.toContain('지원자 목록');});});
