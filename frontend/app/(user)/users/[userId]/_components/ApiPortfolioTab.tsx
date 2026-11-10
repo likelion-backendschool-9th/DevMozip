@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PortfolioDeleteButton } from '@/app/portfolios/_components/PortfolioDeleteButton';
-import { Plus } from 'lucide-react';
+import { Plus, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -16,7 +16,8 @@ export function PortfolioListResult({ result, onRetry, onPage, own = false, onDe
     if (result.status === 'error') return <section role="alert"><p>{result.message}</p>{result.code === 401
         ? <Link href="/login?next=/profile/me?tab=portfolio" className="button secondary">로그인하기</Link>
         : <Button variant="secondary" onClick={onRetry}>다시 시도</Button>}</section>;
-    const { items, page, totalElements, totalPages } = result.value;
+    const { page, totalElements, totalPages } = result.value;
+    const items = result.value.items.filter(item=>own||item.visibility==='PUBLIC');
     return <>
         <p className="text-muted">포트폴리오 {totalElements}개</p>
         {!items.length && <div className="empty-state">{totalElements === 0 ? '아직 등록된 포트폴리오가 없습니다.' : '이 페이지에는 포트폴리오가 없습니다.'}
@@ -24,12 +25,12 @@ export function PortfolioListResult({ result, onRetry, onPage, own = false, onDe
         <div className={styles.grid}>{items.map(item => <Card key={item.id} className={styles.summaryCard}>
             <Link className={styles.openCard} href={`/portfolios/${item.id}`} aria-label={`${item.title || '제목 미입력'} 상세 보기`}>
                 <Image unoptimized width={960} height={540} className={styles.cover} src={item.thumbnailUrl || '/portfolio-cover.svg'} alt={`${item.title || '포트폴리오'} 대표 이미지`} />
-                <div className={styles.summary}><span className={styles.field}>{item.topic || '분야 미등록'}{item.visibility === 'PRIVATE' ? ' · 비공개' : ''}</span>
+                <div className={styles.summary}><span className={styles.field}>{item.topic || '분야 미등록'}</span>
                     <h3>{item.title || '제목 미입력'}</h3><p>{item.summary || '한 줄 소개 미입력'}</p>
                     <div className="profile-tags">{item.techStack.map(stack => <span key={stack}>{stack}</span>)}</div>
                 </div>
             </Link>
-            {own && <div className={styles.ownerActions}><Link href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} onDeleted={onDeleted} /></div>}
+            {own && <div className={styles.cardActions}><span className={styles.visibilityStatus} role="img" aria-label={item.visibility==='PRIVATE'?'비공개':'공개'} title={item.visibility==='PRIVATE'?'비공개':'공개'}>{item.visibility==='PRIVATE'?<EyeOff size={18} aria-hidden="true"/>:<Eye size={18} aria-hidden="true"/>}</span><Link href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} onDeleted={onDeleted} /></div>}
         </Card>)}</div>
         {totalPages > 0 && <nav aria-label="포트폴리오 페이지" className={styles.ownerActions}>
             <Button variant="secondary" disabled={page === 0} onClick={() => onPage(page - 1)}>이전</Button>

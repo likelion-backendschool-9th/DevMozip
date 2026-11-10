@@ -2261,3 +2261,29 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 사용자 요청으로 ApiProjectApplications의 참여 팀원 탭에서 KICKED인 경우에만 관리 페이지 CSS Module의 kickedBadge를 적용했다. 빨간 글씨·연한 빨간 배경·테두리로 구분한다. 데이터·권한 변경 없음.
 
 검증: npm run build 성공(TypeScript 포함). submittedPortfolio·ApiProjectOwnerView 기존 테스트2개 파일/7개 성공. git diff --check 통과. 브라우저 수동 색상 확인은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 커밋·푸시 없음.
+
+## 2026-11-11 포트폴리오 등록·수정 공개 범위 스타일 통일
+
+공통 PortfolioComposer의 공개 범위 select에 기존 form-input 스타일을 적용하고 CSS Module에서 라벨 아래 간격·블록 배치·높이를 주변 입력과 맞췄다. 등록과 수정 모두 같은 작성기를 사용하므로 함께 적용된다. 공개 범위 저장·수정 제한·API 동작 변경 없음.
+
+수정: frontend/app/portfolios/_components/PortfolioComposer.tsx·PortfolioComposer.module.css. 검증: npm run build 성공(TypeScript 포함). PortfolioCrud·ApiPortfolio 기존 테스트2개 파일/12개 통과. git diff --check 통과. 브라우저 수동 디자인 점검 미실행. 백엔드 변경 없어 관련 테스트 생략. 커밋·푸시 없음.
+
+## 2026-11-11 포트폴리오 수정·삭제 버튼 정렬
+
+프로필 포트폴리오 목록의 관리 버튼을 페이지 이동 영역과 분리한 cardActions로 배치했다. 카드 높이가 달라도 하단 오른쪽에 정렬하고 수정·삭제의 높이·간격·테두리를 맞췄다. 삭제는 붉은색으로 구분한다. 상세 상단 버튼도 같은 높이·중앙 정렬을 적용했다. 기존 수정 경로·삭제 확인 모달·권한은 유지한다.
+
+수정: ApiPortfolioTab.tsx·PortfolioTab.module.css·portfolios/[portfolioId]/page.module.css. 검증: npm run build 성공(TypeScript 포함). PortfolioCrud·ApiPortfolio 기존2개 파일/12개 테스트 통과. git diff --check 통과. 브라우저 수동 디자인 검증 미실행. 백엔드 변경 없어 테스트 생략. 커밋·푸시 없음.
+
+## 2026-11-11 포트폴리오 공개 범위 변경을 수정 화면으로 이동
+
+사용자 요청으로 상세 화면 선택기·공개 상태 표시는 제거하고 공통 수정 작성기에서 공개 범위를 편집하도록 허용했다. 복원된 초안의 선택값을 유지하며 PUT에서 내용·visibility를 한 트랜잭션으로 저장한다. 기존 소유권·expectedUpdatedAt·행 잠금 검사와 공개 범위 변경 시 제출본 보관 검사를 유지한다. 기존 PATCH API 계약은 호환성을 위해 유지한다. 본인 포트폴리오 탭에만 눈 뜸/감음 아이콘과 상태를 표시하고 클릭 동작 없이 상태만 표시한다. 타인 탭은 비공개 항목을 방어적으로 제외하며 서버 공개 조회 권한도 유지한다. DB 스키마 변경 없음.
+
+주요 파일: PortfolioMutationServiceImpl·PortfolioMutationRepository·통합 테스트, ApiPortfolioComposer·PortfolioComposer·ApiPortfolioDetail·ApiPortfolioTab 및 PortfolioTab.module.css, portfolioMutations·테스트·PortfolioCrud.test.tsx, portfolio-crud-api.md·portfolio-visibility-api.md.
+
+검증: npm run build 성공(TypeScript 포함). 전체 프론트151개 파일/1671개 테스트 성공. 격리 PostgreSQL Testcontainers에서 PortfolioMutationIntegrationTest29개·PortfolioQueryIntegrationTest18개·ProjectPortfolioSnapshotIntegrationTest12개, 총59개 통과(실패·오류·건너뜀0). 내용과 범위 동시 수정, 제출본 미보관 시 부분 저장 없이 차단, 공개/비공개 접근 정책·보관본 보존, 본인 전용 눈 아이콘·타인 목록 비공개 제외·상세 선택기 제거를 검증했다. git diff --check 통과. 로컬 백엔드 재시작 후 HTTP200 확인. 브라우저 로그인 상태 수동 검증은 미실행. 커밋·푸시 없음.
+
+## 2026-11-11 공개 상태 눈 아이콘 클릭 제거
+
+사용자 정정에 따라 ApiPortfolioTab의 눈 아이콘 링크를 비대화형 span으로 바꿨다. 본인에게만 눈 아이콘을 표시하고 공개/비공개는 접근성 이름·툴팁으로 안내한다. 텍스트 버튼과 수정 화면 이동은 제거했다. 공개 범위 변경은 작성기에서만 수행한다. PortfolioTab.module.css·PortfolioCrud 테스트·공개 범위 문서도 갱신했다.
+
+검증: npm run build 성공(TypeScript 포함). PortfolioCrud9개 테스트 통과, 아이콘이 링크가 아닌지 확인. git diff --check 통과. 브라우저 수동 확인 미실행. 백엔드 변경 없음. 커밋·푸시 없음.

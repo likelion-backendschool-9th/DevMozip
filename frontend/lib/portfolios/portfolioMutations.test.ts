@@ -33,7 +33,7 @@ describe('문서·쓰기 경계', () => {
         const existing = portfolioDetailFixture(); existing.portfolio.updatedAt = '2026-11-01T12:00:00';
         const body = portfolioWriteBody(input(), existing.portfolio.visibility, existing);
         expect(body.expectedUpdatedAt).toBe(existing.portfolio.updatedAt); expect(body.attachments).toEqual(existing.attachments);
-        expect(() => portfolioWriteBody(input(), 'PRIVATE', existing)).toThrow('공개 범위');
+        expect(portfolioWriteBody(input(), 'PRIVATE', existing).visibility).toBe('PRIVATE');
     });
     it('업로드 첨부를 편집 입력에 복원하고 연결 해제를 저장에 반영한다', () => {
         const existing = portfolioDetailFixture();

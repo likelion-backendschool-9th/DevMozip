@@ -30,7 +30,7 @@
 - 제목·요약·역할·기술 스택 등 전체 편집 내용을 검증한다. 작성자·생성 시각·ID는 변경하지 않는다.
 - expectedUpdatedAt에 마지막 GET의 portfolio.updatedAt을 그대로 보낸다. 기존 NULL 시각은 null.
 - 행 잠금 후 현재 버전과 다르면 409. 저장 시각은 한국 시각 LocalDateTime의 마이크로초 단위로 기록하고 같은/과거 시각이면 이전보다 1마이크로초 증가시킨다.
-- 공개 범위 변경은 이 이슈에서 하지 않는다. PUT의 visibility는 현재 값과 같아야 한다. 후속 PATCH에서도 updatedAt을 갱신해야 한다.
+- 2026-11-11 사용자 요청: PUT에서 내용과 visibility를 함께 수정한다. 공개 범위가 달라지는 경우 기존 제출본 보관 검사를 적용하고 행 잠금·expectedUpdatedAt 비교 후 한 트랜잭션으로 저장한다. 기존 PATCH 계약도 호환성을 위해 유지한다.
 - 200 상세 응답.
 
 ### DELETE /api/v1/portfolios/{id}
@@ -117,7 +117,7 @@ feat/113-portfolio-file-upload에서 POST /api/v1/files 및 기존 이미지·PD
 
 ### 후속 공개 범위 변경 #116
 
-PATCH /api/v1/portfolios/{id}/visibility는 docs/portfolio-visibility-api.md를 따른다. 일반 수정 PUT은 기존 공개 범위를 유지하며 PATCH에서 변경한 수정 버전으로 오래된 초안의 덮어쓰기를 차단한다.
+PATCH /api/v1/portfolios/{id}/visibility는 docs/portfolio-visibility-api.md를 따른다. 일반 수정 PUT도 공개 범위를 함께 저장한다(2026-11-11). PUT·PATCH 모두 수정 버전을 확인해 오래된 초안의 덮어쓰기를 차단한다.
 
 ## 임시저장 동선 보완 (2026-11-10)
 
