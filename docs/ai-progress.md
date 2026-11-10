@@ -1909,6 +1909,12 @@ erDiagram
 - 최종 backend: 총 1,138개 중 1,126개 통과·12개 건너뜀·실패/오류 0. 변경28·조회18·파일5·제출본12 통합은 모두 건너뜀 없이 통과. frontend 전체 1,367개·npm run build·수정 파일 ESLint·git diff --check 통과.
 - 실제 공유 DB 브라우저 전환은 이번 통합 후 미실행. 직전 payments.currency schema validate 실패와 실행 환경/파일 공유 저장소 확인 등은 실제 통합 시 남은 검증이다.
 
+### 2026-11-10 Docker 프로필 쓰기 출처 검사 수정
+
+- 사용자 이미지 업로드의 "같은 사이트에서 요청해 주세요" 보고를 확인했다. profileRequestGuard만 request.url.origin을 직접 비교해 Next 내부 0.0.0.0 주소에서 정상 브라우저 Origin을 거절하고 있었다. 팔로우·포트폴리오의 기존 Host 비교 코드는 변경하지 않았다.
+- develop 24b524e 기반 fix/profile-origin-guard 별도 브랜치. lib/profiles/profileProxy.ts에서 브라우저 Host를 엄격히 검증하고 URL hostname/port를 함께 교체해 Origin과 비교한다. HTTPS 기본 포트가 내부 포트로 남지 않도록 처리. 다른 Origin·포트·프로토콜·Origin 누락/손상·위조 forwarded-host 차단은 유지한다. 공통 guard를 사용하는 이미지·기본 수정·소개·옵션·링크에 적용되며 파일 제한/백엔드/DB 변경 없음.
+- profileProxy.test.ts와 기존 이미지 route.test.ts에 Docker 내부 URL/Host 불일치·배포 HTTPS·외부/위조 출처 차단 및 업로드 전달 회귀 검증 추가. 첫 검사에서 HTTPS 기본 포트 처리 누락을 발견해 수정 후 전체 frontend 119개 파일·1,372개 통과, npm run build/ESLint/git diff --check 통과. 백엔드 변경이 없어 backend 테스트 재실행 없음.
+- 실제 Docker 프론트 재시작 후 localhost Origin의 지원하지 않는 SVG 요청은403이 아닌 파일 검증415까지 도달, 외부 Origin은403 차단 확인. 저장되지 않는 입력으로 검사해 실제 파일/DB 변경 없음. 정상 이미지 실제 저장·배포 환경 검증은 미수행. 생성 next-env.d.ts 원복, 기존 frontend/.vite 보존. 커밋·푸시·PR은 아직 하지 않았다.
 ### 2026-11-10 #123 프로필 포스팅 목록 조회·화면 연결
 
 - develop 24b524e에서 feat/123-profile-posts 생성. 이전 로그인 PR #122는 별도 브랜치로 유지한다. #91 SNS 쓰기 기능/공통 게시글 Entity·테이블은 변경하지 않는다.
@@ -2021,3 +2027,9 @@ erDiagram
 사용자 요청으로 별도 pr125-conflicts worktree에서 최신 develop 5592e21을 병합했다. 진행 문서와 ApiProfileTabs·ApiProfilePage 테스트가 충돌했다. #125 포스팅/받은 리뷰와 #124 활동 API 연결을 모두 보존해 소개·포트폴리오·포스팅·활동·리뷰 5개 탭을 함께 연결했다. 기존 본인/공개 slug·own·trustScore 전달을 유지하며 연결 전 안내가 잘못 나오지 않게 했다. 진행 문서는 양쪽 기록을 보존했다. 다른 PR과 실행 서버/미커밋 검색 수정·공유 DB·배포 설정은 변경하지 않는다.
 
 검증 결과: 별도 컨테이너에서 `npm run build` 성공, `npm test -- --maxWorkers=1` 130개 파일·1,426개 테스트 통과. 백엔드는 격리된 Testcontainers 환경에서 `./gradlew test --tests '*ProfilePostsIntegrationTest' --tests '*ProfileReviewsIntegrationTest' --tests '*ProjectQueryIntegrationTest'` 성공 (21개, 실패·오류·건너뜀 0/0/0). 전체 백엔드 테스트와 브라우저 수동 검증은 이번 작업에서 실행하지 않았다. 공유 DB와 실행 중 서버는 변경하지 않았다.
+
+## 2026-11-10 PR #127 충돌 해결
+
+최신 develop 37d40f6 병합 중 진행 문서만 충돌하여 양쪽 기록을 보존했다. 프로필 쓰기 요청 출처 검사 수정과 develop의 프로필·검색 연결 코드는 유지한다. 기존 미커밋 작업과 실행 서버, DB, 배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 `npm run build` 성공. `npm test -- --maxWorkers=1` 133개 파일·1,455개 테스트 통과(출처 검사·이미지 업로드 회귀 포함). `git diff --check` 통과. 백엔드 충돌/수정은 없어 백엔드 테스트 재실행은 생략했으며 실제 이미지 저장 및 배포 브라우저 검증은 미실행.
