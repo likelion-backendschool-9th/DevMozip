@@ -13,24 +13,45 @@ import tools.jackson.databind.node.ObjectNode;
 public class AiAnalysisMergePolicy {
 	private final ObjectMapper mapper;
 	private final AiConditionsDocument documents;
-	public AiAnalysisMergePolicy(ObjectMapper mapper, AiConditionsDocument documents) { this.mapper = mapper; this.documents = documents; }
+	private final AiRequirementSnapshot snapshots;
+	public AiAnalysisMergePolicy(ObjectMapper mapper, AiConditionsDocument documents, AiRequirementSnapshot snapshots) {
+		this.mapper = mapper; this.documents = documents; this.snapshots = snapshots;
+	}
 	public record Merged(String document, String reply) {}
 	public Merged merge(String previous, GeminiAnalysis analysis, String latest, long messageId) {
 		ObjectNode doc = documents.read(previous);
+		ObjectNode initial = documents.formal(doc);
 		ObjectNode metadata = doc.has("_analysis") ? doc.withObject("_analysis").deepCopy() : mapper.createObjectNode();
 		var sources = metadata.withObject("sources");
 		for (String field : AiConditionsDocument.FIELDS) if (doc.has(field) && !sources.has(field)) {
 			sources.set(field, mapper.valueToTree(Map.of("origin", "MANUAL")));
 		}
 		var questions = new LinkedHashSet<>(analysis.questions());
-		var applied = new ArrayList<String>();
+		var changedFields = new LinkedHashSet<Field>();
 		var suggestions = new ArrayList<Change>();
+		var factChanges = new ArrayList<>(analysis.facts());
+		var resolvedRoles = new HashSet<String>();
 		for (var change : analysis.changes()) {
 			evidence(latest, change.evidence());
+			if (change.field() == Field.roles && (change.action() == Action.ADD || change.action() == Action.SET)
+				&& change.count() == null) {
+				String role = change.values().getFirst().strip();
+				boolean alreadyAsked = questions.stream().anyMatch(q -> asksCount(q, role)) || asksCount(analysis.reply(), role);
+				if (!alreadyAsked) questions.add(role + " 동료는 몇 명 정도 함께하길 원하시나요?");
+				factChanges.add(new FactChange(Kind.OTHER, Action.ADD, role + " (인원 미정)",
+					change.origin(), change.evidence()));
+				continue;
+			}
 			boolean ownTechnology = change.field() == Field.stacks && analysis.facts().stream().anyMatch(f ->
 				(f.kind() == Kind.OWN_SKILL || f.kind() == Kind.LEARNING_SKILL) && f.evidence().equals(change.evidence()));
+			boolean pendingRoleAnswer = change.field() == Field.roles && change.count() != null
+				&& (change.action() == Action.ADD || change.action() == Action.SET)
+				&& metadata.path("facts").isArray()
+				&& java.util.stream.StreamSupport.stream(metadata.path("facts").spliterator(), false).anyMatch(f ->
+					"OTHER".equals(f.path("kind").asText()) && "EXPLICIT".equals(f.path("origin").asText())
+					&& (change.values().getFirst().strip() + " (인원 미정)").equals(f.path("value").asText()));
 			if (change.origin() == Origin.INFERRED || ownTechnology
-				|| doc.has(change.field().name()) && !change.explicitChange() && !unchanged(doc, change)) {
+				|| doc.has(change.field().name()) && !change.explicitChange() && !pendingRoleAnswer && !unchanged(doc, change)) {
 				suggestions.add(change);
 				questions.add(label(change.field()) + " 조건 변경을 원하시나요? 변경할 값을 명시해 주세요.");
 				continue;
@@ -38,12 +59,19 @@ public class AiAnalysisMergePolicy {
 			if (unchanged(doc, change)) continue;
 			apply(doc, change);
 			normalizePartial(doc);
+			if (change.field() == Field.roles && change.count() != null
+				&& (change.action() == Action.ADD || change.action() == Action.SET)) {
+				resolvedRoles.add(change.values().getFirst().strip() + " (인원 미정)");
+			}
 			sources.set(change.field().name(), mapper.valueToTree(Map.of("origin", "EXPLICIT", "messageId", messageId, "evidence", change.evidence())));
-			applied.add(label(change.field()) + ": " + display(doc, change.field()));
+			changedFields.add(change.field());
 		}
+		var applied = changedFields.stream()
+			.filter(field -> !Objects.equals(initial.get(field.name()), doc.get(field.name())))
+			.map(field -> label(field) + ": " + display(doc, field)).toList();
 		var facts = new ArrayList<ObjectNode>();
 		if (metadata.path("facts").isArray()) for (var fact : metadata.path("facts")) facts.add((ObjectNode) fact.deepCopy());
-		for (var change : analysis.facts()) {
+		for (var change : factChanges) {
 			evidence(latest, change.evidence());
 			if (change.origin() == Origin.INFERRED && change.action() != Action.ADD) {
 				questions.add("이전 요구사항을 변경하려면 변경할 내용을 명시해 주세요.");
@@ -58,6 +86,7 @@ public class AiAnalysisMergePolicy {
 					"evidence", change.evidence(), "messageId", messageId)));
 			}
 		}
+		facts.removeIf(f -> "OTHER".equals(f.path("kind").asText()) && resolvedRoles.contains(f.path("value").asText()));
 		if (facts.size() > 100 || facts.stream().mapToInt(f -> f.path("value").asText().length()).sum() > 12000) {
 			throw new IllegalArgumentException("보존 가능한 요구사항 수를 초과했습니다. 새 대화를 시작해 주세요.");
 		}
@@ -68,9 +97,26 @@ public class AiAnalysisMergePolicy {
 		metadata.set("appliedChanges", mapper.valueToTree(applied));
 		metadata.set("questions", mapper.valueToTree(questions));
 		doc.set("_analysis", metadata);
+		String document = mapper.writeValueAsString(doc);
+		var before = snapshots.current(previous);
+		var after = snapshots.current(document);
+		String requirementsSummary = "";
+		if (!before.stream().map(r -> List.of(r.kind(), r.value(), r.mode())).toList()
+			.equals(after.stream().map(r -> List.of(r.kind(), r.value(), r.mode())).toList())) {
+			requirementsSummary = after.isEmpty() ? "\n\n저장된 세부 요구사항: 없음\n다음 추천은 정형 조건으로 계산합니다."
+				: "\n\n저장된 세부 요구사항\n" + String.join("\n", after.stream().map(r -> "요구사항: " + r.value()).toList())
+					+ "\n다음 추천을 실행하면 평가에 반영합니다. 자료가 부족한 항목은 미확인으로 처리합니다.";
+			requirementsSummary += "\n기존 추천 결과는 변경되지 않습니다.";
+		}
+		var remainingQuestions = questions.stream().filter(q -> !compact(analysis.reply()).contains(compact(q))).toList();
 		String reply = analysis.reply() + (applied.isEmpty() ? "" : "\n\n반영된 조건\n" + String.join("\n", applied))
-			+ (questions.isEmpty() ? "" : "\n\n확인할 내용\n" + String.join("\n", questions));
-		return new Merged(mapper.writeValueAsString(doc), reply);
+			+ requirementsSummary
+			+ (remainingQuestions.isEmpty() ? "" : "\n\n확인할 내용\n" + String.join("\n", remainingQuestions));
+		return new Merged(document, reply);
+	}
+	private static String compact(String text) { return text.replaceAll("[\\s\\p{P}]+", ""); }
+	private static boolean asksCount(String text, String role) {
+		return text.contains(role) && (text.contains("몇") || text.contains("인원")) && (text.contains("명") || text.contains("인원"));
 	}
 	private void normalizePartial(ObjectNode doc) {
 		var formal = documents.formal(doc);

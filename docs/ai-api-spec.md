@@ -1,5 +1,86 @@
 # AI API 명세
 
+7단계 최종 상태·테스트 증거·남은 운영 검증은 [종료 점검](ai-progress.md#2026-11-10-step-7-종료-점검--현재-구현-기준)을 따른다. 응답6개 필드·429 계약·요금제·차감 기준은 기존 합의와 동일하다. 사용자 공유 SQL 적용 확인과 CHAR 매핑 수정은 새 API 정책 변경이 아니다. 기본 추천/6B 점수·순위·응답도 이번 문서 작업에서 변경하지 않았다.
+
+## 2026-11-10 STEP 7 구현 계약
+
+GET `/api/v1/ai/usage`와 BFF GET `/api/ai/usage`를 구현했다. 응답은 `usageMonth`, `usedCount`, `limit`, `remainingCount`, `pendingCount`, `availableCount`다. 월별 행 잠금·처리 중 예약·성공 원자 차감·실패/만료/삭제 정산을 기존 멱등성 구조에 연결했다. 429/AI_MONTHLY_LIMIT_EXCEEDED·현재 구독·수신 월 귀속·기본30분 예약·접근 시 만료 회복·SQL 적용 조건은 [7단계 구현 계약](ai-usage-api.md)을 따른다. 최초 테이블 부재 확인 이후 사용자가 공유 SQL을 실행했다. 재조회로 테이블·컬럼·주요 제약을 확인했으며 CHAR(7) JDBC 매핑 오류를 수정했다. 에이전트의 공유 DDL 실행·배포는 하지 않았다. 아래 날짜별 미구현 설명은 과거 이력이다.
+
+## 2026-11-10 6B 종료 시점 계약 정리
+
+- 6A 및6B GET/POST 상세 분석은 구현돼 있다. 아래 단계별 개요를 현행화했으며 이전 날짜의 미구현/후보 계약은 이력으로 구분한다. [6B 구현 계약](ai-portfolio-analysis.md)과 [검증·남은 문제](ai-progress.md#2026-11-10-6b-종료-점검--현재-구현-기준)를 우선한다.
+- 상세는 결과 PK·소유권·현재 PREMIUM/ADMIN + 유효 구독·현재 공개 자료를 검사한다. 신규 DTO/일반 추천 응답 필드는 이번 문서 작업에서 변경하지 않았다. backend POST는 본문 없음/{}를 허용하고, 현재 BFF POST는 동일 출처 application/json + {}가 필수다(BFF 자체400/403/415 가능).
+- 서버는 assessments/questions/notice에 UNKNOWN·자료 부족을 보존할 수 있다. 화면은 UNKNOWN/NO_DATA/빈 분석 목록을 숨기고 검증된 인용·출처 제목 링크·부분 구현/차이를 표시한다. 메타데이터 selectionReason은 응답에 있지만 화면은 원문 나열 대신 접힌 선택 원칙으로 표시한다. 서버 questions 전체를 그대로 노출하지 않는다.
+- 프론트 무료 버튼은 상세 API를 호출하지 않고 전용 안내·`/subscription` 링크를 제공한다. 현재 프론트는 상세 요청403을 구독 안내로 통합하며 세분화된 구독 오류코드는 없다. 해당 페이지의 데모 동작은 실제 구독 활성화 계약이 아니다.
+- PENDING에서만3초 GET(최대60회), 완료 이후 정기/포커스 조회 없음. 새 자료/권한 검증은 다음 명시 요청에 수행한다. 정책/프롬프트 변경 시 고정 portfolio-v1 버전을 수동 갱신해야 캐시 지문에 반영된다.
+- 새 기본 추천의 관련성 제외·summary 입력을 확정 반영했으며 상세 본문 가산점은 없다. 과거 결과 GET/replay는 재계산하지 않는다. 7단계 월 사용량 API/차감은 미구현이고 JSON 키·초과 오류 계약은 구현 전 확인 대상이다.
+
+## 2026-11-10 6B 프리미엄 전용 안내
+
+- 무료 사용자도 ‘포트폴리오 추천 이유 보기’ 버튼을 표시한다. 클릭 시 상세 분석 API를 호출하지 않고 ‘이 기능은 프리미엄 전용입니다.’와 ‘프리미엄 페이지로 이동 →’ 링크(`/subscription`)를 표시한다. 닫기로 안내를 접을 수 있다.
+- PREMIUM/ADMIN 화면에서 서버가403을 반환하면 유효 구독 확인 안내와 같은 링크를 표시한다. 그 외 오류는 기존 오류 안내를 유지한다. 서버 권한·구독 검증과 추천 점수·사용량은 변경하지 않는다. 구독 활성화·결제·사용량 구현은 후속 범위다.
+
+## 2026-11-10 요청 관련성 없는 후보 제외 확정
+
+- 최신 사용자 요청으로 새 추천에서 협업 가능·경력·신뢰온도만 충족하는 개발자를 제외한다. 요청 직군 또는 기술 일치가 있거나, 공개 자료의 정확한 인용으로 검증된 세부 요구 MET/PARTIAL 근거가 있으면 유지한다. 신뢰온도·경력만의 세부 평가는 관련성 근거로 사용하지 않는다. 개발자의 관심 분야만 같은 경우도 기술·직군·세부 요구의 연결을 대신하지 않는다.
+- 유사 프로젝트는 요청 분야·기술·기존 텍스트 비교 중 하나가 일치하거나 검증된 세부 요구 MET/PARTIAL이면 유지한다. 모집·진행 상태만으로 남기지 않는다. 구현 중·부분 부합·완료 상태라는 이유로 제외하지 않는다. MISMATCH/UNKNOWN만 있고 다른 관련성 근거가 없으면 제외한다.
+- 고정 점수 하한은 없다. 기존 공개/계정/협업/직군/경력 필터 다음에 전체 후보의 세부 요구를 평가하고, 관련성을 확인한 후 상위10개를 정한다. 빈자리는 무관한 후보로 채우지 않는다. 기존 점수식80:20과 UNKNOWN 분모는 유지하며 과거 저장 결과·GET·동일 키 재조회는 재계산하지 않는다. 6B 포트폴리오 본문은 여전히 가산점/순위에 미반영이다.
+- 기존 도메인·DDL·API 응답 필드는 변경하지 않는다. 아래 관련성/최소점수 미확정 또는 후보 제외 없음 기록은 이 확정 전 이력이다.
+
+## 2026-11-10 프로젝트 한줄 소개 평가 자료 추가
+
+- 기존 공개·미삭제 프로젝트의 AI 읽기 projection에 summary를 추가하고 모델 근거 source에 `project:{id}:summary`, field=`summary`를 전달한다. 기존 source 함수의 HTML제거·개인정보 패턴 마스킹·3000자 제한, 후보ID·정확 인용·필드 검증을 그대로 적용한다. NULL summary는 빈 자료이며 기본점수/세부요구 없음 경로는 기존과 같다.
+- 새 추천의 summary 근거는 기존 requirementAssessments의 source/field/quote로 저장·응답하므로 새 엔드포인트/JSON키/DDL은 없다. 평가식80:20·요구별 동일비중·기존 필터/상위10개·과거GET/replay는 유지한다. 동일 요구를 요약과 본문으로 중복 가산하지 않는다. 프로젝트 주제/예정 기능과 완료 구현 경험을 구분하도록 평가 프롬프트를 보완했다.
+- 최소 점수/관련성 탈락 기준은 이번 사용자 의견 요청에 대한 미확정 항목이다.0점/낮은 점수 후보를 임의로 제외하거나 과거 결과를 수정하지 않았다. 이전 summary 미전달 기록은 해당 수정 전 상태다.
+
+## 2026-11-10 추천 표시·상세 조회 변경
+
+API/DTO/저장 계약은 유지한다. 최신 사용자 요청으로 프론트는 UNKNOWN·자료부족 항목을 표시하지 않고 PARTIAL/구현 중 인용/MISMATCH를 유지한다. 6A 빈 요구별 평가표는 숨기고 알려진 근거만 간결히 표시한다. 후보 탈락·UNKNOWN 분모 제외·점수/순위 재계산은 하지 않는다.
+
+6B 완료 후 주기 GET과 포커스/visibility 자동 GET은 제거했다. 명시 POST 뒤 PENDING에서만3초 간격 GET(최대60회)을 하며 완료/오류/자료없음/취소 시 종료한다. 새 재시도는 사용자가 실행한다. 열어 둔 완료 화면은 백그라운드 권한 재조회가 없으며 다음 명시 요청에서 현재 권한/자료를 검증한다. 본문 출처는 `/portfolios/{id}`에 포트폴리오 제목으로 연결하고 추가 모델 호출 없이 검증 인용을 문장으로 묶는다.
+
+## 2026-11-09 STEP 6B — 프리미엄 포트폴리오 상세 분석 (현재)
+
+- GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` 구현. id는 저장된 개발자 추천 결과 PK. POST는 본문 없음/{}만 허용한다. 소유권·현재 PREMIUM/ADMIN·유효 구독·대상 ACTIVE/tag·PUBLIC 자료를 생성과 조회 모두 검사한다. 최신 사용자 답변으로 구독 기록 없는 PREMIUM/ADMIN도403이다.
+- 요청 스냅샷의 명시 요구 및 정형 조건과 공개 제목/요약/역할/기술을 비교해 최대5개를 선택하고 본문을 Gemini로 분석한다. 선택 이유·출처/정확 인용·미확인·확인 질문만 제공한다. 점수·순위·월 추천 사용량은 변경하지 않는다.
+- 상태 NOT_GENERATED/PENDING/READY/NO_DATA/STALE/FAILED. PENDING=202+Retry-After:3, 완료/GET 상태=200. 오류400/401/403/404/409/429/502/503/504. BFF는 `/api/ai/recommendations/{id}/detailed-analysis`, no-store·동일 출처 POST·빈 JSON·허용 응답을 검증한다.
+- 기존 detailed_reason TEXT의 버전 JSON과 원자적 비교·교환 임대180초로 중복 실행/저장·실패 회복을 관리한다. 새DDL/공통 도메인 수정 없음. 구독 만료·비공개·삭제·자료/모델 변경 시 상세 인용을 차단한다. 세부 DTO·구독 상태/기간·선택 알고리즘·캐시/오류/테스트 한계는 [6B 구현 계약](ai-portfolio-analysis.md)을 따른다. 아래 미구현/후보 계약은 과거 기록이다.
+
+## 2026-11-09 6A 재검증 보완
+
+- 요청 #36의 실제 roles는 게임·모바일·UI/UX이며 이에 해당하는 공개·협업 가능 회원이 없어 개발자 0건·프로젝트 9건이 저장됐다. #29~32는 개발자 3건, #33~35는 6건이다. 후보 필터·정렬·점수 정책은 변경하지 않는다. 기술 스택 완화로 후보 수가 늘어난다는 빈 결과 안내를 수정한다.
+- 기존 개발자 평가 source에 `developer:{id}:trustScore`, field=`trustScore`를 추가한다. 값은 실행 시 DB BigDecimal의 문자열이며 NULL은 빈 자료다. EXPLICIT PROJECT_PREFERENCE의 명시 온도 비교에만 근거로 허용하고 기술·구현 경험의 증거로는 거부한다. Gemini가 수치·연산(이상/초과/이하/미만)을 비교하며 서버는 해당 후보 source/정확 인용·80:20 계산을 검증한다. 자료 누락은 UNKNOWN. 프로젝트에는 이 값이 없으며 UNKNOWN 처리한다. 공개 기본 프로필에 이미 있는 필드로, API/DDL/필수 필터를 추가하지 않는다.
+- 신뢰온도 요구의 추출 지침을 PROJECT_PREFERENCE로 명시했다. 이미 그 kind로 저장된 사실도 새 추천부터 적용하며, 과거 추천 점수/평가/순위는 GET·replay에서 재계산하지 않는다. 본인 기술·추론·면제 요구 제외 정책은 그대로다. 과거 카드의 현재 공개 프로필 정보는 최신 상태로 달라질 수 있다.
+- develop의 포트폴리오 상세 GET은 이미 존재하며 실제 public.portfolios에 description TEXT 및 PUBLIC/PRIVATE 자료가 있다. 타인 상세는 현재 DB 역할 PREMIUM/ADMIN·작성자 ACTIVE·PUBLIC을 확인한다. AI 본문 평가는 미연결이며 subscriptions 테이블 존재만으로 유효 구독 판정이 구현됐다고 보지 않는다. 6B의 상세 DTO·현재 구독/권한·버전/캐시 계약은 [준비 기록](ai-step6-design.md#2026-11-09-6b-구현-준비-재점검)에 남긴다.
+
+- 2026-11-09 최신 프로젝트 API 통합: 추천 상세 링크 `/projects/{recommendedProjectId}`는 develop의 기존 API 상세 화면을 재사용하며 별도 간이 페이지는 제거했다. 숫자 DB ID와 문자열/UUID 로컬 공고의 ID를 임의 변환하지 않는다. AI 카드 공개 projection은 최신 `recruitmentSlots[].roleCode`를 기존 프로젝트 직군 라벨로 표시한다. 기존 role 필드는 더 이상 최신 계약이 아니다.
+
+- 2026-11-09 프론트 타임라인은 추천의 messageId와 createdAt을 이용해 해당 사용자 메시지의 분석 답변 뒤에 결과를 표시한다. 기존 API/저장 순서·스냅샷·점수는 유지하고 재조회에서도 동일하게 배치한다.
+
+- 2026-11-09 표시/입력 보완: 분석 후 평가 대상 요구가 바뀌면 ASSISTANT content에 서버 저장 기준 요구사항 목록과 다음 추천 반영 예정 안내를 포함한다. `AiRequirementSnapshot`의 실제 추천 추출 규칙을 재사용하며 응답 필드·DB 변경은 없다. 미전송 draft가 있으면 프론트의 새 추천 요청을 막고 전송/분석을 안내한다. 기존 pending 요청 복구는 기존 스냅샷으로 수행한다. 분석만으로 추천·점수 재계산은 실행하지 않는다.
+
+- 2026-11-09 `analysis.appliedChanges`와 ASSISTANT의 ‘반영된 조건’은 변경 중간값 대신 전체 변경 적용 후의 최종값을 필드당 한 번 제공한다. 이전 값과 같은 항목은 제외한다. 조건 적용·출처·추천 계산 계약은 유지한다.
+
+- 2026-11-09 표시 보완: 분석 결과 questions는 보존하되 ASSISTANT 본문에 이미 있는 동일 질문을 재출력하지 않는다. 모델이 특정 직군 인원을 묻고 있으면 서버의 같은 직군 보완 질문을 추가하지 않는다. 새 API·응답 필드·DB 변경은 없다.
+- 실제 프로젝트 추천 상세 링크는 `/projects/{recommendedProjectId}`다. 해당 숫자 ID 페이지는 기존 BFF `GET /api/ai/projects/{id}` → 공개 `GET /api/v1/projects/{id}`의 허용 projection을 그대로 사용한다. 기존 모달은 제거하며 공개 조회 실패·비공개·삭제에는 오류 상태를 표시한다. 새로운 프로젝트 수정·지원 계약은 추가하지 않는다.
+
+- 2026-11-09 분석 응답 보완: Gemini 내부 `roles` ADD/SET 제안의 `count:null`은 HTTP 분석 실패가 아니라 인원 확인 대상으로 처리한다. 정형 roles에는 적용하지 않고 `_analysis.facts`의 OTHER(`직군 (인원 미정)`)와 questions, ASSISTANT 답변에 보존한다. 이후 확인된 인원 적용 시 해당 미정 사실을 제거한다. 실제 조건 입력 DTO의 인원 범위·필수 검증은 유지한다. 엔드포인트·DB 스키마 변경은 없다.
+
+## 2026-11-09 STEP 6A — 자연어 요구사항 추천 반영 (현재)
+
+- `feat/gemini-recommend`에서 기존 추천 실행·조회와 부분 조건 sync를 확장한다. 6B·사용량·포트폴리오/구독 도메인 구현은 포함하지 않는다. 무료/프리미엄 모두 기존 공개 후보 projection만 평가한다. 최신 사용자 요청의 공개·열람 가능 자료 제한이 앞선 무료 본문 내부 활용 허용보다 우선한다.
+- 요청 `conditions` JSONB의 기존 정형 키를 유지하고 서버 예약 `_requirements`에 `version:1`, 평가 정책 버전, 실행 시점 facts/sources 및 메시지 범위의 comparisonText를 저장한다. 대화의 최신 `_analysis`와 구분하며 과거 GET은 저장된 조건·점수·평가만 읽고 재분석하지 않는다. 구형 조건/결과도 읽는다. sync/PUT에 클라이언트 메타데이터 주입은 허용하지 않는다.
+- 평가 대상은 EXPLICIT의 TARGET_SKILL/TARGET_EXPERIENCE/FEATURE/PROJECT_PREFERENCE/COLLABORATION_GOAL/LEARNING_GOAL이다. OWN_SKILL/LEARNING_SKILL/USER_LEVEL·추론·제안은 점수에서 제외하되 원래 facts 스냅샷에는 보존한다. PURPOSE도 보존하고 새 참여/모집 후보 필터로 바꾸지 않는다. 정형 stacks와 정규화 일치하는 TARGET_SKILL은 중복 가산하지 않는다. 명시적으로 면제한 요구와 주제 제한 없음은 facts에 보존하되 점수 항목에서는 제외한다. ‘제한 없음’의 기존 필수 조건 정책은 유지한다.
+- 기존 공개·ACTIVE·AVAILABLE·직군·경력 필터를 통과한 전체 개발자와 공개·미삭제 프로젝트를 ID 배치 200건으로 순회한다. 기존 상위 10건을 먼저 자르지 않는다. 후보 4건 × 요구 8개 단위로 Gemini에 공개 projection을 전송하고 서버가 평가 후 종류별 상위 10건을 유지한다. 필드별 3000자까지 개인정보 마스킹·HTML 제거한 텍스트만 비교하므로 후반부 정보는 미확인일 수 있다. 개발자는 직군/기술/경력/공개 요약/신뢰온도, 프로젝트는 제목/설명/기술만 보낸다. 닉네임·연락처·결제·구독·프리미엄 본문은 전송하지 않는다. 공개 요약의 자기서술은 검증된 실력이나 성과 인증이 아니다.
+- 충족 MET=100, 부분 충족 PARTIAL=50, 미확인 UNKNOWN=0, 명시적 불일치 MISMATCH=0을 동일 비중으로 평균한다(2026-11-09 사용자 확정). 미확인도 분모에 포함한다. 요구가 있으면 `기본 점수×0.8 + 요구 점수×0.2`, 없으면 기본 점수 유지. 소수 둘째 자리 반올림·동점 ID 오름차순은 유지한다. 필수 표현은 MANDATORY_UNENFORCED로 표시하되 후보 제외는 하지 않는다. 표현 감지는 보조 표시이며 확정된 필수 조건 추출 계약을 대신하지 않는다.
+- 기본 계산은 기존 엔진을 재사용한다. 세부 요구 평가가 있을 때 프로젝트 원문 전체의 Jaccard 텍스트 항목은 NOT_REQUESTED로 제외해 과거 삭제 요구·본인 기술의 중복 반영을 피하고 기존 평가 가능 항목을 환산한다. 세부 요구가 없을 때는 종전 메시지 텍스트 비교를 유지한다. 포트폴리오 경험 항목은 계속 UNASSESSED다.
+- Gemini는 `{evaluations:[{candidate,requirement,status,source,quote}]}`만 반환한다. 후보·요구 ID/중복/상태를 검증하고 source가 해당 후보의 전송 자료인지, quote가 그 자료의 1~500자 정확한 인용인지 확인한다. 없는 출처·가짜 인용은 UNKNOWN으로 제외하고 해당 주장을 반환하지 않는다. 자료 누락/생략한 쌍은 UNKNOWN이다. 알 수 없는 후보/요구 ID·형식 오류·외부 장애는 전체 추천 FAILED이며 기본 추천으로 대체하지 않는다. 인용 존재 검증은 내용 진위나 의미 분류의 완전한 정확성을 보장하지 않는다.
+- 후보 평가·Gemini 호출은 DB 저장 트랜잭션 밖에서 수행한다. 독립 PENDING 저장 후 모든 배치가 성공해야 결과 전체와 SUCCESS를 원자 저장한다. 실패 시 결과 없이 FAILED로 남긴다. 같은 키 재요청은 다시 분석하지 않는다. 대화/조건 수정 중에도 시작 시점 스냅샷을 사용한다.
+- POST recommendations 본문에 선택 `replay:boolean`을 추가했다. true는 본인 대화의 같은 Idempotency-Key·messageId로 이미 저장된 요청을 현재 조건과 무관하게 재조회하며 생성/재계산하지 않는다. 저장 요청이 없거나 메시지가 다르면 409다. 생략/false는 기존 조건·메시지에 더해 facts까지 같은지 비교하며 다르면 409다. 익명·타인 대화 접근은 기존 401/404다.
+- 출처 ref는 `developer:{users.id}:{field}` 또는 `project:{projects.id}:{field}`로 실제 행과 projection 필드를 식별한다. 결과 항목에 `baseScore`, `requirementScore`(미적용 null), `requirementsApplied`, `requirementAssessments` 배열을 추가한다. 평가 항목은 requirementId/requirement/mode/status/source/field/quote이며 공개 자료만 담는다. `matchScore`는 최종 점수다. 기본 이유 TEXT에 버전 있는 평가 JSON을 저장하고 응답에서는 기존 basicReason 문자열과 분리한다. 과거 일반 문자열은 기존 점수를 기본 점수로 제공한다. 상세 이유 detailed_reason은 계속 응답에서 제외하며 생성하지 않는다. 새 DDL은 없다.
+- 프론트는 서버 facts를 계정별 로컬 상태에 보존해 요구사항만 바뀌어도 재추천을 허용한다. 미완료 분석은 추천 전에 재시도를 안내한다. 응답 유실 후 메타데이터가 있는 재시도는 초안 재동기화 대신 기존 대화 조회 + replay 요청으로 원래 범위를 유지한다. 카드에서 기본/요구/최종 점수·네 상태·공개 출처를 보여 주며 자동 추천·로컬 사용량 차감은 없다. BFF 추천 POST 제한 시간은 300초, 메시지 분석 70초다. 전체 후보 수에 따라 더 오래 걸려 응답을 잃으면 저장된 PENDING/완료 결과를 재조회한다.
+- 실제 DB 재대조: 요청 conditions JSONB·basic_reason/detailed_reason TEXT 유지. 현재 public에 subscriptions 테이블은 있으나 이 브랜치의 구독 유효성 판정 도메인은 없다. 당시에는 portfolios 본문 테이블·엔티티/API가 없어 읽기 계약을 만들지 않았다. 현재는 develop 조회 API와 실제 테이블이 있으며 최신 준비 기록이 우선한다. 원본 ERD는 없어 전사와 코드·메타데이터를 비교했다. 6B는 구독·포트폴리오 권한/버전 계약을 확인한 뒤 별도 요청으로 진행한다.
+
 ## 2026-11-09 부분 선택값 전달 선행 계약 (현재)
 
 이번 구현은 6A 전 부분 UI 선택값 전달이다. 6A 의미 대조·80:20 점수와 6B 상세 분석은 아직 구현하지 않았다. 확정 정책과 남은 데이터 계약은 [설계 검토](ai-step6-design.md)를 참조한다.
@@ -135,8 +216,10 @@ python3 scripts/dev-postgres.py backend
 | 3 | 외부 API 없음 | 내부 후보 조회·점수 계산 엔진 | 4단계 POST 내부에서 사용 |
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 추천 실행·요청/결과 저장 | 신규 성공 201, RecommendationResponse |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 최신 또는 특정 과거 요청 결과 조회 | 200, RecommendationResponse |
+| 6B | GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 프리미엄 포트폴리오 상세 분석 | 200/202, PortfolioAnalysisResponse |
+| 7 | GET `/api/v1/ai/usage` | 현재 월 사용량·한도·예약·실행 가능 횟수 | 200, AiUsageResponse |
 
-아래 단계별 표에 요청·응답·오류를 정리한다. 5단계 분석은 메시지 POST의 `analyze:true`이며 6~7단계 API는 미구현이다.
+5단계 분석은 기존 메시지 POST의 `analyze:true`로 구현돼 있다. 6A는 기존 추천 실행에 연결돼 있고, 6B GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis`와7단계 GET `/api/v1/ai/usage`도 구현돼 있다.7단계 공유 SQL은 사용자가 적용해 생성 결과를 확인했으며 실제 서버 재기동·실사용 검증은 남아 있다. 새 환경은 명시 SQL 적용과 validate 확인이 필요하다.
 
 ### 추가 제공 API 표 반영 (2026-11-04)
 
@@ -353,7 +436,7 @@ POST/GET은 같은 DTO를 반환한다. 아래 JSON은 필드 설명용 예시�
 | rank | 정수 | 개발자·프로젝트 각각 1부터 시작하는 순위 |
 | createdAt | 시각 | 결과 생성 시각 |
 
-두 대상 ID는 정확히 하나만 값이 존재한다. detailed_reason은 DB에 NULL로 두고 응답에서 제외한다. 내부 엔진의 직군 집계·기간 비교·항목별 점수는 응답에 포함하지 않는다. 현재 공개 개발자 정보는 2026-11-08에 추가한 developer 필드를 따른다.
+두 대상 ID는 정확히 하나만 값이 존재한다. 기본 추천 생성 시 detailed_reason은 NULL이며, 이후6B 상세 분석이 버전 JSON을 저장한다. 일반 추천 응답에서는 이 상세 내용을 제외한다. 6A 추가 점수·평가 필드는 문서 상단 최신 계약을, 현재 공개 개발자 정보는 2026-11-08에 추가한 developer 필드를 따른다.
 
 ```json
 {
@@ -647,7 +730,7 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 ## API 단계별 개요
 
-4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다. 6~7단계는 미구현이다.
+4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다.6A 요구사항 반영·6B 상세 분석·7단계 월 사용량 및 CHAR 매핑 보완을 구현했다.7단계 사용자 공유 SQL 적용은 확인했으며 실제 서버 재기동·실사용·배포 확인은 별도다.
 
 | 단계 | Method·URL | 역할·남은 계약 |
 |---|---|---|
@@ -655,9 +738,9 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 구현: 대화 소유권·저장 조건 검증, 선택 메시지·멱등성 키, 요청/결과 저장 |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 구현: 최신 요청 또는 requestId로 과거 요청 조회. 재계산 없음 |
 | 5 | 기존 messages POST의 analyze=true 모드 | 2026-11-09 백엔드 분석·조건 병합·추가 질문·ASSISTANT 저장. 세부 계약은 문서 상단 참조 |
-| 6A | 기존 추천 실행·조회 확장 검토 | 자연어 세부 요구사항의 실제 추천 반영. 점수·스냅샷·중복 입력 비교는 정책 확정 전이며 미구현 |
-| 6B | POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 추천 결과의 개발자 상세 분석. 서버 프리미엄·소유권·포트폴리오 열람권 확인. 미구현 |
-| 7 | GET `/api/v1/ai/usage` | 한국 시간 현재 월의 사용/한도/잔여 횟수. JSON 키·한도 오류 계약 미확정 |
+| 6A | 기존 추천 실행·조회 확장 | 구현: 명시 요구의 공개 근거 평가·80:20·스냅샷·동일 입력 비교·프로젝트 summary 입력·신규 관련성 필터. 과거 결과 미재계산 |
+| 6B | GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 구현: 개발자 상세 근거·소유권·현재 역할+유효 구독·공개 자료·최대5개·CAS/캐시/실패 회복. 점수/순위 미변경 |
+| 7 | GET `/api/v1/ai/usage` | 구현: KST 월·used/limit/remaining/pending/available. 신규 실행 자리 부족429, 상세 계약은 문서 상단 참조 |
 
 4단계 결과는 `recommended_user_id`/`recommended_project_id` 중 정확히 하나, `match_score`·`basic_reason`·`rank`, 초기 `detailed_reason` null 방향이다. `recommendation_type`은 추가하지 않는다. 실제 DDL과의 일치는 해당 단계에서 확인한다. 첨부의 논리 관계 `conversation_id/message_id`를 현재 물리 컬럼명과 혼동하지 않는다.
 
