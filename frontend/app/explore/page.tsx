@@ -10,15 +10,13 @@ import { useQueryState as useSearchParams } from '@/lib/navigation';
 import { Search, X } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { useProfiles } from '@/lib/state/profileStore';
-import { useProjects } from '@/lib/state/projectStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { signupOptionsAction } from '@/lib/auth/actions';
 import {
     parseSearch,
     searchDevelopers,
-    searchProjects,
     activeFilterCount,
-    searchType,
+    developerSearchParams,
     mockFilterChoices,
 } from '@/lib/search/searchService';
 import { apiFilterChoices, applyFollowChange, explorePage, pageAfterEmpty, parseApiSearch, searchApiQuery } from '@/lib/search/searchApi';
@@ -28,9 +26,7 @@ import { SearchBar } from '@/app/explore/_components/SearchBar';
 import { Button } from '@/components/common/Button';
 import { SearchFilters } from '@/app/explore/_components/SearchFilters';
 import { DeveloperResults } from '@/app/explore/_components/DeveloperResults';
-import { ProjectResults } from '@/app/explore/_components/ProjectResults';
 import { ApiDeveloperResults } from '@/app/explore/_components/ApiDeveloperResults';
-import { ApiProjectResults } from '@/app/explore/_components/ApiProjectResults';
 import { SearchPager } from '@/app/explore/_components/SearchPager';
 import type { SignupOptions } from '@/types/auth';
 import type { FollowResult } from '@/types/followApi';
@@ -38,9 +34,9 @@ import type { FollowResult } from '@/types/followApi';
 // 두 모드의 화면 구조와 디자인은 같다(docs/explore-plan.md 5절).
 export default function SearchPage() {
     const {enabled}=useMockVisibility();
-    const { projects } = useProjects();
     const [params, setParams] = useSearchParams();
-    const filters = enabled ? parseSearch(params) : parseApiSearch(params);
+    const developerParams = developerSearchParams(params);
+    const filters = enabled ? parseSearch(developerParams) : parseApiSearch(developerParams);
     const page = explorePage(params);
     const { user, canViewProfile } = useAuth();
     const own = useOwnProfile();
@@ -61,8 +57,7 @@ export default function SearchPage() {
         minimum,
         trustSort,
     );
-    const foundProjects = searchProjects(projects, filters);
-    const signedOutFollowing = filters.target === 'developer' && filters.scope === 'following' && !user;
+    const signedOutFollowing = filters.scope === 'following' && !user;
     // Mock 끄기: 비로그인 팔로잉 탭은 요청하지 않고 로그인 안내를 보여 준다.
     const search = useExploreSearch(enabled || signedOutFollowing ? null : searchApiQuery(filters, page).toString());
     const [signupOptions, setSignupOptions] = useState<SignupOptions | null>(null);
@@ -72,19 +67,18 @@ export default function SearchPage() {
         void signupOptionsAction().then(value => { if (active && !('error' in value)) setSignupOptions(value); });
         return () => { active = false; };
     }, [enabled]);
-    const choices = enabled ? mockFilterChoices(filters.target, Object.values(state.profiles), projects) : apiFilterChoices(signupOptions);
+    const choices = enabled ? mockFilterChoices('developer', Object.values(state.profiles), []) : apiFilterChoices(signupOptions);
     const loading = search.state.status === 'loading';
     const ready = search.state.status === 'ready' ? search.state.result : null;
     const shown = ready ?? (search.state.status === 'loading' ? search.state.previous : null);
     const apiError = search.state.status === 'error' ? search.state.error : null;
     const count = enabled
-        ? filters.target === 'developer' ? developers.length : foundProjects.length
+        ? developers.length
         : shown?.page.totalCount ?? 0;
     // 로그인했지만 내 프로필을 아직 모르면 본인 카드인지 알 수 없으므로 버튼을 잠시 숨긴다.
     const ownTag = !user ? null : own.profile ? own.profile.tag : own.loading ? undefined : null;
     const update = (key: string, value: string | string[]) => {
-        const next = new URLSearchParams(params);
-        next.set('type', searchType(filters.target));
+        const next = developerSearchParams(params);
         next.delete(key);
         for (const v of Array.isArray(value) ? value : [value]) if (v) next.append(key, v);
         // 검색어·필터·탭이 바뀌면 첫 페이지로 돌아간다.
@@ -93,8 +87,7 @@ export default function SearchPage() {
     };
     const goPage = (target: number) => update('page', target > 0 ? String(target) : '');
     const reset = (clearQuery = false) => {
-        const next = new URLSearchParams();
-        next.set('type', searchType(filters.target));
+        const next = developerSearchParams(new URLSearchParams());
         if (!clearQuery && filters.q) next.set('q', filters.q);
         if (!clearQuery && filters.scope === 'following') next.set('tab', 'following');
         setParams(next);
@@ -121,24 +114,11 @@ export default function SearchPage() {
         setParams(next);
     }, [ready, params, setParams]);
     const selected = [
-        ...filters.stacks.map(s => ({ key: 'stack', value: s })),
-        ...(filters.target === 'developer'
-            ? [
-                  { key: 'job', value: filters.job },
-                  { key: 'career', value: filters.career },
-                  ...(filters.interests || []).map(value => ({ key: 'interest', value })),
-                  {
-                      key: 'available',
-                      value:
-                          filters.available === 'yes' ? '협업 가능' : filters.available === 'no' ? '협업 쉬는 중' : '',
-                  },
-              ]
-            : [
-                  { key: 'role', value: filters.role },
-                  ...(filters.fields || []).map(value => ({ key: 'field', value })),
-                  { key: 'status', value: filters.status },
-              ]),
-    ].filter(v => v.value);
+        ...filters.stacks.map(value => ({key: 'stack', value})),
+        {key: 'job', value: filters.job}, {key: 'career', value: filters.career},
+        ...(filters.interests || []).map(value => ({key: 'interest', value})),
+        {key: 'available', value: filters.available === 'yes' ? '협업 가능' : filters.available === 'no' ? '협업 쉬는 중' : ''},
+    ].filter(item => item.value);
     const emptyFilters = (
         <div className={[styles.scope, 'search-empty'].join(' ')}>
             <span>
@@ -181,7 +161,7 @@ export default function SearchPage() {
             return notice(apiError.message, '잠시 후 다시 시도해 주세요.', (
                 <Button variant="secondary" onClick={search.reload}>다시 시도</Button>
             ));
-        if (!shown) return null;
+        if (!shown || shown.type !== 'developers') return null;
         if (!shown.page.items.length) {
             if (shown.page.totalCount === 0) return emptyFilters;
             const last = shown.page.totalPages - 1;
@@ -191,17 +171,13 @@ export default function SearchPage() {
         }
         return (
             <>
-                {shown.type === 'developers' ? (
-                    <ApiDeveloperResults
+                <ApiDeveloperResults
                         items={shown.page.items}
                         signedIn={!!user}
                         ownTag={ownTag}
                         onFollowChange={changeFollow}
                         onFollowError={message => notify(message)}
-                    />
-                ) : (
-                    <ApiProjectResults items={shown.page.items} />
-                )}
+                />
                 <SearchPager page={shown.page.page} totalPages={shown.page.totalPages} disabled={loading} onChange={goPage} />
             </>
         );
@@ -211,9 +187,9 @@ export default function SearchPage() {
             <header className={[styles.scope, 'search-page-heading'].join(' ')}>
                 <div className={[styles.scope, 'eyebrow'].join(' ')}>DISCOVER YOUR NEXT CONNECTION</div>
                 <h1>
-                    좋은 연결의 시작, <span>DevMozip 탐색</span>
+                    좋은 연결의 시작, <span>개발자 탐색</span>
                 </h1>
-                <p>같은 관심사를 가진 개발자부터 새로운 도전이 될 프로젝트까지.</p>
+                <p>기술과 관심사가 맞는 개발자를 찾아보세요.</p>
                 <SearchBar variant="page" />
             </header>
             <div className={[styles.scope, 'search-workspace'].join(' ')}>
@@ -228,7 +204,7 @@ export default function SearchPage() {
                             setTrustSort(false);
                         }}
                     />
-                    {filters.target === 'developer' && (
+
                         <AdvancedSearch
                             minimum={minimum}
                             sort={trustSort}
@@ -237,12 +213,11 @@ export default function SearchPage() {
                                 setTrustSort(s);
                             }}
                         />
-                    )}
                 </div>
                 <section className={[styles.scope, 'search-results'].join(' ')} aria-label="검색 결과">
                     <div className={[styles.scope, 'search-results-heading'].join(' ')}>
                         <div>
-                            {filters.target === 'developer' ? (
+
                                 <div className={[styles.scope, 'tabs compact'].join(' ')} aria-label="개발자 검색 범위">
                                     <button
                                         className={[styles.scope, filters.scope === 'all' ? 'active' : ''].join(' ')}
@@ -261,12 +236,10 @@ export default function SearchPage() {
                                         팔로잉
                                     </button>
                                 </div>
-                            ) : (
-                                <h2>프로젝트 탐색</h2>
-                            )}
+
                         </div>
                         <span className={[styles.scope, 'search-count'].join(' ')} role="status">
-                            {!enabled && loading ? '조회 중…' : <>{count} {filters.target === 'developer' ? '명의 개발자' : '개의 프로젝트'}</>}
+                            {!enabled && loading ? '조회 중…' : <>{count} 명의 개발자</>}
                         </span>
                     </div>
                     {filters.q && (
@@ -284,9 +257,7 @@ export default function SearchPage() {
                                                 ? filters.stacks.filter(s => s !== f.value)
                                                 : f.key === 'interest'
                                                   ? (filters.interests || []).filter(v => v !== f.value)
-                                                  : f.key === 'field'
-                                                    ? (filters.fields || []).filter(v => v !== f.value)
-                                                    : '',
+                                                  : '',
                                         )
                                     }
                                     aria-label={`${f.value} 필터 제거`}
@@ -298,11 +269,7 @@ export default function SearchPage() {
                         </div>
                     )}
                     {!enabled ? apiResults() : count > 0 ? (
-                        filters.target === 'developer' ? (
-                            <DeveloperResults items={developers} />
-                        ) : (
-                            <ProjectResults items={foundProjects} />
-                        )
+                        <DeveloperResults items={developers} />
                     ) : emptyFilters}
                     {enabled && (
                         <p className={[styles.scope, 'search-data-note'].join(' ')}>
