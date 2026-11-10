@@ -4,7 +4,7 @@ import { safeNext } from './paths';
 // 카카오 인증을 시작할 때 쿠키에 저장했다가 콜백에서 대조하는 값
 export interface KakaoFlow { state: string; intent: KakaoIntent; next: string }
 
-const intents: unknown[] = ['login', 'signup', 'link', 'unlink'] satisfies KakaoIntent[];
+const intents: unknown[] = ['login', 'signup', 'link', 'unlink', 'withdraw'] satisfies KakaoIntent[];
 export const isKakaoIntent = (value: unknown): value is KakaoIntent => intents.includes(value);
 
 export function serializeKakaoFlow(flow: KakaoFlow) {

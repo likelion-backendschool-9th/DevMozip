@@ -39,7 +39,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse apply(long id,CreateProjectApplicationRequest request){
-		long user=currentUser.getCurrentUserId();var project=locked(id);
+		long user=currentUser.getCurrentUserId();requireActiveApplicant(user);var project=locked(id);
 		if(request==null||!validator.validate(request).isEmpty())throw bad("지원 직군·포트폴리오 1~3개·지원 멘트 10~1500자를 확인해 주세요.");
 		if(new HashSet<>(request.portfolioIds()).size()!=request.portfolioIds().size())throw bad("포트폴리오를 중복 제출할 수 없습니다.");
 		String unavailable=unavailable(project,user);
@@ -72,7 +72,11 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse update(long id,long applicationId,UpdateProjectApplicationRequest request){
-		long user=currentUser.getCurrentUserId();var project=locked(id);
+		long user=currentUser.getCurrentUserId();
+		if(request!=null&&request.status()==ProjectApplication.Status.APPROVED){
+			requireActiveApplicant(applications.findApplicantId(applicationId,id).orElseThrow(this::missing));
+		}
+		var project=locked(id);
 		if(request==null||!validator.validate(request).isEmpty()||request.status()==ProjectApplication.Status.PENDING)throw bad("승인·거절·취소 명령을 확인해 주세요.");
 		if(request.status()!=ProjectApplication.Status.CANCELLED)requireHost(project,user);
 		var application=applications.findByIdAndProjectId(applicationId,id).orElseThrow(this::missing);
@@ -145,6 +149,10 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private void emit(ProjectApplication a,ProjectApplicationChanged.Type type,boolean penalty,LocalDateTime now){events.publishEvent(new ProjectApplicationChanged(type,a.getProject().getId(),a.getId(),a.getApplicantMemberId(),a.getProject().getHostMemberId(),a.getJobRole(),penalty,"project-application:"+a.getId()+":"+type,now));}
 	private void requireHost(Project p,long user){if(p.getHostMemberId()!=user||!members.existsByProjectIdAndUserIdAndStatus(p.getId(),user,ProjectMember.Status.ACTIVE))throw forbidden("현재 주최자만 지원자를 관리할 수 있습니다.");}
 	private void requirePending(ProjectApplication a){if(a.getStatus()!=ProjectApplication.Status.PENDING)throw conflict("대기 중인 지원만 승인·거절할 수 있습니다.");}
+	private void requireActiveApplicant(long userId){
+		var member=users.findActiveForAccountUpdateById(userId).orElseThrow(()->conflict("탈퇴한 회원의 지원은 처리할 수 없습니다."));
+		if(member.getStatus()!=Member.MemberStatus.ACTIVE&&member.getStatus()!=Member.MemberStatus.WARNED)throw conflict("현재 지원할 수 없는 회원입니다.");
+	}
 	private Project live(long id){if(id<=0)throw bad("프로젝트 ID를 확인해 주세요.");return projects.findByIdAndDeletedAtIsNull(id).orElseThrow(this::missing);}
 	private Project locked(long id){if(id<=0)throw bad("프로젝트 ID를 확인해 주세요.");return projects.findLiveForUpdate(id).orElseThrow(this::missing);}
 	private ResponseStatusException bad(String text){return new ResponseStatusException(HttpStatus.BAD_REQUEST,text);}

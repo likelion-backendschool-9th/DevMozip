@@ -7,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +41,11 @@ public class AuthService {
         this.memberRepository = memberRepository;
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest loginRequest){
+        // 인증과 토큰 저장 사이에 탈퇴·동일 이메일 재가입이 끼어들지 않게 한다.
+        memberRepository.findForAccountUpdateByEmail(loginRequest.username())
+                .orElseThrow(() -> new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다."));
 
         UsernamePasswordAuthenticationToken authenticationToken
             = new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password());
@@ -59,9 +65,13 @@ public class AuthService {
     }
 
     /** 카카오 인증처럼 비밀번호 확인 없이 본인임을 확인한 회원에게 토큰을 발급한다. */
+    @Transactional
     public LoginResponse issueTokens(Member member){
+        Member current = memberRepository.findForAccountUpdateByEmail(member.getEmail())
+                .filter(found -> java.util.Objects.equals(found.getId(), member.getId()))
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다."));
         checkNotSuspended(member.getEmail());
-        return issueTokens(member.getEmail(), roleOf(member));
+        return issueTokens(current.getEmail(), roleOf(current));
     }
 
     private LoginResponse issueTokens(String username, String role){
@@ -82,6 +92,7 @@ public class AuthService {
     }
 
     /** 리프레시 토큰을 받아 새 액세스 토큰을 발급한다. 리프레시 토큰은 그대로 유지한다. */
+    @Transactional
     public LoginResponse refresh(String refreshToken){
 
         // 1. 서명과 만료 확인 (위조됐거나 14일이 지났으면 거절)
@@ -93,6 +104,11 @@ public class AuthService {
         String username = jwtProvider.getUsername(refreshToken);
         if (!refreshTokenStore.matches(username, refreshToken)) {
             throw new InvalidTokenException("이미 만료 처리된 리프레시 토큰입니다.");
+        }
+        Member member = memberRepository.findForAccountUpdateByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다."));
+        if (!jwtProvider.validateRefreshToken(refreshToken) || !refreshTokenStore.matches(username, refreshToken)) {
+            throw new InvalidTokenException("리프레시 토큰이 유효하지 않습니다.");
         }
 
         // 3. 로그인 이후 정지됐으면 재발급을 거절하고, 저장된 리프레시 토큰도 지워 이후 재시도를 막는다.
@@ -106,9 +122,6 @@ public class AuthService {
         // 4. 리프레시 토큰에는 역할이 없으므로 회원 정보를 다시 읽어 역할을 알아낸다.
         //    (그 사이 권한이 바뀌었어도 새 액세스 토큰에는 최신 역할이 담긴다)
         //    비밀번호 없는 카카오 회원도 재발급받아야 하므로 이메일 로그인용 UserDetailsService를 거치지 않는다.
-        Member member = memberRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다: " + username));
-
         String accessToken = jwtProvider.createAccessToken(username, roleOf(member));
 
         return LoginResponse.builder()

@@ -12,7 +12,7 @@ public class ProjectCreationPolicy {
 	private final MemberRepository members;
 	public ProjectCreationPolicy(MemberRepository members) { this.members=members; }
 	public void requirePermission(long userId) {
-		Member member=members.findById(userId).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED,"로그인 회원을 찾을 수 없습니다."));
+		Member member=members.findActiveForAccountUpdateById(userId).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED,"로그인 회원을 찾을 수 없습니다."));
 		if ((member.getStatus()!=Member.MemberStatus.ACTIVE && member.getStatus()!=Member.MemberStatus.WARNED)
 			|| member.getRole()!=Member.MemberRole.PREMIUM)
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN,"프리미엄 회원만 모집 공고를 생성할 수 있습니다.");

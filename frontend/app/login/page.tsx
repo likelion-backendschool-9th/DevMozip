@@ -56,6 +56,8 @@ function LoginForm() {
             )}
             <KakaoNotice />
             <PasswordNotice />
+            {searchParams.get('withdrawal') === 'complete' && <p role="status">회원 탈퇴가 완료되었습니다.</p>}
+            {searchParams.get('withdrawal') === 'complete' && searchParams.get('local') === 'cleanup-failed' && <p role="alert">브라우저의 임시 초안을 지우지 못했습니다. 이 사이트의 브라우저 저장 데이터를 삭제해 주세요.</p>}
             <form className={[styles.scope, 'auth-form'].join(' ')} onSubmit={submit} noValidate>
                 <label htmlFor="login-email">이메일</label>
                 <Input

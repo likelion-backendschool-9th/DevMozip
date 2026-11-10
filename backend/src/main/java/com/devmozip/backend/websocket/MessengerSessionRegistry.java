@@ -45,14 +45,22 @@ public class MessengerSessionRegistry implements SmartLifecycle {
 	private final MessengerRealtimeProperties properties;
 	private final SuspendedMemberStore suspendedMembers;
 	private final Clock clock;
+	private final com.devmozip.backend.repository.MemberRepository accounts;
 	private volatile boolean running;
 	private ScheduledExecutorService checker;
 
 	public MessengerSessionRegistry(MessengerRealtimeProperties properties, SuspendedMemberStore suspendedMembers,
 		@Qualifier("messengerClock") Clock clock) {
+		this(properties, suspendedMembers, clock, null);
+	}
+
+	@org.springframework.beans.factory.annotation.Autowired
+	public MessengerSessionRegistry(MessengerRealtimeProperties properties, SuspendedMemberStore suspendedMembers,
+		@Qualifier("messengerClock") Clock clock, com.devmozip.backend.repository.MemberRepository accounts) {
 		this.properties = properties;
 		this.suspendedMembers = suspendedMembers;
 		this.clock = clock;
+		this.accounts = accounts;
 	}
 
 	void register(WebSocketSession session) {
@@ -150,6 +158,15 @@ public class MessengerSessionRegistry implements SmartLifecycle {
 	}
 
 	private boolean closeIfNotAllowed(Connection connection) {
+		try {
+			if (accounts != null && accounts.findByEmail(connection.email).filter(member -> member.getId() == connection.memberId).isEmpty()) {
+				connection.close(TOKEN_EXPIRED);
+				return true;
+			}
+		} catch (org.springframework.dao.DataAccessException e) {
+			connection.close(CloseStatus.SESSION_NOT_RELIABLE);
+			return true;
+		}
 		if (suspendedMembers.isSuspended(connection.email)) {
 			connection.close(SUSPENDED);
 			return true;

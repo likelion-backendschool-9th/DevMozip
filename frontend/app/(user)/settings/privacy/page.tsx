@@ -11,6 +11,7 @@ import { changePasswordAction, kakaoAccountStatusAction, setPasswordAction, star
 import { AccountLockPanel } from './_components/AccountLockPanel';
 import { AccountPasswordForm, passwordCopy } from './_components/AccountPasswordForm';
 import { PaymentInfoPanel } from './_components/PaymentInfoPanel';
+import { AccountWithdrawalPanel } from './_components/AccountWithdrawalPanel';
 import type { PasswordChangeInput } from '@/types/account';
 import type { KakaoAccountStatus } from '@/types/auth';
 const blankPassword = (): PasswordChangeInput => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -113,6 +114,7 @@ function AccountSettingsContent() {
                 <PaymentInfoPanel role={user?.role} />
                 <AccountLockPanel />
             </>
+            <AccountWithdrawalPanel account={account} />
             {modal && (
                 <Modal
                     title={

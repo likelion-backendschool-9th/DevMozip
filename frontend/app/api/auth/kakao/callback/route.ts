@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { backendFetch } from '@/lib/auth/backend';
-import { KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, KAKAO_SIGNUP_MAX_AGE, cookieOptions } from '@/lib/auth/cookies';
+import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, KAKAO_SIGNUP_MAX_AGE, WITHDRAWAL_KAKAO_COOKIE, cookieOptions } from '@/lib/auth/cookies';
 import { kakaoResultPath, parseKakaoFlow, type KakaoFlow } from '@/lib/auth/kakao';
 import { loginNext } from '@/lib/auth/paths';
 import { writeSessionCookies } from '@/lib/auth/sessionCookies';
@@ -61,6 +61,12 @@ export async function GET(request: Request) {
     // 이전에 끝내지 못한 가입이 남아 있어도 이번 결과만 쓰도록 비운다.
     jar.set(KAKAO_SIGNUP_COOKIE, '', { ...cookieOptions, maxAge: 0 });
     try {
+        if (flow.intent === 'withdraw') {
+            const session = jar.get(ACCESS_COOKIE)?.value;
+            if (!session) return redirectTo(LOGIN_AGAIN);
+            jar.set(WITHDRAWAL_KAKAO_COOKIE, JSON.stringify({ code, session }), { ...cookieOptions, maxAge: 180 });
+            return redirectTo('/settings/privacy?withdrawal=kakao-ready');
+        }
         if (flow.intent === 'link') return redirectTo(await completeLink(flow, code));
         if (flow.intent === 'unlink') return redirectTo(await completeUnlink(flow, code));
         return redirectTo(await completeLogin(flow, code));

@@ -4,7 +4,7 @@ import { normalizeEmail } from '@/lib/account/authService';
 import type { PasswordChangeInput } from '@/types/account';
 import type { KakaoAccountStatus, KakaoIntent, PasswordResetInput, PasswordSetInput, SignupInput, SignupOptions } from '@/types/auth';
 import { backendFetch, readErrorMessage } from './backend';
-import { ACCESS_COOKIE, REFRESH_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_FLOW_MAX_AGE, KAKAO_SIGNUP_COOKIE, cookieOptions } from './cookies';
+import { ACCESS_COOKIE, REFRESH_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_FLOW_MAX_AGE, KAKAO_SIGNUP_COOKIE, WITHDRAWAL_KAKAO_COOKIE, cookieOptions } from './cookies';
 import { isKakaoIntent, serializeKakaoFlow } from './kakao';
 import { writeSessionCookies } from './sessionCookies';
 import { loginNext, safeNext } from './paths';
@@ -93,6 +93,12 @@ export async function checkAvailabilityAction(field: 'email' | 'nickname', value
 // 서버 액션(POST)으로 시작해 외부 페이지가 링크만으로 연동·해제를 유도할 수 없게 한다. 카카오로 이동은 호출한 화면이 맡는다.
 export async function startKakaoAction(intent: KakaoIntent, next?: string): Promise<{ url: string } | { error: string }> {
     if (!isKakaoIntent(intent)) return { error: '잘못된 요청입니다.' };
+    if (intent === 'withdraw') {
+        try {
+            if (!(await backendFetch('/api/v1/users/me')).ok) return { error: '로그인 후 다시 시도해 주세요.' };
+        } catch { return { error: '계정 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.' }; }
+        (await cookies()).set(WITHDRAWAL_KAKAO_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+    }
     const state = crypto.randomUUID();
     const failure = { error: '카카오 인증을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
     let response: Response;
@@ -102,6 +108,14 @@ export async function startKakaoAction(intent: KakaoIntent, next?: string): Prom
     if (!response.ok) return { error: await readErrorMessage(response) };
     const data = await response.json();
     if (typeof data.authorizeUrl !== 'string') return failure;
+    if (intent === 'withdraw') {
+        try {
+            const url = new URL(data.authorizeUrl);
+            if (url.protocol !== 'https:' || url.hostname !== 'kauth.kakao.com') return failure;
+            url.searchParams.set('prompt', 'login');
+            data.authorizeUrl = url.toString();
+        } catch { return failure; }
+    }
     (await cookies()).set(KAKAO_FLOW_COOKIE, serializeKakaoFlow({ state, intent, next: safeNext(next) }), { ...cookieOptions, maxAge: KAKAO_FLOW_MAX_AGE });
     return { url: data.authorizeUrl };
 }
@@ -188,5 +202,30 @@ export async function logoutAction(): Promise<{ error: string } | null> {
         } catch { return { error: '로그아웃을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.' }; }
     }
     await clearSessionCookies();
+    return null;
+}
+
+// 비밀번호는 서버 요청 본문으로만 전달한다. 카카오 인가 코드는 HttpOnly 쿠키에서만 읽는다.
+export async function withdrawAccountAction(input: { currentPassword: string; confirmed: boolean }): Promise<{ error: string } | null> {
+    if (input.confirmed !== true) return { error: '개인정보 삭제와 환불 불가 안내를 확인해 주세요.' };
+    const jar = await cookies();
+    let kakaoCode: string | undefined;
+    try {
+        const saved = JSON.parse(jar.get(WITHDRAWAL_KAKAO_COOKIE)?.value ?? 'null');
+        if (saved && saved.session === jar.get(ACCESS_COOKIE)?.value && typeof saved.code === 'string') kakaoCode = saved.code;
+    } catch { return { error: '카카오 인증 정보를 확인하지 못했습니다. 다시 인증해 주세요.' }; }
+    let response: Response;
+    try {
+        response = await backendFetch('/api/v1/users/me', {
+            method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: input.currentPassword, confirmed: true, kakaoCode }),
+            signal: AbortSignal.timeout(60_000),
+        });
+    } catch { return { error: '탈퇴 결과를 확인하지 못했습니다. 로그인 상태를 확인한 후 다시 시도해 주세요.' }; }
+    jar.set(WITHDRAWAL_KAKAO_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+    if (!response.ok) return { error: await readErrorMessage(response) };
+    await clearSessionCookies();
+    jar.set(KAKAO_FLOW_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+    jar.set(KAKAO_SIGNUP_COOKIE, '', { ...cookieOptions, maxAge: 0 });
     return null;
 }

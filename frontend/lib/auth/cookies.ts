@@ -8,6 +8,7 @@ export const KAKAO_FLOW_MAX_AGE = 10 * 60;
 // 가입 폼을 제출할 때까지 카카오 가입 토큰을 보관한다. 값은 백엔드 토큰 수명과 맞춘다.
 export const KAKAO_SIGNUP_COOKIE = 'devmozip_kakao_signup';
 export const KAKAO_SIGNUP_MAX_AGE = 30 * 60;
+export const WITHDRAWAL_KAKAO_COOKIE = 'devmozip_withdrawal_kakao';
 export const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
