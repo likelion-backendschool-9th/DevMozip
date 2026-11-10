@@ -45,14 +45,14 @@ function ProjectDetail({ projectId }: { projectId: string }) {
                 <ArrowLeft size={14} />
                 프로젝트 모집
             </Link>
-            <header className={[styles.scope, 'project-detail-heading'].join(' ')}>
+            <header className={[styles.scope,styles.heading,'project-detail-heading'].join(' ')}>
                 <div className={[styles.scope, 'project-detail-labels'].join(' ')}>
                     <span className={[styles.scope, 'outline-badge'].join(' ')}>{p.field}</span>
                     <span className={[styles.scope, 'availability-badge'].join(' ')}>{projectStatus(p, now)}</span>
                 </div>
                 <h1>{p.title}</h1>
                 <p>{p.summary}</p>
-                <ProjectActions project={p} />
+                <div className={styles.headerActions}><ProjectActions project={p} /></div>
             </header>
             <div className={[styles.scope, 'project-detail-layout'].join(' ')}>
                 <div className={[styles.scope, 'project-detail-main'].join(' ')}>

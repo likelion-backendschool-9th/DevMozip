@@ -2,6 +2,14 @@
 
 기준일: 2026-11-06. 현재 작업 브랜치는 `feat/run-ai-recommendation`이다. 3단계 엔진을 포함한 상태에서 **4단계 백엔드 추천 실행·요청/결과 저장·조회**를 구현했다. 프론트 연결과 5~7단계는 시작하지 않는다. 아래 과거 기록은 당시 상태이며 현재 완료 범위·미완료·최종 검증은 이 절을 우선한다. 다른 도메인·팀원 기록은 보존한다.
 
+## 2026-11-09 PR #93 최신 develop 충돌 해결
+
+- 사용자 요청으로 `feat/56-project-bookmarks`에 최신 develop a04608f를 병합했다. `ApiProjectDetail.tsx`는 지원자 관리와 좋아요/공유/북마크 import를 모두 유지했고, 청사진은 #48 및 공통 좋아요 설명을 함께 보존했다. 공통 테이블명은 likes를 유지하며 이름 변경 취소 상태를 보존한다.
+- AI 테스트 입력 2곳을 문자열 모집 직군 생성자에 맞췄다. 공통 likes를 함께 사용하는 `LikedPostsIntegrationTest`는 필수 updated_at과 유효 프로젝트 FK를 갖춘 데이터로 보완했다. 업무 코드·공유 DB 스키마는 변경하지 않았다.
+- 최종 backend 전체: 642개 중 630개 통과·12개 스킵·실패 0. 게시글 좋아요 통합 14개 및 프로젝트 북마크/좋아요 통합 8개 통과. 첫 실행의 updated_at 누락 오류를 수정했으며 기존 카카오 로그 검증도 최종 재실행에서 통과했다.
+- frontend 전체 804개 테스트, 빌드·TypeScript 통과. git diff --check 및 unmerged 파일 없음 확인. develop 대비 YAML 추가 변경 없음. 실제 팀 DB·서버·브라우저는 이번 통합에서 변경/재검증하지 않았다.
+- 검증된 병합 내용을 기존 #93 브랜치에 커밋·푸시하고 PR 본문을 현재 결과와 의존성에 맞춰 갱신한다.
+
 ## 2026-11-09 PR #86 최신 develop 충돌 해결
 
 - 사용자 요청으로 기존 `feat/50-project-reviews` 작업 폴더에 최신 `origin/develop` a04608f를 `--no-commit`으로 병합했다. GitHub의 f47ca029 기준 15개 충돌과 달리 로컬 다중 기준 병합에서는 진행 문서 한 파일의 3구간만 충돌했다. 양쪽 기록을 모두 보존하고 자동 병합된 지원·리뷰·키워드·BFF 코드를 확인했다.
@@ -24,6 +32,45 @@
 - WSL 실행·조회 도구: `scripts/dev-postgres.py`에 Compose로 해석한 루트 .env → 직접 bootRun 환경 전달, default/validate/초기화 never·호스트 Redis 연결, 읽기 전용 PostgreSQL check/db 명령을 추가했다. `docs/postman/devmozip-ai.postman_collection.json`과 `docs/postgresql-development.md`에 실제 로그인·데모 결과 조회를 정리했다. 개인 Git 제외 compose.override.yaml에 127.0.0.1 Redis 포트를 추가했다. 공통 Java 인증·DB·배포 설정과 회원 비밀번호는 변경하지 않았다.
 - WSL/Compose 최종 검증(2026-11-07): Linux Docker CLI와 Windows Docker Desktop이 같은 정지 컨테이너를 조회하는 것을 확인했다. 개발 compose.yaml+개인 override로 생성된 postgres-1은 로컬 서비스이며 백엔드는 .env의 cloud.newlecture.com:5442/devmozip(PostgreSQL17.11)을 사용한다. Redis를 healthy까지 시작한 후 `docker compose up -d --no-deps backend frontend`로 개발 앱만 복구했고 로컬 postgres는 Exited 상태로 유지했다. 백엔드/프론트 헬스200·실제 데모 로그인200·최신 요청2/과거 요청1 조회200(각 개발자6·프로젝트8), DB 요청2·결과28 보존을 확인했다. 개발 실행 안내를 서비스 지정 방식과 ps -a 설명으로 보완했다. frontend npm run build·git diff --check·문서 링크/기존 기록 보존 확인 성공. 제품 Java 미변경으로 Gradle test는 재실행하지 않았다. 기존 컨테이너·볼륨·데이터는 삭제하지 않았다.
 - 미완료: 팀 PostgreSQL 17의 전체 공개 계약·실제 다중 사용자/실패·삭제 통합 검증, 포트폴리오 연동, AI BFF/로컬 초안 동기화·프론트 버튼 연결, 5~7단계. 프로세스 강제 종료·DB 장애로 남는 PENDING의 자동 복구/만료는 없다. FK NO ACTION으로 참조 대상 물리 삭제를 차단하므로 탈퇴·다른 도메인의 삭제 계약은 후속 조율 대상이다. 앱/DB 기준 시간대는 기존과 같이 미확정이다.
+
+
+## 2026-11-09 북마크·좋아요 PR 준비
+
+- 사용자 요청으로 `feat/56-project-bookmarks`의 현재 변경을 커밋·푸시하고 develop 대상 PR을 준비한다. 이 브랜치는 미병합 PR #81을 기반으로 하므로 선행 의존성을 PR에 명시한다. YAML·실제 환경 설정은 이번 변경에 포함하지 않는다.
+- 푸시 대상 작업 폴더에서 `npm run build -- --webpack` 및 TypeScript 성공, 프론트 전체 테스트 70개 파일 736개 통과. `./backend/gradlew -p backend test --tests '*ProjectBookmarkIntegrationTest' --tests '*ProjectLikeIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`으로 PostgreSQL/JWT 통합 테스트 8개 통과. 실행 폴더에서 기록했던 프로필 테스트 실패와 구분한 결과다. 이전 1440px Mock/API 화면 캡처와 측정 결과를 `docs/artifacts/project-bookmarks`에 첨부한다.
+- 실계정 로그인 401로 팀 DB 인증 후 저장·취소는 미검증이며 개발 서버의 테스트 브라우저 초기화 대기도 기존 기록대로 남긴다. 백엔드 전체 테스트의 기존 카카오 로그 검증 실패를 이번 PR에서 수정하지 않는다.
+
+
+## 2026-11-09 프로젝트 카드·상세 액션 배치 정리
+
+- 기능 변경 없이 카드 북마크를 제목 옆에서 커버 오른쪽 위(상단·우측 12px)로 이동했다. 제목은 20px/750 굵기, 한 줄 소개는 14px로 구분했다. 상세는 제목과 소개를 왼쪽, 좋아요·공유·북마크를 같은 헤더 오른쪽 끝으로 배치했다. Mock·API에 동일하게 반영했다.
+- 변경 파일: `RecruitmentCard.tsx/module.css`, `ProjectSummaryCard.tsx/module.css`, `app/projects/[projectId]/page.tsx/module.css`, `ProjectActions.module.css`, `ApiProjectDetail.tsx`. 실행 폴더와 북마크 작업 브랜치에 함께 반영했다. 백엔드·DB 스키마·API 코드는 수정하지 않았다.
+- `npm run build -- --webpack` 및 TypeScript 성공. 프로젝트 화면·Mock 동작·북마크/좋아요 공통 상태 관련 테스트 4개 파일 40개 통과. 기능이 바뀌지 않아 백엔드 테스트는 재실행하지 않았다.
+- 실제 Chrome 1440×1100에서 빌드 프리뷰(임시 3101)로 Mock/API 목록과 상세를 확인했다. 두 모드 모두 제목20px/소개14px, 북마크 커버 내부 우측·상단12px, 상세 그룹 우측 여백0px·컨트롤3개·가로 넘침 없음을 측정하고 캡처를 확인했다. 개발 서버(3000)는 테스트 브라우저에서 초기화 대기가 지속돼 프론트만 재시작했으며, 해당 개발 서버의 시각 검증 성공으로 보고하지 않는다.
+- 임시 프리뷰와 검증 브라우저는 검증 후 종료한다. 커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 프로젝트 좋아요·공유·북마크 아이콘
+
+- 상세 화면의 좋아요·공유·북마크를 아이콘 그룹으로 묶고 북마크 크기를 확대했다. Mock 좋아요는 기존 모집 상태에 계정별로 보존하며, Mock 끄기는 실제 좋아요 API·공통 상태를 사용한다. 사용자 승인대로 bookmarks와 같은 `likes` 공통 테이블을 팀 DB에 생성하고 컬럼·FK·중복·대상 CHECK를 확인했다. 변경 파일·API는 [프로젝트 아이콘 액션](project-icon-actions.md)을 참조한다.
+- 실행 폴더에서 `npm run build -- --webpack` 및 TypeScript 검사 성공. 프론트 전체 테스트 682개 중 681개 통과·1개 실패. 실패는 기존 `ProfilePage.test.tsx`의 리뷰 버블 개수 기대 4/실제 14 불일치다. 첫 실행의 CSS 코로케이션 실패는 공통 ProjectIconActions 컴포넌트로 정리해 재실행에서 해결했다.
+- 임시 Gradle 설정으로 기존 테스트의 직군 타입 컴파일 오류와 실행 서버 잠금을 분리하고 좋아요·북마크 PostgreSQL/JWT 통합 테스트 8개를 실행해 모두 통과했다. 실행 서버 프로젝트 페이지 200, 프론트/백 좋아요 목록 비로그인 401을 확인했다. 계정 로그인 401로 팀 DB 인증 후 좋아요 저장·취소는 검증하지 못했다. 브라우저 시각 검증·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 실행 화면의 프로젝트 북마크 누락 수정
+
+- Docker 실행 소스는 이 브랜치가 아닌 `.worktrees/project-api`여서 화면에 북마크가 없었다. 실행 폴더에 북마크 변경만 반영하고 백엔드를 재시작했다. 기존 지원·리뷰 및 YAML은 유지한다.
+- 해당 실행 소스에서 프론트 빌드·TypeScript와 관련 테스트 26개, 분리 실행한 북마크 통합 테스트 4개 통과. 기존 프로젝트 테스트 직군 타입 컴파일 오류 6건 및 실제 로그인 401은 남아 있다. 상세는 [프로젝트 북마크](project-bookmarks.md)를 참조한다. 커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 프로젝트 북마크 #56
+
+- `feat/56-project-bookmarks`의 별도 worktree에서 작업했다. 기존 Mock 화면과 실제 API 전환을 유지하며 공통 `bookmarks` 엔티티·저장소·서비스·컨트롤러·응답 record, BFF와 공통 화면 상태를 추가했다. 상세·탐색·내 북마크함에 저장·해제를 연결했다. 변경 파일은 [프로젝트 북마크](project-bookmarks.md)를 참조한다.
+- 사용자 승인으로 `docs/sql/project-bookmarks.sql`을 팀 PostgreSQL에 실행했다. 컬럼 6개, 사용자/프로젝트 FK, 두 중복 제약과 대상 CHECK를 확인했다. 회원·프로젝트 데이터를 변경하거나 별도 프로젝트 북마크 테이블을 만들지 않았다.
+- `frontend`: `npm test -- --maxWorkers=1` 68개 파일·728개 통과. `npm run build -- --webpack` 성공(TypeScript 포함). 제한 환경의 최초 빌드는 TypeScript --showConfig 파싱 오류로 실패해 일반 실행 환경에서 재검증했다.
+- `backend`: `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m` 567개 중 555개 통과·11개 스킵·1개 실패. 북마크 PostgreSQL/JWT 통합 테스트 4개(동시 저장 포함)는 통과했다. 실패는 기존 `KakaoClientTest.java:153` 로그 검증이며 이번 변경에서 수정하지 않았다.
+- 임시 18081 서버를 DDL 자동 변경 없이 팀 DB에 연결하고 프로젝트 목록 HTTP 200을 확인했다. 실제 데모 로그인은 401이므로 팀 DB의 인증 후 저장·해제는 검증하지 못했다. 계정·비밀번호는 수정하지 않았고 임시 서버는 종료했다.
+- 브라우저 시각 검증은 실행하지 않았다. 게시글 실제 북마크 API와 post_id FK는 공통 SNS 담당 범위다. 커밋·푸시·PR과 다음 이슈는 진행하지 않았다.
 
 
 ## 2026-11-08 PR #81 충돌 해결
@@ -946,3 +993,12 @@ erDiagram
 - 최종 `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 644개 중 631 통과·1 실패·12 건너뜀. 실패는 기존 KakaoClientTest.java:153의 DEBUG HTTP 폼 로그 비밀값 포함 여부 검사이며 이번 범위에서 수정하지 않았다. 최종 리뷰/상태/지원 통합 테스트 32개는 모두 통과했다.
 - 프론트 `npx vitest run lib/projects/projectReviewRoutes.test.ts`: 4개 통과. DB와 실제 알림 서비스·브라우저 시연은 검증하지 않았다.
 - 프론트 `npm run build -- --webpack`: 성공(TypeScript 검사·57개 페이지 생성 포함). 자동 생성 next-env.d.ts는 원복했고 `git diff --check` 통과. 후속 사용자 요청에 따라 기존 PR #86 브랜치에 푸시한다. 실제 실행 서버 반영과 PR 병합은 수행하지 않는다.
+
+### 2026-11-10 PR #93 리뷰 병합 후 충돌 해결
+
+- 사용자 요청으로 feat/56-project-bookmarks에 최신 origin/develop 9d6f307(PR #86 병합)을 통합했다. 충돌은 docs/ai-progress.md와 frontend/app/projects/_components/api/ApiProjectDetail.tsx 두 곳이다.
+- 양쪽 진행 기록을 보존하고, 상세 화면에서 좋아요·공유·북마크 액션과 지원·승인·리뷰 요청 현황 import 및 렌더링을 모두 유지했다. 리뷰 Response record와 ProjectReviewNotificationEvent 명명 정리도 그대로 보존했다.
+- 기존 공통 likes·bookmarks와 프리미엄/인증 정책을 유지하며 팀 DB·실행 중 Docker 서버·YAML 설정 내용은 변경하지 않았다. 새로운 기능 구현 없이 검증 후 기존 PR #93 브랜치에 충돌 해결 커밋을 푸시한다.
+- 백엔드 전체 `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 652개 중 639 통과·1 실패·12 건너뜀. 북마크 4개·좋아요 4개·리뷰 10개 통합 테스트는 모두 통과했다. 실패는 기존 KakaoClientTest.java:153의 DEBUG HTTP 폼 로그 검사이며 관련 없는 카카오 코드는 변경하지 않았다.
+- 프론트 `npm test -- --maxWorkers=2`: 810개 모두 통과. 실제 계정 브라우저 시연 및 팀 DB 실데이터 왕복은 이번 충돌 해결 범위에서 미실행이다.
+- 프론트 `npm run build -- --webpack`: 성공(TypeScript 검사·59개 페이지 생성 포함). 생성된 next-env.d.ts는 병합 인덱스 기준으로 복구했다. 충돌 마커·미해결 파일 없음, git diff --check / git diff --cached --check 통과.
