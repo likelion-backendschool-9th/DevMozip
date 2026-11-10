@@ -104,6 +104,14 @@ export class FollowRequestError extends Error {
     constructor(public readonly status: number, message: string) { super(message); }
 }
 
+/** 비공개 계정(WBS 17.7)의 팔로우 상태·목록·변경 요청에 백엔드가 403과 함께 보내는 문구 */
+export const PRIVATE_ACCOUNT_MESSAGE = '비공개 계정입니다.';
+
+/** 403은 정지 회원에게도 오므로 상태와 문구가 모두 맞을 때만 비공개 계정으로 본다. */
+export function isPrivateAccountError(error: unknown) {
+    return error instanceof FollowRequestError && error.status === 403 && error.message === PRIVATE_ACCOUNT_MESSAGE;
+}
+
 async function request<T>(path: string, init: RequestInit, parse: (value: unknown) => T, fallback: string): Promise<T> {
     const response = await fetch(path, { cache: 'no-store', ...init });
     if (!response.ok) {

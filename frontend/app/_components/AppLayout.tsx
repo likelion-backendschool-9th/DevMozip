@@ -1,6 +1,6 @@
 'use client';
 import styles from './AppLayout.module.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ActiveLink as NavLink } from '@/components/navigation/ActiveLink';
 import { useNavigation as useNavigate, useCurrentLocation as useLocation } from '@/lib/navigation';
@@ -19,6 +19,9 @@ import { HeaderProfileLink } from './HeaderProfileLink';
 import { Toast } from './Toast';
 import { MockVisibilityToggle } from './MockVisibility';
 import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { useNotifications } from '@/lib/state/notificationStore';
+import { NotificationModal } from '@/components/notifications/NotificationModal';
+import { NotificationSync } from './NotificationSync';
 
 const logo = '/devmozip-logo.svg';
 
@@ -28,7 +31,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
 function AppShell({ children }: { children?: React.ReactNode }) {
     const { enabled: mockEnabled } = useMockVisibility();
-    const { unreadCount, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unreadCount: mockUnreadNotices, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unreadCount: serverUnreadNotices } = useNotifications();
+    // 알림 배지: 토글 OFF는 서버 안 읽음 수(12.1), ON은 지금처럼 Mock 수를 센다.
+    const unreadCount = mockEnabled ? mockUnreadNotices : serverUnreadNotices;
+    // 공통 알림 모달(D1 B)은 주소를 바꾸지 않고 보던 화면 위에 연다.
+    const [noticesOpen, setNoticesOpen] = useState(false);
     const { unread: serverDirectUnread } = useDirectChats();
     const { unread: serverProjectUnread } = useProjectChats();
     // 토글 OFF는 1:1(11.7)과 프로젝트 채팅(7.21)을 합산한다(D12). ON은 지금처럼 Mock 1:1만 센다.
@@ -70,14 +78,15 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                             </>
                         ) : (
                             <>
-                                <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="알림" href="/notifications">
+                                <button type="button" className={[styles.scope, "icon-button"].join(" ")} aria-label="알림" aria-haspopup="dialog"
+                                    aria-expanded={noticesOpen} onClick={() => setNoticesOpen(true)}>
                                     <Bell size={20} />
                                     {unreadCount > 0 && (
                                         <span className={[styles.scope, "header-count"].join(" ")} aria-label={`안 읽은 알림 ${unreadCount}개`}>
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>
                                     )}
-                                </Link>
+                                </button>
                                 <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="쪽지" href="/messages/chats">
                                     <MessageSquare size={20} />
                                     {unreadMessages > 0 && (
@@ -93,6 +102,7 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                                     aria-label="로그아웃"
                                     title="로그아웃"
                                     onClick={() => {
+                                        setNoticesOpen(false);
                                         logout();
                                         resetHome();
                                         navigate('/');
@@ -148,6 +158,8 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                 </Link>
             </footer>
 
+            {user && noticesOpen && <NotificationModal onClose={() => setNoticesOpen(false)} />}
+            <NotificationSync />
             <Toast />
         </>
     );

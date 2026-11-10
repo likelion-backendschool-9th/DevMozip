@@ -11,7 +11,7 @@
 | `/onboarding` | 가입 후 4단계 기본/개발자/협업/미리보기 | 로그인 신규 계정, 기존/데모는 완료 안내 |
 | `/profile/me/likes` | 내가 좋아요한 글·날짜·취소 | 로그인, 본인 전용 Aside |
 | `/profile/me/bookmarks` | 게시글/프로젝트 북마크·해제 | 로그인, 본인 전용 Aside |
-| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지 |
+| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지. 공개/비공개 전환은 Mock 토글 OFF이면 서버 값(`/api/v1/users/me/account-lock`), ON이면 Mock 저장값을 쓴다 ([privacy-settings-api.md](privacy-settings-api.md)) |
 | `/login` | 서버 로그인·카카오 로그인·계정 전환 | 공개 |
 | `/signup` | 입력 검증·DB 중복 확인·서버 가입 후 자동 로그인·카카오 가입(`?kakao=signup`이면 비밀번호 입력 없음) | 공개, localhost/HTTPS 권장 |
 | `/forgot-password` | 재설정 메일 요청·메일 링크로 새 비밀번호 저장 | 공개 |
@@ -33,7 +33,7 @@
 | `/following` | 팔로워/팔로잉 검색·협업 필터·알림 설정 | 공개 목록, 변경은 로그인 |
 | `/messages` | 1:1 목록·대화·읽음·사용자 신고. 실제 경로는 `/messages/chats`, `/messages/chats/:id`다. Mock 토글 OFF는 서버 API와 실시간 신호·입력 중 표시를 쓴다 | 로그인 |
 | `/chats/:projectId` | 멤버·대화·강퇴 투표·종료 시 보관/삭제. 실제 경로는 `/messages/projects/:projectId`다. Mock 토글 OFF는 서버 프로젝트 채팅(멤버·읽음 n/m·초대·퇴장 문구·입력 중 표시)을 쓰고 강퇴 투표와 기한 시뮬레이터를 숨긴다 | 채팅 제외 대상이 아닌 주최자/팀원. 토글 OFF는 승인된 팀원(모집 시작일부터) |
-| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음 | 로그인, 현재 계정 알림만 |
+| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음. 헤더 종 버튼은 같은 목록을 공통 알림 모달로 연다(주소 유지, "전체 보기"로 이 페이지). Mock 토글 OFF는 서버 알림([알림 API](notification-api.md): 프로젝트 지원·상태·기간·종료, 협업 리뷰 요청·재알림, 리뷰 작성 대기·완료·만료 표시)을 쓴다 | 로그인, 현재 계정 알림만 |
 | `/subscription` | 프리미엄 상품 안내(월 ₩9,900)·요금제 비교 | 공개 |
 | `/subscription/checkout` | 결제 수단 선택(토스페이먼츠 카드·카카오페이)·결제 전 고지와 동의·포트원 결제창 | 로그인, 결제는 무료(USER) 회원만 |
 | `/subscription/manage` | 구독 상태·다음 결제일·결제 수단·해지(기간 끝까지 유지) | 로그인 |

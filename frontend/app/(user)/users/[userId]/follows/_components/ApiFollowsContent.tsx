@@ -8,7 +8,7 @@ import { useQueryState } from '@/lib/navigation';
 import { useAuth } from '@/lib/state/authStore';
 import { fetchProfileDetail, ProfileRequestError, validProfileSlug } from '@/lib/profiles/profileDetail';
 import {
-    appendFollowUsers, fetchFollowList, fetchFollowStatus, FOLLOW_PAGE_SIZE, FOLLOW_QUERY_MAX, followTab, followUserName,
+    appendFollowUsers, fetchFollowList, fetchFollowStatus, FOLLOW_PAGE_SIZE, FOLLOW_QUERY_MAX, followTab, followUserName, isPrivateAccountError,
 } from '@/lib/profiles/followApi';
 import type { FollowResult, FollowStatus, FollowUser } from '@/types/followApi';
 import { useOwnProfile } from '../../../../_components/OwnProfileProvider';
@@ -20,6 +20,17 @@ import local from './FollowListResult.module.css';
 type ProfileState = { status: 'loading' } | { status: 'ready'; nickname: string } | { status: 'error'; code: number };
 const scope = (name: string) => [styles.scope, name].join(' ');
 const message = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
+/** 비공개 계정(WBS 17.7)의 목록을 다른 사람이 열었을 때. 문구는 Mock 목록 화면과 같다. */
+export function FollowsPrivateNotice() {
+    return <div className={scope('container planned')}>
+        <section className={scope('planned-card')}>
+            <h1>비공개 계정입니다.</h1>
+            <p>이 사용자의 팔로워와 팔로잉 목록은 공개되지 않습니다.</p>
+            <Link className={scope('button secondary')} href="/explore">개발자 탐색으로</Link>
+        </section>
+    </div>;
+}
 
 /**
  * /users/{tag}/follows: 팔로워(9.3)·팔로잉(9.4) 목록. 탭·검색어·협업 가능 필터는 URL(?tab=&q=&available=yes)에 두고 서버 목록 요청에 넘긴다.
@@ -49,6 +60,10 @@ export function ApiFollowsContent({ slug }: { slug: string }) {
         return () => controller.abort();
     }, [slug, validSlug, profileKey]);
 
+    // 비공개 계정은 요청자에 따라 볼 수 있는지가 달라지므로 대상과 로그인 계정을 함께 키로 쓴다.
+    const viewerKey = `${slug}:${email}`;
+    const [hiddenKey, setHiddenKey] = useState<string | null>(null);
+
     // 탭의 수. 팔로우를 바꾸면 다시 받아 맞춘다(내 목록이면 내 팔로잉 수가 바뀐다).
     const [statusVersion, setStatusVersion] = useState(0);
     const [counts, setCounts] = useState<FollowStatus | null>(null);
@@ -57,9 +72,12 @@ export function ApiFollowsContent({ slug }: { slug: string }) {
         const controller = new AbortController();
         void fetchFollowStatus(slug, controller.signal).then(value => {
             if (!controller.signal.aborted) setCounts(value);
-        }).catch(() => { /* 수를 받지 못하면 탭에 —를 표시하고 목록은 그대로 보여 준다. */ });
+        }).catch(error => {
+            // 수를 받지 못하면 탭에 —를 표시하고 목록은 그대로 보여 준다. 비공개 계정이면 안내 화면으로 바꾼다.
+            if (!controller.signal.aborted && isPrivateAccountError(error)) setHiddenKey(viewerKey);
+        });
         return () => controller.abort();
-    }, [slug, validSlug, statusVersion]);
+    }, [slug, validSlug, statusVersion, viewerKey]);
 
     const [listAttempt, setListAttempt] = useState(0);
     const listKey = `${slug}:${tab}:${q.trim()}:${available}:${email}:${listAttempt}`;
@@ -73,11 +91,13 @@ export function ApiFollowsContent({ slug }: { slug: string }) {
                 if (!controller.signal.aborted) setList({ key: listKey, state: { status: 'ready', items: page.items, hasNext: page.hasNext,
                     totalCount: page.totalCount, page: page.page, more: 'idle' } });
             }).catch(error => {
-                if (!controller.signal.aborted) setList({ key: listKey, state: { status: 'error', message: message(error, '목록을 불러오지 못했어요.') } });
+                if (controller.signal.aborted) return;
+                if (isPrivateAccountError(error)) setHiddenKey(viewerKey);
+                setList({ key: listKey, state: { status: 'error', message: message(error, '목록을 불러오지 못했어요.') } });
             });
         }, q.trim() ? 250 : 0);
         return () => { clearTimeout(timer); controller.abort(); };
-    }, [slug, validSlug, tab, q, available, listKey]);
+    }, [slug, validSlug, tab, q, available, listKey, viewerKey]);
 
     const [actionError, setActionError] = useState('');
     const [settings, setSettings] = useState<(FollowUser & { tag: string }) | null>(null);
@@ -91,6 +111,8 @@ export function ApiFollowsContent({ slug }: { slug: string }) {
             </section>
         </div>;
     }
+
+    if (hiddenKey === viewerKey) return <FollowsPrivateNotice />;
 
     const profileState = profile.key === profileKey ? profile.state : { status: 'loading' as const };
     const listState: FollowListState = list.key === listKey ? list.state : { status: 'loading' };

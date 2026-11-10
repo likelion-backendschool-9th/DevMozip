@@ -50,3 +50,22 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.notification-item-actions){gap:.75rem}
 }}
+
+/* 공통 알림 모달(D1 B)과 서버 알림 목록. 위의 Mock 화면 규칙은 app/notifications/page.module.css에서 옮긴 그대로다. */
+@layer devmozip-messaging{:where(.scope):global(.notification-dialog){width:680px;padding:24px 26px 20px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-dialog .notification-tabs){margin-top:14px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-dialog .notification-list){max-height:min(56vh,540px);overflow-y:auto;margin-top:16px;padding-right:4px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-dialog .notification-item){padding:16px 18px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-summary){display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}}
+@layer devmozip-messaging{:where(.scope):global(.notification-summary p){margin:0;font-size:14px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-modal-footer){display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}}
+@layer devmozip-messaging{:where(.scope):global(.notification-modal-footer a){font-size:14px;color:#7652a7;font-weight:600}}
+@layer devmozip-messaging{:where(.scope):global(.notification-more){display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:18px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-alert){margin:12px 0 0;font-size:14px;color:#b4235a}}
+@layer devmozip-messaging{:where(.scope):global(.notification-review-status){display:inline-block;font-size:13px;margin-left:10px;background:#f0e9fc;color:#6f4aa0;padding:3px 7px;border-radius:5px}}
+@layer devmozip-messaging{:where(.scope):global(.notification-review-meta){display:block;margin-top:-6px;margin-bottom:10px;font-size:13px;color:var(--muted)}}
+@layer devmozip-messaging{:where(.scope):global(.notification-item-actions .link-button){border:0;background:none;padding:0;font-size:14px;color:#7652a7;cursor:pointer}}
+@layer devmozip-messaging{:where(.scope):global(.notification-item-actions button:disabled){opacity:.55;cursor:default}}
+@layer devmozip-responsive{@media(max-width:30rem){
+ :where(.scope):global(.notification-dialog){padding:18px 16px 16px}
+}}

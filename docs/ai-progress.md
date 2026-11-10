@@ -2178,3 +2178,14 @@ ProjectQueryIntegrationTest에 결과/집계/페이지·당일·KST 자정·다�
 stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-recruiting 브랜치에 적용했다. SearchPage·SearchFilters·진행 문서 충돌을 해결했다. develop의 실제 API 검색·팔로우 상태·페이지 이동·서버 선택지는 유지하면서 /explore는 개발자 검색 전용으로 제한한다. 예전 type=projects URL도 개발자 조회로 정규화한다. 모집 중 필터의 모집 종료일 검사와 경계 테스트도 복원했다. 커밋·푸시는 하지 않는다.
 
 검증 결과: 최초 실행 중인 개발 컨테이너에서 NODE_ENV=development 빌드가 prerender 오류로 실패했고, 동일 환경의 테스트는 이미지 BACKEND_URL 기대값 불일치 및 프로세스 종료137로 완료되지 않았다. 환경을 분리한 컨테이너(NODE_ENV=production, 별도 .next)에서 npm run build 성공·전체 frontend 139개 파일/1,522개 통과. 마지막 검색어 변경 시 page 초기화 보존 후 빌드 재통과·검색 관련 25개 재통과. backend ./gradlew test --tests '*ProjectQueryIntegrationTest' 14개 통과(실패/건너뜀0, 격리 PostgreSQL). /explore?type=projects HTTP200 및 backend health UP 확인. 브라우저 수동 조작은 미실행. stash는 보존하고 생성 next-env.d.ts는 원복했다.
+## 2026-11-10 PR #132 충돌 해결
+
+최신 develop 0d6f533을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 알림·개발자 탐색·SNS 및 이미지 제공 범위와 관련 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 미커밋 작업과 실행 서버·공유 DB·배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공, npm test -- --maxWorkers=1 전체 143개 파일·1,613개 테스트 통과. backend ./gradlew test --tests '*notification.*' 49개, 실패 0·오류 0·건너뜀 0. 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
+
+## 2026-11-10 PR #133 충돌 해결
+
+최신 develop 2af95a7을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 개인정보 설정(비공개 계정)과 develop의 SNS·검색·알림 및 이미지 제공 범위와 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 로컬 작업·실행 서버·공유 DB는 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공. npm test -- --maxWorkers=1 전체 146개 파일·1,646개 테스트 통과. backend ./gradlew test에 AccountLock*・AccountVisibilityPolicyTest・FollowPrivacyIntegrationTest 필터를 적용해 36개 통과(실패·오류·건너뜀 0). 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
