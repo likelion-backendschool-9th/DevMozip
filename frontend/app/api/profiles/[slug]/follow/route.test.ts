@@ -36,6 +36,21 @@ describe('팔로우 BFF', () => {
         expect((await DELETE(request('DELETE', {}, 'http://evil.example'), context())).status).toBe(403);
         expect(backendFetch).toHaveBeenCalledTimes(2);
     });
+    it('Next 내부 URL과 브라우저 주소가 달라도 브라우저가 보낸 Host로 같은 사이트를 판단한다', async () => {
+        // Docker 개발 서버(--hostname 0.0.0.0)에서는 request.url의 호스트가 브라우저 주소와 다르다.
+        const docker = (method: string, origin?: string, path = '/api/profiles/dev-one/follow', init: RequestInit = {}) => new Request(
+            `http://0.0.0.0:3000${path}`, { method, ...init, headers: { Host: 'localhost:3000', ...(origin ? { Origin: origin } : {}), ...init.headers } });
+        vi.mocked(backendFetch).mockImplementation(async () => Response.json(result));
+        expect((await POST(docker('POST', 'http://localhost:3000'), context())).status).toBe(200);
+        expect((await DELETE(docker('DELETE', 'http://localhost:3000'), context())).status).toBe(200);
+        vi.mocked(backendFetch).mockImplementation(async () => Response.json({ activityNotificationEnabled: true }));
+        const body = { headers: { 'Content-Type': 'application/json' }, body: '{"activityNotificationEnabled":true}' };
+        expect((await PUT(docker('PUT', 'http://localhost:3000', '/api/profiles/dev-one/notify', body), context())).status).toBe(200);
+        expect(backendFetch).toHaveBeenCalledTimes(3);
+        for (const origin of ['http://evil.example', 'https://localhost:3000', 'http://localhost:3001', 'null', undefined])
+            expect((await POST(docker('POST', origin), context())).status).toBe(403);
+        expect(backendFetch).toHaveBeenCalledTimes(3);
+    });
     it.each(['../auth/me', '//example.com', 'bad?tag', ''])('잘못된 태그 %s를 전달하지 않는다', async slug => {
         expect((await GET(request('GET'), context(slug))).status).toBe(400);
         expect((await POST(request('POST'), context(slug))).status).toBe(400);

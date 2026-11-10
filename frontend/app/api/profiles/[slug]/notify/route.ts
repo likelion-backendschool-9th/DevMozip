@@ -1,10 +1,10 @@
 import { parseFollowNotification } from '@/lib/profiles/followApi';
-import { followPath, followSlugError, proxyFollow } from '@/lib/profiles/followProxy';
-import { profileError, profileRequestGuard } from '@/lib/profiles/profileProxy';
+import { followPath, followRequestGuard, followSlugError, proxyFollow } from '@/lib/profiles/followProxy';
+import { profileError } from '@/lib/profiles/profileProxy';
 
 // 내가 팔로우한 {slug}의 활동 알림 켜기·끄기(9.5). 새 게시글·새 프로젝트 모집 알림을 함께 바꾼다.
 export async function PUT(request: Request, context: { params: Promise<{ slug: string }> }) {
-    const blocked = profileRequestGuard(request);
+    const blocked = followRequestGuard(request);
     if (blocked) return blocked;
     const { slug } = await context.params;
     const invalid = followSlugError(slug);

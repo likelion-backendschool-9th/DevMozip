@@ -17,6 +17,18 @@ const messages: Record<number, string> = {
     409: '팔로우한 개발자의 알림만 설정할 수 있어요.',
 };
 
+// 쓰기 요청은 같은 사이트에서만 받는다. Docker 개발 서버(--hostname 0.0.0.0)처럼 Next 내부 URL의 호스트가
+// 브라우저 주소와 다를 수 있어, 프로젝트 BFF(projectGuard)와 같이 브라우저가 보낸 Host와 비교한다.
+export function followRequestGuard(request: Request) {
+    const url = new URL(request.url);
+    let origin: URL;
+    try { origin = new URL(request.headers.get('origin') ?? ''); }
+    catch { return profileError(403, '같은 사이트에서 요청해 주세요.'); }
+    if (origin.host !== (request.headers.get('host') ?? url.host) || origin.protocol !== url.protocol)
+        return profileError(403, '같은 사이트에서 요청해 주세요.');
+    return null;
+}
+
 export function followSlugError(slug: string) {
     return validProfileSlug(slug) ? null : profileError(400, '올바른 사용자 태그가 필요합니다.');
 }

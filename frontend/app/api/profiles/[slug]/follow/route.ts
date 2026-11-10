@@ -1,6 +1,5 @@
 import { parseFollowResult, parseFollowStatus } from '@/lib/profiles/followApi';
-import { followPath, followSlugError, proxyFollow } from '@/lib/profiles/followProxy';
-import { profileRequestGuard } from '@/lib/profiles/profileProxy';
+import { followPath, followRequestGuard, followSlugError, proxyFollow } from '@/lib/profiles/followProxy';
 
 type Context = { params: Promise<{ slug: string }> };
 
@@ -12,7 +11,7 @@ export async function GET(_request: Request, context: Context) {
 
 // 팔로우(9.1). 요청자는 백엔드가 토큰으로 정한다.
 export async function POST(request: Request, context: Context) {
-    const blocked = profileRequestGuard(request);
+    const blocked = followRequestGuard(request);
     if (blocked) return blocked;
     const { slug } = await context.params;
     return followSlugError(slug) ?? proxyFollow(followPath(slug, 'follow'), { method: 'POST' }, parseFollowResult, undefined,
@@ -21,7 +20,7 @@ export async function POST(request: Request, context: Context) {
 
 // 언팔로우(9.2)
 export async function DELETE(request: Request, context: Context) {
-    const blocked = profileRequestGuard(request);
+    const blocked = followRequestGuard(request);
     if (blocked) return blocked;
     const { slug } = await context.params;
     return followSlugError(slug) ?? proxyFollow(followPath(slug, 'follow'), { method: 'DELETE' }, parseFollowResult, undefined,
