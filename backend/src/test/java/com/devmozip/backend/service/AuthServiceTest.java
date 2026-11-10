@@ -52,6 +52,8 @@ class AuthServiceTest {
         when(jwtProvider.validateRefreshToken(REFRESH_TOKEN)).thenReturn(true);
         when(jwtProvider.getUsername(REFRESH_TOKEN)).thenReturn(EMAIL);
         when(refreshTokenStore.matches(EMAIL, REFRESH_TOKEN)).thenReturn(true);
+        org.mockito.Mockito.lenient().when(memberRepository.findForAccountUpdateByEmail(EMAIL))
+                .thenAnswer(invocation -> memberRepository.findByEmail(EMAIL));
     }
 
     @Test
@@ -100,6 +102,7 @@ class AuthServiceTest {
     void 인증된_회원에게_토큰을_발급하고_리프레시_토큰을_저장한다() {
         Member member = kakaoMember(MemberRole.USER, MemberStatus.ACTIVE);
         when(memberRepository.findByEmail(EMAIL)).thenReturn(Optional.of(member));
+        when(memberRepository.findForAccountUpdateByEmail(EMAIL)).thenReturn(Optional.of(member));
         when(jwtProvider.createAccessToken(EMAIL, "USER")).thenReturn("access");
         when(jwtProvider.createRefreshToken(EMAIL)).thenReturn(REFRESH_TOKEN);
 
@@ -115,6 +118,7 @@ class AuthServiceTest {
     void 정지된_회원에게는_토큰을_발급하지_않는다() {
         Member member = kakaoMember(MemberRole.USER, MemberStatus.SUSPENDED);
         when(memberRepository.findByEmail(EMAIL)).thenReturn(Optional.of(member));
+        when(memberRepository.findForAccountUpdateByEmail(EMAIL)).thenReturn(Optional.of(member));
 
         assertThatThrownBy(() -> authService.issueTokens(member)).isInstanceOf(LockedException.class);
         verify(refreshTokenStore, never()).save(any(), any());

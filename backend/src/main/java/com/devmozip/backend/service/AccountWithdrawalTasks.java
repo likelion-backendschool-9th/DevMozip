@@ -35,7 +35,11 @@ public class AccountWithdrawalTasks {
 		memory = environment.acceptsProfiles(Profiles.of("local", "test"));
 	}
 
-	public record Job(long userId, String encryptedBillingKey, List<String> imageFiles) {}
+	public record Job(long userId, String encryptedBillingKey, List<String> imageFiles, String operationId) {
+		public Job(long userId, String encryptedBillingKey, List<String> imageFiles) {
+			this(userId, encryptedBillingKey, imageFiles, UUID.randomUUID().toString());
+		}
+	}
 
 	public void save(Job job) {
 		String json = mapper.writeValueAsString(job);
@@ -47,7 +51,7 @@ public class AccountWithdrawalTasks {
 		if (memory) return List.copyOf(local.keySet());
 		try (var cursor = redis.scan(ScanOptions.scanOptions().match(PREFIX + "*").count(100).build())) {
 			var keys = new java.util.ArrayList<String>();
-			while (cursor.hasNext() && keys.size() < 100) keys.add(cursor.next());
+			while (cursor.hasNext()) keys.add(cursor.next());
 			return keys;
 		}
 	}
@@ -57,9 +61,11 @@ public class AccountWithdrawalTasks {
 		return json == null ? null : mapper.readValue(json, Job.class);
 	}
 
-	public void remove(long userId) {
-		if (memory) local.remove(PREFIX + userId);
-		else redis.delete(PREFIX + userId);
+	public void removePrepared(Job job) {
+		String key = PREFIX + job.userId();
+		String json = mapper.writeValueAsString(job);
+		if (memory) local.remove(key, json);
+		else redis.execute(new DefaultRedisScript<>("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end", Long.class), List.of(key), json);
 	}
 
 	public String acquire(String key) {
@@ -78,7 +84,7 @@ public class AccountWithdrawalTasks {
 	/** 이전 형식(회원 ID 없는 JWT)도 같은 이메일 재가입 계정에 적용되지 않게 한다. */
 	public void revokeLegacy(String email) {
 		String key = fingerprint(email);
-		Duration ttl = Duration.ofMillis(jwt.getAccessTokenExpiration()).plusSeconds(60);
+		Duration ttl = Duration.ofMillis(Math.max(jwt.getAccessTokenExpiration(), jwt.getRefreshTokenExpiration())).plusSeconds(60);
 		if (memory) revoked.put(key, System.currentTimeMillis() + ttl.toMillis());
 		else redis.opsForValue().set(key, "1", ttl);
 	}

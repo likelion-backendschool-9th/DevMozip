@@ -13,6 +13,9 @@ import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.MemberStatus;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
+    // 탈퇴와 신규 프로젝트 생성·지원 승인을 직렬화한다. 잠금 대기 후 DB의 현재 상태로 다시 검사한다.
+    @Query(value = "SELECT * FROM users WHERE id=:id AND email IS NOT NULL AND status IN ('ACTIVE','WARNED') FOR UPDATE", nativeQuery = true)
+    Optional<Member> findActiveForAccountUpdateById(@Param("id") Long id);
     Optional<Member> findByTagAndStatus(String tag, MemberStatus status);
     // 사용자 신고 대상은 계정 상태와 무관하게 찾는다
     Optional<Member> findByTag(String tag);

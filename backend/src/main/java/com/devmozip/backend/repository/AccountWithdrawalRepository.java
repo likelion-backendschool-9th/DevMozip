@@ -25,7 +25,21 @@ public class AccountWithdrawalRepository {
 	}
 
 	public boolean isWithdrawn(long userId) {
-		return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM users WHERE id=? AND email IS NULL AND status IS NULL)", Boolean.class, userId));
+		// 준비 작업을 본 다른 서버는 진행 중인 탈퇴 트랜잭션의 커밋/롤백을 기다려야 한다.
+		return jdbc.query("SELECT (email IS NULL AND status IS NULL) FROM users WHERE id=? FOR UPDATE",
+			(rs, row) -> rs.getBoolean(1), userId).stream().findFirst().orElse(true);
+	}
+
+	public List<Long> participatingProjects(long userId) {
+		return jdbc.query("""
+			SELECT DISTINCT p.id FROM projects p WHERE p.deleted_at IS NULL AND p.status<>'COMPLETED'
+			AND (EXISTS(SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.user_id=? AND m.status='ACTIVE')
+			OR EXISTS(SELECT 1 FROM project_applications a WHERE a.project_id=p.id AND a.applicant_member_id=? AND a.status='PENDING')) ORDER BY p.id
+			""", (rs, row) -> rs.getLong(1), userId, userId);
+	}
+
+	public void cancelApplications(long projectId, long userId, LocalDateTime now) {
+		jdbc.update("UPDATE project_applications SET status='CANCELLED',cancelled_at=?,updated_at=? WHERE project_id=? AND applicant_member_id=? AND status IN ('PENDING','APPROVED')", now, now, projectId, userId);
 	}
 
 	public void erasePersonalData(long userId, LocalDateTime now) {
@@ -34,6 +48,11 @@ public class AccountWithdrawalRepository {
 		jdbc.update("DELETE FROM likes WHERE user_id=?", userId);
 		jdbc.update("DELETE FROM bookmarks WHERE user_id=?", userId);
 		jdbc.update("UPDATE chat_members SET left_at=COALESCE(left_at,?) WHERE user_id=?", now, userId);
+		jdbc.update("""
+			UPDATE project_application_portfolio_snapshots s SET content=jsonb_set(jsonb_set(s.content,'{author,tag}','null'::jsonb),'{author,profileImage}','null'::jsonb)
+			FROM project_application_portfolios link,project_applications a
+			WHERE s.application_portfolio_id=link.id AND link.application_id=a.id AND a.applicant_member_id=?
+			""", userId);
 		// 본문·지원·참여·리뷰·거래 기록은 보존한다. 공개 식별 정보는 users를 통해 제거된다.
 		jdbc.update("""
 			UPDATE users SET email=NULL,password_hash=NULL,kakao_id=NULL,tag=NULL,role=NULL,status=NULL,

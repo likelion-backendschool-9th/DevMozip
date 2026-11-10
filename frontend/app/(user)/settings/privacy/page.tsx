@@ -11,6 +11,7 @@ import { needsFirstPassword, passwordChangeErrors, passwordSetErrors } from '@/l
 import { changePasswordAction, kakaoAccountStatusAction, setPasswordAction, startKakaoAction } from '@/lib/auth/actions';
 import { AccountPasswordForm, passwordCopy } from './_components/AccountPasswordForm';
 import { PaymentInfoPanel } from './_components/PaymentInfoPanel';
+import { AccountWithdrawalPanel } from './_components/AccountWithdrawalPanel';
 import type { PasswordChangeInput } from '@/types/account';
 import type { KakaoAccountStatus } from '@/types/auth';
 const blankPassword = (): PasswordChangeInput => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -132,6 +133,7 @@ function AccountSettingsContent() {
                     </div>
                 </section>
             </>
+            <AccountWithdrawalPanel account={account} />
             {modal && (
                 <Modal
                     title={

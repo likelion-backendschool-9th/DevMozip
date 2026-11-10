@@ -41,7 +41,10 @@ public class AccountWithdrawalCleanup {
 		if (lease == null) return;
 		try {
 			var job = tasks.read(key);
-			if (job == null || !accounts.isWithdrawn(job.userId())) return;
+			if (job == null) return;
+			if (!accounts.isWithdrawn(job.userId())) { tasks.removePrepared(job); return; }
+			var current = tasks.read(key);
+			if (current == null || !current.operationId().equals(job.operationId())) return;
 			String billingKey = job.encryptedBillingKey();
 			if (billingKey != null) {
 				try { portOne.deleteBillingKey(cipher.decrypt(billingKey)); billingKey = null; }
@@ -54,8 +57,8 @@ public class AccountWithdrawalCleanup {
 					if (!members.existsByProfileImageOrBannerImage(url, url)) images.delete(filename);
 				} catch (java.io.IOException | RuntimeException e) { pending.add(filename); }
 			}
-			if (billingKey == null && pending.isEmpty()) tasks.remove(job.userId());
-			else tasks.save(new AccountWithdrawalTasks.Job(job.userId(), billingKey, pending));
+			if (billingKey == null && pending.isEmpty()) tasks.removePrepared(job);
+			else tasks.save(new AccountWithdrawalTasks.Job(job.userId(), billingKey, pending, job.operationId()));
 		} catch (RuntimeException e) {
 			log.warn("탈퇴 정리 작업을 완료하지 못했습니다. 다음 주기에 재시도합니다.");
 		} finally { tasks.release(key, lease); }
