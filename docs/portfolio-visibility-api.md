@@ -2,7 +2,7 @@
 
 ## 범위와 흐름
 
-feat/116-portfolio-visibility는 미병합 업로드 #115(feat/113-portfolio-file-upload, 8079707)에서 분기했다. 기존 CRUD·업로드·Mock 화면을 보존하며 이 단계는 공개 범위 전환만 구현한다.
+feat/116-portfolio-visibility는 미병합 업로드 #115(feat/113-portfolio-file-upload, 8079707)에서 분기했다. 기존 CRUD·업로드·Mock 화면을 보존하며 이 단계는 공개 범위 전환만 구현한다. PR 준비 시 #115와 제출본 보관 #117이 develop에 병합되어 최신 develop d61e585를 통합했다.
 
 본인 상세의 공개 범위 선택 → 명시적 저장 → Next PATCH /api/portfolios/{id}/visibility → Spring Controller → PortfolioMutationService/Impl → 잠금·수정 버전·지원서 참조 확인 → Repository UPDATE → 최신 상세 응답.
 
@@ -26,7 +26,7 @@ PATCH /api/v1/portfolios/{id}/visibility
 
 ## 제출 정책과 파일 권한
 
-- 제출 이력이 확인되면 409로 변경을 보류한다. 제출 후 변경 허용 여부는 프로젝트 담당자 합의 전까지 임의 확정하지 않는다. 참조 저장소를 읽지 못하면 503으로 중단한다.
+- 최신 #117 정책에 따라 제출 이력이 있어도 모든 제출본 보관이 확인되면 원본 공개 범위를 변경할 수 있다. 제출본이 없거나 원본 ID가 불일치하면 409로 보류한다. 원본 범위 변경은 보관본에 반영하지 않는다. 참조 저장소를 읽지 못하면 503으로 중단한다.
 - 프로젝트 지원 구현도 같은 포트폴리오 행 잠금으로 공개 여부 확인과 제출을 처리해야 한다. 담당 PR 통합 시 동시 제출·변경 계약을 함께 검증해야 한다. 이 기능은 프로젝트 지원서·스냅샷·파일을 변경하지 않는다.
 - 공개 전환 시 프로필의 공개 목록에 표시된다. 상세는 기존 프리미엄/본인 정책을 따른다.
 - 비공개 전환 시 이후 타인 목록·상세 및 연결 파일의 신규 접근을 기존 조회/파일 권한에서 차단한다. 이미 다운로드한 파일까지 회수하는 기능은 아니다.
@@ -38,8 +38,7 @@ PATCH /api/v1/portfolios/{id}/visibility
 
 ## 검증과 현재 실행 제한 (2026-11-10)
 
-- 프론트 전체 1,246개 통과. 새 BFF 필드 제한·출처·ID·소유권·응답 범위·409, 요청 버전·자동 재시도 금지 및 본인 UI 조건 확인.
-- 원래 backend gradlew test는 develop의 RecommendationSummaryRequest.java/public record RecommendationRequestSummary 불일치에서 compileJava 실패. 담당자 소스를 변경하지 않았다.
-- 저장소 외부 임시 Gradle init에서 그 파일만 제외하고 동일 내용을 올바른 파일명으로 복사해 검증했다. 이 조건에서 실제 PostgreSQL 관련 50개(변경 27·조회 18·파일 5) 건너뜀 없이 통과. 일반 빌드·CI 성공을 뜻하지 않는다.
-- 소유자 전환·공개 목록/타인 상세 차단, 잘못된 enum·타인·오래된 버전, 동일 값 no-op·NULL 시각, 제출 이력/저장소 미준비 보류, 동시 요청 200/409, 비공개 전환 후 대표 이미지 404를 검증했다.
-- 최신 클래스가 반영된 로컬 개발 서버는 payments.currency의 실제 CHAR/bpchar와 Entity의 VARCHAR 기대 타입 불일치로 schema validate 부팅 실패. 공유 DB·결제 Entity를 임의 변경하지 않았으며 현재 기능의 실제 공유 DB 브라우저 전환은 미실행이다. 원본 컴파일/스키마 문제 해결 후 실계정 검증 필요.
+- 최신 #115·#117 통합 후 프론트 전체 1,367개·빌드·수정 파일 ESLint·git diff --check 통과.
+- 최신 develop에는 AI DTO 파일명 수정도 반영됐다. 임시 소스/제외 없이 일반 backend gradlew test 최종 실행: 1,138개 중 1,126 통과·12개 건너뜀·실패/오류 0. 이전 단계의 임시 파일명 보정 검증과 구분한다.
+- 소유자 전환·공개 목록/타인 상세 차단, 잘못된 enum·타인·오래된 버전, 동일 값 no-op·NULL 시각, 제출본 미보관 보류/보관 후 원본 변경·보관본 불변, 동시 요청 200/409, 비공개 PATCH 후 대표 이미지 404를 검증했다. 변경 28·조회 18·파일 5·제출본 12 테스트 모두 건너뜀 없이 통과.
+- 실제 공유 DB 브라우저 전환은 미실행이다. 직전 실행에서 로컬 서버는 payments.currency의 실제 CHAR/bpchar와 Entity VARCHAR 기대 타입 불일치로 schema validate 부팅 실패를 확인했다. 결제 Entity/공유 DB는 이 작업에서 변경하지 않았다. 통합 실행 서버 상태 확인과 실계정 검증은 별도로 필요하다.

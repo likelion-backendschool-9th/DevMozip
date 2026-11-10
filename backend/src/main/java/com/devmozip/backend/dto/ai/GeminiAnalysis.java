@@ -29,9 +29,6 @@ public record GeminiAnalysis(String reply, List<String> questions, List<Change> 
 			if ((field == Field.roles || field == Field.career || field == Field.durationMonths)
 				&& action != Action.CLEAR && values.size() != 1) throw new IllegalArgumentException("단일 조건 값 오류");
 			if (field != Field.roles && count != null) throw new IllegalArgumentException("직군 외 인원 지정 오류");
-			if (field == Field.roles && (action == Action.ADD || action == Action.SET) && count == null) {
-				throw new IllegalArgumentException("명시되지 않은 인원은 질문해야 합니다.");
-			}
 		}
 		@JsonAnySetter public void unknown(String key, Object value) { throw new IllegalArgumentException("조건 변경 필드 오류"); }
 	}

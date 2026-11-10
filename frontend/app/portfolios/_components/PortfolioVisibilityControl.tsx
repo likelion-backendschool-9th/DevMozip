@@ -25,7 +25,7 @@ export function PortfolioVisibilityControl({ detail, onChanged, onReload }: {
         </select></label>{' '}
         <Button variant="secondary" disabled={pending || visibility === detail.portfolio.visibility} onClick={() => void save()}>{pending ? '변경 중…' : '공개 범위 저장'}</Button>
         <p>{visibility === 'PRIVATE' ? '본인만 목록·상세·첨부파일을 볼 수 있어요.' : '프로필 목록에 표시되며 프리미엄 회원이 상세를 볼 수 있어요.'}</p>
-        <p className="auth-hint">프로젝트에 제출한 포트폴리오는 정책 확인 전까지 공개 범위를 변경할 수 없어요.</p>
+        <p className="auth-hint">프로젝트에 제출한 경우 제출본 보관이 확인되어야 공개 범위를 바꿀 수 있어요.</p>
         {error && <p role="alert">{error}{' '}<Button variant="secondary" onClick={onReload}>최신 내용 다시 불러오기</Button></p>}
     </section>;
 }

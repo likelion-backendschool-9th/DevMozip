@@ -1,0 +1,17 @@
+.more {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+.alert {
+    font-size: 14px;
+    color: #c2410c;
+    margin: 0 0 16px;
+}
+.state {
+    font-size: 14px;
+    color: #9b8eaa;
+    padding: 24px 0;
+}

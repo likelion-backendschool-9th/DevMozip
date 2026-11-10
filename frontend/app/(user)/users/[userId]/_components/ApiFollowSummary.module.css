@@ -1,0 +1,39 @@
+.countLink {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 14px;
+    color: #9b8eaa;
+    text-decoration: none;
+}
+.countLink:hover {
+    color: #61526f;
+}
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.actions :global(.button) {
+    font-size: 14px;
+    padding: 7px 12px;
+    gap: 6px;
+}
+.hint,
+.error {
+    font-size: 14px;
+    color: #9b8eaa;
+}
+.error {
+    color: #c2410c;
+}
+.retry {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 14px;
+    color: #7c3aed;
+    text-decoration: underline;
+    cursor: pointer;
+}

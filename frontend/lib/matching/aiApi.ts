@@ -1,4 +1,4 @@
-import type { AiAnalysisResponse, AiConditions, AiDraftConditions, AiConversationDetail, AiConversationSummary, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
+import type { AiAnalysisResponse, AiConditions, AiDraftConditions, AiFact, AiConversationDetail, AiConversationSummary, AiRecommendation, AiRequestSummary } from '@/types/aiRecommendation';
 import type { ChatRequirements, MatchingConversation } from '@/types/matchingChat';
 import { emptyChatRequirements } from '@/mocks/matchingChat';
 
@@ -22,11 +22,11 @@ export function toAiDraftConditions(r: ChatRequirements): AiDraftConditions {
         ...(r.duration ? { durationMonths: Number(r.duration.replace('개월', '')) } : {}) };
 }
 // 선택 순서는 추천 조건의 변경이 아니다. 기술명 대소문자·앞뒤 공백도 비교 시 정규화한다.
-export function aiConditionsKey(c: AiConditions): string {
+export function aiConditionsKey(c: AiConditions, facts: AiFact[] = c._requirements?.facts || []): string {
     return JSON.stringify({ interests: [...new Set(c.interests.map(v => v.trim()))].sort(),
         stacks: [...new Set((c.stacks || []).map(v => v.trim().toLowerCase()))].sort(),
         roles: (c.roles || []).map(v => [v.name.trim().toLowerCase(), v.count]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
-        career: c.career, durationMonths: c.durationMonths });
+        career: c.career, durationMonths: c.durationMonths, facts: facts.map(f => [f.kind, f.value, f.origin]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))) });
 }
 export function fromAiConditions(c: Partial<AiConditions>): ChatRequirements {
     return { ...structuredClone(emptyChatRequirements), interests: c.interests || [], stacks: c.stacks || [],
@@ -44,9 +44,9 @@ export function syncAiDraft(c: MatchingConversation, conditions: AiDraftConditio
         body: JSON.stringify({ conversationId: c.serverId, clientKey: c.id, title: c.title, conditions,
             messages: c.messages.filter(m => m.role === 'user' && !m.serverId).map(m => ({ clientKey: m.id, content: m.text })) }) });
 }
-export function executeAiRecommendation(id: number, key: string, messageId?: number) {
+export function executeAiRecommendation(id: number, key: string, messageId?: number, replay = false) {
     return request<AiRecommendation>(`/${id}/recommendations`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(messageId ? { messageId } : {}) });
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify({ ...(messageId ? { messageId } : {}), ...(replay ? { replay: true } : {}) }) });
 }
 
 export function applyAiAnalysis(local: MatchingConversation, response: AiAnalysisResponse): MatchingConversation {
@@ -73,7 +73,7 @@ export function applyAiAnalysis(local: MatchingConversation, response: AiAnalysi
     if ('roles' in sources && !('roles' in remote)) requirements.roles = [];
     if ('career' in sources && !('career' in remote)) requirements.career = '';
     if ('durationMonths' in sources && !('durationMonths' in remote)) requirements.duration = '';
-    return { ...local, messages, requirements };
+    return { ...local, messages, requirements, analysisFacts: response.currentConditions._analysis?.facts || (response.analysis as { facts?: AiFact[] })?.facts || local.analysisFacts || [] };
 }
 export function mergeAiConversation(remote: AiConversationDetail, local?: MatchingConversation): MatchingConversation {
     const messages = remote.messages.map(m => {
@@ -83,6 +83,7 @@ export function mergeAiConversation(remote: AiConversationDetail, local?: Matchi
     });
     const pending = local?.messages.filter(m => !messages.some(v => v.id === m.id || v.serverId === m.serverId && m.serverId)) || [];
     return { ...local, id: local?.id || remote.clientKey || `server:${remote.id}`, serverId: remote.id,
+        analysisFacts: remote.currentConditions._analysis?.facts || local?.analysisFacts || [],
         title: remote.title || '새 대화', createdAt: remote.createdAt, updatedAt: remote.updatedAt,
         requirements: local?.requirements || fromAiConditions(remote.currentConditions), messages: [...messages, ...pending] };
 }

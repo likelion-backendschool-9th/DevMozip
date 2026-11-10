@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/auth/backend';
+import { roleLabels } from '@/lib/projects/projectApiContract';
 
 type Context = { params: Promise<{ path: string[] }> };
 const headers = { 'Cache-Control': 'no-store' };
@@ -20,11 +21,11 @@ async function handle(request: Request, context: Context) {
                 || !Array.isArray(project.recruitmentSlots)) return error(502, '프로젝트 정보를 확인할 수 없습니다.');
             return NextResponse.json({ id: project.id, title: project.title, summary: typeof project.summary === 'string' ? project.summary : '',
                 description: typeof project.description === 'string' ? project.description : '', imageUrl: typeof project.imageUrl === 'string' ? project.imageUrl : null,
-                stacks: project.techStacks, roles: project.recruitmentSlots.filter((v: { role?: unknown }) => typeof v?.role === 'string').map((v: { role: string }) => v.role) }, { headers });
+                stacks: project.techStacks, roles: project.recruitmentSlots.filter((v: { roleCode?: unknown }) => typeof v?.roleCode === 'string').map((v: { roleCode: string }) => roleLabels[v.roleCode] || v.roleCode) }, { headers });
         } catch { return error(502, '프로젝트 정보를 불러올 수 없습니다.'); }
     }
     const allowed = request.method === 'GET'
-        ? new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
+        ? route === 'usage' || new RegExp(`^conversations(?:/${id}(?:/recommendations(?:/history)?)?)?$`).test(route)
         : request.method === 'DELETE' ? new RegExp(`^conversations/${id}$`).test(route)
         : request.method === 'POST' && (route === 'conversations' || route === 'conversations/sync'
             || new RegExp(`^conversations/${id}/(?:messages|recommendations)$`).test(route));
@@ -36,7 +37,7 @@ async function handle(request: Request, context: Context) {
         return error(400, '조회 조건을 확인해 주세요.');
     }
     const messages = /\/messages$/.test(route);
-    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : 60000) };
+    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : route.endsWith('/recommendations') && request.method === 'POST' ? 300000 : 60000) };
     if (request.method !== 'GET') {
         if (request.headers.get('origin') !== `${url.protocol}//${request.headers.get('host') || url.host}`) return error(403, '같은 사이트에서 요청해 주세요.');
         if (request.method === 'POST') {
@@ -65,6 +66,9 @@ async function handle(request: Request, context: Context) {
         // Recommendation FAILED responses contain the public result DTO; never forward server error details.
         if (response.ok || response.status === 500 && body?.status === 'FAILED' && Number.isSafeInteger(body?.requestId)) {
             return NextResponse.json(body, { status: response.status, headers });
+        }
+        if (response.status === 429 && route.endsWith('/recommendations') && body?.code === 'AI_MONTHLY_LIMIT_EXCEEDED') {
+            return NextResponse.json({ code: body.code, message: '이번 달 추천 가능 횟수가 부족하거나 남은 횟수를 처리 중입니다. 사용량을 확인해 주세요.' }, { status: 429, headers });
         }
         const status = [400, 401, 403, 404, 409].includes(response.status) ? response.status : 502;
         return error(status, ({ 400: '입력 내용을 확인해 주세요.', 401: '로그인이 만료되었습니다. 다시 로그인해 주세요.',

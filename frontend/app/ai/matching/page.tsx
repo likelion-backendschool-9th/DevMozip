@@ -119,6 +119,11 @@ function MatchingWorkspace() {
     };
     const recommend = async () => {
         if (!user) { login(); return; }
+        if (text.trim() && !conversation?.pendingRecommendation) {
+            setError('입력 중인 메시지는 아직 추천에 반영되지 않았어요. 먼저 메시지를 보내고 분석을 완료해 주세요.');
+            workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+            return;
+        }
         if (busy || recommendationUnchanged) return;
         if (missing.length && !conversation?.pendingRecommendation) { setError(`${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.`); showConditions(); return; }
         const key = chatKey; setBusyKey(key); setTask('recommend'); setError('');
@@ -136,7 +141,7 @@ function MatchingWorkspace() {
             <section className={styles.chat} aria-label="AI 추천 대화" aria-busy={busy}>
                 <header className={styles.toolbar}><button type="button" aria-label="대화 사이드바 접기/펼치기" aria-controls="matching-history" onClick={() => openPanel('history')}><PanelLeft size={18} /></button><div><strong>{conversation?.title || '새로운 대화'}</strong><span>{historyLoading ? '대화 기록 불러오는 중' : user ? '대화하며 아이디어를 정리해 보세요' : '로그인하고 아이디어를 이어가세요'}</span></div><button type="button" className={styles.conditionToggle} aria-controls="matching-conditions" aria-label="추천 조건 패널 접기/펼치기" onClick={() => openPanel('conditions')}><PanelRight size={17} /><span>추천 조건</span></button></header>
                 <div className={styles.thread} ref={thread} role="log" aria-label="추천 메시지" aria-live="polite">
-                    {!conversation?.messages.length ? <div className={styles.welcome}><div className={styles.welcomeIcon}><Sparkles size={27} /></div><span>DEV‌MOZIP MATCHING</span><h2>어떤 프로젝트를<br />함께 만들어 볼까요?</h2><p>떠오른 아이디어나 찾고 있는 동료를 이야기해 주세요.<br />조건을 정리하고, 함께할 개발자와 비슷한 프로젝트를 찾아봐요.</p><div className={styles.examples}>{chatPromptExamples.map((v, i) => <button type="button" key={v.title} onClick={() => { changeText(v.text); workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }}><span>{['01', '02', '03'][i]}</span><strong>{v.title}</strong><ArrowRight size={14} /></button>)}</div><small>메시지를 보내면 조건을 정리하고, 추천 결과에서 개발자와 유사 프로젝트를 보여 줍니다.</small></div> : <>
+                    {!conversation?.messages.length ? <div className={styles.welcome}><div className={styles.welcomeIcon}><Sparkles size={27} /></div><span>DEVMOZIP MATCHING</span><h2>어떤 프로젝트를<br />함께 만들어 볼까요?</h2><p>떠오른 아이디어나 찾고 있는 동료를 이야기해 주세요.<br />조건을 정리하고, 함께할 개발자와 비슷한 프로젝트를 찾아봐요.</p><div className={styles.examples}>{chatPromptExamples.map((v, i) => <button type="button" key={v.title} onClick={() => { changeText(v.text); workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }}><span>{['01', '02', '03'][i]}</span><strong>{v.title}</strong><ArrowRight size={14} /></button>)}</div><small>메시지를 보내면 조건을 정리하고, 추천 결과에서 개발자와 유사 프로젝트를 보여 줍니다.</small></div> : <>
                         <div className={styles.conversationIntro}><Sparkles size={17} /><p>아이디어를 차근차근 정리해 보세요.<br /><span>선택한 조건을 바탕으로 동료와 유사 프로젝트를 추천합니다.</span></p></div>
                     </>}
                     {user && <SavedRecommendations key={chatKey} serverId={conversation?.serverId} result={result?.chatKey === chatKey ? result.value : undefined} messages={conversation?.messages} onLoaded={scrollBottom} />}
@@ -145,6 +150,7 @@ function MatchingWorkspace() {
                 </div>
                 <div className={styles.execution}><span><i />{conversation?.pendingRecommendation ? '이전 요청을 확인하면 같은 추천을 다시 만들지 않아요.' : recommendationUnchanged ? '같은 조건의 추천이 있어요. 추천 조건을 변경해 주세요.' : missing.length ? '조건을 설정하면 추천을 시작할 수 있어요.' : '조건이 준비됐어요. 새로운 동료를 찾아보세요.'}</span><button type="button" disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={13} />{conversation?.pendingRecommendation ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}</button></div>
                 {(visibleError || conversation?.pendingAnalysisKey && !busy) && <div role="alert" className={styles.error}>{visibleError}{(retryAnalysis || conversation?.pendingAnalysisKey) && <button type="button" onClick={() => void runAnalysis()}>분석 다시 시도</button>}</div>}
+                {user && text.trim() && !conversation?.pendingRecommendation && <div className={styles.conditionHint}><Sparkles size={16} /><div><strong>입력 중인 메시지는 아직 추천에 반영되지 않았어요</strong><button type="button" disabled={busy} onClick={send}>메시지 보내고 분석하기<ArrowRight size={12} /></button></div></div>}
                 <ChatComposer used={chatMessageLength(conversation?.messages || [])} value={text} busy={busy} signedIn={!!user} onChange={changeText} onSend={send} />
             </section>
             <aside id="matching-conditions" aria-label="추천 조건" className={styles.conditions} data-mobile-open={drawer === 'conditions'} role={drawer === 'conditions' ? 'dialog' : undefined} aria-modal={drawer === 'conditions' ? true : undefined}><ChatConditions key={chatKey} busy={busy} signedIn={!!user} retry={!!conversation?.pendingRecommendation} onRecommend={recommend} onClose={() => { setConditions(false); setDrawer(null); }} /></aside>

@@ -46,7 +46,7 @@ public class PortfolioMutationRepository {
                   WHERE c.conrelid=to_regclass('public.project_application_portfolios')
                     AND c.confrelid=to_regclass('public.portfolios') AND c.contype='f'
                     AND array_length(c.conkey,1)=1 AND a.attname='portfolio_id' AND r.attname='id'
-                    AND c.confdeltype IN ('a','r') AND c.convalidated AND NOT c.condeferrable)
+                    AND c.confdeltype IN ('a','r','n') AND c.convalidated AND NOT c.condeferrable)
                 """,new MapSqlParameterSource(),Boolean.class);
         return Boolean.TRUE.equals(ready);
     }
@@ -57,6 +57,14 @@ public class PortfolioMutationRepository {
     public void changeVisibility(long id,long userId,String visibility,LocalDateTime now) {
         jdbc.update("UPDATE portfolios SET visibility=:visibility,updated_at=:now WHERE id=:id AND user_id=:userId",
                 new MapSqlParameterSource("id",id).addValue("userId",userId).addValue("visibility",visibility).addValue("now",now));
+    }
+    public boolean submittedCopiesReady(long id) {
+        if(!Boolean.TRUE.equals(jdbc.queryForObject("SELECT to_regclass('public.project_application_portfolio_snapshots') IS NOT NULL",new MapSqlParameterSource(),Boolean.class)))return false;
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT NOT EXISTS(SELECT 1 FROM project_application_portfolios l
+                LEFT JOIN project_application_portfolio_snapshots s ON s.application_portfolio_id=l.id
+                WHERE l.portfolio_id=:id AND (s.id IS NULL OR s.source_portfolio_id<>:id OR s.content IS NULL))
+                """,new MapSqlParameterSource("id",id),Boolean.class));
     }
     public void delete(long id,long userId) {
         jdbc.update("DELETE FROM portfolios WHERE id=:id AND user_id=:userId",new MapSqlParameterSource("id",id).addValue("userId",userId));

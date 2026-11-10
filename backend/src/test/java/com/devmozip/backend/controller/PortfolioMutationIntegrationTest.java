@@ -41,6 +41,7 @@ class PortfolioMutationIntegrationTest {
             attachments JSONB,visibility VARCHAR(20),created_at TIMESTAMP,updated_at TIMESTAMP)
             """);
         // Recreate only this isolated test fixture: the application Entity has no portfolio FK.
+        jdbc.execute("DROP TABLE IF EXISTS project_application_portfolio_snapshots");
         jdbc.execute("DROP TABLE IF EXISTS project_application_portfolios");
         jdbc.execute("CREATE TABLE IF NOT EXISTS project_application_portfolios(id BIGINT PRIMARY KEY,portfolio_id BIGINT REFERENCES portfolios(id) ON DELETE RESTRICT)");
         jdbc.update("DELETE FROM project_application_portfolios");jdbc.update("DELETE FROM portfolios");jdbc.update("DELETE FROM users");
@@ -192,6 +193,18 @@ class PortfolioMutationIntegrationTest {
             start.countDown();var statuses=java.util.stream.Stream.of(a.get(15,java.util.concurrent.TimeUnit.SECONDS),b.get(15,java.util.concurrent.TimeUnit.SECONDS)).sorted().toList();
             assertEquals(java.util.List.of(200,409),statuses);
         }finally{executor.shutdownNow();}
+    }
+
+    @Test void preservedSubmissionAllowsVisibilityChangeWithoutChangingSnapshot()throws Exception{
+        var created=create(input(),1);long id=id(created);
+        jdbc.update("INSERT INTO project_application_portfolios(id,portfolio_id) VALUES(1,?)",id);
+        jdbc.execute("CREATE TABLE project_application_portfolio_snapshots(id BIGINT PRIMARY KEY,application_portfolio_id BIGINT,source_portfolio_id BIGINT,content JSONB)");
+        jdbc.update("INSERT INTO project_application_portfolio_snapshots VALUES(1,1,?,CAST(? AS jsonb))",id,"{\"title\":\"제출 당시 제목\",\"visibility\":\"PUBLIC\"}");
+        String snapshot=jdbc.queryForObject("SELECT content::text FROM project_application_portfolio_snapshots WHERE id=1",String.class);
+        var changed=mapper.readTree(visibility(id,1,created,"PUBLIC").andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        visibility(id,1,changed,"PRIVATE").andExpect(status().isOk());
+        assertEquals(snapshot,jdbc.queryForObject("SELECT content::text FROM project_application_portfolio_snapshots WHERE id=1",String.class));
+        assertEquals(id,jdbc.queryForObject("SELECT portfolio_id FROM project_application_portfolios WHERE id=1",Long.class));
     }
 
 }

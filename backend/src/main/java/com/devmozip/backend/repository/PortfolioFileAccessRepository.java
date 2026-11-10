@@ -14,4 +14,13 @@ public class PortfolioFileAccessRepository {
         return Boolean.TRUE.equals(coverOnly ? jdbc.queryForObject(sql, Boolean.class, ownerId, url)
                 : jdbc.queryForObject(sql, Boolean.class, ownerId, url, url, url));
     }
+    public boolean submittedReference(long ownerId,long viewerId,String url) {
+        if(!Boolean.TRUE.equals(jdbc.queryForObject("SELECT to_regclass('public.project_application_portfolio_snapshots') IS NOT NULL",Boolean.class)))return false;
+        return Boolean.TRUE.equals(jdbc.queryForObject("""
+                SELECT EXISTS(SELECT 1 FROM project_application_portfolio_snapshots s
+                JOIN project_application_portfolios l ON l.id=s.application_portfolio_id
+                JOIN project_applications a ON a.id=l.application_id JOIN projects p ON p.id=a.project_id
+                WHERE a.applicant_member_id=? AND p.host_member_id=? AND position(? in s.content::text)>0)
+                """,Boolean.class,ownerId,viewerId,url));
+    }
 }

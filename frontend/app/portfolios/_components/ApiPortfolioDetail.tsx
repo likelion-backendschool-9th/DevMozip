@@ -15,17 +15,17 @@ import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import styles from '../[portfolioId]/page.module.css';
 import content from './PortfolioContent.module.css';
 export type PortfolioDetailState = { status: 'loading' } | { status: 'error'; code: number; message: string } | { status: 'ready'; value: PortfolioDetail };
-export function PortfolioDetailResult({ result, onRetry, onChanged, notice }: { result: PortfolioDetailState; onRetry: () => void; onChanged?: (value: PortfolioDetail) => void; notice?: string }) {
+export function PortfolioDetailResult({ result, onRetry, onChanged, notice, backHref, backLabel = '포트폴리오 목록' }: { result: PortfolioDetailState; onRetry: () => void; onChanged?: (value: PortfolioDetail) => void; notice?: string; backHref?: string; backLabel?: string }) {
     if (result.status === 'loading') return <section className="container planned" role="status">포트폴리오를 불러오는 중…</section>;
     if (result.status === 'error') return <section className="container planned" role="alert"><h1>{result.code === 404 ? '포트폴리오를 볼 수 없어요.' : '포트폴리오를 불러오지 못했어요.'}</h1><p>{result.message}</p>
         {result.code === 401 ? <Link className="button" href="/login">로그인하기</Link> : result.code === 403 ? <Link className="button" href="/subscription">프리미엄 안내</Link> : <Button variant="secondary" onClick={onRetry}>다시 시도</Button>}
-        <Link className="button secondary" href="/profile/me?tab=portfolio">내 포트폴리오</Link></section>;
+        <Link className="button secondary" href={backHref || "/profile/me?tab=portfolio"}>{backHref ? backLabel : "내 포트폴리오"}</Link></section>;
     const { portfolio: item, author, description, attachments } = result.value;
     const profilePath = author.tag && author.tag.toLowerCase() !== 'me' ? `/users/${encodeURIComponent(author.tag)}` : null;
-    const listPath = result.value.canEdit ? '/profile/me?tab=portfolio' : profilePath ? `${profilePath}?tab=portfolio` : '/explore';
+    const listPath = backHref || (result.value.canEdit ? '/profile/me?tab=portfolio' : profilePath ? `${profilePath}?tab=portfolio` : '/explore');
     const authorLabel = <><ProfileAvatar name={author.nickname || '작성자'} color="lavender" small image={author.profileImage || undefined} /><span><strong>{author.nickname || '작성자'}</strong><small>{item.role || '역할 미입력'}</small></span></>;
     return <div className={`${styles.page} container`}>
-        <div className={styles.topbar}><Link href={listPath}><ArrowLeft size={16} />포트폴리오 목록</Link><div className={styles.actions}>
+        <div className={styles.topbar}><Link href={listPath}><ArrowLeft size={16} />{backLabel}</Link><div className={styles.actions}>
             {result.value.canEdit && <><Link className="button secondary" href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} /></>}
             <Button variant="secondary" onClick={() => window.print()}><Printer size={15} />인쇄 / PDF</Button>
         </div></div>
@@ -51,7 +51,7 @@ export function PortfolioDetailResult({ result, onRetry, onChanged, notice }: { 
             <div className={styles.content}>
                 {result.value.document ? <PortfolioContent item={portfolioInputFromDetail(result.value)} /> : <section className={content.section} id="portfolio-description"><header><span className={content.number}>01</span><h2>프로젝트 설명</h2></header><div className={content.body}><p className={content.plain}>{description || '등록된 설명이 없습니다.'}</p></div></section>}
                 {!!attachments.length && <section className={content.section} id="portfolio-attachments"><header><span className={content.number}>02</span><h2>첨부파일</h2></header><div className={`${content.body} ${content.links}`}>{attachments.map((file, index) => <a key={`${file.url}:${index}`} href={file.url} target="_blank" rel="noopener noreferrer">{file.name || `첨부파일 ${index + 1}`} ↗</a>)}</div></section>}
-                <footer className={styles.caseFooter}><span>PROJECT / {item.title || '제목 미입력'}</span><Link href={listPath}>다른 포트폴리오 보기<ArrowUpRight size={17} /></Link></footer>
+                <footer className={styles.caseFooter}><span>PROJECT / {item.title || '제목 미입력'}</span><Link href={listPath}>{backHref ? backLabel : "다른 포트폴리오 보기"}<ArrowUpRight size={17} /></Link></footer>
             </div>
         </article>
     </div>;

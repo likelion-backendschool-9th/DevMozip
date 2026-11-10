@@ -46,7 +46,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         try{
             owned(id,member);
             if(!repository.referenceConstraintReady())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"지원서 참조 제약이 준비되지 않아 삭제할 수 없습니다.");
-            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"지원서에 제출된 포트폴리오의 삭제 정책은 담당자 협의 전까지 보류됩니다.");
+            if(repository.referenced(id)&&!repository.submittedCopiesReady(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"제출본이 보관되지 않은 포트폴리오는 삭제할 수 없습니다.");
             repository.delete(id,member.getId());
         }catch(org.springframework.dao.DataIntegrityViolationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 기능에서 참조 중인 포트폴리오는 삭제할 수 없습니다.");}
         catch(DataAccessException e){throw unavailable();}
@@ -58,8 +58,8 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
             if(!Objects.equals(input.expectedUpdatedAt(),old.updatedAt()))throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 곳에서 변경되었습니다. 최신 내용을 다시 불러와 주세요.");
             String visibility=input.visibility().name();
             if(old.visibility().equals(visibility))return queries.detail(email,id);
-            // 제출 상태를 바꾸거나 원본 공개 정책을 임의로 결정하지 않는다.
-            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"지원서에 제출된 포트폴리오의 공개 범위 변경은 담당자 협의 전까지 보류됩니다.");
+            // 제출본 보관이 확인되면 원본 범위 변경을 허용한다. 지원서/보관본은 변경하지 않는다.
+            if(repository.referenced(id)&&!repository.submittedCopiesReady(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"제출본이 보관되지 않은 포트폴리오는 공개 범위를 변경할 수 없습니다.");
             var time=now();if(old.updatedAt()!=null&&!time.isAfter(old.updatedAt()))time=old.updatedAt().plusNanos(1000);
             repository.changeVisibility(id,member.getId(),visibility,time);
             return queries.detail(email,id);

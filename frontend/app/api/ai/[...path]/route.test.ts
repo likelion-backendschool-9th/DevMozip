@@ -7,6 +7,22 @@ const post = (path: string, origin = 'http://localhost', key = 'request-key') =>
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', 'Idempotency-Key': key, Authorization: 'Bearer untrusted' }, body: '{}' }), context(path));
 beforeEach(() => vi.mocked(backendFetch).mockReset());
 describe('AI BFF', () => {
+    it('현재 사용량 GET만 허용하고 사용자 지정 쿼리를 거절한다', async () => {
+        const usage = { usageMonth: '2026-11', usedCount: 4, limit: 5, remainingCount: 1, pendingCount: 1, availableCount: 0 };
+        vi.mocked(backendFetch).mockResolvedValue(Response.json(usage));
+        const result = await GET(new Request('http://localhost/api/ai/usage'), context('usage'));
+        expect(await result.json()).toEqual(usage);
+        expect(result.headers.get('cache-control')).toBe('no-store');
+        expect(backendFetch).toHaveBeenCalledWith('/api/v1/ai/usage', expect.any(Object));
+        expect((await GET(new Request('http://localhost/api/ai/usage?userId=2'), context('usage'))).status).toBe(400);
+        expect((await post('usage')).status).toBe(404);
+    });
+    it('추천 한도 429를 유지하고 내부 오류 필드는 제외한다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ code: 'AI_MONTHLY_LIMIT_EXCEEDED', message: '한도 초과', secret: 'hidden' }, { status: 429 }));
+        const result = await post('conversations/1/recommendations');
+        expect(result.status).toBe(429);
+        expect(await result.json()).toEqual({ code: 'AI_MONTHLY_LIMIT_EXCEEDED', message: expect.stringContaining('추천 가능 횟수') });
+    });
     it('정해진 AI 경로만 전달하고 캐시하지 않는다', async () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json([]));
         const response = await GET(new Request('http://localhost/api/ai/conversations'), context('conversations'));
@@ -32,10 +48,10 @@ describe('AI BFF', () => {
         expect(response.status).toBe(200);
     });
     it('기존 공개 프로젝트 API에서 카드용 필드만 읽는다', async () => {
-        vi.mocked(backendFetch).mockResolvedValue(Response.json({ project: { id: 9, isPublic: true, title: '공개 프로젝트', summary: '소개', description: '상세', techStacks: ['React'], recruitmentSlots: [{ role: 'BACKEND' }], hostEmail: 'private' } }));
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ project: { id: 9, isPublic: true, title: '공개 프로젝트', summary: '소개', description: '상세', techStacks: ['React'], recruitmentSlots: [{ roleCode: 'BACKEND' }], hostEmail: 'private' } }));
         const response = await GET(new Request('http://localhost/api/ai/projects/9'), context('projects/9'));
         expect(response.status).toBe(200);
-        expect(await response.json()).toEqual({ id: 9, title: '공개 프로젝트', summary: '소개', description: '상세', imageUrl: null, stacks: ['React'], roles: ['BACKEND'] });
+        expect(await response.json()).toEqual({ id: 9, title: '공개 프로젝트', summary: '소개', description: '상세', imageUrl: null, stacks: ['React'], roles: ['백엔드'] });
         expect(backendFetch).toHaveBeenCalledWith('/api/v1/projects/9');
     });
     it('비공개 프로젝트 응답을 카드 정보로 넘기지 않는다', async () => {

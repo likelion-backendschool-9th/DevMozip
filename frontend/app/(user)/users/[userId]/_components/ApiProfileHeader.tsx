@@ -6,6 +6,7 @@ import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { collaborationLabel, formatCareer, profileImageUrl } from '@/lib/profiles/profileDetail';
 import { starColor } from '@/lib/profiles/profileService';
 import type { OwnProfileDetail } from '@/types/profileDetail';
+import { ApiFollowSummary } from './ApiFollowSummary';
 import styles from './ProfileHeader.module.css';
 
 export function ApiProfileHeader({ profile, onEdit }: { profile: OwnProfileDetail; onEdit?: () => void }) {
@@ -39,8 +40,7 @@ export function ApiProfileHeader({ profile, onEdit }: { profile: OwnProfileDetai
                 <span><Clock3 size={13} />{profile.contactHours || '연락 가능 시간 미입력'}</span>
             </div>
             <div className={scope('profile-social')}>
-                <button disabled title="팔로워 조회 연결 전">팔로워 <b>—</b></button>
-                <button disabled title="팔로잉 조회 연결 전">팔로잉 <b>—</b></button>
+                <ApiFollowSummary profile={profile} />
                 <div className={scope('trust-temperature')} style={{ color: starColor(profile.trustScore ?? 36.5) }}>
                     <Star size={17} fill="currentColor" /><strong>{profile.trustScore === null ? '—' : `${profile.trustScore.toFixed(1)}°C`}</strong><span>신뢰 온도</span>
                 </div>
