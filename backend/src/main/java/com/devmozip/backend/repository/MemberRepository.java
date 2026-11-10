@@ -52,6 +52,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 회원가입 시 닉네임 중복 확인 (대소문자는 구분하지 않는다)
     boolean existsByNicknameIgnoreCase(String nickname);
 
+    // 회원가입 시 이메일 앞부분을 태그로 쓸 수 있는지 확인 (프로필 수정처럼 대소문자는 구분하지 않는다)
+    boolean existsByTagIgnoreCase(String tag);
+
     // 서버 시작 시 정지된 회원 목록 불러오기 (SuspendedMemberStore)
     List<Member> findAllByStatus(MemberStatus status);
 }

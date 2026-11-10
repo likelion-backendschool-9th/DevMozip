@@ -47,6 +47,7 @@ erDiagram
 - `follows` 엔티티와 DDL은 develop과 원격 브랜치 어디에도 없다. `docs/sql`에도 없다.
 - `users`는 `Member` 엔티티(`entity/Member.java`)가 매핑한다. `Member`는 인증 담당 코드이므로 고치지 않고 연관관계 대상으로만 쓴다.
 - `users.tag`는 회원가입 때 저장되지 않고 프로필 수정(WBS 3.2)에서 정해진다. 그래서 태그가 없는 회원이 있을 수 있다. 태그는 영문·숫자·밑줄·하이픈 2~30자이고, `me`는 쓸 수 없으며, 대소문자를 구분하지 않고 중복을 막는다(`ProfileUpdateRequest`, `ProfileUpdateService`).
+  - 2026-11-10 변경: 회원가입이 이메일 @ 앞부분을 같은 규칙으로 확인해 `users.tag`에 저장한다(`MemberService`). 규칙에 맞지 않거나 이미 쓰는 값이면 비워 두므로 태그가 없는 회원은 여전히 있을 수 있다.
 
 ## 3. 백엔드 구조
 

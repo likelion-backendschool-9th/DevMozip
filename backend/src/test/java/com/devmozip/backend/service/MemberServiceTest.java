@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -88,6 +89,7 @@ class MemberServiceTest {
         assertThat(member.getPasswordHash()).isNull();
         assertThat(member.getEmail()).isEqualTo("new@devmozip.demo");
         assertThat(member.getNickname()).isEqualTo("새회원");
+        assertThat(member.getTag()).isEqualTo("new");
         assertThat(member.getJobCategories()).containsExactly("백엔드 개발자");
         assertThat(member.getSkills()).containsExactly("Java");
         assertThat(member.getInterests()).containsExactly("AI");
@@ -166,6 +168,8 @@ class MemberServiceTest {
         assertThat(member.getEmail()).isEqualTo("new@devmozip.demo");
         assertThat(member.getPasswordHash()).isEqualTo("hash");
         assertThat(member.getNickname()).isEqualTo("새회원");
+        // 대문자·앞뒤 공백을 정리한 이메일의 @ 앞부분
+        assertThat(member.getTag()).isEqualTo("new");
         assertThat(member.getJobCategories()).containsExactly("백엔드 개발자");
         assertThat(member.getSkills()).containsExactly("Java", "React");
         assertThat(member.getInterests()).containsExactly("AI");
@@ -177,6 +181,39 @@ class MemberServiceTest {
 
         assertThat(response.email()).isEqualTo("new@devmozip.demo");
         assertThat(response.nickname()).isEqualTo("새회원");
+    }
+
+    private static SignupRequest requestWithEmail(String email) {
+        return new SignupRequest(email, PASSWORD, PASSWORD, "새회원", "백엔드 개발자", "3년 차",
+                List.of("Java"), List.of("AI"), true, null);
+    }
+
+    private Member signedUpWith(String email) {
+        when(memberRepository.save(any(Member.class))).then(returnsFirstArg());
+        memberService.signup(requestWithEmail(email));
+        verify(memberRepository).save(memberCaptor.capture());
+        return memberCaptor.getValue();
+    }
+
+    @Test
+    void 이메일_앞부분의_밑줄_하이픈_숫자는_그대로_태그가_된다() {
+        assertThat(signedUpWith("dev_kim-01@devmozip.demo").getTag()).isEqualTo("dev_kim-01");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"john.doe@devmozip.demo", "new+dev@devmozip.demo", "a@devmozip.demo", "me@devmozip.demo",
+            "abcdefghijklmnopqrstuvwxyz12345@devmozip.demo"})
+    void 이메일_앞부분이_태그_규칙에_맞지_않으면_태그를_비우고_가입한다(String email) {
+        assertThat(signedUpWith(email).getTag()).isNull();
+
+        verify(memberRepository, never()).existsByTagIgnoreCase(any());
+    }
+
+    @Test
+    void 다른_회원이_쓰는_태그면_태그를_비우고_가입한다() {
+        when(memberRepository.existsByTagIgnoreCase("new")).thenReturn(true);
+
+        assertThat(signedUpWith("new@devmozip.demo").getTag()).isNull();
     }
 
     @Test
