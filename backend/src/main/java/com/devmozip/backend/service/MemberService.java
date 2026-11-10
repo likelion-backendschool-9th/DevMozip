@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,8 @@ public class MemberService {
     private static final BigDecimal INITIAL_TRUST_SCORE = new BigDecimal("36.50");
     // BCrypt는 72바이트까지만 처리한다. 글자 수가 64자 이내여도 한글이 많으면 넘을 수 있다.
     private static final int BCRYPT_MAX_BYTES = 72;
+    // 프로필 수정의 태그 규칙(ProfileUpdateRequest)과 같다. 영문·숫자·밑줄·하이픈 2~30자이며 me는 쓸 수 없다.
+    private static final Pattern TAG_PATTERN = Pattern.compile("(?![mM][eE]$)[a-zA-Z0-9_-]{2,30}");
     private static final String DUPLICATE_EMAIL_MESSAGE = "이미 가입된 이메일입니다.";
     private static final String DUPLICATE_EMAIL_FOR_KAKAO_MESSAGE =
             "이미 가입된 이메일입니다. 기존 계정으로 로그인한 뒤 개인정보 설정에서 카카오를 연동해 주세요.";
@@ -304,6 +307,7 @@ public class MemberService {
         return Member.builder()
                 .email(email)
                 .nickname(request.nickname().trim())
+                .tag(tagFromEmail(email))
                 .role(MemberRole.USER)
                 .status(MemberStatus.ACTIVE)
                 .trustScore(INITIAL_TRUST_SCORE)
@@ -312,6 +316,19 @@ public class MemberService {
                 .jobCategories(List.of(request.job().trim()))
                 .skills(distinct(request.skills()))
                 .interests(distinct(request.interests()));
+    }
+
+    /**
+     * 가입 이메일의 @ 앞부분을 사용자 태그로 쓴다. 이메일은 소문자로 정리된 값을 받는다.
+     * 태그 규칙에 맞지 않거나 다른 회원이 이미 쓰는 값이면 가입을 막지 않고 비워 둔다. 이때는 프로필 수정에서 직접 정한다.
+     */
+    private String tagFromEmail(String email) {
+        int at = email.lastIndexOf('@');
+        String tag = at < 0 ? "" : email.substring(0, at);
+        if (!TAG_PATTERN.matcher(tag).matches() || memberRepository.existsByTagIgnoreCase(tag)) {
+            return null;
+        }
+        return tag;
     }
 
     private Member saveMember(Member member, String conflictMessage) {

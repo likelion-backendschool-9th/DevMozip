@@ -13,7 +13,7 @@
 
 ## 계정과 인증
 
-로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬(local 프로필)도 PostgreSQL을 사용하며 초기 데이터 SQL을 자동 실행하지 않는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 회원가입은 직군·기술 스택·관심 분야를 users 테이블의 job_categories·skills·interests 칼럼(PostgreSQL JSONB)에 저장한다. 허용 값은 백엔드 entity/enums의 enum으로 검증하고, 가입 화면은 GET /api/v1/auth/signup/options로 같은 목록을 받는다. 회원정보 수정 API도 같은 enum으로 검증해야 한다. 매칭·검색·프로젝트 등 Mock 화면의 선택지는 frontend/mocks에 있다.
+로그인은 백엔드 users 테이블의 계정으로 한다. 데모 계정(member·premium·admin@devmozip.demo)은 서버 DB에 등록되어 있다. 로컬(local 프로필)도 PostgreSQL을 사용하며 초기 데이터 SQL을 자동 실행하지 않는다. 서버의 기본 설정은 초기 데이터 SQL을 실행하지 않는다. 회원가입은 직군·기술 스택·관심 분야를 users 테이블의 job_categories·skills·interests 칼럼(PostgreSQL JSONB)에 저장한다. 가입 이메일(소문자로 정리한 값)의 @ 앞부분이 태그 규칙(영문·숫자·밑줄·하이픈 2~30자, me 제외)에 맞고 다른 회원이 대소문자 무시로 쓰지 않으면 users.tag에 저장한다. 맞지 않으면 가입은 그대로 진행하고 tag를 비워 두며, 회원이 프로필 수정에서 정한다. 허용 값은 백엔드 entity/enums의 enum으로 검증하고, 가입 화면은 GET /api/v1/auth/signup/options로 같은 목록을 받는다. 회원정보 수정 API도 같은 enum으로 검증해야 한다. 매칭·검색·프로젝트 등 Mock 화면의 선택지는 frontend/mocks에 있다.
 
 | 구분 | 동작 |
 |---|---|

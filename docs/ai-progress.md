@@ -1,5 +1,13 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 회원가입 시 이메일 앞부분을 사용자 태그로 저장 (`develop`)
+
+- 요청 범위: 회원가입 때 가입 이메일의 @ 왼쪽 값을 `users.tag`에 저장한다. 확인 결과 기존 가입(이메일·카카오)은 tag를 넣지 않아 NULL이었다.
+- 변경 파일: `backend/src/main/java/com/devmozip/backend/service/MemberService.java`, `repository/MemberRepository.java`(`existsByTagIgnoreCase` 추가), `backend/src/test/java/com/devmozip/backend/service/MemberServiceTest.java`, 신규 `backend/src/test/java/com/devmozip/backend/controller/SignupTagIntegrationTest.java`, `docs/team-auth-deployment.md`, `docs/profile-edit-integration.md`, `docs/follow-plan.md`, 이 문서.
+- 완료: 이메일 가입과 카카오 가입이 함께 쓰는 `memberBuilder`에서 소문자로 정리한 이메일의 마지막 @ 앞부분을 tag로 넣는다. 프로필 수정과 같은 규칙(영문·숫자·밑줄·하이픈 2~30자, me 제외)에 맞고 다른 회원이 대소문자 무시로 쓰지 않을 때만 저장한다. 맞지 않으면(예: `.`·`+` 포함, 1자, 31자 이상, 중복) 가입은 그대로 진행하고 tag를 비워 두며 회원이 프로필 수정에서 정한다. 다른 값을 자동 생성하지 않는다. 가입 요청·응답 형식, 엔티티·DDL, 프론트는 변경하지 않았다.
+- 검증: 저장소 밖 복사본 `backend`에서 `./gradlew test --tests MemberServiceTest --tests SignupTagIntegrationTest` 실행, 56개 통과(건너뜀 0). 통합 테스트 2개는 Testcontainers PostgreSQL 17에 가입 API를 호출해 `users.tag` 저장값, 기존 태그와 겹칠 때·규칙에 맞지 않을 때 NULL을 확인했다. 전체 `./gradlew test`는 1380개 중 실패 17·건너뜀 12였다. 실패 중 `ProjectPortfolioSnapshotIntegrationTest` 12개는 복사본에 `docs/sql`이 없어서였고, 넣고 다시 실행해 12개 통과했다. `ProfilePostsIntegrationTest` 5개는 `posts` 위치 기반 INSERT에서 `created_at` 형식 오류로 실패하며 변경 전 HEAD 복사본에서도 같은 5개가 실패한다(이번 변경과 무관, 담당 코드 미수정). 프론트는 변경 없이 복사본 `frontend`에서 `npm ci`·`npm run build` 성공.
+- 미검증·주의: 개발·공유 DB에는 실행하지 않았다. 이미 가입한 회원의 tag는 바꾸지 않는다. 같은 앞부분으로 동시에 가입하면 unique 제약으로 한쪽이 기존 동시 가입과 같은 409를 받고, 다시 가입하면 tag 없이 가입된다. 새 회원은 가입 직후 tag가 생겨 tag 보유를 조건으로 하는 개발자 탐색·AI 추천 후보·공개 프로필(`/users/{tag}`)에 바로 나타나며, 이메일 앞부분이 공개 주소로 노출된다. 커밋·푸시는 하지 않았다.
+
 ## 2026-11-10 월간 추천 잔여 횟수 표시 (`feat/ai-prompt`)
 
 - 사용자 요청으로 matching 추천 조건 패널의 `사용 횟수 / 한도` 표시를 서버 `remainingCount` 기준의 `남은 횟수 / 한도`로 변경하고 제목을 ‘월간 추천 잔여’로 명확히 했다. 프리미엄1회 사용은99/100회, 무료1회 사용은4/5회다. 로딩·실패 시 기존 ‘—’ 표시를 유지한다.
