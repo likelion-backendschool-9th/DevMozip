@@ -52,7 +52,7 @@ Mock ON은 기존 시연 상태·날짜 시뮬레이션을 유지한다. OFF는 
 
 ## 미연결 범위
 
-실제 알림 발송·영속 outbox/재전송은 미연결이다. ProjectReviewRequested 소비자는 AFTER_COMMIT에 연결해야 하며 현재 프로세스 종료 시 발송을 보장하지 않는다. 원문 토큰은 발급 응답/이벤트 순간에만 존재한다.
+실제 알림 발송·영속 outbox/재전송은 미연결이다. ProjectReviewNotificationEvent 소비자는 AFTER_COMMIT에 연결해야 하며 현재 프로세스 종료 시 발송을 보장하지 않는다. 원문 토큰은 발급 응답/이벤트 순간에만 존재한다.
 
 프로필의 실제 회원 식별·공개 범위 API·신뢰 점수 계산식 연결은 남았다. 집계 서비스를 준비했으며 기존 Mock 온도 공식을 실제 점수로 적용하지 않는다. 키워드 관리용 관리자 CRUD API도 추가하지 않았다.
 
@@ -60,7 +60,7 @@ Mock ON은 기존 시연 상태·날짜 시뮬레이션을 유지한다. OFF는 
 
 - backend entity/ProjectReview, ReviewKeyword, ReviewKeywordSelection
 - backend repository/ProjectReviewRepository, ReviewKeywordRepository, ReviewKeywordSelectionRepository
-- backend service/ProjectReviewService, controller/ProjectReviewController, dto/project/*Review*, event/ProjectReviewRequested
+- backend service/ProjectReviewService, controller/ProjectReviewController, dto/project/*Review*, event/ProjectReviewNotificationEvent
 - backend project/ProjectReviewIntegrationTest 및 테스트 DB 자식 테이블 우선 정리
 - frontend app/api/projects/[projectId]/reviews/**/route.ts, reviews/_components/ApiProjectReviewForm.tsx
 - frontend app/projects/_components/api/ApiProjectReviewStatus.tsx, ApiProjectDetail.tsx
@@ -94,3 +94,9 @@ Mock ON은 기존 시연 상태·날짜 시뮬레이션을 유지한다. OFF는 
 ## 2026-11-09 최신 develop a04608f 통합
 
 진행 문서의 양쪽 기록을 보존하고 GitHub 충돌 목록에 있던 프로젝트 코드의 자동 병합 결과를 확인했다. 리뷰 업무 코드는 직전 구현을 유지한다. 문자열 모집 직군 계약에 맞춰 AI 테스트 입력 2곳만 수정했다. 프론트 빌드·TypeScript/795개 테스트 통과. 백엔드 전체 631개 통과·12개 스킵·기존 카카오 로그 검증 1개 실패, 프로젝트는 103개 통과·11개 스킵·실패 없음(리뷰 통합 10개 포함). 팀 DB/서버/브라우저 재검증은 하지 않았다. 현재 로컬 병합 상태이며 커밋·푸시는 별도 요청 전 진행하지 않는다.
+
+## DTO·이벤트 명명 정리 (2026-11-10)
+
+응답 record는 dto/project에 ProjectReviewResponse, ProjectReviewLinkResponse, ProjectReviewRequestStatusResponse, ProjectReviewSummaryResponse, ProjectReviewReminderResponse로 구분한다. SubmitProjectReviewsRequest는 입력 DTO로 유지한다. API 경로·JSON 필드와 기존 정책은 바꾸지 않는다.
+
+ProjectReviewNotificationEvent는 최초 리뷰 요청과 재알림을 알림 담당자에게 전달하는 내부 이벤트다. HTTP 요청 DTO나 실제 발송 완료 이벤트가 아니며 AFTER_COMMIT 소비·영속 발송은 기존 후속 연동 범위다. 링크 및 이벤트의 toString에서는 토큰을 계속 숨긴다.

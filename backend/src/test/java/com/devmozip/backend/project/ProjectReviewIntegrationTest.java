@@ -61,7 +61,7 @@ class ProjectReviewIntegrationTest {
  private org.springframework.test.web.servlet.ResultActions submit(long id,long user,String body) throws Exception {return mvc.perform(put(base(id)+"/reviews/me").header("Authorization",token(user)).contentType("application/json").content(body));}
  @Test void completionSnapshotsTargetsAndSubmissionIsImmutable() throws Exception {
   long id=ended();assertEquals(6L,jdbc.queryForObject("SELECT count(*) FROM reviews WHERE project_id=?",Long.class,id));assertEquals(0L,jdbc.queryForObject("SELECT count(*) FROM reviews WHERE reviewer_member_id=reviewee_member_id",Long.class));
-  assertEquals(3L,events.stream(com.devmozip.backend.event.ProjectReviewRequested.class).filter(e->!e.reminder()).count());
+  assertEquals(3L,events.stream(com.devmozip.backend.event.ProjectReviewNotificationEvent.class).filter(e->!e.reminder()).count());
   assertEquals(1L,jdbc.queryForObject("SELECT count(DISTINCT token_hash) FROM reviews r JOIN project_members m ON m.id=r.reviewer_member_id WHERE m.user_id=202",Long.class));
   var before=mine(id,202);assertEquals("2026-12-06T12:00:00",before.get("expiresAt").asText());
   String token=link(id,202),body=submission(id,202,token);submit(id,202,body).andExpect(status().isOk()).andExpect(jsonPath("$.submitted").value(true));submit(id,202,body).andExpect(status().isConflict());
