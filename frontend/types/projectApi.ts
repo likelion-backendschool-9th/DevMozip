@@ -15,7 +15,7 @@ export interface ProjectRecord extends CreateProjectRequest {
 export interface ProjectListRecord extends ProjectRecord { memberCount:number; myRole:'HOST'|'PARTICIPANT'|null; recruitmentClosed:boolean }
 export interface ProjectPageResult {items:ProjectListRecord[];totalElements:number;page:number;size:number;totalPages:number}
 export interface ProjectMembership {myRole:'HOST'|'PARTICIPANT';myEndRequested:boolean;endRequestCount:number;requiredEndRequestCount:number}
-export interface ProjectTeamMember {userId:number;tag:string|null;nickname:string|null;role:'HOST'|'PARTICIPANT';jobRole:string|null}
+export interface ProjectTeamMember {status?:'ACTIVE'|'KICKED';userId:number;tag:string|null;nickname:string|null;role:'HOST'|'PARTICIPANT';jobRole:string|null}
 export interface ProjectDetailResult {team?:ProjectTeamMember[];project:ProjectRecord;memberCount:number;recruitmentClosed:boolean;membership:ProjectMembership|null;host:{id:number;tag:string|null;nickname:string|null}|null}
 export interface ProjectIdentity {id:number;role:string}
 export interface ProjectLifecycleResult {project:ProjectRecord;activeMemberCount:number;endRequestCount:number;requiredEndRequestCount:number;myEndRequested:boolean}

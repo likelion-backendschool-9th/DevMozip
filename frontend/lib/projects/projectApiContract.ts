@@ -22,8 +22,8 @@ export function parseProjectPage(value:unknown):ProjectPageResult{
 export function parseProjectTeam(value:unknown):ProjectTeamMember[]{
  if(!Array.isArray(value))throw new Error('잘못된 팀원 응답');
  const team=value.map(member=>{
-  if(!record(member)||!Number.isSafeInteger(member.userId)||Number(member.userId)<=0||!['HOST','PARTICIPANT'].includes(String(member.role))||![member.tag,member.nickname,member.jobRole].every(v=>v===null||typeof v==='string'))throw new Error('잘못된 팀원 응답');
-  return {userId:Number(member.userId),tag:member.tag as string|null,nickname:member.nickname as string|null,role:member.role as ProjectTeamMember['role'],jobRole:member.jobRole as string|null};
+  if(!record(member)||(member.status!==undefined&&!['ACTIVE','KICKED'].includes(String(member.status)))||!Number.isSafeInteger(member.userId)||Number(member.userId)<=0||!['HOST','PARTICIPANT'].includes(String(member.role))||![member.tag,member.nickname,member.jobRole].every(v=>v===null||typeof v==='string'))throw new Error('잘못된 팀원 응답');
+  return {...(member.status===undefined?{}:{status:member.status as ProjectTeamMember['status']}),userId:Number(member.userId),tag:member.tag as string|null,nickname:member.nickname as string|null,role:member.role as ProjectTeamMember['role'],jobRole:member.jobRole as string|null};
  });
  if(new Set(team.map(m=>m.userId)).size!==team.length)throw new Error('중복된 팀원 응답');
  return team;

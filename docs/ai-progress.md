@@ -2247,3 +2247,17 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 변경 파일: ChatWindow.tsx·새 ChatWindow.test.tsx, 새 lib/messaging/chatTimeline.ts, ApiKickVotePanel.tsx·ServerProjectChat.tsx·KickVotePanel.tsx·프로젝트 채팅 page.tsx, docs/messenger-plan.md.
 
 검증: 독립 Docker 컨테이너에서 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체151개 파일/1667개 성공. 새 테스트로 투표 전후 대화 배치, 여러 투표 시간순 정렬, 한국 시각·UTC 혼합 비교와 투표만 있는 화면의 빈 대화 안내 제거를 확인했다. git diff --check 통과. 브라우저 수동 스크롤·실제 투표 생성 검증은 미실행. 백엔드·DB 변경 없어 백엔드 테스트는 재실행하지 않았다. 커밋·푸시 없음.
+
+## 2026-11-11 현재 참여자에게 강퇴 팀원 표시
+
+사용자 요청으로 상세·관리 응답 team에 status를 추가했다. ACTIVE 조회자에게만 KICKED 팀원도 포함하고, 비로그인·비팀원·강퇴된 본인의 조회는 기존 ACTIVE 명단만 제공한다. LEFT 이력은 포함하지 않으며 현재 인원 수·정원 계산은 변경하지 않았다. 오른쪽 팀원 카드 이름 옆에 강퇴됨 배지를 표시하고 활동 카드도 강퇴됨을 프로젝트 종료보다 우선 표시한다. 기존 지원서·관리 팀원 화면의 KICKED 표기는 유지했다. DB 변경 없음.
+
+수정: ProjectDetailResponse·ProjectQueryRepository·ProjectQueryServiceImpl·조회 통합 테스트, ProjectTeamCard/CSS/테스트·projectApi 타입·계약/테스트·ApiActivityTab, docs/project-query.md.
+
+검증: npm run build 성공(TypeScript 포함), 전체 프론트151개 파일/1669개 테스트 통과. 격리 PostgreSQL Testcontainers에서 조회·지원·강퇴 관련36개 통합 테스트 통과(실패·오류·건너뜀0). 현재 팀원만 강퇴 이력을 보고 외부·강퇴된 조회자는 보지 못하는 조건, 현재 인원에서 강퇴 제외, 상태 전달·잘못된 상태 거부 및 강퇴 배지를 검증했다. git diff --check 통과. 로컬 백엔드 재시작. 브라우저 로그인 상태 수동 검증은 미실행. 커밋·푸시 없음.
+
+## 2026-11-11 관리 화면 강퇴 배지 빨간색 표시
+
+사용자 요청으로 ApiProjectApplications의 참여 팀원 탭에서 KICKED인 경우에만 관리 페이지 CSS Module의 kickedBadge를 적용했다. 빨간 글씨·연한 빨간 배경·테두리로 구분한다. 데이터·권한 변경 없음.
+
+검증: npm run build 성공(TypeScript 포함). submittedPortfolio·ApiProjectOwnerView 기존 테스트2개 파일/7개 성공. git diff --check 통과. 브라우저 수동 색상 확인은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 커밋·푸시 없음.

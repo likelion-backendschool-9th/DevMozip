@@ -15,3 +15,8 @@ it('팀원 공개 필드만 전달하고 중복·잘못된 응답은 거부한�
  expect(()=>parseProjectTeam([{...member,role:'ADMIN'}])).toThrow();
  expect(parseProjectDetail({project,memberCount:1,recruitmentClosed:false,membership:null,team:[member]}).team).toEqual([member]);
 });
+
+it('서버 강퇴 상태를 유지하고 알 수 없는 상태를 거부한다',()=>{
+ const member={userId:7,tag:'developer',nickname:'개발자',role:'PARTICIPANT',jobRole:'BACKEND',status:'KICKED'};
+ expect(parseProjectTeam([member])[0].status).toBe('KICKED');expect(()=>parseProjectTeam([{...member,status:'UNKNOWN'}])).toThrow();
+});

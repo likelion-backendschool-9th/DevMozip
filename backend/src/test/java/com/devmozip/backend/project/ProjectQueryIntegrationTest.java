@@ -82,6 +82,15 @@ class ProjectQueryIntegrationTest {
 			.andExpect(jsonPath("$.team[1].userId").value(303))
 			.andExpect(jsonPath("$.team[1].jobRole").value("BACKEND"))
 			.andExpect(jsonPath("$.team[1].email").doesNotExist());
+		when(currentUser.getCurrentUserId()).thenReturn(303L);
+		mvc.perform(get(BASE+"/"+first).header("Authorization",token())).andExpect(status().isOk())
+			.andExpect(jsonPath("$.team.length()").value(3))
+			.andExpect(jsonPath("$.team[2].userId").value(305))
+			.andExpect(jsonPath("$.team[2].status").value("KICKED"))
+			.andExpect(jsonPath("$.memberCount").value(2));
+		when(currentUser.getCurrentUserId()).thenReturn(305L);
+		mvc.perform(get(BASE+"/"+first).header("Authorization",token())).andExpect(status().isOk())
+			.andExpect(jsonPath("$.team.length()").value(2));
 		mvc.perform(get(BASE+"/"+privateId)).andExpect(status().isNotFound());
 		when(currentUser.getCurrentUserId()).thenReturn(303L);
 		mvc.perform(get(BASE+"/"+privateId).header("Authorization",token())).andExpect(status().isNotFound());
