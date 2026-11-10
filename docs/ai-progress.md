@@ -888,3 +888,15 @@ erDiagram
 - 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
+
+### 2026-11-10 minimatch 보안 알림 수정
+
+- 범위: 사용자가 제시한 Dependabot GHSA-g3hv-75wg-m249 대응. develop a04608f 기반 `.worktrees/minimatch-security` / `fix/minimatch-security`에서만 수정하며 원본 작업 폴더의 미커밋 변경과 Docker 실행 설정은 보존했다. 후속 사용자 요청으로 해당 보안 수정만 커밋·푸시하고 develop 대상 PR을 생성한다.
+- 변경 파일: frontend/package.json에 `minimatch@>=7.0.0 <11.0.1` → `11.0.1` override 추가, frontend/package-lock.json 재생성. @typescript-eslint/typescript-estree가 사용하던 10.2.6만 수정 버전으로 교체하며 알림 범위 밖의 3.1.5와 Next.js/ESLint 버전은 유지한다. 새 버전의 간접 의존성 @isaacs/nonrecursive-glob-match가 추가됐다.
+- 공식 npm 레지스트리의 minimatch 11.0.1 Node 요구사항(18 || 20 || >=22)을 확인했다. 현재 Node 24 및 Docker Node 24와 일치한다.
+- `npm ci --prefer-offline --no-audit --no-fund` 및 `npm ls minimatch` 성공. 실제 설치 트리에서 11.0.1 overridden 확인.
+- `npm audit --json`: 취약점 0건, minimatch 알림 없음. GitHub 알림 해소는 수정 사항이 기본 브랜치에 반영되어 Dependabot이 재검사한 뒤 별도 확인해야 한다.
+- `npm test -- --maxWorkers=2`: 71개 파일, 789개 테스트 모두 통과.
+- `npm run lint -- --format json`: 기존 코드에서 오류 81건·경고 68건으로 실패했다. 같은 소스에서 10.2.6으로 실행한 결과와 파일별 메시지가 완전히 일치함을 확인했고, 비교 후 11.0.1을 복원했다. 관련 없는 린트 수정은 하지 않았다.
+- 백엔드 코드·DB·서버 실행 설정 변경 없음. 백엔드 테스트와 브라우저 기능 테스트는 미실행이다.
+- `npm run build -- --webpack`: 성공, Next.js TypeScript 검사 및 57개 페이지 생성 포함. 자동 생성된 next-env.d.ts는 원복했다. `git diff --check` 통과.
