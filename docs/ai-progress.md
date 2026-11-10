@@ -1436,3 +1436,19 @@ erDiagram
 - 첫 프론트 검증은 상세 페이지 자동 병합에서 useMockVisibility import가 중복돼 테스트 파일 3개 파싱 및 빌드에 실패했다. frontend/app/projects/[projectId]/page.tsx에서 동일 import 한 줄만 제거했고 기능·Hook 호출은 유지했다. 백엔드 코드는 재변경하지 않았다.
 - 중복 import 제거 후 남은 프론트 1건 실패는 채팅 PR의 테스트가 Mock OFF에도 `/projects/pocket` Mock 상세를 기대하던 과거 전제였다. DirectChatScreens.test.tsx를 숫자 ID의 실제 API 로딩/Mock 식별자 미전달 및 Mock slug 차단으로 맞췄으며 Mock ON 대화 시작 검사는 유지했다. API 기능·권한을 완화하거나 새 채팅 연동을 추가하지 않았다.
 - 최종 프론트 `npm test -- --maxWorkers=2`: 93개 파일 / 1,066개 모두 통과. `npm run build -- --webpack`: 성공(TypeScript 검사·63개 페이지 생성 포함). next-env.d.ts 생성 변경 복구, 충돌 마커 없음 및 git diff --check 통과. 브라우저 실제 계정 시연은 미실행이다.
+
+
+### 2026-11-10 프로젝트 지원 포트폴리오 스냅샷 전환
+
+- 사용자 요청으로 닫힌 #108의 원본 수정 금지 정책을 폐기하고 별도 제출본 보관을 구현했다. 최신 develop d6a5720 기반 `.worktrees/project-portfolio-snapshots` / feat/48-project-portfolio-snapshots에서 작업한다. 후속 사용자 요청으로 해당 변경을 커밋·푸시하고 develop 대상 새 PR을 생성한다. 현재 서버는 교체하지 않는다.
+- 신규 ProjectApplicationPortfolioSnapshot 엔티티/Repository, DatabaseProjectPortfolioAccess의 공개/소유권 검사·잠금·원자적 복사, ProjectPortfolioSnapshotService/Controller/제출본 목록 DTO를 추가했다. 원본 수정은 허용하고 보관본이 있는 원본은 삭제 후에도 제출 내역에서 조회한다. 원본 FK는 SET NULL, 스냅샷 sourcePortfolioId는 FK 없이 보존한다.
+- PortfolioMutationRepository/Service는 삭제 보류 정책을 제출본 존재 확인으로 변경했다. 본인 지원자는 무료로 자신의 제출본을 조회하며 주최자의 타인 상세 열람에는 프리미엄/관리자 권한을 유지한다. 다른 프로젝트·지원서 경로로 접근할 수 없다.
+- 프론트 실제 지원 내역에 제출본 제목 링크와 읽기 전용 상세 경로/BFF를 연결하고 기존 포트폴리오 상세 디자인을 재사용했다. 원본 편집 UI는 그대로 유지한다. Mock 시연 데이터는 실제 DB로 이관하지 않았다.
+- SQL은 기존 제출에 보관본이 없으면 자동 이관을 중단한다. 격리 PostgreSQL 테스트 후 팀 DB에 적용해 원본 23행·기존 제출 연결 0행을 유지하고 신규 보관 테이블 0행을 확인했다. 원본/회원 컬럼과 데이터는 변경하지 않았다.
+- 대상 PostgreSQL 통합 40개(신규 스냅샷 11·기존 포트폴리오 CRUD 22·지원 7) 통과. 원본 수정/삭제 후 유지, 이미지/첨부/문서 전체 보관, 취소/거절, 권한, 동시 수정/삭제, 실패 롤백, 마이그레이션 중단을 확인했다. 실제 공유 DB에 지원·삭제 테스트 데이터를 쓰지 않았다.
+- 최신 develop의 RecommendationSummaryRequest.java 파일 안 public record가 RecommendationRequestSummary여서 Java 컴파일이 막혔다. 내용 변경 없이 파일명만 RecommendationRequestSummary.java로 맞췄다.
+- 청사진·프로젝트 지원·포트폴리오 CRUD·페이지 문서를 실제 정책으로 수정하고 docs/project-portfolio-snapshots.md에 ERD/API/적용 범위와 이미지 URL 보존 한계를 기록했다. 전체 검증 결과는 이어서 기록한다.
+- 최종 전체 backend `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 총 1,037개 중 1,023 통과·2 실패·12 건너뜀. 변경하지 않은 KakaoClientTest.java:153 및 PortOneClientTest.java:105의 로그 검증이 실패했다. 신규 스냅샷 11개와 관련 지원·포트폴리오 테스트는 통과했다. 외부 인증/결제 코드를 수정하지 않았다.
+- 최종 frontend `npm test -- --maxWorkers=2`: 107개 파일 / 1,223개 모두 통과. `npm run build -- --webpack`: 성공(TypeScript 검사 포함). 새 제출본 App Router 경로 및 BFF가 빌드에 포함됐으며 생성된 next-env.d.ts는 복구했다. git diff --check 통과.
+- 팀 DB 읽기 전용 재확인: portfolios 23행·제출 연결 0행·스냅샷 0행 유지, 스냅샷 PK/연결 UNIQUE/FK·JSONB 객체 제약과 원본 SET NULL FK 검증 완료. 실제 계정으로 공유 DB에 지원/원본 삭제를 수행하거나 브라우저 시연하지 않았고 실행 서버에도 새 소스를 반영하지 않았다.
+- 한계: 이미지/첨부 URL과 메타데이터를 보관하며 파일 바이너리를 복제하지 않는다. 외부 파일 변경·삭제 및 관리자의 직접 SQL 변경까지 당시 상태를 보장하지 않는다. 기존 Mock 시연은 유지하고 실제 API 모드에 스냅샷을 연결했다.

@@ -45,7 +45,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         try{
             owned(id,member);
             if(!repository.referenceConstraintReady())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"지원서 참조 제약이 준비되지 않아 삭제할 수 없습니다.");
-            if(repository.referenced(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"지원서에 제출된 포트폴리오의 삭제 정책은 담당자 협의 전까지 보류됩니다.");
+            if(repository.referenced(id)&&!repository.submittedCopiesReady(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"제출본이 보관되지 않은 포트폴리오는 삭제할 수 없습니다.");
             repository.delete(id,member.getId());
         }catch(org.springframework.dao.DataIntegrityViolationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 기능에서 참조 중인 포트폴리오는 삭제할 수 없습니다.");}
         catch(DataAccessException e){throw unavailable();}

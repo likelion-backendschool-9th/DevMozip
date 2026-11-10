@@ -24,6 +24,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private final ProjectMemberRepository members;
 	private final ProjectApplicationRepository applications;
 	private final ProjectApplicationPortfolioRepository links;
+	private final ProjectApplicationPortfolioSnapshotRepository snapshots;
 	private final MemberRepository users;
 	private final ProjectCurrentUserProvider currentUser;
 	private final ProjectPortfolioAccess portfolios;
@@ -31,9 +32,9 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private final Validator validator;
 	private final ApplicationEventPublisher events;
 	public ProjectApplicationServiceImpl(ProjectRepository projects,ProjectMemberRepository members,ProjectApplicationRepository applications,
-		ProjectApplicationPortfolioRepository links,MemberRepository users,ProjectCurrentUserProvider currentUser,ProjectPortfolioAccess portfolios,
+		ProjectApplicationPortfolioRepository links,ProjectApplicationPortfolioSnapshotRepository snapshots,MemberRepository users,ProjectCurrentUserProvider currentUser,ProjectPortfolioAccess portfolios,
 		@Qualifier("projectClock") Clock clock,Validator validator,ApplicationEventPublisher events){
-		this.projects=projects;this.members=members;this.applications=applications;this.links=links;this.users=users;
+		this.projects=projects;this.members=members;this.applications=applications;this.links=links;this.snapshots=snapshots;this.users=users;
 		this.currentUser=currentUser;this.portfolios=portfolios;this.clock=clock;this.validator=validator;this.events=events;
 	}
 	@Override @Transactional
@@ -46,10 +47,10 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		var slot=slot(project,request.jobRole());
 		if(filled(id,slot.roleCode())>=slot.capacity())throw conflict("해당 직군의 정원이 찼습니다.");
 		if(!portfolios.available())throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"포트폴리오 연동 준비 후 지원할 수 있습니다.");
-		if(!portfolios.ownsAll(user,request.portfolioIds()))throw forbidden("본인의 존재하는 포트폴리오만 제출할 수 있습니다.");
+		if(!portfolios.ownsAll(user,request.portfolioIds()))throw forbidden("본인의 공개 포트폴리오만 제출할 수 있습니다.");
 		var now=LocalDateTime.now(clock);
 		var application=applications.saveAndFlush(new ProjectApplication(project,user,slot.roleCode(),request.introduction().strip(),now));
-		for(long portfolioId:request.portfolioIds())links.save(new ProjectApplicationPortfolio(application,portfolioId,now));
+		for(long portfolioId:request.portfolioIds()){var link=links.saveAndFlush(new ProjectApplicationPortfolio(application,portfolioId,now));portfolios.capture(link,now);}
 		links.flush();emit(application,ProjectApplicationChanged.Type.SUBMITTED,false,now);
 		return response(application);
 	}
@@ -65,7 +66,9 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		var roles=project.getRecruitmentSlots().stream().map(s->new ProjectApplicationOptions.Role(s.roleCode(),s.capacity(),filled(id,s.roleCode()),s.minimumYears())).toList();
 		if(reason==null&&roles.stream().noneMatch(s->s.filled()<s.capacity()))reason="모집 정원이 찼습니다.";
 		if(reason==null&&!available)reason="포트폴리오 연동 준비 후 지원할 수 있습니다.";
-		return new ProjectApplicationOptions(roles,available?portfolios.ownedBy(user):List.of(),available,own.map(this::response).orElse(null),reason==null,reason);
+		var owned=available?portfolios.ownedBy(user):List.<ProjectPortfolioAccess.Portfolio>of();
+		if(reason==null&&owned.isEmpty())reason="제출 가능한 공개 포트폴리오를 먼저 등록해 주세요.";
+		return new ProjectApplicationOptions(roles,owned,available,own.map(this::response).orElse(null),reason==null,reason);
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse update(long id,long applicationId,UpdateProjectApplicationRequest request){
@@ -118,7 +121,8 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	}
 	private ProjectApplicationResponse response(ProjectApplication a){
 		var user=users.findById(a.getApplicantMemberId());
-		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7));
+		var copies=snapshots.summaries(a.getId());
+		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),copies.isEmpty()?links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList():copies.stream().map(ProjectApplicationPortfolioResponse::sourcePortfolioId).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7),copies);
 	}
 	private boolean late(ProjectApplication a){return a.getStatus()==ProjectApplication.Status.APPROVED&&LocalDate.now(clock).isAfter(a.getProject().getRecruitmentEnd().minusDays(7));}
 	private String unavailable(Project p,long user){
