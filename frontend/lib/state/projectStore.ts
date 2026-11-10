@@ -2,7 +2,7 @@ import { createLocalStore, derived, useStore } from '@/lib/localStore';
 import { applyKickAction } from '@/lib/projects/chatKickService';
 import { projectHistory } from '@/lib/projects/projectSelectors';
 import { syncProjectState } from '@/lib/projects/projectManagementService';
-import { allProjects, applyRecruitmentAction, freshRecruitmentState, loadRecruitmentState, saveRecruitmentState } from '@/lib/projects/projectService';
+import { allProjects, applyRecruitmentAction, loadRecruitmentState, saveRecruitmentState } from '@/lib/projects/projectService';
 import { validateReviewSubmission } from '@/lib/projects/projectReviewService';
 import { getAdministration, getUser } from '@/lib/state/authStore';
 import { getProfileState, profileAct, profileSources } from '@/lib/state/profileStore';
@@ -21,7 +21,7 @@ interface Result {
 const projectStore = createLocalStore(() => {
     const loaded = loadRecruitmentState();
     return syncProjectState(loaded, loaded.simulationDate ? new Date(loaded.simulationDate) : new Date(), getProfileState());
-});
+}, true);
 
 export const projectSources = [...profileSources, projectStore];
 
@@ -114,10 +114,6 @@ function submitReviews(projectId: string, requestId: string, token: string, entr
     }
 }
 
-function reset() {
-    if (!commit(freshRecruitmentState())) notify('프로젝트 초기화는 이번 세션에만 유지됩니다.');
-}
-
 const projects = derived(projectSources, () => ({
     state: projectStore.get(),
     now: projectClock(),
@@ -127,7 +123,6 @@ const projects = derived(projectSources, () => ({
     act,
     simulate,
     submitReviews,
-    reset,
 }));
 
 export function useProjects() {

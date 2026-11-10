@@ -1,0 +1,2 @@
+@layer devmozip-auth{:where(.scope):global(.kakao-button){background:#fee500!important;color:#292419;width:100%;margin-top:12px;font-size:14px}}
+@layer devmozip-auth{:where(.scope):global(.kakao-button:hover){background:#f4dc00!important}}

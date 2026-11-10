@@ -6,23 +6,28 @@ import { useParams, usePathname } from 'next/navigation';
 import { ActiveLink as NavLink } from '@/components/navigation/ActiveLink';
 import { UserRound, Heart, Bookmark, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
+import { useOwnProfile } from './OwnProfileProvider';
 import { accountMenu } from '@/mocks/account';
 
 const icons = [UserRound, Heart, Bookmark, Settings];
 
 /**
  * 개인 계정 화면 틀(왼쪽 개인 메뉴 + 본문). (user)/layout.tsx가 감싼다.
- * 북마크 · 좋아요한 글 · 개인정보 설정은 항상, 프로필(/users/{id})은 본인일 때만 메뉴를 보여 주고
- * 다른 사람의 프로필과 팔로우 목록(/users/{id}/follows)은 그대로 둔다.
+ * 로그인한 사용자의 개인 메뉴는 서버 프로필 조회 중에도 유지한다.
+ * Mock 모드에서는 본인 프로필에 표시하고, 팔로우 목록에는 표시하지 않는다.
  */
 export function AccountLayout({ children }: { children: ReactNode }) {
     const { user: current } = useAuth();
+    const own = useOwnProfile();
     const pathname = usePathname();
     const { userId } = useParams<{ userId?: string }>();
     const [menuOpen, setMenuOpen] = useState(false);
     const menuId = useId();
 
-    if (userId && !(pathname === `/users/${userId}` && current?.id === userId)) return children;
+    // 사이드바는 로그인한 사용자의 탐색 메뉴이며, 조회 대상의 수정 권한과는 별개다.
+    const profilePage = !!userId && pathname === `/users/${userId}`;
+    const showProfileMenu = profilePage && !!current && true;
+    if (userId && !showProfileMenu) return children;
 
     if (!current)
         return (
@@ -42,7 +47,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
             <aside className={[styles.scope, 'account-aside'].join(' ')} data-open={menuOpen}>
                 <div className={[styles.scope, 'account-aside-heading'].join(' ')}>
                     <span>MY WORKSPACE</span>
-                    <strong>{current.nickname}</strong>
+                    <strong>{own.profile?.nickname || current.email}</strong>
                     <small>개인 계정 관리</small>
                 </div>
                 <button
@@ -62,7 +67,7 @@ export function AccountLayout({ children }: { children: ReactNode }) {
                                 onClick={() => setMenuOpen(false)}
                                 key={item.key}
                                 end
-                                href={item.key === 'profile' ? `/users/${current.id}` : item.path}
+                                href={item.key === 'profile' ? (own.profile?.tag && pathname === `/users/${own.profile.tag}` ? `/users/${own.profile.tag}` : '/profile/me') : item.path}
                             >
                                 <Icon size={17} />
                                 <span>{item.label}</span>

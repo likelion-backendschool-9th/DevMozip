@@ -1,243 +1,160 @@
 'use client';
-import styles from './page.module.css';
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { useNavigation as useNavigate, useCurrentLocation as useLocation } from '@/lib/navigation';
-import { Plus, Send, Sparkles, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { PanelLeft, PanelRight, SlidersHorizontal, Sparkles, ArrowRight, LoaderCircle } from 'lucide-react';
+import { useNavigation } from '@/lib/navigation';
 import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
-import { ChatConditions } from '@/app/ai/matching/_components/ChatConditions';
-import { ChatResults } from '@/app/ai/matching/_components/ChatResults';
+import { matchingLoginPath } from '@/lib/matching/loginPrompt';
+import { chatMessageLength, missingChatRequirements } from '@/lib/matching/matchingChatService';
+import { chatPromptExamples, chatRequirementLabels, emptyChatRequirements } from '@/mocks/matchingChat';
+import type { AiRecommendation } from '@/types/aiRecommendation';
 import { Button } from '@/components/common/Button';
-import { Textarea } from '@/components/common/Input';
 import { Modal } from '@/components/common/Modal';
-import { chatWelcome } from '@/mocks/matchingChat';
+import { ChatSidebar } from './_components/ChatSidebar';
+import { ChatComposer } from './_components/ChatComposer';
+import { ChatConditions } from './_components/ChatConditions';
+import { SavedRecommendations } from './_components/SavedRecommendations';
+import styles from './page.module.css';
+
 export default function MatchingPage() {
     const { user } = useAuth();
-    const { usage, conversations, conversation, newChat, selectChat, deleteChat, sendChat } = useHome();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const handoff = useRef<string | null>(null);
-    const [text, setText] = useState('');
+    return <MatchingWorkspace key={user?.email || 'guest'} />;
+}
+function MatchingWorkspace() {
+    const { user } = useAuth();
+    const { conversations, conversation, newChat, selectChat, deleteAiChat, sendChat, analyzeChat, editChatMessage, loadAiChats, recommendChat, recommendationUnchanged, resumeLoginPrompt } = useHome();
+    const navigate = useNavigation();
+    const [guestInput, setGuestInput] = useState('');
     const [error, setError] = useState('');
+    const [busyKey, setBusyKey] = useState<string | null>(null);
+    const [task, setTask] = useState<'analyze' | 'recommend' | null>(null);
+    const [retryAnalysis, setRetryAnalysis] = useState(false);
+    const [result, setResult] = useState<{ chatKey: string; value: AiRecommendation }>();
     const [deleting, setDeleting] = useState<string | null>(null);
-    const [historyOpen, setHistoryOpen] = useState(false);
-    const bottom = useRef<HTMLDivElement>(null);
-    const premium = user?.role === 'premium' || user?.role === 'admin';
-    // 대화나 계정이 바뀌면 입력과 오류를 비운다(렌더 중 이전 값과 비교).
-    const chatKey = `${conversation?.id}|${user?.id}`;
-    const [shownChat, setShownChat] = useState(chatKey);
-    if (shownChat !== chatKey) {
-        setShownChat(chatKey);
-        setText('');
-        setError('');
-    }
+    const [sidebar, setSidebar] = useState(true);
+    const [conditions, setConditions] = useState(true);
+    const [drawer, setDrawer] = useState<'history' | 'conditions' | null>(null);
+    const [historyLoading, setHistoryLoading] = useState(!!user);
+    const workspace = useRef<HTMLDivElement>(null);
+    const thread = useRef<HTMLDivElement>(null);
+    const chatKey = `${user?.email}:${conversation?.id || 'new'}`;
+    const currentKey = useRef(chatKey);
+    const busy = busyKey === chatKey;
+    const text = user ? conversation?.draft || '' : guestInput;
+    const requirements = conversation?.requirements || emptyChatRequirements;
+    const missing = missingChatRequirements(requirements);
+    const visibleError = error.endsWith('항목을 선택해 주세요.') ? (missing.length ? `${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.` : '') : error;
+    const scrollBottom = useCallback(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: 'smooth' }); }, []);
+    useEffect(() => { currentKey.current = chatKey; }, [chatKey]);
     useEffect(() => {
-        if (bottom.current) bottom.current.scrollTop = bottom.current.scrollHeight;
-    }, [conversation?.id, conversation?.messages.length]);
-    const send = () => {
-        const result = sendChat(text);
-        if (result.ok) setText('');
-        setError(result.error || '');
+        if (conversation?.messages.length || busy || result?.chatKey === chatKey) scrollBottom();
+        else if (thread.current) thread.current.scrollTop = 0;
+    }, [conversation?.id, conversation?.messages.length, busy, result, chatKey, scrollBottom]);
+    useEffect(() => {
+        const measure = () => {
+            if (window.innerWidth > 1100) setDrawer(null);
+            const el = workspace.current;
+            if (el) el.style.setProperty('--workspace-height', `${Math.max(340, window.innerHeight - el.getBoundingClientRect().top - 18)}px`);
+        };
+        measure(); window.addEventListener('resize', measure);
+        const header = document.querySelector('header');
+        const observer = new ResizeObserver(measure); if (header) observer.observe(header);
+        return () => { window.removeEventListener('resize', measure); observer.disconnect(); };
+    }, []);
+    useEffect(() => {
+        if (!user) return;
+        let active = true;
+        void loadAiChats().catch(e => { if (active) setError(e instanceof Error ? e.message : '대화 기록을 불러오지 못했습니다.'); }).finally(() => { if (active) setHistoryLoading(false); });
+        return () => { active = false; };
+    }, [user, loadAiChats]);
+    useEffect(() => {
+        if (!user) return;
+        const token = new URLSearchParams(window.location.search).get('resume');
+        if (!token) return;
+        let active = true;
+        void Promise.resolve().then(() => {
+            if (!active) return;
+            const resumed = resumeLoginPrompt(token);
+            if (resumed.error) setError(resumed.error);
+            else navigate('/ai/matching', { replace: true });
+        });
+        return () => { active = false; };
+    }, [user, resumeLoginPrompt, navigate]);
+    useEffect(() => {
+        if (!drawer) return;
+        const panel = document.getElementById(`matching-${drawer}`);
+        const previous = document.activeElement as HTMLElement | null;
+        const elements = () => Array.from(panel?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]') || []).filter(el => el.offsetParent !== null);
+        elements()[0]?.focus();
+        const keydown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setDrawer(null);
+            if (e.key !== 'Tab') return;
+            const list = elements(); const first = list[0]; const last = list[list.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+        };
+        document.addEventListener('keydown', keydown);
+        return () => { document.removeEventListener('keydown', keydown); previous?.focus(); };
+    }, [drawer]);
+    const openPanel = (panel: 'history' | 'conditions') => {
+        if (window.matchMedia('(max-width: 1100px)').matches) setDrawer(v => v === panel ? null : panel);
+        else if (panel === 'history') setSidebar(v => !v);
+        else setConditions(v => !v);
     };
-    return (
-        <div className={[styles.scope, 'container ai-chat-page'].join(' ')}>
-            <div className={[styles.scope, 'ai-chat-title'].join(' ')}>
-                <div>
-                    <div className={[styles.scope, 'eyebrow'].join(' ')}>YOUR NEXT TEAM, ONE CONVERSATION AWAY</div>
-                    <h1>
-                        <Sparkles size={25} /> AI 팀원 추천
-                    </h1>
+    const showConditions = () => { if (window.matchMedia('(max-width: 1100px)').matches) setDrawer('conditions'); else setConditions(true); };
+    const changeText = (value: string) => { if (user) editChatMessage(value); else setGuestInput(value); setError(''); };
+    const login = () => { try { navigate(matchingLoginPath(text)); } catch (e) { setError(e instanceof Error ? e.message : '입력을 보관하지 못했습니다.'); } };
+    const runAnalysis = async (conversationId = conversation?.id) => {
+        const key = `${user?.email}:${conversationId || 'new'}`;
+        currentKey.current = key;
+        setBusyKey(key); setTask('analyze'); setRetryAnalysis(false); setError('');
+        try { await analyzeChat(); }
+        catch (e) { if (currentKey.current === key) { setRetryAnalysis(true); setError(e instanceof Error ? e.message : '메시지 분석을 완료하지 못했습니다. 다시 시도해 주세요.'); } }
+        finally { setBusyKey(null); setTask(null); }
+    };
+    const send = () => {
+        if (!user) { login(); return; }
+        const sent = sendChat(text); setError(sent.error || '');
+        if (sent.ok) void runAnalysis(sent.conversationId);
+    };
+    const recommend = async () => {
+        if (!user) { login(); return; }
+        if (text.trim() && !conversation?.pendingRecommendation) {
+            setError('입력 중인 메시지는 아직 추천에 반영되지 않았어요. 먼저 메시지를 보내고 분석을 완료해 주세요.');
+            workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+            return;
+        }
+        if (busy || recommendationUnchanged) return;
+        if (missing.length && !conversation?.pendingRecommendation) { setError(`${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.`); showConditions(); return; }
+        const key = chatKey; setBusyKey(key); setTask('recommend'); setError('');
+        try { const value = await recommendChat(); if (currentKey.current === key) setResult({ chatKey: key, value }); }
+        catch (e) { if (currentKey.current === key) setError(e instanceof Error ? e.message : '추천에 실패했습니다. 다시 시도해 주세요.'); }
+        finally { setBusyKey(null); setTask(null); }
+    };
+    return <div className={styles.page}>
+        <div className={styles.pageHeading}><div className={styles.brandIcon}><Sparkles size={20} /></div><div><h1>AI 팀원 추천</h1><p>아이디어에서 시작하는, 나에게 맞는 팀</p></div><span className={styles.mode}><i />조건 기반 매칭</span></div>
+        <div ref={workspace} className={styles.workspace} data-sidebar={sidebar} data-conditions={conditions}>
+            {drawer && <button type="button" className={styles.backdrop} aria-label="열린 패널 닫기" onClick={() => setDrawer(null)} />}
+            <aside id="matching-history" aria-label="추천 대화 기록" className={styles.sidebar} data-mobile-open={drawer === 'history'} role={drawer === 'history' ? 'dialog' : undefined} aria-modal={drawer === 'history' ? true : undefined}>
+                <ChatSidebar conversations={conversations} activeId={conversation?.id} signedIn={!!user} busy={busy} onClose={() => { setSidebar(false); setDrawer(null); }} onNew={() => { if (user) newChat(); else setGuestInput(''); setError(''); setRetryAnalysis(false); setDrawer(null); }} onSelect={id => { selectChat(id); setError(''); setRetryAnalysis(false); setDrawer(null); }} onDelete={setDeleting} />
+            </aside>
+            <section className={styles.chat} aria-label="AI 추천 대화" aria-busy={busy}>
+                <header className={styles.toolbar}><button type="button" aria-label="대화 사이드바 접기/펼치기" aria-controls="matching-history" onClick={() => openPanel('history')}><PanelLeft size={18} /></button><div><strong>{conversation?.title || '새로운 대화'}</strong><span>{historyLoading ? '대화 기록 불러오는 중' : user ? '대화하며 아이디어를 정리해 보세요' : '로그인하고 아이디어를 이어가세요'}</span></div><button type="button" className={styles.conditionToggle} aria-controls="matching-conditions" aria-label="추천 조건 패널 접기/펼치기" onClick={() => openPanel('conditions')}><PanelRight size={17} /><span>추천 조건</span></button></header>
+                <div className={styles.thread} ref={thread} role="log" aria-label="추천 메시지" aria-live="polite">
+                    {!conversation?.messages.length ? <div className={styles.welcome}><div className={styles.welcomeIcon}><Sparkles size={27} /></div><span>DEVMOZIP MATCHING</span><h2>어떤 프로젝트를<br />함께 만들어 볼까요?</h2><p>떠오른 아이디어나 찾고 있는 동료를 이야기해 주세요.<br />조건을 정리하고, 함께할 개발자와 비슷한 프로젝트를 찾아봐요.</p><div className={styles.examples}>{chatPromptExamples.map((v, i) => <button type="button" key={v.title} onClick={() => { changeText(v.text); workspace.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }}><span>{['01', '02', '03'][i]}</span><strong>{v.title}</strong><ArrowRight size={14} /></button>)}</div><small>메시지를 보내면 조건을 정리하고, 추천 결과에서 개발자와 유사 프로젝트를 보여 줍니다.</small></div> : <>
+                        <div className={styles.conversationIntro}><Sparkles size={17} /><p>아이디어를 차근차근 정리해 보세요.<br /><span>선택한 조건을 바탕으로 동료와 유사 프로젝트를 추천합니다.</span></p></div>
+                    </>}
+                    {user && <SavedRecommendations key={chatKey} serverId={conversation?.serverId} result={result?.chatKey === chatKey ? result.value : undefined} messages={conversation?.messages} onLoaded={scrollBottom} />}
+                    {visibleError.endsWith('항목을 선택해 주세요.') && !!missing.length && !busy && <div className={styles.conditionHint}><SlidersHorizontal size={16} /><div><strong>추천을 위해 조금만 더 알려주세요</strong><p>{missing.map(k => chatRequirementLabels[k]).join(' · ')}을 선택하면 추천을 시작할 수 있어요.</p><button type="button" onClick={showConditions}>조건 직접 설정<ArrowRight size={12} /></button></div></div>}
+                    {busy && <div role="status" className={styles.loading}><LoaderCircle size={16} /><span>{task === 'analyze' ? '메시지를 분석하고 조건을 정리하고 있어요…' : '조건을 저장하고 추천 후보를 찾고 있어요…'}</span></div>}
                 </div>
-                <span className={[styles.scope, 'outline-badge'].join(' ')}>Mock 추천 · API 연결 없음</span>
-            </div>
-            <div className={[styles.scope, 'ai-chat-layout'].join(' ')}>
-                <aside
-                    className={[styles.scope, 'ai-chat-sidebar'].join(' ')}
-                    aria-label="추천 대화 기록"
-                    data-history-open={historyOpen}
-                >
-                    <Button onClick={() => newChat()}>
-                        <Plus size={16} />새 대화 시작
-                    </Button>
-                    <button
-                        className={[styles.scope, 'ai-history-toggle'].join(' ')}
-                        type="button"
-                        aria-expanded={historyOpen}
-                        aria-controls="matching-history"
-                        onClick={() => setHistoryOpen(v => !v)}
-                    >
-                        대화 기록 {historyOpen ? '접기 −' : '펼치기 +'}
-                    </button>
-                    <div id="matching-history" className={[styles.scope, 'ai-history-block'].join(' ')}>
-                        <h2>이전 대화 기록</h2>
-                        <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                            {user ? '현재 계정의 대화만 표시합니다.' : '비로그인 대화는 별도 데모 공간입니다.'}
-                        </p>
-                        <div className={[styles.scope, 'ai-conversation-list'].join(' ')}>
-                            {conversations.map(c => (
-                                <div
-                                    key={c.id}
-                                    className={[styles.scope, c.id === conversation?.id ? 'active' : ''].join(' ')}
-                                >
-                                    <button
-                                        className={[styles.scope, 'ai-history-open'].join(' ')}
-                                        onClick={() => {
-                                            selectChat(c.id);
-                                            setHistoryOpen(false);
-                                        }}
-                                        aria-current={c.id === conversation?.id ? 'true' : undefined}
-                                    >
-                                        <strong>{c.title}</strong>
-                                        <time dateTime={c.createdAt}>
-                                            {new Date(c.createdAt).toLocaleDateString('ko-KR', {
-                                                timeZone: 'Asia/Seoul',
-                                            })}
-                                        </time>
-                                    </button>
-                                    <button
-                                        className={[styles.scope, 'icon-button'].join(' ')}
-                                        aria-label={`${c.title} 대화 삭제`}
-                                        onClick={() => setDeleting(c.id)}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                        {!conversations.length && (
-                            <p className={[styles.scope, 'auth-hint'].join(' ')}>첫 아이디어로 대화를 시작해 보세요.</p>
-                        )}
-                    </div>
-                    <div className={[styles.scope, 'ai-usage'].join(' ')}>
-                        <strong>
-                            {usage.month} · {premium ? '프리미엄' : '무료'} 추천
-                        </strong>
-                        {user ? (
-                            <>
-                                <p>
-                                    남은 추천 <b>{usage.remaining}</b> / {usage.limit}회
-                                </p>
-                                <small>{usage.used}회 사용 · 결과 생성만 차감</small>
-                                <progress
-                                    max={usage.limit}
-                                    value={Math.min(usage.used, usage.limit)}
-                                    aria-label="이번 달 추천 사용량"
-                                />
-                            </>
-                        ) : (
-                            <Link href="/login">로그인하고 추천 받기</Link>
-                        )}
-                        <small>한국 시각 매월 새 한도 적용</small>
-                        {!premium && <Link href="/subscription">프리미엄 월 100회 안내 →</Link>}
-                    </div>
-                </aside>
-                <section className={[styles.scope, 'ai-chat-main'].join(' ')} aria-label="AI 추천 대화">
-                    <header className={[styles.scope, 'ai-conversation-title'].join(' ')}>
-                        <strong>{conversation?.title || '아이디어에서 시작하는 새로운 팀'}</strong>
-                        <span>일반 메시지·추가 질문 무료</span>
-                    </header>
-                    <div
-                        ref={bottom}
-                        className={[styles.scope, 'ai-chat-messages'].join(' ')}
-                        role="log"
-                        aria-label="추천 메시지"
-                    >
-                        <article className={[styles.scope, 'ai-message assistant'].join(' ')}>
-                            <span className={[styles.scope, 'ai-message-label'].join(' ')}>
-                                <Sparkles size={15} /> DevMozip
-                            </span>
-                            <p>{chatWelcome}</p>
-                        </article>
-                        {conversation?.messages.map(m => (
-                            <article key={m.id} className={[styles.scope, `ai-message ${m.role}`].join(' ')}>
-                                <span className={[styles.scope, 'ai-message-label'].join(' ')}>
-                                    {m.role === 'user' ? '나' : 'DevMozip · Mock'}
-                                </span>
-                                <p>{m.text}</p>
-                                {m.role === 'user' && m.requirements && (
-                                    <div className={[styles.scope, 'ai-sent-conditions'].join(' ')}>
-                                        {[
-                                            ...m.requirements.fields,
-                                            ...m.requirements.interests,
-                                            ...m.requirements.stacks,
-                                            ...m.requirements.roles.map(r => r.name + ' ' + r.count + '명'),
-                                            m.requirements.career,
-                                            m.requirements.duration,
-                                        ]
-                                            .filter(Boolean)
-                                            .map((v, i) => (
-                                                <span key={i}>{v}</span>
-                                            ))}
-                                    </div>
-                                )}
-                                {m.result && <ChatResults result={m.result} />}
-                            </article>
-                        ))}
-                    </div>
-                    <div className={[styles.scope, 'ai-chat-controls'].join(' ')}>
-                        <ChatConditions key={`${user?.id || 'guest'}:${conversation?.id || 'new'}`} />
-                        {user && usage.remaining === 0 && (
-                            <div role="status" className={[styles.scope, 'matching-limit'].join(' ')}>
-                                이번 달 추천 횟수를 모두 사용했습니다. 추가 질문은 계속 이용할 수 있어요.
-                                {!premium && <Link href="/subscription">프리미엄 업그레이드 →</Link>}
-                            </div>
-                        )}
-                        <form
-                            className={[styles.scope, 'ai-chat-composer'].join(' ')}
-                            onSubmit={e => {
-                                e.preventDefault();
-                                send();
-                            }}
-                        >
-                            <Textarea
-                                aria-label="AI에게 메시지"
-                                rows={2}
-                                maxLength={1500}
-                                value={text}
-                                onChange={e => setText(e.target.value)}
-                                placeholder="예: 웹과 AI 분야, 프론트엔드 2명과 백엔드 1명, 경력 무관, 3개월을 생각해요."
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                                        e.preventDefault();
-                                        if (text.trim()) send();
-                                    }
-                                }}
-                            />
-                            <Button type="submit" disabled={!text.trim()} aria-label="메시지 전송">
-                                <Send size={18} />
-                            </Button>
-                        </form>
-                        {error && (
-                            <p role="alert" className={[styles.scope, 'form-error'].join(' ')}>
-                                {error}
-                            </p>
-                        )}
-                        <small className={[styles.scope, 'ai-disclaimer'].join(' ')}>
-                            Gemini 연결 없는 Mock 규칙 기반 추천 · 적합도는 데모 계산 점수 · Enter 전송 / Shift+Enter
-                            줄바꿈
-                        </small>
-                    </div>
-                </section>
-            </div>
-            {deleting && (
-                <Modal title="대화를 삭제할까요?" onClose={() => setDeleting(null)}>
-                    <p>메시지와 추천 결과가 삭제됩니다. 이미 사용한 추천 횟수는 복원되지 않습니다.</p>
-                    <div className={[styles.scope, 'modal-actions'].join(' ')}>
-                        <Button variant="secondary" onClick={() => setDeleting(null)}>
-                            취소
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                deleteChat(deleting);
-                                setDeleting(null);
-                            }}
-                        >
-                            대화 삭제
-                        </Button>
-                    </div>
-                </Modal>
-            )}
+                <div className={styles.execution}><span><i />{conversation?.pendingRecommendation ? '이전 요청을 확인하면 같은 추천을 다시 만들지 않아요.' : recommendationUnchanged ? '같은 조건의 추천이 있어요. 추천 조건을 변경해 주세요.' : missing.length ? '조건을 설정하면 추천을 시작할 수 있어요.' : '조건이 준비됐어요. 새로운 동료를 찾아보세요.'}</span><button type="button" disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={13} />{conversation?.pendingRecommendation ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}</button></div>
+                {(visibleError || conversation?.pendingAnalysisKey && !busy) && <div role="alert" className={styles.error}>{visibleError}{(retryAnalysis || conversation?.pendingAnalysisKey) && <button type="button" onClick={() => void runAnalysis()}>분석 다시 시도</button>}</div>}
+                {user && text.trim() && !conversation?.pendingRecommendation && <div className={styles.conditionHint}><Sparkles size={16} /><div><strong>입력 중인 메시지는 아직 추천에 반영되지 않았어요</strong><button type="button" disabled={busy} onClick={send}>메시지 보내고 분석하기<ArrowRight size={12} /></button></div></div>}
+                <ChatComposer used={chatMessageLength(conversation?.messages || [])} value={text} busy={busy} signedIn={!!user} onChange={changeText} onSend={send} />
+            </section>
+            <aside id="matching-conditions" aria-label="추천 조건" className={styles.conditions} data-mobile-open={drawer === 'conditions'} role={drawer === 'conditions' ? 'dialog' : undefined} aria-modal={drawer === 'conditions' ? true : undefined}><ChatConditions key={chatKey} busy={busy} signedIn={!!user} retry={!!conversation?.pendingRecommendation} onRecommend={recommend} onClose={() => { setConditions(false); setDrawer(null); }} /></aside>
         </div>
-    );
+        {deleting && <Modal title="대화를 삭제할까요?" onClose={() => { if (!busy) setDeleting(null); }}><p>대화와 메시지·조건 및 저장된 추천 이력이 함께 삭제됩니다.</p><div className={styles.modalActions}><Button variant="secondary" disabled={busy} onClick={() => setDeleting(null)}>취소</Button><Button disabled={busy} onClick={async () => { const key = chatKey; setBusyKey(key); try { await deleteAiChat(deleting); setDeleting(null); } catch (e) { if (currentKey.current === key) setError(e instanceof Error ? e.message : '삭제하지 못했습니다.'); setDeleting(null); } finally { setBusyKey(null); } }}>대화 삭제</Button></div></Modal>}
+    </div>;
 }

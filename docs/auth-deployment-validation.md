@@ -1,5 +1,7 @@
 # 인증·배포 분석 및 검증 기록
 
+> 최신 정식 배포 상태·운영 명령은 [운영 안내](deployment-operations.md)를 참조하세요. 아래 미완료 항목은 해당 검증 단계의 기록입니다.
+
 2026-11-03. develop에서 작업. 커밋·원격 푸시·main 병합·외부 배포는 수행하지 않았다.
 
 ## 저장소 분석과 적용 범위
@@ -9,7 +11,7 @@
 - PostgreSQL 드라이버는 있으나 서버 버전·접속 설정·사용자 엔티티·테이블·기존 compose는 없었다. PostgreSQL 17을 선택했다. 업무 스키마/마이그레이션은 추가하지 않았으며 JPA ddl-auto=none이다. H2는 테스트 런타임에서만 사용한다.
 - 인증 분류: 실제 서버 인증은 없음. 프론트에는 localStorage/sessionStorage 기반 Mock 인증과 salt + SHA-256 가입 계정이 있다. 사용자 추가 승인에 따라 Mock은 보존하고 별도 BCrypt 임시 USER/ADMIN으로 서버 인증을 구현했다.
 - 사용자 역할: 기존 화면 free/premium/admin을 유지하고 서버는 USER/ADMIN이다. premium 구독은 여전히 Mock이며 서버 USER에 premium 권한을 부여하지 않는다.
-- 로그인 없이 호출하는 업무 GET API는 없다. 따라서 추가 공개 업무 API 목록도 비어 있다. 공개는 POST /api/auth/login, /refresh, /logout, GET /actuator/health, /error로 좁혔다. /api/auth/me는 로그인 필수다. 프론트 /api/auth/session은 토큰 없이 mode와 identity:null만 제공한다.
+- 로그인 없이 호출하는 업무 GET API는 없다. 따라서 추가 공개 업무 API 목록도 비어 있다. 공개는 POST /api/v1/auth/login, /refresh, /logout, /signup, GET /api/v1/auth/check-email, /check-nickname, GET /actuator/health, /error로 좁혔다. /api/v1/users/me는 로그인 필수다. 프론트 /api/auth/session은 토큰 없이 mode와 identity:null만 제공한다.
 - 보호 화면: /my-projects, /onboarding, /profile/me, /bookmarks, /settings, /messages, /notifications, /portfolios, /admin 접두어; /projects/new, 프로젝트별 manage/reviews, /feeds/new 및 게시글 edit. 기존 /posts, /chats 별칭도 방어적으로 보호한다. /admin은 ADMIN 전용. 공개 프로젝트·게시글·프로필 목록/상세는 유지한다. 매칭은 공개 조건 입력과 로그인 결과 생성이 섞여 있어 전체 경로를 차단하지 않는다. 기존 세부 도메인 권한 검사는 계속 Mock이다.
 - 브라우저의 실제 백엔드 fetch는 없었다. 미사용 frontend/lib/shared/api.ts의 Axios 기본값에 localhost:8080/api/v1 및 공개 환경변수가 있어 동일 출처 /api로 바꿨다. 인증은 서버 액션과 서버 전용 backendFetch만 사용한다.
 - 기존 backend application.properties는 애플리케이션 이름뿐이었다. 환경변수 기반 application.yaml로 교체했다. JWT 비밀키·두 임시 계정 비밀번호는 안전한 기본 비밀값을 코드에 두는 대신 빈 기본값에서 시작을 거부한다.
@@ -65,7 +67,7 @@
 
 ## 사람이 이어서 확인할 항목
 
-Docker Desktop WSL 통합 후 로컬 Compose config/build/up과 실제 Redis 폐기·재발급을 검증한다. GitHub Secrets·GHCR 권한·호스트 clone/.env/TLS/전달 헤더를 준비한다. develop 검증 결과를 리뷰한 다음 사용자 요청에 따라 main에 반영한다. 실제 무중단 및 롤백은 운영 호스트에서 확인한다. 회원가입·사용자 DB·도메인 API는 다음 단계의 별도 승인 범위다.
+Docker Desktop WSL 통합 후 로컬 Compose config/build/up과 실제 Redis 폐기·재발급을 검증한다. GitHub Secrets·GHCR 권한·호스트 clone/.env/TLS/전달 헤더를 준비한다. develop 검증 결과를 리뷰한 다음 사용자 요청에 따라 main에 반영한다. 실제 무중단 및 롤백은 운영 호스트에서 확인한다. 회원가입 외의 도메인 API는 다음 단계의 별도 승인 범위다.
 
 ## 후속 서버 검증 결과
 

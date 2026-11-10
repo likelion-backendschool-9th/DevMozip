@@ -3,8 +3,11 @@ import type { Metadata } from 'next';
 import { Suspense, type ReactNode } from 'react';
 import { AppLayout } from './_components/AppLayout';
 import { ClientReady } from './_components/ClientReady';
+import { DirectChatSync } from './_components/DirectChatSync';
+import { MessengerSocketSync } from './_components/MessengerSocketSync';
 import { MessagingSync } from './_components/MessagingSync';
 import { ProjectSync } from './_components/ProjectSync';
+import { MockDataWorkspace } from './_components/MockVisibility';
 
 export const metadata: Metadata = {
     title: {
@@ -22,9 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <body>
                 <Suspense fallback={<div className="client-loading" role="status">화면을 준비하고 있어요…</div>}>
                     <ClientReady>
-                        <ProjectSync />
-                        <MessagingSync />
-                        <AppLayout>{children}</AppLayout>
+                        <MockDataWorkspace><ProjectSync /><MessagingSync /><DirectChatSync /><MessengerSocketSync /><AppLayout>{children}</AppLayout></MockDataWorkspace>
                     </ClientReady>
                 </Suspense>
             </body>

@@ -1,17 +1,19 @@
 'use client';
 import { useParams } from 'next/navigation';
 import { useQueryState as useSearchParams } from '@/lib/navigation';
+import { validChatId } from '@/lib/messaging/directChatApi';
 import { directId } from '@/lib/messaging/messagingService';
 import { useAuth } from '@/lib/state/authStore';
 import { useMessaging } from '@/lib/state/messagingStore';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { useProfiles } from '@/lib/state/profileStore';
 import type { DirectConversation } from '@/types/messaging';
 
 /**
- * 지금 열린 1:1 대화 — /messages/chats/{대화 ID}이면 그 대화, ?userId=로 들어오면 그 사용자와의 대화(없으면 새 대화),
- * 둘 다 없으면 가장 최근 대화. 사이드바(layout)와 대화 영역(page)이 함께 쓴다.
+ * Mock 토글 ON의 열린 1:1 대화 — /messages/chats/{대화 ID}이면 그 대화, ?userId=로 들어오면 그 사용자와의 대화(없으면 새 대화),
+ * 둘 다 없으면 가장 최근 대화.
  */
-export function useActiveConversation() {
+export function useMockActiveConversation() {
     const { user } = useAuth();
     const { state: profiles } = useProfiles();
     const { state } = useMessaging();
@@ -29,4 +31,25 @@ export function useActiveConversation() {
                 ? conversations.find(c => c.id === selected)
                 : conversations[0];
     return { active, requested, selected };
+}
+
+/**
+ * Mock 토글 OFF의 열린 1:1 대화 — 주소의 대화방 ID만 쓴다.
+ * ?userId=는 Mock 회원 ID라서 서버 대화로 열지 않는다.
+ */
+export function useServerActiveChat() {
+    const [params] = useSearchParams();
+    const { conversationId } = useParams<{ conversationId?: string }>();
+    const requested = params.get('userId');
+    const selected = conversationId ? decodeURIComponent(conversationId) : null;
+    const id = !requested && selected && validChatId(selected) ? Number(selected) : null;
+    return { id, requested, selected };
+}
+
+/** 지금 열린 대화의 ID. 사이드바가 있는 layout이 쓴다. 대화 내용은 useConversationPane이 맡는다. */
+export function useActiveConversationId() {
+    const { enabled } = useMockVisibility();
+    const mock = useMockActiveConversation();
+    const server = useServerActiveChat();
+    return enabled ? mock.active?.id : server.id === null ? undefined : String(server.id);
 }

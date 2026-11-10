@@ -1,4 +1,9 @@
+# compose·서버 공통 기본 설정. 비밀값은 넣지 않고 환경변수(루트 .env → compose)로 받는다.
+# 로컬에서 H2로 실행할 때는 application-local.yml(커밋하지 않음)을 만들고 local 프로필로 실행한다.
+# 로컬의 카카오 값은 application-local.yml에 spring.config.import: optional:file:../.env.local[.properties]를 넣어 읽는다.
 spring:
+  config:
+    import: classpath:ai/gemini.properties
   application:
     name: backend
   datasource:
@@ -7,25 +12,80 @@ spring:
     password: ${DB_PASSWORD:}
   jpa:
     hibernate:
-      ddl-auto: none
+      # 엔티티 기준으로 테이블을 만들거나 갱신한다
+      ddl-auto: update
     open-in-view: false
+  # 리프레시 토큰 저장소. compose·서버는 REDIS_HOST=redis로 받는다
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       connect-timeout: 2s
       timeout: 2s
+  # 비밀번호 재설정 메일. 값이 없어도 서버는 뜬다. 시간 제한의 기본값은 무제한이므로 지정한다
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+  web:
+    error:
+      include-stacktrace: never
+
 jwt:
   secret: ${JWT_SECRET:}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
-auth:
-  bootstrap:
-    user-username: ${AUTH_USER_USERNAME:member@devmozip.demo}
-    user-password: ${AUTH_USER_PASSWORD:}
-    admin-username: ${AUTH_ADMIN_USERNAME:admin@devmozip.demo}
-    admin-password: ${AUTH_ADMIN_PASSWORD:}
+
+# 카카오 로그인. 값이 없어도 서버는 뜬다.
+kakao:
+  rest-api-key: ${KAKAO_REST_API:}
+  client-secret: ${KAKAO_CLIENT_SECRET:}
+  # DOMAINNAME/KAKAO_REDIRECT_URI가 카카오 콘솔에 등록한 Redirect URI와 정확히 같아야 한다
+  domain-name: ${DOMAINNAME:}
+  redirect-path: ${KAKAO_REDIRECT_URI:}
+
+# 비밀번호 재설정. 값이 없으면 재설정 요청만 쓸 수 없고 서버는 정상 기동한다.
+password-reset:
+  mail-host: ${spring.mail.host:}
+  mail-username: ${spring.mail.username:}
+  mail-password: ${spring.mail.password:}
+  from-address: ${MAIL_FROM:}
+  base-url: ${DOMAINNAME:}
+  token-ttl: 30m
+  email-cooldown: 60s
+  email-hourly-limit: 5
+  ip-hourly-limit: 20
+
+# 프리미엄 구독 결제 (포트원 V2). 값이 없어도 서버는 뜨고, 설정이 없는 결제 수단의 결제만 503으로 응답한다.
+# 상점 ID·채널 키는 브라우저 SDK에 쓰는 공개 값, API Secret·암호화 키는 비밀값이다 (docs/premium-payment-plan.md 4절)
+payment:
+  store-id: ${PORTONE_STORE_ID:}
+  api-secret: ${PORTONE_API_SECRET:}
+  toss-channel-key: ${TOSS_CHANNEL_KEY:}
+  kakaopay-channel-key: ${KAKAOPAY_CHANNEL_KEY:}
+  # 빌링키 암호화 키. base64로 만든 32바이트 값이며, 바꾸면 저장된 빌링키를 읽을 수 없다
+  encryption-key: ${PAYMENT_ENCRYPTION_KEY:}
+  # 모바일 결제창이 돌아올 주소({DOMAINNAME}/api/payments/callback)를 만든다
+  domain-name: ${DOMAINNAME:}
+  # 결제 준비 후 승인까지 기다리는 시간
+  checkout-ttl: 15m
+  # 매월 결제·해지 예약 만료 스케줄러. 매일 24:00(0시, 한국 시각)에 그날이 결제일인 구독을 결제하고 해지 예약 만료를 처리한다
+  renewal-enabled: true
+  renewal-cron: "0 0 0 * * *"
+
 management:
+  health:
+    # SMTP 장애가 /actuator/health DOWN → 블루그린 배포 실패로 이어지지 않게 끈다
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
@@ -33,3 +93,39 @@ management:
   endpoint:
     health:
       show-details: never
+
+profile:
+  images:
+    directory: ${PROFILE_IMAGE_DIRECTORY:./uploads/profile-images}
+    public-base-url: ${PROFILE_IMAGE_PUBLIC_BASE_URL:http://localhost:8080}
+
+# 메신저 WebSocket. 쿠키로 인증하므로 이 Origin만 연결할 수 있고, 값이 없으면 모든 연결을 거부한다
+messenger:
+  realtime:
+    allowed-origin: ${DOMAINNAME:}
+    # 블루그린의 두 백엔드가 Redis 채널로 신호를 주고받는다
+    redis:
+      enabled: true
+
+---
+# local(H2) 프로필은 리프레시 토큰을 메모리에 두므로 Redis 없이 실행한다.
+# Redis 연결 상태를 헬스체크에서 빼야 /actuator/health가 DOWN이 되지 않는다.
+spring:
+  config:
+    activate:
+      on-profile: local
+messenger:
+  realtime:
+    allowed-origin: ${DOMAINNAME:http://localhost:3000}
+    redis:
+      enabled: false
+management:
+  health:
+    redis:
+      enabled: false
+# DOMAINNAME이 없어도 콘솔에 출력한 재설정 링크를 그대로 쓸 수 있게 한다
+password-reset:
+  base-url: ${DOMAINNAME:http://localhost:3000}
+# 모바일 결제 결과 주소도 같은 기본값을 쓴다
+payment:
+  domain-name: ${DOMAINNAME:http://localhost:3000}

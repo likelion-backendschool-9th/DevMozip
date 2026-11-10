@@ -1,5 +1,7 @@
 # DevMozip 인증·배포 환경 준비
 
+> 최신 정식 배포 상태·운영 명령은 [운영 안내](deployment-operations.md)를 참조하세요. 아래 미완료 항목은 해당 검증 단계의 기록입니다.
+
 코드는 develop에서 검증한 뒤 main에 병합한다. 아래 외부 설정을 준비하기 전에는 main에 배포 변경을 반영하지 않는다. [팀 공유 글](team-auth-deployment.md)의 Mock/서버 인증 구분을 먼저 읽는다. 실제 도메인 데이터는 여전히 Mock이다.
 
 ## 1. 로컬 — 팀원 각자
@@ -12,7 +14,7 @@ cp .env.example .env
 
 DB_PASSWORD, JWT_SECRET, AUTH_USER_PASSWORD, AUTH_ADMIN_PASSWORD의 예제 자리표시를 임의의 고유 값으로 교체한다. JWT_SECRET은 `openssl rand -hex 32`로 만들 수 있다. 비밀값을 채팅·커밋·로그에 공유하지 않는다. 나머지 로컬 기본값은 유지해도 된다: COMPOSE_PROJECT_NAME=devmozip, DB_NAME=devmozip, DB_USER=devmozip, DB_PORT=5432, FRONTEND_PORT=3000, BACKEND_PORT=8080, HTTP_PORT=80, HTTPS_PORT=443. 포트 충돌 시 바꾼다. DB_PORT는 호스트 공개 포트이며 컨테이너 내부는 항상 5432다.
 
-AUTH_MODE=mock은 기존 프론트 발표 시연이고, JWT+BFF 확인 시 AUTH_MODE=server로 바꾼다. AUTH_USER_USERNAME 기본값은 member@devmozip.demo, AUTH_ADMIN_USERNAME은 admin@devmozip.demo다. 비밀번호는 새로 설정한 각 환경변수 값이다. 기존 Mock 데모 비밀번호·브라우저 가입 계정은 서버 계정으로 이관되지 않는다.
+프론트 로그인은 JWT+BFF 서버 인증을 사용한다. AUTH_USER_USERNAME 기본값은 member@devmozip.demo, AUTH_ADMIN_USERNAME은 admin@devmozip.demo다. 비밀번호는 새로 설정한 각 환경변수 값이다. 기존 Mock 데모 비밀번호·브라우저 가입 계정은 서버 계정으로 이관되지 않는다.
 
 ```bash
 docker compose up -d
@@ -23,6 +25,60 @@ docker compose logs backend frontend
 http://localhost:3000에서 확인한다. Dockerfile의 첫 빌드에는 의존성 다운로드 시간이 걸린다. 서버 인증 모드에서 로그인 후 개발자 도구 Application → Cookies의 devmozip_access, devmozip_refresh 두 쿠키가 HttpOnly인지, Network에 브라우저가 backend:8080 또는 localhost:8080을 직접 부르는 요청이 없는지 확인한다. `curl -f http://localhost:3000/api/health`도 확인한다. Adminer가 필요하면 `docker compose --profile tools up -d` 후 http://localhost:8082를 연다.
 
 프론트만 Mock 시연하려면 frontend에서 `npm ci && npm run dev`를 실행한다. 이 경우 .env 없이도 되며 기본 포트는 3000이다. frontend/.env.example을 frontend/.env.local로 복사하면 서버 인증 모드를 선택할 수 있다. BACKEND_URL은 서버 전용이며 기본 http://localhost:8080이다. 루트 .env는 Compose가 읽고 frontend/.env.local은 Next가 읽는다. 호스트 직접 백엔드 실행은 루트 .env 변수들을 실행 환경에 전달해야 한다.
+
+선택 카카오 로그인:
+
+루트 `.env.local`(Git 제외)에 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME을 넣는다. 형식은 `.env.example`을 따른다. `{DOMAINNAME}/{KAKAO_REDIRECT_URI}`는 카카오 콘솔에 등록한 Redirect URI와 정확히 같아야 한다. local 프로필이 이 파일을 읽도록 각자의 `application-local.yml`(Git 제외)에 아래를 추가하고 `backend` 폴더에서 `./gradlew bootRun`으로 실행한다.
+
+```yaml
+spring:
+  config:
+    import: optional:file:../.env.local[.properties]
+```
+
+값이 없으면 카카오 API만 503으로 응답하고 다른 기능은 그대로 동작한다. 서비스 주소에 HOSTNAME을 쓰지 않는다. Git Bash가 PC 이름으로 export해 파일 값을 덮어쓴다. 프론트엔드는 카카오 값을 쓰지 않으므로 `frontend/.env*`에 넣지 않는다.
+
+선택 비밀번호 재설정 메일:
+
+MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM을 넣는다. 형식은 `.env.example`을 따른다. Gmail은 2단계 인증을 켠 계정에서 [앱 비밀번호](https://myaccount.google.com/apppasswords)를 발급해 MAIL_PASSWORD에 공백 없이 넣고, MAIL_FROM을 MAIL_USERNAME과 같게 둔다. 구글 계정 비밀번호를 바꾸면 앱 비밀번호도 폐기되므로 다시 발급한다.
+
+| 실행 방식 | 값을 읽는 위치 | 값이 없을 때 |
+|---|---|---|
+| `docker compose` | 루트 `.env` | 재설정 요청만 503 |
+| `./gradlew bootRun` (local 프로필) | 루트 `.env.local` | 메일 대신 링크를 백엔드 콘솔에 출력. 서비스 주소 기본값은 `http://localhost:3000` |
+
+`compose.yaml`은 Git 제외 파일이므로 compose로 실행하는 사람은 각자 backend의 environment에 아래 다섯 줄을 추가한 뒤 `docker compose up -d --force-recreate --no-deps backend`로 다시 만든다.
+
+```yaml
+MAIL_HOST: ${MAIL_HOST:-}
+MAIL_PORT: ${MAIL_PORT:-587}
+MAIL_USERNAME: ${MAIL_USERNAME:-}
+MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+MAIL_FROM: ${MAIL_FROM:-}
+```
+
+계약과 동작은 [비밀번호 재설정·변경 API](password-reset-api.md)를 참조한다.
+
+선택 프리미엄 결제(포트원):
+
+포트원 콘솔의 "식별코드 · API Keys"(V2)에서 상점 ID와 API Secret을, "채널 관리"에서 토스페이먼츠·카카오페이 채널 키를 가져와 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY에 넣는다. PAYMENT_ENCRYPTION_KEY는 빌링키 암호화 키로 직접 만든다(`openssl rand -base64 32`). 로컬과 서버는 다른 값을 쓰고, 정한 뒤에는 바꾸지 않는다. 바꾸면 저장된 빌링키를 읽을 수 없어 매월 결제가 미뤄진다.
+
+| 실행 방식 | 값을 읽는 위치 | 값이 없을 때 |
+|---|---|---|
+| `docker compose` | 루트 `.env` | 설정이 없는 결제 수단의 결제만 503. 상품 안내·구독 상태는 동작 |
+| `./gradlew bootRun` (local 프로필) | 루트 `.env.local` | 같다. 모바일 결과 주소 기본값은 `http://localhost:3000` |
+
+`compose.yaml`은 Git 제외 파일이므로 compose로 실행하는 사람은 각자 backend의 environment에 아래 다섯 줄을 추가한 뒤 backend를 다시 만든다. 새 테이블(`subscription_plans`·`subscriptions`·`payments`)이 연결된 DB에 생기므로 공용 DB라면 반영 시점을 팀과 맞춘다.
+
+```yaml
+PORTONE_STORE_ID: ${PORTONE_STORE_ID:-}
+PORTONE_API_SECRET: ${PORTONE_API_SECRET:-}
+TOSS_CHANNEL_KEY: ${TOSS_CHANNEL_KEY:-}
+KAKAOPAY_CHANNEL_KEY: ${KAKAOPAY_CHANNEL_KEY:-}
+PAYMENT_ENCRYPTION_KEY: ${PAYMENT_ENCRYPTION_KEY:-}
+```
+
+프론트엔드는 이 값을 쓰지 않는다. 상점 ID와 채널 키는 백엔드가 결제 준비 응답으로 내려 준다. 계약은 [프리미엄 구독·결제 API](premium-payment-api.md)를 참조한다.
 
 선택 로컬 HTTPS:
 
@@ -87,13 +143,13 @@ chmod 600 ~/DevMozip/.env
 
 경로는 워크플로의 `cd ~/DevMozip`과 정확히 같아야 한다. 비공개 저장소라면 호스트의 git 읽기 인증도 별도로 준비한다.
 
-.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다.
+.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다. 카카오 로그인을 쓰려면 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME도 채우고 운영 Redirect URI를 카카오 콘솔에 등록한다. 값이 없으면 카카오 기능만 꺼진다. 비밀번호 재설정 메일을 쓰려면 MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM과 DOMAINNAME을 채운다. DOMAINNAME은 메일 링크의 주소가 되므로 운영 주소여야 한다. 값이 없으면 재설정 요청만 503이다. 프리미엄 결제를 쓰려면 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY, PAYMENT_ENCRYPTION_KEY를 채운다. PAYMENT_ENCRYPTION_KEY는 서버에서 따로 만든다. 값이 없으면 결제만 503이다.
 
 ```bash
 docker compose -f compose.prod.yaml --profile blue --profile green config --quiet
 ```
 
-필수 변수 누락 시 명령이 실패해야 한다. config 출력 전체에는 비밀값이 포함될 수 있어 공유하지 않는다. 운영은 nginx의 127.0.0.1:TEAM_PORT:80만 공개하며 DB·Redis·백엔드·프론트 포트는 외부에 열지 않는다. 호스트 nginx가 Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto=https, X-Forwarded-Host를 전달해야 한다. 운영 쿠키는 Secure이므로 HTTPS로 접속한다. DB 스키마/업무 테이블을 만들거나 변경하지 않는다.
+필수 변수 누락 시 명령이 실패해야 한다. config 출력 전체에는 비밀값이 포함될 수 있어 공유하지 않는다. 운영은 nginx의 127.0.0.1:TEAM_PORT:80만 공개하며 DB·Redis·백엔드·프론트 포트는 외부에 열지 않는다. 호스트 nginx가 Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto=https, X-Forwarded-Host를 전달해야 한다. X-Real-IP는 비밀번호 재설정 요청의 IP 제한에도 쓰이므로 클라이언트가 보낸 값을 그대로 넘기지 말고 실제 접속 IP로 덮어써야 한다. 운영 쿠키는 Secure이므로 HTTPS로 접속한다. DB 스키마/업무 테이블을 만들거나 변경하지 않는다.
 
 ## 4. 첫 배포와 확인
 
@@ -128,7 +184,6 @@ rollback은 정지된 이전 컨테이너를 그대로 다시 켠다. 특정 커
 | gradlew FileHasher 오류 | docker compose stop backend 후 호스트 Gradle 실행 |
 | next build가 node 없음/WSL 오류 | Linux용 Node 24를 PATH 앞에 배치; Windows npm을 WSL에서 호출하지 않기 |
 | /api/health 503 | 해당 색 backend/frontend 로그, DB·Redis 연결, JWT_SECRET 32바이트 이상, 두 임시 계정 비밀번호 설정 |
-| 기존 Mock 가입 계정 로그인 불가 | 정상 분리 정책; 서버는 환경변수 임시 두 계정만 지원 |
 | 로그아웃 실패 안내 | Redis/백엔드 복구 후 재시도; 토큰 폐기 실패를 성공으로 표시하지 않음 |
 
 ## 현재 서버 확인 결과 (2026-11-03)

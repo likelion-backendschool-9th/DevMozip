@@ -2,6 +2,7 @@
 import { adminStyles as styles } from '../_components/AdminShell';
 import { useHome } from '@/lib/state/homeStore';
 import { useProfiles } from '@/lib/state/profileStore';
+import { visibleSeeds } from '@/lib/demo/mockVisibility';
 import { aiErrorExamples } from '@/mocks/administration';
 
 export default function AdminAiPage() {
@@ -26,7 +27,7 @@ export default function AdminAiPage() {
                 </article>
             ))}
             <h3>오류 로그 예시</h3>
-            {aiErrorExamples.map(l => (
+            {visibleSeeds(aiErrorExamples).map(l => (
                 <article key={l.id} className={[styles.scope, 'admin-log'].join(' ')}>
                     <time>{l.date}</time>
                     <code>{l.code}</code>

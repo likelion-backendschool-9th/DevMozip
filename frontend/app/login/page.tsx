@@ -2,59 +2,50 @@
 import { loginAction } from '@/lib/auth/actions';
 import { useSearchParams } from 'next/navigation';
 import { AuthShell } from '@/app/_components/AuthShell';
+import { KakaoNotice } from '@/app/_components/KakaoNotice';
+import { KakaoStartButton } from '@/app/_components/KakaoStartButton';
+import { PasswordNotice } from './_components/PasswordNotice';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import Link from 'next/link';
-import { useNavigation as useNavigate } from '@/lib/navigation';
-import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
-import { usePrototype } from '@/lib/state/prototypeStore';
 import { validEmail } from '@/lib/account/authService';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
-import { Modal } from '@/components/common/Modal';
-import { DemoAccounts } from '@/components/auth/DemoAccounts';
 function LoginForm() {
-    const { user, login, mode } = useAuth();
+    const { user } = useAuth();
     const searchParams = useSearchParams();
-    const { notify } = usePrototype();
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [remember, setRemember] = useState(true);
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
-    const [kakao, setKakao] = useState(false);
-    const submit = async (e: React.FormEvent) => {
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         if (!validEmail(email) || !password) {
             setError('이메일과 비밀번호를 확인해 주세요.');
             return;
         }
-        if (mode === 'server') {
-            const form = new FormData();
-            form.set('username', email);
-            form.set('password', password);
-            form.set('next', searchParams.get('next') ?? '/');
-            setBusy(true);
+        const form = new FormData();
+        form.set('username', email);
+        form.set('password', password);
+        form.set('next', searchParams.get('next') ?? '/');
+        setBusy(true);
+        // 쿠키 설정 응답을 받은 후 새 문서로 이동해 로그인 세션을 다시 확인한다.
+        startTransition(async () => {
             try {
                 const result = await loginAction(form);
-                if (result?.error) setError(result.error);
-            } finally { setBusy(false); }
-            return;
-        }
-        setBusy(true);
-        try {
-            await login(email, password, remember);
-            setPassword('');
-            navigate('/');
-            notify('로그인되었습니다.');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : '로그인하지 못했습니다.');
-        } finally {
-            setBusy(false);
-        }
+                if ('error' in result) {
+                    setError(result.error);
+                    setBusy(false);
+                    return;
+                }
+                window.location.replace(result.redirectTo);
+            } catch {
+                setError('로그인 처리 중 문제가 발생했습니다. 다시 시도해 주세요.');
+                setBusy(false);
+            }
+        });
     };
     return (
         <>
@@ -63,6 +54,8 @@ function LoginForm() {
                     현재 {user.nickname} 계정으로 로그인되어 있습니다. 다른 계정으로 전환할 수 있어요.
                 </div>
             )}
+            <KakaoNotice />
+            <PasswordNotice />
             <form className={[styles.scope, 'auth-form'].join(' ')} onSubmit={submit} noValidate>
                 <label htmlFor="login-email">이메일</label>
                 <Input
@@ -99,19 +92,10 @@ function LoginForm() {
                     required
                 />
                 <div className={[styles.scope, 'auth-options'].join(' ')}>
-                    <label className={[styles.scope, 'checkbox-label'].join(' ')}>
-                        <input
-                            type="checkbox"
-                            checked={remember}
-                            onChange={e => setRemember(e.target.checked)}
-                            disabled={busy || mode === 'server'}
-                        />
-                        로그인 상태 유지
-                    </label>
                     <Link href="/forgot-password">비밀번호 찾기</Link>
                 </div>
                 <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                    {mode === 'server' ? '임시 인증 계정으로 로그인합니다. 세션은 보안 쿠키로 관리됩니다.' : '체크 해제 시에도 새로고침은 유지되며, 현재 탭을 닫으면 세션이 종료됩니다.'}
+                    서버에 등록된 계정으로 로그인합니다. 세션은 보안 쿠키로 관리됩니다.
                 </p>
                 {error && (
                     <p id="login-error" className={[styles.scope, 'form-error'].join(' ')} role="alert">
@@ -122,22 +106,12 @@ function LoginForm() {
                     {busy ? '로그인 중…' : '로그인'}
                 </Button>
             </form>
-            <Button type="button" className={[styles.scope, 'kakao-button'].join(' ')} onClick={() => setKakao(true)}>
-                <MessageCircle size={17} />
+            <KakaoStartButton intent="login" next={searchParams.get('next') ?? '/'}>
                 카카오로 시작하기
-            </Button>
+            </KakaoStartButton>
             <p className={[styles.scope, 'auth-switch'].join(' ')}>
                 아직 DevMozip 회원이 아니신가요? <Link href="/signup">회원가입</Link>
             </p>
-            <DemoAccounts showCredentials onSelected={() => navigate('/')} />
-            {kakao && (
-                <Modal title="카카오 로그인 데모 안내" onClose={() => setKakao(false)}>
-                    <p>
-                        카카오 OAuth는 연결하지 않았습니다. 데모 계정을 선택하거나 Mock 이메일 로그인을 이용해 주세요.
-                    </p>
-                    <Button onClick={() => setKakao(false)}>확인</Button>
-                </Modal>
-            )}
         </>
     );
 }

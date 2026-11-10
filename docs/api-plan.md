@@ -1,13 +1,19 @@
 # 향후 REST API 설계 초안
 
-**문서 초안이며 실제 API는 없습니다.** 기본 경로 `/api/v1`, 서버 `http://localhost:8080`, 프론트 개발 포트 5173.
+**문서 초안입니다. 실제로 구현된 API는 로그인·재발급·로그아웃, 회원가입, 이메일·닉네임 중복 확인, `/users/me`, `/users/me/availability`, [비밀번호 재설정·변경](password-reset-api.md)뿐입니다.** 기본 경로 `/api/v1`, 서버 `http://localhost:8080`, 프론트 개발 포트 5173.
 아래 URL은 기본 경로를 생략했습니다. 인증 방식, 페이지네이션, 오류 스키마, 권한 정책은 백엔드 단계에서 확정합니다.
 요청 필드/응답 필드는 개념 수준이며 최종 계약이 아닙니다. 향후 공통 응답은 `{ data, message? }`, 오류는 `{ code, message }`를 검토합니다.
+
+**메신저(1:1·프로젝트 단톡방·사용자 신고·WebSocket)도 구현됐습니다. 계약은 [메신저 API](messenger-api.md)를 따르며, 아래 표의 Message·Project Chat·`/conversations`·`/projects/{id}/chat` 행과 사용자 신고는 이전 초안입니다.**
 
 | 도메인 | Method | URL | 기능 | 인증 필요 | 요청 | 응답 | 프리미엄 |
 |---|---|---|---|---|---|---|---|
 | Auth | POST | /auth/login | 로그인 | 아니오 | email, password | user, session | 아니오 |
-| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, nickname, profile | user | 아니오 |
+| Auth | GET | /auth/signup/options | 회원가입 선택지(직군·기술 스택·관심 분야) | 아니오 | 없음 | jobCategories, skills, interests | 아니오 |
+| Auth | GET | /auth/check-email | 이메일 중복 확인 (남용 방지 정책 필요) | 아니오 | email | available | 아니오 |
+| Auth | GET | /auth/check-nickname | 닉네임 중복 확인 (남용 방지 정책 필요) | 아니오 | nickname | available | 아니오 |
+| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, skills, interests, available | id, email, nickname | 아니오 |
+| User | PATCH | /users/me/availability | 협업 가능 상태·연락 가능 시간 수정 | 예 | collaborationStatus, contactHours (보낸 값만 변경) | collaborationStatus, contactHours | 아니오 |
 | User | GET | /users/{id} | 사용자 조회 | 선택 | id | user | 아니오 |
 | Profile | PATCH | /users/me/profile | 프로필 수정 | 예 | 소개, 기술, 연락 시간 | profile | 아니오 |
 | Portfolio | GET | /users/{id}/portfolios | 포트폴리오 목록/상세 | 선택 | id | portfolio[] (권한에 따라 상세 제한) | 상세 예 |
@@ -18,7 +24,8 @@
 | Project | GET | /projects | 프로젝트 목록 | 아니오 | q, role, stack, status, sort | projects, total | 아니오 |
 | Project | GET | /projects/{id} | 프로젝트 상세 | 아니오 | id | project | 아니오 |
 | Project | POST | /projects | 모집 공고 생성 | 예 | 소개, 목표, 기간, 역할, 기술 | project | 예 |
-| Project | PATCH | /projects/{id} | 공고/상태 수정 | 예 (주최자) | 변경 필드 | project | 정책 검토 |
+| Project | PUT | /projects/{id} | 공고 전체 수정 (#46) | 예 (주최자) | 전체 공고 필드 | project | 아니오 |
+| Project | PATCH | /projects/{id}/update | 상태·기간·종료 동의 (#47) | 예 (현재 팀원, 명령별 권한) | action, status 또는 종료일 | project, 종료 동의 집계 | 아니오 |
 | Project | DELETE | /projects/{id} | 공고 삭제 | 예 (주최자) | id | 삭제 결과/제한 사유 | 정책 검토 |
 | Project Application | POST | /projects/{id}/applications | 지원 | 예 | portfolioId, message | application | 아니오 |
 | Project Application | PATCH | /projects/{id}/applications/{applicationId} | 승인/거절 | 예 (주최자) | status | application, members | 아니오 |
@@ -46,7 +53,7 @@
 | Admin | PATCH | /admin/users/{id} | 회원 경고/정지/해제 | 예 (관리자) | action | userStatus | 아니오 |
 | Admin | PATCH | /admin/moderation/{type}/{id} | 프로젝트/글/댓글 신고 처리 | 예 (관리자) | action, reasonCode | moderationResult | 아니오 |
 
-향후 보완: 회원/닉네임 중복확인, 비밀번호 찾기, 로그아웃, 프로필 수정, 포트폴리오 수정/삭제, 팔로워/팔로잉 목록과 알림 설정, 모집 기간 연장, 팀원 관리, 채팅 종료 정책, 글/댓글 삭제, 좋아요, 북마크 취소, 신고, 메시지 읽음, 구독 내역 및 관리자 상세 관리.
+향후 보완: 로그아웃, 프로필 수정, 포트폴리오 수정/삭제, 팔로워/팔로잉 목록과 알림 설정, 모집 기간 연장, 팀원 관리, 채팅 종료 정책, 글/댓글 삭제, 좋아요, 북마크 취소, 신고, 메시지 읽음, 구독 내역 및 관리자 상세 관리.
 현재 단계에서는 외부 인증·Gemini·Kakao·Toss·DB 연동을 설계 계약으로 확정하거나 구현하지 않습니다.
 
 ## 최종 프로토타입 범위를 반영한 추가 REST 후보
@@ -56,8 +63,6 @@
 | Method | 기본 경로 이후 URL | 목적 | 권한/비고 |
 |---|---|---|---|
 | POST | /auth/logout | 로그아웃 | 로그인 |
-| POST | /auth/password-recovery | 비밀번호 복구 요청 | 메일 정책 미확정 |
-| GET | /auth/availability | 이메일/닉네임 중복 확인 | 공개, 남용 방지 정책 필요 |
 | PATCH | /portfolios/{id} | 포트폴리오 수정 | 작성자 |
 | DELETE | /portfolios/{id} | 포트폴리오 삭제 | 작성자, 지원서 스냅샷 유지 검토 |
 | POST | /portfolios/{id}/feedback | 포트폴리오 피드백 | 프리미엄/관리자 |
@@ -67,8 +72,8 @@
 | GET | /users/me/activities | 모집/참여 프로젝트 이력 | 본인 |
 | GET | /projects/{id}/applications | 지원자 목록 | 주최자 |
 | GET | /projects/{id}/members | 팀원 목록 | 접근 범위 검토 |
-| PATCH | /projects/{id}/period | 모집/개발 기간 연장 | 주최자 |
-| POST | /projects/{id}/close | 종료 및 채팅 보관/삭제 선택 | 주최자, 리뷰 자격 생성 |
+| PATCH | /projects/{id}/update | #47 상태·기간·종료 동의, 기존 /period 후보 대체 | 현재 팀원, 명령별 권한 |
+| PATCH | /projects/{id}/update | #47 REQUEST_END/CANCEL_END_REQUEST, 기존 /close 후보 대체 | 진행 중 ACTIVE 팀원 본인 |
 | POST | /projects/{id}/reports | 프로젝트 신고 | 로그인 |
 | PATCH | /posts/{id} | 게시글 수정/숨김 | 작성자 |
 | DELETE | /posts/{id} | 게시글 삭제 | 작성자 |
@@ -144,3 +149,12 @@
 ## Next.js 이전 후 실행 경계
 
 프론트엔드는 Next.js App Router로 이전했지만 실제 서비스 API 계획은 Spring Boot 기준으로 유지합니다. Next Route Handler/Server Action을 비즈니스 API로 구현하지 않았습니다. 브라우저의 RSC·정적 청크 요청은 Next.js 페이지 이동에 필요한 프레임워크 요청입니다. 미사용 Axios 공통 인스턴스는 `frontend/lib/shared/api.ts`, 호출 경로는 동일 출처 `/api`이며 백엔드 주소는 서버 전용 `BACKEND_URL`입니다. 인증 BFF와 도메인 API 구분은 [팀 공유 문서](team-auth-deployment.md)를 참고하세요.
+
+
+#47의 실제 서버 계약은 [프로젝트 상태·기간 API](project-lifecycle.md)를 따른다. /complete·/extend-period·/period 별도 API는 구현하지 않았다. 기존 후보 경로는 확정 계약으로 사용하지 않는다.
+
+### 프로젝트 지원 포트폴리오 제출본 (2026-11-10 확정)
+
+- GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`: 지원 당시 보관본 조회. 본인 지원자 또는 프리미엄/관리자 주최자에게만 제공한다. 수정·삭제 API 없음.
+- POST `/api/v1/projects/{projectId}/applications`는 공개 원본 1~3개 검증 후 지원서·연결·제출본을 함께 저장한다. 응답의 submittedPortfolios는 제출본 ID·원본 ID·당시 제목을 제공한다.
+- 원본 수정·삭제는 허용하며 제출본을 변경하지 않는다. 원본 삭제 시 연결 ID만 SET NULL로 처리한다. 상세는 docs/project-portfolio-snapshots.md를 따른다.

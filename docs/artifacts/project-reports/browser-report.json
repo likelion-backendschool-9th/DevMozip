@@ -1,0 +1,13 @@
+{
+  "fixture": "브라우저 /api/auth/session만 데모 회원으로 대체, 실제 로그인 검증 아님",
+  "form": {
+    "radios": 4,
+    "maxLength": 1000,
+    "noOverflow": true
+  },
+  "mockSubmit": true,
+  "duplicate": true,
+  "ownProject": true,
+  "loginRequired": true,
+  "errors": []
+}

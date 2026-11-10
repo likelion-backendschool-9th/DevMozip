@@ -1,0 +1,10 @@
+.group{display:inline-flex;align-items:center;gap:6px;padding:5px;border:1px solid var(--border);border-radius:14px;background:#fff}
+.icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;padding:0;border:1px solid transparent;border-radius:10px;background:#fff;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.icon svg{width:21px;height:21px}
+.compact{width:36px;height:36px;border-color:var(--border)}
+.icon:hover{background:#f3eefb;color:var(--purple)}
+.icon[aria-pressed=true]{background:#f1ebfc;color:var(--purple)}
+.icon:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.icon:disabled{opacity:.5;cursor:wait}
+.report{color:#dc3545;background:#fff1f2;border-color:#ffd8dc;margin-left:3px}
+.report:hover{color:#b91c35;background:#ffe2e7;border-color:#ffb7c1}

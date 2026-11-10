@@ -4,7 +4,7 @@ import {safeExternalUrl} from '@/lib/utils/externalUrl';
 const color=[/^#[0-9a-f]{3,8}$/i,/^[a-z]{1,24}$/i,/^rgba?\(\s*[\d.,%\s]+\)$/i];
 const spacing=[/^(?:0|\d{1,2}px|[0-3](?:\.\d{1,2})?rem)(?:\s+(?:0|\d{1,2}px|[0-3](?:\.\d{1,2})?rem)){0,3}$/];
 // Shared by save and render: old/tampered storage is also filtered before display.
-// Real persistence will need the same validation on the future backend.
+// The introduction API also filters HTML on save/read; the browser keeps this defensive rendering policy.
 export function sanitizeIntroduction(source:string){
  const markup=/<\/?[a-z][^>]*>/i.test(source)?source:source.replace(/\r?\n/g,'<br />');
  return sanitizeHtml(markup,{

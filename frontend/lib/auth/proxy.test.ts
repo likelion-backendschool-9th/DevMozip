@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 vi.mock('./refresh', () => ({ refreshAccessToken: vi.fn() }));
 import { refreshAccessToken } from './refresh';
@@ -6,8 +6,7 @@ import { proxy } from '@/proxy';
 import { ACCESS_COOKIE, REFRESH_COOKIE } from './cookies';
 const jwt = (role: string, exp = 9999999999) => `header.${Buffer.from(JSON.stringify({ sub: 'user', role, exp })).toString('base64url')}.sig`;
 const request = (path: string, cookie = '') => new NextRequest(`https://devmozip.test${path}`, { headers: { cookie } });
-beforeEach(() => { vi.stubEnv('AUTH_MODE', 'server'); vi.mocked(refreshAccessToken).mockReset(); });
-afterEach(() => vi.unstubAllEnvs());
+beforeEach(() => { vi.mocked(refreshAccessToken).mockReset(); });
 describe('BFF proxy', () => {
     it('보호 화면에 next 쿼리를 보존해 로그인으로 보낸다', async () => {
         const response = await proxy(request('/messages?userId=user'));
@@ -15,9 +14,19 @@ describe('BFF proxy', () => {
         expect(location.pathname).toBe('/login');
         expect(location.searchParams.get('next')).toBe('/messages?userId=user');
     });
-    it('USER의 관리자 접근을 막는다', async () => {
-        const response = await proxy(request('/admin/users', `${ACCESS_COOKIE}=${jwt('USER')}`));
+    it('AI 입력 화면은 비로그인도 열고 서버 저장 인증은 백엔드에 맡긴다', async () => {
+        expect((await proxy(request('/ai/matching'))).headers.get('location')).toBeNull();
+        const allowed = await proxy(request('/ai/matching', `${ACCESS_COOKIE}=${jwt('USER')}`));
+        expect(allowed.headers.get('location')).toBeNull();
+    });
+    it.each(['USER', 'PREMIUM'])('%s의 관리자 접근을 막는다', async role => {
+        const response = await proxy(request('/admin/users', `${ACCESS_COOKIE}=${jwt(role)}`));
         expect(new URL(response.headers.get('location')!).pathname).toBe('/');
+    });
+    it('PREMIUM 토큰은 로그인 상태로 보호 화면을 연다', async () => {
+        const response = await proxy(request('/my-projects', `${ACCESS_COOKIE}=${jwt('PREMIUM')}`));
+        expect(response.headers.get('location')).toBeNull();
+        expect(refreshAccessToken).not.toHaveBeenCalled();
     });
     it('재발급 토큰을 이번 요청과 응답 쿠키에 모두 전달한다', async () => {
         const access = jwt('ADMIN');

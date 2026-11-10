@@ -1,36 +1,43 @@
 'use client';
 import styles from './AppLayout.module.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ActiveLink as NavLink } from '@/components/navigation/ActiveLink';
 import { useNavigation as useNavigate, useCurrentLocation as useLocation } from '@/lib/navigation';
-import { Bell, MessageSquare, ArrowUpRight, RotateCcw } from 'lucide-react';
+import { Bell, MessageSquare, ArrowUpRight, LogOut } from 'lucide-react';
 import { navigation } from '@/mocks/routes';
 import { routeTitle } from '@/lib/shared/routeService';
 import { useAuth } from '@/lib/state/authStore';
-import { DemoAccounts } from '@/components/auth/DemoAccounts';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { useMessaging } from '@/lib/state/messagingStore';
+import { useDirectChats } from '@/lib/state/directChatStore';
+import { useProjectChats } from '@/lib/state/projectChatStore';
 import { useProjects } from '@/lib/state/projectStore';
-import { useProfiles } from '@/lib/state/profileStore';
 import { useHome } from '@/lib/state/homeStore';
-import { Modal } from '@/components/common/Modal';
+import { OwnProfileProvider } from '@/app/(user)/_components/OwnProfileProvider';
+import { HeaderProfileLink } from './HeaderProfileLink';
 import { Toast } from './Toast';
-import { Button } from '@/components/common/Button';
+import { MockVisibilityToggle } from './MockVisibility';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 
 const logo = '/devmozip-logo.svg';
 
-export function AppLayout({ children }: {
-    children?: React.ReactNode;
-}) {
-    const { unreadCount, unreadMessages, reset: resetMessaging } = useMessaging();
-    const { settings, toggleGuide, reset, notify } = usePrototype();
-    const { reset: resetHome, resetAll: resetAllHome } = useHome();
-    const { reset: resetProfiles, state: followState } = useProfiles();
-    const { reset: resetProjects, state: projectState } = useProjects();
-    const { user, logout, resetAdministration, administration, resetAccountArea, accountUser, needsOnboarding } = useAuth();
-    const [resetOpen, setResetOpen] = useState(false);
-    const [demoOpen, setDemoOpen] = useState(false);
+export function AppLayout({ children }: { children?: React.ReactNode }) {
+    return <OwnProfileProvider><AppShell>{children}</AppShell></OwnProfileProvider>;
+}
+
+function AppShell({ children }: { children?: React.ReactNode }) {
+    const { enabled: mockEnabled } = useMockVisibility();
+    const { unreadCount, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unread: serverDirectUnread } = useDirectChats();
+    const { unread: serverProjectUnread } = useProjectChats();
+    // 토글 OFF는 1:1(11.7)과 프로젝트 채팅(7.21)을 합산한다(D12). ON은 지금처럼 Mock 1:1만 센다.
+    const unreadMessages = mockEnabled ? mockUnreadMessages : serverDirectUnread + serverProjectUnread;
+    const unreadMessageLabel = mockEnabled ? '안 읽은 쪽지' : '안 읽은 메시지';
+    const { notify } = usePrototype();
+    const { reset: resetHome } = useHome();
+    const { state: projectState } = useProjects();
+    const { user, logout, administration, needsOnboarding } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const main = useRef<HTMLElement>(null);
@@ -74,19 +81,26 @@ export function AppLayout({ children }: {
                                 <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="쪽지" href="/messages/chats">
                                     <MessageSquare size={20} />
                                     {unreadMessages > 0 && (
-                                        <span className={[styles.scope, "header-count"].join(" ")} aria-label={`안 읽은 쪽지 ${unreadMessages}개`}>
+                                        <span className={[styles.scope, "header-count"].join(" ")} aria-label={`${unreadMessageLabel} ${unreadMessages}개`}>
                                             {unreadMessages > 99 ? '99+' : unreadMessages}
                                         </span>
                                     )}
                                 </Link>
-                                <Link
-                                    className={[styles.scope, styles.profileLink, "icon-button header-profile-link"].join(" ")}
-                                    href={`/users/${user.id}`}
-                                    aria-label="내 프로필로 이동"
-                                    title={`${user.nickname}님의 프로필`}
+                                <HeaderProfileLink />
+                                <button
+                                    type="button"
+                                    className={[styles.scope, "icon-button"].join(" ")}
+                                    aria-label="로그아웃"
+                                    title="로그아웃"
+                                    onClick={() => {
+                                        logout();
+                                        resetHome();
+                                        navigate('/');
+                                        notify('로그아웃되었습니다.');
+                                    }}
                                 >
-                                    <span className={[styles.scope, "small-avatar lavender"].join(" ")}>{user.nickname.slice(0, 2)}</span>
-                                </Link>
+                                    <LogOut size={20} />
+                                </button>
                             </>
                         )}
                     </div>
@@ -97,16 +111,9 @@ export function AppLayout({ children }: {
                 <div className={[styles.scope, "utility-inner"].join(" ")}>
                     <span>
                         <span className={[styles.scope, "status-dot"].join(" ")} />
-                        Mock 프로토타입 <b>· 프론트엔드 데모</b>
+                        {mockEnabled ? <>Mock ON <b>· 데모 콘텐츠 표시 중</b></> : <>Mock OFF <b>· 샘플 데이터 없이 보기</b></>}
                     </span>
-                    <div>
-                        <button onClick={() => setDemoOpen(true)}>데모 계정 전환</button>
-                        <button onClick={toggleGuide}>{settings.showGuide ? '안내 숨기기' : '안내 보기'}</button>
-                        <button onClick={() => setResetOpen(true)}>
-                            <RotateCcw size={13} />
-                            데모 초기화
-                        </button>
-                    </div>
+                    <MockVisibilityToggle />
                 </div>
             </div>
 
@@ -134,63 +141,12 @@ export function AppLayout({ children }: {
                     <img className={[styles.scope, "brand-logo"].join(" ")} src={logo} alt="DevMozip" width="96" height="64" />
                 </Link>
                 <p>개발자의 다음 가능성을 연결합니다.</p>
-                <span>© 2026 DevMozip · Mock 기반 프로토타입</span>
+                <span>© 2026 DevMozip · {mockEnabled ? 'Mock 기반 프로토타입' : '샘플 데이터 없이 보기'}</span>
                 <Link href="/subscription">
                     프리미엄 안내
                     <ArrowUpRight size={14} />
                 </Link>
             </footer>
-
-            {demoOpen && (
-                <Modal title="데모 계정으로 둘러보기" onClose={() => setDemoOpen(false)}>
-                    <p>실제 인증 없이 일반 회원·프리미엄 회원·관리자를 체험합니다.</p>
-                    <DemoAccounts onSelected={() => setDemoOpen(false)} />
-                    {user && (
-                        <Button
-                            variant="secondary"
-                            className={[styles.scope, "demo-logout"].join(" ")}
-                            onClick={() => {
-                                logout();
-                                resetHome();
-                                setDemoOpen(false);
-                                navigate('/');
-                                notify('로그아웃되었습니다.');
-                            }}
-                        >
-                            로그아웃 상태로 전환
-                        </Button>
-                    )}
-                </Modal>
-            )}
-
-            {resetOpen && (
-                <Modal title="데모 데이터를 초기화할까요?" onClose={() => setResetOpen(false)}>
-                    <p>
-                        계정 상태, 추천 입력·사용량과 안내 설정을 초기값으로 되돌립니다.
-                        프로필·포트폴리오·글·리뷰·팔로우·모집 공고·지원·북마크·신고·대화·알림 읽음·구독·회원 제재·신고 처리·리뷰 선택지도 초기화하며 가입한 Mock 계정은 유지됩니다.
-                        계정 공개 설정·카카오 Mock 연동·온보딩 임시 입력도 초기화합니다.
-                    </p>
-                    <div className={[styles.scope, "modal-actions"].join(" ")}>
-                        <Button variant="secondary" onClick={() => setResetOpen(false)}>취소</Button>
-                        <Button
-                            onClick={() => {
-                                logout();
-                                resetAllHome();
-                                resetProfiles();
-                                resetProjects();
-                                resetMessaging();
-                                resetAdministration();
-                                resetAccountArea();
-                                reset();
-                                setResetOpen(false);
-                                window.location.assign('/');
-                            }}
-                        >
-                            초기화
-                        </Button>
-                    </div>
-                </Modal>
-            )}
 
             <Toast />
         </>

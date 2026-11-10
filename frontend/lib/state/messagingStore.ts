@@ -1,5 +1,5 @@
 import { createLocalStore, derived, useStore } from '@/lib/localStore';
-import { applyMessagingAction, directUnread, freshMessagingState, loadMessaging, reconcileMessaging as reconcile, saveMessaging, unifiedNotices, unreadNotices } from '@/lib/messaging/messagingService';
+import { applyMessagingAction, directUnread, loadMessaging, reconcileMessaging as reconcile, saveMessaging, unifiedNotices, unreadNotices } from '@/lib/messaging/messagingService';
 import { canViewProfile, getUser } from '@/lib/state/authStore';
 import { getProfileState } from '@/lib/state/profileStore';
 import { getProjectState, projectClock, projectSources } from '@/lib/state/projectStore';
@@ -7,7 +7,7 @@ import { notify } from '@/lib/state/prototypeStore';
 import type { MessagingAction, MessagingState } from '@/types/messaging';
 
 // 1:1 쪽지 · 프로젝트 단체 대화방 · 알림 읽음 상태.
-const messagingStore = createLocalStore(() => reconcile(loadMessaging(), getProjectState(), getProfileState(), projectClock()));
+const messagingStore = createLocalStore(() => reconcile(loadMessaging(), getProjectState(), getProfileState(), projectClock()), true);
 
 const messagingSources = [...projectSources, messagingStore];
 
@@ -67,9 +67,6 @@ const messaging = derived(messagingSources, () => {
         unreadCount: user ? unreadNotices(state, notifications.get(), user.id).length : 0,
         unreadMessages: user ? directUnread(state, user.id) : 0,
         act,
-        reset: () => {
-            commit(freshMessagingState());
-        },
     };
 });
 
