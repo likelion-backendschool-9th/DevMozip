@@ -61,6 +61,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 // 오류 응답(404, 409 등)이 403으로 바뀌지 않도록 스프링의 오류 경로는 허용
                 .requestMatchers("/error").permitAll()
+                // 메신저 WebSocket은 쿠키로 인증하므로 Bearer 필터 대신 핸드셰이크 인터셉터가 검증한다
+                .requestMatchers(HttpMethod.GET, "/ws/messages").permitAll()
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
@@ -76,6 +78,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}", "/api/v1/files/{id}").permitAll()
                 // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
+                // 프리미엄 상품 안내(/subscription)는 비로그인도 볼 수 있다. 결제·구독 관리는 기본 정책(인증 필요)을 따른다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/subscription/plans").permitAll()
                 // 관리자만 접근 가능
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능

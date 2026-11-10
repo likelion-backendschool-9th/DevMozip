@@ -1,0 +1,1 @@
+export interface ApiReviewView {projectId:number;title:string;completedAt:string;expiresAt:string;submitted:boolean;expired:boolean;keywords:string[];targets:{memberId:number;userId:number;nickname:string;tag:string|null;status:'PENDING'|'SUBMITTED';rating:number|null;keywords:string[]}[]}
