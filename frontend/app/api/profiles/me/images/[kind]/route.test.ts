@@ -20,6 +20,13 @@ describe('이미지 BFF', () => {
         expect((init?.body as FormData).get('file')).toBeInstanceOf(File);
         expect(init?.headers).toBeUndefined();
     });
+    it('Docker 내부 주소에서도 같은 브라우저 출처의 이미지 업로드를 전달한다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json({ profileImage: '/new.png', bannerImage: null }));
+        const body = new FormData(); body.append('file', new File(['png'], 'image.png', { type: 'image/png' }));
+        const request = new Request('http://0.0.0.0:3000/api/profiles/me/images/profile', { method: 'PUT', headers: { Host: 'localhost:3000', Origin: 'http://localhost:3000' }, body });
+        expect((await PUT(request, context())).status).toBe(200);
+        expect(backendFetch).toHaveBeenCalledTimes(1);
+    });
     it('256KB 초과 파일을 전송하지 않는다', async () => {
         expect((await PUT(upload(new File([new Uint8Array(262145)], 'large.png', { type: 'image/png' })), context())).status).toBe(413);
         expect(backendFetch).not.toHaveBeenCalled();

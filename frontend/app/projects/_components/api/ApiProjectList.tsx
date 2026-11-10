@@ -11,7 +11,6 @@ import {useAuth} from '@/lib/state/authStore';
 import type {ProjectOptions,ProjectPageResult} from '@/types/projectApi';
 import {Button} from '@/components/common/Button';
 import {Input} from '@/components/common/Input';
-import {Card} from '@/components/common/Card';
 import {ProjectSummaryCard} from '@/components/projects/ProjectSummaryCard';
 import {Search,Plus,RotateCcw,ArrowUpRight} from 'lucide-react';
 import recruitment from '../../page.module.css';
@@ -44,7 +43,7 @@ export function ApiProjectList({mine=false,compact=false,initialQuery=''}:{mine?
  {compact?sorting:<div className={cls('recruitment-list-heading',styles.listHeading)}><span role="status">{resource.loading?'조회 중…':resource.data?<>총 <b>{resource.data.totalElements}</b>개의 프로젝트</>:''}</span>{sorting}</div>}
  {resource.error&&<ApiError error={resource.error} retry={resource.reload}/>}
  {resource.data?.items.length===0&&<div className="empty-state"><strong>조건에 맞는 프로젝트가 없습니다.</strong><p>검색어 또는 필터를 바꿔보세요.</p></div>}
- <div className={cls(compact?'project-grid':mine?'my-project-grid':'recruitment-grid')}>{resource.data?.items.map((p,index)=>mine?<Card className={cls('my-project-card')} key={p.id}><header><span className={cls('project-mark lavender')}>{p.title.charAt(0)}</span><span className="demo-pill">{statusLabels[p.status]}</span></header><Link href={'/projects/'+p.id}><h2>{p.title}</h2></Link><p>{p.summary}</p><dl><div><dt>주최자</dt><dd>회원 {p.hostMemberId}</dd></div><div><dt>내 역할</dt><dd>{p.myRole==='HOST'?'주최자':p.myRole==='PARTICIPANT'?'참여자':'—'}</dd></div><div><dt>모집 기간</dt><dd>{p.recruitmentStart} — {p.recruitmentEnd}</dd></div><div><dt>진행 기간</dt><dd>{p.developmentStart} — {p.developmentEnd}</dd></div><div><dt>참여 인원</dt><dd>{p.memberCount}/{p.totalCapacity}명</dd></div></dl><div className={styles.actions}><Link className="button secondary" href={'/projects/'+p.id}>상세 보기</Link>{p.myRole&&<Link className="button" href={'/my-projects/'+p.id+'/manage'}>{p.myRole==='HOST'?'프로젝트 관리':'참여 정보'}</Link>}</div></Card>:<ProjectSummaryCard key={p.id} project={p} index={index} compact={compact}/>)}</div>
+ <div className={cls(compact?'project-grid':mine?'my-project-grid':'recruitment-grid')}>{resource.data?.items.map((p,index)=><ProjectSummaryCard key={p.id} project={p} index={index} compact={compact} returnTo={mine?'/my-projects'+(params.size?'?'+params.toString():''):undefined}/>)}</div>
  {!compact&&resource.data&&resource.data.totalPages>1&&<div className={styles.pager}><Button variant="secondary" disabled={resource.data.page===0} onClick={()=>update('page',String(resource.data!.page-1))}>이전</Button><span>{resource.data.page+1}/{resource.data.totalPages}</span><Button variant="secondary" disabled={resource.data.page+1>=resource.data.totalPages} onClick={()=>update('page',String(resource.data!.page+1))}>다음</Button></div>}
  </section>;
 }
