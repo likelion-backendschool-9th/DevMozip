@@ -1,5 +1,12 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 월간 추천 잔여 횟수 표시 (`feat/ai-prompt`)
+
+- 사용자 요청으로 matching 추천 조건 패널의 `사용 횟수 / 한도` 표시를 서버 `remainingCount` 기준의 `남은 횟수 / 한도`로 변경하고 제목을 ‘월간 추천 잔여’로 명확히 했다. 프리미엄1회 사용은99/100회, 무료1회 사용은4/5회다. 로딩·실패 시 기존 ‘—’ 표시를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/ChatConditions.tsx`, `docs/ai-matching.md`, 이 문서. 사용량 계산·차감·처리 중 예약·API·백엔드·다른 도메인은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/usage.test.ts tests/screens/FollowingMatching.test.tsx` 실행,2개 파일27개 테스트 통과. `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/_components/ChatConditions.tsx` 오류0·종료0. 표시1줄 변경으로 새 테스트는 추가하지 않았다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증: 실제 브라우저 및 서버 연결 검증은 수행하지 않았다. 커밋·푸시·병합·배포는 수행하지 않는다.
+
 ## 2026-11-10 메인 첫 프롬프트 분석 연결 (`feat/ai-prompt`)
 
 - 요청 범위: 메인에서 첫 프롬프트를 제출하고 matching으로 이동했을 때 AI가 입력에 응답하고 조건을 처리하도록 수정한다. 기존 저장·이동만 하던 경로에 기존 메시지 분석을 연결하며 다음 AI 개발 단계는 시작하지 않는다.
