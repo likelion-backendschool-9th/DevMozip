@@ -1,5 +1,129 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 STEP 7 종료 점검 — 현재 구현 기준
+
+이번 요청은 **문서만 갱신**한다. 현재 코드·이전 실행 로그·JUnit XML을 대조했으며 아래 테스트 수치는 이번 문서 작업에서 새로 실행한 결과가 아니다. 현재 브랜치는 `feat/ai-usage`, 본체 커밋은 `8945056`이다. 이후 CHAR JDBC 매핑 수정·스키마 검증 테스트·관련 문서는 작업 트리에 남아 있으며 커밋되지 않았다. 이전 날짜별 미구현·미적용·테스트 수치는 당시 이력이고 이 절을 최신 기준으로 삼는다.
+
+### 완료 기능과 정책
+
+- 사용자·KST 월별 `AiUsage`와 GET `/api/v1/ai/usage`, 인증 BFF GET `/api/ai/usage`를 구현했다. 응답은 usageMonth/usedCount/limit/remainingCount/pendingCount/availableCount다. UNIQUE(user_id, usage_month), 카운터 음수 금지, 추천 요청의 사용량 FK·예약 만료 시각을 관리한다.
+- 무료5회, 현재 DB PREMIUM/ADMIN 역할+유효 구독100회이며 ADMIN 무제한 예외는 없다. 신규 요청 최초 처리 시 기록한 KST 수신 월에 귀속한다. 월이 바뀌면 새 행을 사용하며 이전 월 행을 초기화하지 않는다. 구독 변경 시 기존 used는 유지하고, 이미 예약한 요청은 완료를 허용한다.
+- 0건 정상 완료를 포함해 신규 추천 요청 전체 성공에1회 차감한다. 개발자/프로젝트 중 한쪽 실패는 전체 실패·부분 결과 롤백·미차감이다. 대화·일반 메시지·조건 변경·기존 결과 GET·6B 상세 분석·실패는 차감하지 않는다.
+- 대화별 멱등성 키를 먼저 확인하고 신규 요청에만 월별 행 잠금·예약을 적용한다. 외부 계산은 트랜잭션 밖에서 수행하고, 성공은 결과/SUCCESS/used 증가/pending 감소를 함께 커밋한다. 실패·만료·삭제는 예약을 한 번만 반환하며, 대화 삭제 후 성공 used를 보존한다. 첫 월 행 생성 경쟁도 DB UNIQUE와 실패 트랜잭션 밖 재조회로 처리한다.
+- 자리 부족은429·AI_MONTHLY_LIMIT_EXCEEDED다. 프론트는 서버 사용량만 표시하고 실패를0회로 대체하지 않는다. 429로 생성되지 않은 요청의 대기 키는 제거하고, 네트워크 응답 유실의 기존 키는 유지한다. 같은 키의 기존 성공·처리 중·실패 조회는 추가 차감하지 않는다.
+- 예약은 기본30분으로 설정 가능하다. usage GET/추천 POST/결과 GET에서 사용자 전체 월의 만료를 정리한다. 늦은 완료와 중복 정리의 상태 전이를 DB 잠금으로 보호한다. 별도 스케줄러나 외부 호출 즉시 취소는 없다.
+- 사용자 SQL 적용 후 발생한 CHAR(7) 검증 오류는 `@JdbcTypeCode(SqlTypes.CHAR)`+길이7로 수정했다. 기존 SQL CHAR(7)에 Hibernate validate를 수행하는 회귀 테스트를 추가했다. DB 타입·확정된 사용량 정책을 변경한 것이 아니라 매핑 누락을 보완한 것이다.
+
+### STEP 7 전체 변경 파일
+
+| 루트 | 파일 |
+|---|---|
+| `backend/src/main/java/com/devmozip/backend/` 신규 | `config/AiUsageConfiguration.java`, `controller/AiUsageController.java`, `dto/ai/AiUsageResponse.java`, `entity/AiUsage.java`, `repository/AiUsageRepository.java`, `service/AiUsageService.java` |
+| 같은 루트 수정 | `controller/AiRecommendationController.java`, `entity/AiRecommendationRequest.java`, `repository/AiConversationDeletionRepository.java`, `repository/AiRecommendationRequestRepository.java`, `service/impl/AiRecommendationExecutionServiceImpl.java` |
+| `backend/src/test/java/com/devmozip/backend/ai/controller/` | 신규 `AiUsageIntegrationTest.java`, `AiUsageSchemaValidationTest.java`; 수정 `AiConversationTests.java`, `AiMessageAnalysisTests.java`, `AiRecommendationExecutionTests.java` |
+| 백엔드 fixture | `backend/src/test/resources/ai/schema.sql` |
+| `frontend/` | `app/ai/matching/_components/ChatConditions.tsx`/`ChatConditions.module.css`, `app/api/ai/[...path]/route.ts`/`route.test.ts`, 신규 `lib/matching/usage.ts`/`usage.test.ts`, `lib/state/homeStore.ts`/`homeStore.test.tsx`, `tests/screens/FollowingMatching.test.tsx` |
+| `docs/` | `ai-matching.md`, `ai-api-spec.md`, `ai-progress.md`, `ai-usage-api.md`, `ai-step7-concurrency-notes.md`, `sql/ai-usages.sql` |
+
+회원·프로젝트·포트폴리오·구독·공통 인증·배포 코드는 변경하지 않았다. 이번 문서 작업에서 수정하는 것은 위 목록 중 AI Markdown 문서5개뿐이며 SQL·기능 코드·기존 미커밋 테스트는 보존한다.
+
+### 직접 대조한 검증 결과
+
+| 실행 시점·대상 | 명령·근거 | 확인한 결과 |
+|---|---|---|
+| CHAR 수정 전 재현 | `backend`: PG 사용량 URL 지정 후 `DEBUG=false ./gradlew test --tests '*AiUsageSchemaValidationTest' --no-daemon`; `/tmp/devmozip-usage-char-before.log`/XML |1개 실패. 실제 CHAR를 VARCHAR로 기대하는 사용자 보고와 같은 오류 재현 |
+| 최초 격리 PostgreSQL 추천·동시성 | PG18.6의 실행/사용량 URL 지정 후 `DEBUG=false ./gradlew test --tests '*AiUsageIntegrationTest' --tests '*AiRecommendationExecutionTests' --no-daemon`; `/tmp/devmozip-step7-postgres-final.log`, `/tmp/devmozip-step7-pg-results/TEST-*.xml` |33개 통과·실패/오류/스킵0. 사용량16개+기존 실행17개 |
+| CHAR 수정 후 격리 PostgreSQL | 같은 PG18.6 사용량 URL 지정 후 `DEBUG=false ./gradlew test --tests '*AiUsageSchemaValidationTest' --tests '*AiUsageIntegrationTest' --no-daemon`; `/tmp/devmozip-usage-char-pg-after.log`, `/tmp/devmozip-usage-char-pg-results/TEST-*.xml` |17개 통과·실패/오류/스킵0. schema validate1개+사용량16개 |
+| CHAR 수정 후 최종 백엔드 전체 | `backend`: `DEBUG=false ./gradlew test --no-daemon`; `/tmp/devmozip-usage-char-backend-final.log`, 현재 JUnit XML68개 | 총743개,731개 통과·12개 스킵·실패/오류0,2분12초 |
+| 마지막 프론트 전체 테스트 | `frontend`: `npm test -- --maxWorkers=2`; `/tmp/devmozip-step7-frontend-final.log` |80개 파일897개 통과. CHAR 수정에서는 프론트 코드가 바뀌지 않아 반복하지 않음 |
+| CHAR 수정 후 프론트 빌드 | `frontend`: `npm run build`; `/tmp/devmozip-usage-char-frontend-build.log` |성공, TypeScript·정적57개 생성 |
+
+33개와17개 실행은 사용량16개가 겹치므로 고유 테스트50개로 합산하지 않는다. 최종 전체의12개 스킵은 팀DB opt-in11개와 PostgreSQL 부분 인덱스 선택 검증1개다. 이 부분 인덱스 검증은 앞선 격리 PG33개 실행에는 포함돼 통과했다. 초기598개 통과·111개 스킵 기록은 앞선 환경의 결과이며 최신731개 통과 기록으로 대체해 읽는다.
+
+실험 근거: 잔여1회에 서로 다른8개 대화가 동시에 요청하면 성공1개/429 일곱 개·최종 used=5/pending=0. 월 행 없이8개가 경쟁하면 행1개·성공5개/거절3개다. 같은 키 재전송, 실패·저장 롤백, KST 월말→월초 완료, 무료→프리미엄/구독 종료, 계정 분리, 만료·완료·중복 정리 경합, 진행 중 대화 삭제와 성공 사용량 보존을 검증했다. PostgreSQL 결과는 단일 JVM의 독립 HTTP 요청·트랜잭션·커넥션과 계산 테스트 대역으로 수행했다.
+
+### DB 적용 상태·미해결 문제
+
+- 사용자가 공유 PostgreSQL17.11에 SQL을 실행했고 직전 읽기 전용 재조회로 테이블·컬럼·주요 UNIQUE/CHECK/FK를 확인했다. 도구의 결과 표시 TypeError가 SQL 롤백을 뜻하지는 않았다. 에이전트는 공유 DB에 DDL·데이터를 쓰지 않았다. 이번 문서 작업에서 DB를 다시 조회한 것으로 보고하지 않는다.
+- CHAR 수정 뒤 사용자의 실제 서버 재기동 성공, 공유17의 신규 API 성공/429/실패·동시성, 브라우저·모바일, 실제 Gemini 품질·할당량은 확인하지 않았다. 스키마 확인·격리 PG18.6 검증을 전체 실사용 완료로 확장하지 않는다.
+- 별도 만료 스케줄러·여러 JVM 실험·실제 프로세스 강제 종료/DB 장애 복구 실험은 없다.30분은 실제 대규모 후보 지연을 측정한 값이 아니며 실행 중 외부 호출을 취소하지 않는다. 요청이 없으면 만료 정산은 다음 접근까지 지연된다.
+- 과거 usage 연결이NULL인 PENDING은 자동 회복하지 않고 과거 추천은 소급 차감하지 않는다. 외부 AI 호출 자체의 exactly-once는 보장하지 않는다.6B 본문 가산점·짧은 ‘네’ 반복 확인·구독 결제는 이번 단계에 포함하지 않는다.
+
+### 다음 작업에서 주의할 점
+
+1. 현재 미커밋 CHAR 수정과 회귀 테스트를 함께 관리한다. SQL을 다시 실행하거나 usage_month를 VARCHAR로 바꿔 기동 오류를 우회하지 않는다. 새 환경에는 AI SQL을 명시 적용하고 validate까지 확인한다.
+2. 사용자의 서버 재기동과 유효 구독 계정으로 usage GET·추천 성공/429/실패를 확인하는 작업은 별도 지시 후 수행한다. 공유 DB 실사용 검증은 실제 used를 바꾸므로 기존 기록을 임의로 초기화·삭제하지 않는다.
+3. 대화 → 사용량 → 요청 잠금 순서, 외부 호출의 트랜잭션 분리, 성공 원자 저장, 기존 키 재조회, 수신 월 귀속을 후속 변경에서도 보존한다. 요금제 변경으로 used+pending이 현재 한도를 넘는 상태는 가능하므로 고정5/100 DB CHECK를 추가하지 않는다.
+4. 예약 수명·스케줄러·중단 복구를 보완하려면 기존 예약/만료 상태 전이와 검증부터 확인한다. 로컬/여러 서버 시간·타임아웃·후보 수 측정 없이 만료 시간을 줄이지 않는다.
+5. 이번 정리는 정책 변경 없이 합의 내용을 현재 명세와 맞춘다. 기능 완료와 공유 DB 반영·실제 서버 검증·운영 배포를 구분하며 다음 기능·커밋·푸시를 자동 시작하지 않는다.
+
+이번 문서 작업의 검증: 직전 로그·XML과 코드를 대조했다. `frontend`의 `npm run build`를 이번에 실행해 성공했고 로그는 `/tmp/devmozip-step7-docs-build.log`에 남겼다. 생성 next-env.d.ts를 작업 전 내용으로 복원한 뒤 기능/테스트/정적 파일834개의 전후 SHA-256이 모두 같아 이번 작업의 기능 코드 변경0건을 확인했다. 문서 상대 링크·종료 점검 앵커·`git diff --check`도 통과했다. 새 테스트를 만들거나 프론트/백엔드 기능 테스트를 재실행하지 않았으며 기존 미커밋 CHAR 수정·회귀 테스트를 보존했다. 공유 DB 조회·수정, 앱 재시작·배포, 커밋·푸시는 이번 문서 작업에서 수행하지 않았다.
+
+## 2026-11-10 사용자 SQL 적용 후 CHAR(7) 기동 오류 수정
+
+- 사용자 로그의 `found bpchar (Types#CHAR), expecting char(7) (Types#VARCHAR)`는 엔티티 JDBC 타입 누락이었다. `columnDefinition="char(7)"`만으로 Java String의 JDBC VARCHAR 기본 매핑을 바꾸지 못했다. 실제 DB 타입은 ERD·SQL 계약대로이며 DB 컬럼을 변경하지 않았다.
+- `entity/AiUsage.java`의 usageMonth에 `@JdbcTypeCode(SqlTypes.CHAR)`와 `length=7`을 추가했다. 신규 `ai/controller/AiUsageSchemaValidationTest.java`는 독립 스키마에 SQL CHAR(7) 테이블을 먼저 만들고 Hibernate validate만 실행한다. 최초 create-drop 위주의 검증에서 놓친 배포 스키마 타입 비교를 회귀 검증한다.
+- 공유 PostgreSQL17.11은 읽기 전용으로 재조회했다. 사용자가 실행한 SQL로 ai_usages, 요청의 ai_usage_id/reservation_expires_at, 사용자·월 UNIQUE, 음수 금지, 사용량 FK, 예약 쌍 CHECK가 생성됐음을 확인했다. 에이전트는 공유 SQL을 실행하거나 데이터를 바꾸지 않았다. 앞선 ‘스키마 미적용’ 기록은 사용자 실행 전 상태다.
+- `docs/ai-usage-api.md`, `docs/ai-matching.md`, `docs/ai-api-spec.md`에 사용자 적용 사실과 JDBC 매핑을 반영했고, `docs/ai-step7-concurrency-notes.md`에 원인·기존 검증의 빈틈·수정·회귀 테스트를 기록했다. 코드 변경은 AI 엔티티 매핑에 한정한다. 기능 정책·DDL·공통 설정 변경, 커밋·푸시는 하지 않았다.
+- 재현: 격리 PostgreSQL18.6에서 `DEVMOZIP_AI_USAGE_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:18547/ai_usage_test DEBUG=false ./gradlew test --tests '*AiUsageSchemaValidationTest' --no-daemon` 실행. 수정 전1개가 사용자와 동일한 타입 오류로 실패했다. `/tmp/devmozip-usage-char-before.log`, `/tmp/devmozip-usage-char-before.xml`에 보존했다.
+- 수정 후: 같은 PostgreSQL에서 `--tests '*AiUsageSchemaValidationTest' --tests '*AiUsageIntegrationTest'`로 실행해17개 모두 통과·스킵0(33초). `/tmp/devmozip-usage-char-pg-after.log`, `/tmp/devmozip-usage-char-pg-results/TEST-*.xml`. 프론트 `npm run build`도 성공, 생성 next-env.d.ts 복원. 프론트 코드 변경이 없어 프론트 테스트는 반복하지 않았다.
+- 최종 백엔드: `DEBUG=false ./gradlew test --no-daemon` 성공(2분12초), JUnit XML68개에서 총743개·731개 통과·12개 스킵·실패/오류0. `/tmp/devmozip-usage-char-backend-final.log`. 프론트 빌드 로그는 `/tmp/devmozip-usage-char-frontend-build.log`. `git diff --check`와 문서 링크 확인도 통과했다. 실제 사용자 서버 재기동·신규 AI API 쓰기·실제 Gemini 검증은 이번 테스트와 구분한다.
+
+## 2026-11-10 STEP 7 구현·최종 검증
+
+### 완료 범위와 실제 DB 대조
+
+- 브랜치 `feat/gemini-portfolio-analysis`, 기준 HEAD `19a3232`에서 기존 미커밋 문서를 보존했다. Java21/Spring Boot4.1.2/Gradle9.8.2/JPA를 파일로 재확인했다. 회원·프로젝트·포트폴리오·구독 도메인·공통 인증/배포 설정은 수정하지 않았다.
+- 제한 환경의 공유 DB 연결 실패 후 일반 환경에서 **읽기 전용**으로 재조회했다. 공유 PostgreSQL17.11/public에는 `ai_usages`와 추천 요청의 `ai_usage_id`, `reservation_expires_at`가 없다. 제공 ERD의 사용량 컬럼과 현재 구독/요청 DDL을 대조했다. 합의한 `pending_count` 및 비식별 FK/만료 시각만 추가 SQL로 작성했고 공유 DB에는 적용하지 않았다.
+- `AiUsage` 엔티티·월별 UNIQUE·음수 금지, GET `/api/v1/ai/usage` 및 BFF `/api/ai/usage`, 현재 요금제·무료5/프리미엄100·KST 월·응답6개 필드를 구현했다. PREMIUM/ADMIN은 현재 유효 구독을 요구하며 관리자 예외·과거 소급 차감은 없다.
+- 신규 추천 접수는 월별 행 잠금과 처리 중 예약을 사용한다. 기존 대화별 멱등성 키를 먼저 확인하고 신규 요청만 예약한다. 외부 계산은 잠금 밖, 성공은 결과+SUCCESS+used 증가+pending 감소를 같은 트랜잭션, 실패는 결과 롤백 후 FAILED+예약 반환을 별도 트랜잭션으로 처리한다.
+- 요청 최초 수신 KST 월에 귀속하고 구독 변경 시 같은 달 used를 유지한다. 접수 후 구독 종료는 기존 요청 완료를 허용하고 다음 신규 요청부터 현재 한도를 적용한다. 0건 정상 완료는1회, 대화/메시지/조건/GET/6B 상세/실패는 미차감이다.
+- 예약 기본30분(`app.ai.usage.reservation-ttl`, 양수 Duration), usage GET/추천 POST/결과 GET에서 전체 월 만료 정리를 수행한다. 과거 연결 없는 PENDING은 유지한다. 만료와 완료의 상태 전이를 잠금으로 보호해 늦은 결과·중복 정산을 차단한다. 대화 삭제는 예약을 먼저 반환하고 성공 사용량은 보존한다.
+- 프론트는 로컬 Mock/역할 한도 대신 현재 서버 used/limit/remaining/pending/available을 표시한다. 계정·처리 상태 변경/포커스/명시 새로고침에서 조회하며 오류를0회로 숨기지 않는다. 월 한도429의 코드·안내를 BFF에서 유지하고 미생성 요청의 대기 키는 제거한다. 응답 유실 키 재사용은 유지한다.
+
+### 변경 파일
+
+| 범위 | 파일 (각 루트 상대 경로) |
+|---|---|
+| `backend/src/main/java/com/devmozip/backend/` 신규 | `entity/AiUsage.java`, `repository/AiUsageRepository.java`, `service/AiUsageService.java`, `config/AiUsageConfiguration.java`, `dto/ai/AiUsageResponse.java`, `controller/AiUsageController.java` |
+| 같은 루트 수정 | `entity/AiRecommendationRequest.java`, `repository/AiRecommendationRequestRepository.java`, `repository/AiConversationDeletionRepository.java`, `service/impl/AiRecommendationExecutionServiceImpl.java`, `controller/AiRecommendationController.java` |
+| 백엔드 테스트 | 신규 `ai/controller/AiUsageIntegrationTest.java`; 기존 `AiRecommendationExecutionTests.java`, `AiConversationTests.java`, `AiMessageAnalysisTests.java` 및 `src/test/resources/ai/schema.sql` |
+| 프론트 | 신규 `lib/matching/usage.ts`/`usage.test.ts`; `app/ai/matching/_components/ChatConditions.tsx`/CSS, `app/api/ai/[...path]/route.ts`/테스트, `lib/state/homeStore.ts`/테스트, `tests/screens/FollowingMatching.test.tsx` |
+| 문서·AI SQL | `sql/ai-usages.sql`, `ai-usage-api.md`, `ai-step7-concurrency-notes.md`, `ai-matching.md`, `ai-api-spec.md`, 이 기록 |
+
+### 이번에 실행한 검증
+
+| 검증 | 명령·환경 | 실제 결과 |
+|---|---|---|
+| 격리 PostgreSQL 동시성·기존 실행 | `backend`: `DEVMOZIP_AI_USAGE_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:18547/ai_usage_test DEVMOZIP_AI_EXECUTION_TEST_JDBC_URL=jdbc:postgresql://127.0.0.1:18547/ai_usage_test DEBUG=false ./gradlew test --tests '*AiUsageIntegrationTest' --tests '*AiRecommendationExecutionTests' --no-daemon` | PostgreSQL18.6, 사용량16개+추천 실행17개=33개 모두 통과·스킵0. SQL 재실행 포함.53초 |
+| 백엔드 전체 회귀 | `backend`: `DEBUG=false ./gradlew test --no-daemon` | 명령 성공. JUnit XML67개에서 총709개,598개 통과·111개 스킵·실패/오류0.1분26초. Docker 비가용 Testcontainers·팀DB opt-in·PG 선택 검증 조건의 스킵이며 전체709개 실행 통과로 표현하지 않음 |
+| 프론트 전체 | `frontend`: `npm test -- --maxWorkers=2` | 80개 파일897개 통과 |
+| 최종 프론트 빌드 | `frontend`: `npm run build` | 일반 환경에서 성공, TypeScript·정적57개 생성. 생성 next-env.d.ts는 작업 전으로 복원 |
+| 변경 프론트 제품 검사 | `npx eslint app/ai/matching/_components/ChatConditions.tsx 'app/api/ai/[...path]/route.ts' lib/matching/usage.ts lib/matching/usage.test.ts lib/state/homeStore.ts` | 종료0·오류 출력 없음 |
+
+주요 경쟁 실험: 무료 used=4에서 서로 다른8개 대화의 동시 요청은201 한 개/429 일곱 개, 최종 used=5/pending=0. 월 행 없는8개 동시 요청은 월 행1개/성공5개/거절3개다. 같은 키 처리 중 재전송은202·추가 계산 없음, 완료 후1회다. 무료6번째/프리미엄101번째 차단, 실패·저장 롤백 미차감, 월 경계, 구독 전환/만료·ADMIN, 사용자 격리, 대화 삭제, 만료/완료/중복 정리 경합, DB 제약을 확인했다.6B 테스트 대역 통합은 전체 회귀에서 유지한다.
+
+초기 검증 실패도 구분한다. Gradle 캐시 읽기 전용·제한 환경 Next TypeScript 설정 조회 실패는 일반 환경 재실행으로 해결했다. 최초 백엔드 회귀의 조회 경로/fixture 기대 실패, PostgreSQL DO 블록 분리 오류, 신규 테스트의 인증 없는 서비스 직접 호출·Mockito 재설정 오류, native DELETE 후 JPA 잔여 요청 참조 문제를 수정한 뒤 위 최종 검증을 실행했다. 실제 제품 문제의 원인·수정은 [학습 기록](ai-step7-concurrency-notes.md)에 남겼다.
+
+로그: `/tmp/devmozip-step7-postgres-final.log`, `/tmp/devmozip-step7-pg-results/TEST-*.xml`, `/tmp/devmozip-step7-backend-final.log`, `/tmp/devmozip-step7-frontend-final.log`, `/tmp/devmozip-step7-build-final.log`, `/tmp/devmozip-step7-eslint.log`. 기존 단계 수치를 이번 결과로 대신 쓰지 않았다.
+
+최종 `git diff --check`와 신규 문서 상대 링크 검사를 통과했다. 변경31개 파일의 업무 범위를 확인했고, 빌드 생성 파일 변경은 남기지 않았다. 검증 전용 `/tmp/devmozip-step7-pg` PostgreSQL 서버는 종료했으며 로그·테스트 결과는 보존했다.
+
+### 남은 적용·검증 경계
+
+- 공유 DB에 [AI 전용 SQL](sql/ai-usages.sql)을 검토·적용한 뒤 새 서버를 반영해야 한다. 현재 실행 중 서비스 재시작·공유 데이터/DDL 변경·운영 배포·커밋·푸시·main/develop 병합은 하지 않았다. 기존 공통 ddl-auto 설정은 그대로이며 자동 update만으로 모든 SQL 제약을 보장하지 않는다.
+- 실제 Gemini 호출, 공유 PostgreSQL17에서의 신규 API 쓰기/동시성, 여러 JVM/서버 인스턴스·프로세스 강제 종료 실험, 브라우저 수동·모바일 시각 검증은 하지 않았다. 이번 동시성은 단일 JVM의 독립 HTTP 요청/트랜잭션/커넥션과 격리 PostgreSQL18.6+추천 엔진 테스트 대역이다.
+- 만료 정리는 접근 시 수행하고 별도 스케줄러는 없다.30분은 설정 가능한 초기값이며 전체 후보/실제 모델 지연 측정 후 조정할 수 있다. 만료가 외부 호출을 즉시 취소하지는 않는다. 기존 연결 없는 과거 PENDING 자동 복구는 포함하지 않는다.
+- 짧은 ‘네’ 대화 문제·6B 가산점·결제 구현 등 다른 범위는 진행하지 않는다. API/시간/잠금 상세는 [구현 계약](ai-usage-api.md)을 따른다.
+
+## 2026-11-10 STEP 7 정책·동시성 학습 기록 — 문서 작업
+
+- 사용자 합의한 무료5/프리미엄100, 현재 유효 구독 판정, KST 접수 월 귀속, 0건 성공 차감, 실패 미차감, 처리 중 구독 변경·기존 사용 횟수 유지 정책을 기록했다. 처리 중 자리 예약과 짧은 DB 잠금, 결과/상태/사용량 원자 저장 방향을 정리했다.
+- 신규 `docs/ai-step7-concurrency-notes.md`: 쉬운 용어, 경쟁 상황 예시, 현재 코드 경계, ERD 비식별관계·추가 컬럼안, API 계산값, 대안 비교, 만료/삭제/월 경계, 검증 계획, 트러블슈팅 양식과 포트폴리오 작성 예시. 실제 장애·실험 결과와 설계 가설을 구분했다.
+- `docs/ai-matching.md`, `docs/ai-api-spec.md`에 최신 설계 합의·예정 API 링크를 추가하고 현재 단계 설명을 보완했다. 이 문서의 전체 단계 표도6A/6B 구현 상태로 갱신했다. 이후 무료 안내·별 아이콘은 현재 f4d313e에 커밋됐으며 HEAD는19a3232다. 아래 과거 미커밋 기록은 당시 상태다.
+- 미완료: 실제 DB DDL 대조·마이그레이션, AiUsage/API/예약·차감 구현, 기본 추천 예약 만료 시간·회복 실행 방식, PostgreSQL 동시성 실험. 코드·SQL·DB·실행 환경 변경·커밋·푸시는 하지 않는다.
+- 이번 검증: `frontend`에서 `npm run build` 성공(TypeScript·정적57개 생성), 생성된 next-env.d.ts는 작업 전 내용으로 복원했다. `git diff --check` 및 신규 문서의 상대 파일 링크 존재 확인 통과. 문서만 변경했으므로 프론트/백엔드 기능 테스트·실제 DB/Gemini 검증은 실행하지 않았고 새 테스트도 작성하지 않았다. 기존 테스트 결과를 이번 성공으로 보고하지 않는다.
+
 ## 2026-11-10 6B 불필요 코드·로그 점검
 
 - PR 정리 요청으로6B 및 함께 변경된 AI 제품 코드를 점검했다. `AiRecommendationServiceImpl`의 미사용 `Transactional` import1개를 제거했다. 정책·트랜잭션 경계·실제 동작은 변경하지 않았다.
@@ -740,9 +864,9 @@
 | 3. 추천 엔진 | 실제 DB 후보 조회·필터링, 개발자/프로젝트 적합도·순위·기본 이유 계산 | 동일 입력·데이터로 일관된 0~100점·순위 산출 | **내부 엔진 구현 완료**. H2·격리 PostgreSQL 18 검증, 팀 DB 17 대조 미완료 |
 | 4. 추천 실행·결과 저장 | 로그인·소유권 확인, 추천 요청/결과 저장·조회, 성공/실패 상태, 과거 결과 조회 | 생성한 결과를 재계산 없이 다시 조회 | **백엔드 및 프론트 연동 코드 구현**. 신규 sync 스키마 적용 성공·실제 연동 검토 완료(사용자 확인). UI 개선은 남음 |
 | 5. Gemini 조건 분석 | 자연어 조건 추출·변경·병합, 추가 질문, 응답 저장, 장애 처리 | 검증된 조건 JSON을 선택 UI와 동기화 | **백엔드·프론트/BFF 분석 연동 구현**. Postman 실제 Gemini 성공 사용자 확인. 관련 프론트 58개 통과·빌드 성공. 부분 UI 조건 전달·브라우저 전체 통합 검증은 남음 |
-| 6A. 자연어 요구사항 추천 반영 | 확정된 세부 요구사항을 실제 후보 대조·점수/순위·기본 이유에 연결 | 스냅샷·재추천·재시도 일관성, 기존 필터 보존 | 사전 설계만 수행, 정책 답변 대기·미구현 |
-| 6B. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 사전 설계만 수행·미구현, 6A 후 자동 착수하지 않음 |
-| 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 미구현 |
+| 6A. 자연어 요구사항 추천 반영 | 확정된 세부 요구사항을 실제 후보 대조·점수/순위·기본 이유에 연결 | 스냅샷·재추천·재시도 일관성, 기존 필터 보존 | 구현 완료. 80:20 평가·summary·관련성 필터 반영. 실제 모델 품질·전체 통합 검증 한계는 상단 기록 참조 |
+| 6B. 프리미엄 상세 분석 | 서버 권한·포트폴리오 열람권 확인, 실제 경험 기반 상세 이유 저장·재사용 | 무료 노출 차단, 프리미엄에 허용된 분석 제공 | 구현 완료. 유효 구독·인용 검증·캐시·임대 제어 및 프론트/BFF 연결. 실제 Gemini·공유 DB 신규 상세 API 검증은 남음 |
+| 7. 사용량·동시성 | 무료 월 5회/프리미엄 월 100회, 한국 시간 월 경계, 성공 시 차감, 중복·동시 요청 제어 | 동시 요청에도 초과 사용·중복 차감 없음 | 코드·BFF/표시·CHAR 수정 및 격리 PostgreSQL 검증 완료. 사용자 공유 SQL 적용 확인, 실제 서버 재기동·실사용·배포 확인은 남음 |
 
 2단계는 초기 빈 조건과 PUT 전체 교체를 유지하고 최신 사용자 확정으로 분야를 interests에 통합했다. 현재 입력 계약과 후속 후보 데이터 비교 규칙은 API 명세에서 구분한다. 3단계의 종전 예시 배점은 2026-11-06 정책으로 대체한다. 직군 30/기술 30/경험 20/신뢰 온도 10이며 협업 배점·후기는 제거한다. 포트폴리오 연동 전 경험은 미산정으로 표시하고 평가 가능한 배점으로 100점 환산한다. 기본 추천에서 상세 포트폴리오는 사용하지 않는다.
 
@@ -1669,3 +1793,13 @@ erDiagram
 - frontend `npm test -- --maxWorkers=2`: 성공, 109개 파일·1,258개 테스트 통과. `npm run build`: 성공(종료 0). 로그: `/tmp/devmozip-pr111-frontend-test.log`, `/tmp/devmozip-pr111-build.log`. 생성된 `next-env.d.ts`만 복원했다. 백엔드 테스트 fixture 변경 후에는 프론트 코드 변화가 없어 프론트 검증을 반복하지 않았다.
 - backend: 앞 단계와 같은 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache`를 backend에서 실행했다. 최초137개 중 포트폴리오19개가 fixture 준비의 컬럼 수 불일치로 실패했고, 위 보정 후 재실행은137개 중136개 통과·1개 스킵·실패/오류0, 종료0이다. 중간 루트에서 wrapper 경로를 잘못 지정한 명령은 종료127이었고 backend에서 재실행했다. 로그: `/tmp/devmozip-pr111-ai-test.log`, `/tmp/devmozip-pr111-ai-test-final.log`. Docker 의존 전체 회귀 테스트는 앞 단계에서 확인한 응답 대기 문제로 다시 실행하지 않았다.
 - 점검: 미해결 충돌 없음, `git diff --check origin/develop` 통과. 실제 Gemini·공유 DB·브라우저 검증은 미실행이다. 다음 작업은 이 병합 결과를 사용량 PR에 전달하고 동일한 테스트 fixture 충돌을 보정하는 것이다. develop/main·기존 로컬 ai-usage의 미푸시 배포 커밋은 보존한다.
+
+
+## 2026-11-10 PR #112 순차 통합 준비 — 포트폴리오 분석 브랜치 전달
+
+- 기준: 원격 사용량 브랜치 `fbb71a1`에서 `codex/resolve-ai-usage-20261110`을 만들어 검증된 포트폴리오 병합 커밋 `a25ac13`을 병합했다. 텍스트 충돌은 없었다. 기존 로컬 `feat/ai-usage`의 미푸시 `68dac43`(compose.prod Gemini 환경변수)은 그대로 보존하고 PR에는 추가하지 않았다. PR #111은 푸시 후 GitHub `mergeable: true`를 확인했다.
+- 직접 수정 파일: `backend/src/test/java/com/devmozip/backend/ai/controller/AiUsageIntegrationTest.java`, 이 문서. 앞 단계와 같은 구독 fixture 충돌을 소스로 확인하고 격리 테스트 DB의 fixture를 재생성하는 2줄(설명 포함)만 추가했다. 임의 구독 상태 거절·월 사용량·동시성 테스트의 기존 검증은 그대로 보존한다. 이 클래스의 PostgreSQL 경로는 기존의 명시적 격리 테스트 URL opt-in이며 이번에는 사용하지 않았다. 실제 공유 DB·공통 구독 엔티티·배포 설정·제품 로직은 수정하지 않았다.
+- frontend `npm test -- --maxWorkers=2`: 성공, 110개 파일·1,271개 테스트 통과. `npm run build`: 성공(종료0). 로그: `/tmp/devmozip-pr112-frontend-test.log`, `/tmp/devmozip-pr112-build.log`. 생성된 `next-env.d.ts`만 복원했다.
+- backend에서 앞 단계와 같은 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache` 성공(종료0),154개 중153개 통과·1개 스킵·실패/오류0. 추천·포트폴리오·사용량 및 H2 CHAR(7) 스키마 검증을 포함한다. 로그: `/tmp/devmozip-pr112-ai-test.log`. Docker 응답 대기로 중단한 전체 백엔드 회귀 테스트를 통과로 간주하지 않는다. 실제 Gemini·공유 PostgreSQL·브라우저 통합은 재실행하지 않았다.
+- 순차 병합 관계: 최신 develop `d6a5720` → 추천 병합 `984292e` → 포트폴리오 병합 `a25ac13` → 사용량 병합 순서로 조상을 포함한다. PR 브랜치만 푸시하며 develop/main 직접 변경·PR 머지는 수행하지 않는다. 후속 PR 머지 순서는 #106 → #111 → #112다.
+- 최종 직접 변경 범위는 AI DTO 및 참조3개 파일(제품 코드5줄), AI 테스트2개 파일(각2줄), 이 진행 문서다. API 경로·JSON 계약·점수·권한·월 제한 정책은 기존 각 PR 구현을 유지해 기능/API 문서의 계약 변경은 없다. 다른 팀원 변경은 develop에서 가져온 원본을 유지했다. 새 기능·추가 단계는 시작하지 않는다.

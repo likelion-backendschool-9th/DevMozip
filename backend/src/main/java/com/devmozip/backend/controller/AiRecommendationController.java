@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/conversations/{id}/recommendations")
 public class AiRecommendationController {
+	@ExceptionHandler(com.devmozip.backend.service.AiUsageService.LimitExceeded.class)
+	ResponseEntity<java.util.Map<String, Object>> limit(com.devmozip.backend.service.AiUsageService.LimitExceeded failure) {
+		return ResponseEntity.status(429).header("Cache-Control", "no-store").body(java.util.Map.of(
+			"status", 429, "code", "AI_MONTHLY_LIMIT_EXCEEDED", "message", failure.getMessage(), "usage", failure.usage()));
+	}
 	@ExceptionHandler(IllegalArgumentException.class)
 	ResponseEntity<com.devmozip.backend.dto.common.ErrorResponse> invalid(IllegalArgumentException error,
 		jakarta.servlet.http.HttpServletRequest request) {

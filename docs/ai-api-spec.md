@@ -1,5 +1,11 @@
 # AI API 명세
 
+7단계 최종 상태·테스트 증거·남은 운영 검증은 [종료 점검](ai-progress.md#2026-11-10-step-7-종료-점검--현재-구현-기준)을 따른다. 응답6개 필드·429 계약·요금제·차감 기준은 기존 합의와 동일하다. 사용자 공유 SQL 적용 확인과 CHAR 매핑 수정은 새 API 정책 변경이 아니다. 기본 추천/6B 점수·순위·응답도 이번 문서 작업에서 변경하지 않았다.
+
+## 2026-11-10 STEP 7 구현 계약
+
+GET `/api/v1/ai/usage`와 BFF GET `/api/ai/usage`를 구현했다. 응답은 `usageMonth`, `usedCount`, `limit`, `remainingCount`, `pendingCount`, `availableCount`다. 월별 행 잠금·처리 중 예약·성공 원자 차감·실패/만료/삭제 정산을 기존 멱등성 구조에 연결했다. 429/AI_MONTHLY_LIMIT_EXCEEDED·현재 구독·수신 월 귀속·기본30분 예약·접근 시 만료 회복·SQL 적용 조건은 [7단계 구현 계약](ai-usage-api.md)을 따른다. 최초 테이블 부재 확인 이후 사용자가 공유 SQL을 실행했다. 재조회로 테이블·컬럼·주요 제약을 확인했으며 CHAR(7) JDBC 매핑 오류를 수정했다. 에이전트의 공유 DDL 실행·배포는 하지 않았다. 아래 날짜별 미구현 설명은 과거 이력이다.
+
 ## 2026-11-10 6B 종료 시점 계약 정리
 
 - 6A 및6B GET/POST 상세 분석은 구현돼 있다. 아래 단계별 개요를 현행화했으며 이전 날짜의 미구현/후보 계약은 이력으로 구분한다. [6B 구현 계약](ai-portfolio-analysis.md)과 [검증·남은 문제](ai-progress.md#2026-11-10-6b-종료-점검--현재-구현-기준)를 우선한다.
@@ -210,8 +216,10 @@ python3 scripts/dev-postgres.py backend
 | 3 | 외부 API 없음 | 내부 후보 조회·점수 계산 엔진 | 4단계 POST 내부에서 사용 |
 | 4 | POST `/api/v1/ai/conversations/{id}/recommendations` | 추천 실행·요청/결과 저장 | 신규 성공 201, RecommendationResponse |
 | 4 | GET `/api/v1/ai/conversations/{id}/recommendations` | 최신 또는 특정 과거 요청 결과 조회 | 200, RecommendationResponse |
+| 6B | GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 프리미엄 포트폴리오 상세 분석 | 200/202, PortfolioAnalysisResponse |
+| 7 | GET `/api/v1/ai/usage` | 현재 월 사용량·한도·예약·실행 가능 횟수 | 200, AiUsageResponse |
 
-아래 단계별 표에 요청·응답·오류를 정리한다. 5단계 분석은 메시지 POST의 `analyze:true`이며 6~7단계 API는 미구현이다.
+5단계 분석은 기존 메시지 POST의 `analyze:true`로 구현돼 있다. 6A는 기존 추천 실행에 연결돼 있고, 6B GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis`와7단계 GET `/api/v1/ai/usage`도 구현돼 있다.7단계 공유 SQL은 사용자가 적용해 생성 결과를 확인했으며 실제 서버 재기동·실사용 검증은 남아 있다. 새 환경은 명시 SQL 적용과 validate 확인이 필요하다.
 
 ### 추가 제공 API 표 반영 (2026-11-04)
 
@@ -428,7 +436,7 @@ POST/GET은 같은 DTO를 반환한다. 아래 JSON은 필드 설명용 예시�
 | rank | 정수 | 개발자·프로젝트 각각 1부터 시작하는 순위 |
 | createdAt | 시각 | 결과 생성 시각 |
 
-두 대상 ID는 정확히 하나만 값이 존재한다. detailed_reason은 DB에 NULL로 두고 응답에서 제외한다. 내부 엔진의 직군 집계·기간 비교·항목별 점수는 응답에 포함하지 않는다. 현재 공개 개발자 정보는 2026-11-08에 추가한 developer 필드를 따른다.
+두 대상 ID는 정확히 하나만 값이 존재한다. 기본 추천 생성 시 detailed_reason은 NULL이며, 이후6B 상세 분석이 버전 JSON을 저장한다. 일반 추천 응답에서는 이 상세 내용을 제외한다. 6A 추가 점수·평가 필드는 문서 상단 최신 계약을, 현재 공개 개발자 정보는 2026-11-08에 추가한 developer 필드를 따른다.
 
 ```json
 {
@@ -722,7 +730,7 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 
 ## API 단계별 개요
 
-4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다. 6A 요구사항 반영과6B 상세 분석은 구현했고7단계 월 사용량은 미구현이다.
+4단계의 구현 계약은 앞의 실행·조회 절을 따른다. 5단계 분석은 문서 상단 계약과 `/ai/matching` 전송 연동으로 구현했다.6A 요구사항 반영·6B 상세 분석·7단계 월 사용량 및 CHAR 매핑 보완을 구현했다.7단계 사용자 공유 SQL 적용은 확인했으며 실제 서버 재기동·실사용·배포 확인은 별도다.
 
 | 단계 | Method·URL | 역할·남은 계약 |
 |---|---|---|
@@ -732,7 +740,7 @@ ERD는 저장 구조이고 API 명세는 클라이언트·서버 간 요청/응�
 | 5 | 기존 messages POST의 analyze=true 모드 | 2026-11-09 백엔드 분석·조건 병합·추가 질문·ASSISTANT 저장. 세부 계약은 문서 상단 참조 |
 | 6A | 기존 추천 실행·조회 확장 | 구현: 명시 요구의 공개 근거 평가·80:20·스냅샷·동일 입력 비교·프로젝트 summary 입력·신규 관련성 필터. 과거 결과 미재계산 |
 | 6B | GET/POST `/api/v1/ai/recommendations/{id}/detailed-analysis` | 구현: 개발자 상세 근거·소유권·현재 역할+유효 구독·공개 자료·최대5개·CAS/캐시/실패 회복. 점수/순위 미변경 |
-| 7 | GET `/api/v1/ai/usage` | 한국 시간 현재 월의 사용/한도/잔여 횟수. JSON 키·한도 오류 계약 미확정 |
+| 7 | GET `/api/v1/ai/usage` | 구현: KST 월·used/limit/remaining/pending/available. 신규 실행 자리 부족429, 상세 계약은 문서 상단 참조 |
 
 4단계 결과는 `recommended_user_id`/`recommended_project_id` 중 정확히 하나, `match_score`·`basic_reason`·`rank`, 초기 `detailed_reason` null 방향이다. `recommendation_type`은 추가하지 않는다. 실제 DDL과의 일치는 해당 단계에서 확인한다. 첨부의 논리 관계 `conversation_id/message_id`를 현재 물리 컬럼명과 혼동하지 않는다.
 

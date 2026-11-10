@@ -6,12 +6,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class AiConversationDeletionRepository {
 	private final EntityManager entityManager;
+	private final com.devmozip.backend.service.AiUsageService usage;
 
-	public AiConversationDeletionRepository(EntityManager entityManager) {
+	public AiConversationDeletionRepository(EntityManager entityManager, com.devmozip.backend.service.AiUsageService usage) {
 		this.entityManager = entityManager;
+		this.usage = usage;
 	}
 
 	public void deleteChildren(long conversationId) {
+		usage.releaseConversation(conversationId);
 		entityManager.createNativeQuery("DELETE FROM ai_recommendations WHERE recommended_request_id IN "
 			+ "(SELECT id FROM ai_recommendation_requests WHERE ai_conversation_id = :conversationId)")
 			.setParameter("conversationId", conversationId).executeUpdate();

@@ -185,6 +185,14 @@ describe('AI 서버 연동과 재시도', () => {
         expect(vi.mocked(fetch).mock.calls[2][0]).toBe('/api/ai/conversations/71');
         expect(JSON.parse(String(vi.mocked(fetch).mock.calls[3][1]?.body))).toMatchObject({ replay: true, messageId: 81 });
     });
+    it('한도 초과로 생성되지 않은 추천의 대기 키는 제거해 이후 신규 실행을 허용한다', async () => {
+        const c = ready();
+        vi.mocked(fetch).mockResolvedValueOnce(Response.json(remote(c)))
+            .mockResolvedValueOnce(Response.json({ code: 'AI_MONTHLY_LIMIT_EXCEEDED', message: '이번 달 한도 초과' }, { status: 429 }));
+        await expect(home().recommendChat()).rejects.toThrow('이번 달 한도 초과');
+        expect(home().conversation!.pendingRecommendation).toBeUndefined();
+        expect(home().conversation!.lastRecommendation).toBeUndefined();
+    });
     it('성공 조건이 같으면 재실행·선택 순서 변경·재로딩·메시지 추가로도 POST하지 않는다', async () => {
         ready();
         home().editChat({ interests: ['웹', '교육'], stacks: ['React', 'Java'], roles: [{name:'백엔드',count:1},{name:'프론트엔드',count:2}] });

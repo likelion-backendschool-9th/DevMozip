@@ -73,12 +73,15 @@ class AiRecommendationExecutionTests {
 			new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(
 				new org.springframework.core.io.FileSystemResource("../docs/sql/ai-recommendations.sql"))
 				.execute(java.util.Objects.requireNonNull(jdbc.getDataSource()));
+			var usage = new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(new org.springframework.core.io.FileSystemResource("../docs/sql/ai-usages.sql"));
+			usage.setSeparator(org.springframework.jdbc.datasource.init.ScriptUtils.EOF_STATEMENT_SEPARATOR);
+			usage.execute(jdbc.getDataSource());
 		}
 	}
 
 	@BeforeEach void setup() {
 		reset(engine);
-		for (String table : List.of("ai_recommendations", "ai_recommendation_requests", "ai_messages", "ai_conversations", "projects", "users")) jdbc.update("DELETE FROM " + table);
+		for (String table : List.of("ai_recommendations", "ai_recommendation_requests", "ai_usages", "ai_messages", "ai_conversations", "projects", "users")) jdbc.update("DELETE FROM " + table);
 		ownerId = member("owner").getId();
 		developerId = member("developer").getId();
 		authorization = "Bearer " + jwt.createAccessToken("owner@example.com", "USER");
@@ -289,6 +292,8 @@ class AiRecommendationExecutionTests {
 			.andExpect(jsonPath("$.status").value("FAILED"));
 		assertEquals(0, count("ai_recommendations"));
 		assertEquals(1, count("ai_recommendation_requests"));
+		assertEquals(0, jdbc.queryForObject("SELECT used_count FROM ai_usages WHERE user_id=?", Integer.class, ownerId));
+		assertEquals(0, jdbc.queryForObject("SELECT pending_count FROM ai_usages WHERE user_id=?", Integer.class, ownerId));
 	}
 
 	@Test void databaseRejectsBothOrNeitherTargetsAndMissingForeignKeys() throws Exception {

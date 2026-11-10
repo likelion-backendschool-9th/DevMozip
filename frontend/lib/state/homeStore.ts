@@ -302,7 +302,7 @@ async function recommendChat() {
             ...(result.status === 'SUCCESS' ? { lastRecommendation: { requestId: result.requestId, conditions: result.conditions || pending.conditions } } : {}) });
         return result;
     } catch (error) {
-        if (getUser() && owner() === account && error instanceof AiApiError && [400, 409].includes(error.status)) {
+        if (getUser() && owner() === account && error instanceof AiApiError && [400, 409, 429].includes(error.status)) {
             const current = existingChat(initial.id);
             if (current) saveConversation({ ...current, pendingRecommendation: undefined });
         }
