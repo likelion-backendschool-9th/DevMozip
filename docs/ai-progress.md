@@ -878,3 +878,9 @@ erDiagram
 - 변경 파일: types/profileDetail, profileDetail/profileUpdate/profileProxy, 본인 profile BFF, OwnProfileProvider·AccountLayout, ApiProfileContent/Header/Editor와 관련 파서·BFF·화면 테스트, profile-edit-integration 문서.
 - 검증: frontend npm test 651개·npm run build 통과. 로컬 HTTP: tag=NULL 본인 BFF 200, 최초 아이디 설정 PUT 200, 공개 BFF GET 200, 빈 아이디 거절 400, 재조회 값 유지 확인. 백엔드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 실제 PostgreSQL·브라우저 수동 UI 검증은 미실행.
 - 아직 커밋·푸시는 하지 않았다. 프론트는 기존 5173 포트와 backend 18080 연결로 복구했다.
+
+### 2026-11-10 PR #96 YAML 예외 규칙 복구
+
+- 사용자 요청으로 feat/51-project-reports의 .gitignore에서 삭제됐던 `!.github/workflows/*.yml`, `!/compose.prod.yaml`, `!/backend/src/main/resources/application.yaml` 및 기존 설명을 복구했다. `*.yaml`·`*.yml` 기본 제외와 .env·개인 설정 제외는 유지한다.
+- `git check-ignore --no-index`로 공통 설정 3종은 포함 가능, application-local.yaml·임의 개인 yml·.env는 제외됨을 확인했다. `git diff --check` 통과.
+- Git 제외 규칙과 문서만 수정했으며 실제 YAML 내용·앱 코드·DB·실행 서버는 변경하지 않았다. 앱 빌드 및 기능 테스트는 미실행이다. 후속 사용자 요청으로 해당 변경만 커밋하고 기존 PR #96 브랜치에 푸시한다.
