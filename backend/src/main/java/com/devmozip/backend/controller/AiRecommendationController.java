@@ -24,7 +24,9 @@ public class AiRecommendationController {
 	public ResponseEntity<RecommendationResponse> execute(@PathVariable long id,
 		@RequestHeader(value = "Idempotency-Key", required = false) String key,
 		@RequestBody(required = false) CreateRecommendationRequest request) {
-		var execution = service.execute(id, request == null ? null : request.messageId(), key);
+		var execution = request != null && Boolean.TRUE.equals(request.replay())
+			? service.execute(id, request.messageId(), key, true)
+			: service.execute(id, request == null ? null : request.messageId(), key);
 		var response = execution.response();
 		int status = response.status() == Status.FAILED ? 500 : response.status() == Status.PENDING ? 202 : execution.created() ? 201 : 200;
 		return ResponseEntity.status(status).body(response);

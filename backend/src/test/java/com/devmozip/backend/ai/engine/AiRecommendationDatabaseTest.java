@@ -108,6 +108,22 @@ class AiRecommendationDatabaseTest {
 		assertEquals(3, projects.count());
 	}
 
+	@Test void unavailableRequestedJobsReturnNoDevelopersWhileProjectsRemainAndStackMismatchDoesNotFilter() {
+		when(requester.getCurrentUserId()).thenReturn(999L);
+		member("backend", Member.MemberStatus.ACTIVE, Member.CollaborationStatus.AVAILABLE, List.of("백엔드 개발자"));
+		project(true);
+		var missingJobs = conditions(List.of(new RecruitmentRoleConditionDto("게임", 1),
+			new RecruitmentRoleConditionDto("모바일", 1), new RecruitmentRoleConditionDto("UI/UX", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		var empty = engine.recommend(missingJobs, null);
+		assertTrue(empty.developers().isEmpty());
+		assertEquals(1, empty.projects().size());
+		assertTrue(empty.roleCoverage().stream().allMatch(role -> role.eligibleCount() == 0));
+		var matchingJob = conditions(List.of(new RecruitmentRoleConditionDto("백엔드", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		assertEquals(1, engine.recommend(matchingJob, null).developers().size());
+	}
+
 	@Test void keysetScanScoresCandidatesAfterFirstDatabaseBatchBeforeLimitingToTen() {
 		when(requester.getCurrentUserId()).thenReturn(999999L);
 		for (int i = 0; i < 202; i++) member("paged-" + i, Member.MemberStatus.ACTIVE,

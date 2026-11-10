@@ -82,12 +82,12 @@ public class AiDraftService {
 				.stream().map(MessageResponse::from).toList(), conversation.getClientKey());
 	}
 
-	public List<RecommendationRequestSummary> history(long conversationId) {
+	public List<RecommendationSummaryRequest> history(long conversationId) {
 		long userId = currentUser.getCurrentUserId();
 		return transaction.execute(tx -> {
 			owned(conversationId, userId);
 			return requests.findByConversationIdOrderByCreatedAtDescIdDesc(conversationId).stream()
-				.map(r -> new RecommendationRequestSummary(r.getId(), r.getStatus(), r.getCreatedAt())).toList();
+				.map(r -> new RecommendationSummaryRequest(r.getId(), r.getStatus(), r.getCreatedAt())).toList();
 		});
 	}
 	private AiConversation owned(long id, long userId) {

@@ -10,6 +10,8 @@ import com.devmozip.backend.security.ai.CurrentUserProvider;
 import com.devmozip.backend.service.AiRecommendationExecutionService;
 import com.devmozip.backend.service.AiRecommendationService;
 import com.devmozip.backend.service.AiConditionsDocument;
+import com.devmozip.backend.service.AiRequirementSnapshot;
+import com.devmozip.backend.service.AiStoredEvaluation;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Objects;
@@ -37,11 +39,12 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	private final TransactionTemplate transaction;
 	private final TransactionTemplate read;
 	private final AiConditionsDocument documents;
+	private final AiRequirementSnapshot snapshots;
 
 	public AiRecommendationExecutionServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
 		AiMessageRepository messages, AiRecommendationRequestRepository requests, AiRecommendationRepository results,
 		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager,
-		AiConditionsDocument documents) {
+		AiConditionsDocument documents, AiRequirementSnapshot snapshots) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
@@ -51,6 +54,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		this.mapper = mapper;
 		this.entityManager = entityManager;
 		this.documents = documents;
+		this.snapshots = snapshots;
 		transaction = new TransactionTemplate(manager);
 		transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		read = new TransactionTemplate(manager);
@@ -60,50 +64,66 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 
 	@Override
 	public Execution execute(long conversationId, Long messageId, String key) {
+		return execute(conversationId, messageId, key, false);
+	}
+	@Override
+	public Execution execute(long conversationId, Long messageId, String key, boolean replay) {
 		long userId = currentUser.getCurrentUserId();
 		if (key == null || !key.matches("[A-Za-z0-9._:-]{1,128}")) throw bad("Idempotency-Key는 영문·숫자·._:-로 1~128자여야 합니다.");
 		var started = transaction.execute(tx -> {
 			var conversation = owned(conversationId, userId, true);
+			if (replay) {
+				var previous = requests.findByConversationIdAndIdempotencyKey(conversationId, key);
+				if (previous.isPresent()) {
+					if (!Objects.equals(messageId, previous.get().getMessageId())) throw new ResponseStatusException(HttpStatus.CONFLICT, "같은 키에 다른 메시지를 사용할 수 없습니다.");
+					return new Execution(response(conversationId, previous.get()), false);
+				}
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "저장된 추천 요청이 없습니다. 현재 조건을 확인한 뒤 새 추천을 실행해 주세요.");
+			}
 			UpdateConditionsRequest conditions = conditions(conversation.getCurrentConditions());
 			AiMessage message = messageId == null ? null : messages.findByIdAndConversationId(messageId, conversationId)
 				.orElseThrow(() -> bad("동일 대화의 USER 메시지를 지정해 주세요."));
 			if (message != null && (message.getRole() != AiMessage.Role.USER || message.getContent().length() > 10000)) {
 				throw bad("동일 대화의 10000자 이하 USER 메시지를 지정해 주세요.");
 			}
+			String captured = snapshots.capture(conversation.getCurrentConditions(), mapper.writeValueAsString(conditions), conversationText(conversationId, messageId));
 			var previous = requests.findByConversationIdAndIdempotencyKey(conversationId, key);
 			if (previous.isPresent()) {
 				var item = previous.get();
-				if (!Objects.equals(messageId, item.getMessageId()) || !conditions.equals(conditions(item.getConditions()))) {
+				if (!Objects.equals(messageId, item.getMessageId()) || !conditions.equals(conditions(item.getConditions())) || !snapshots.same(item.getConditions(), captured)) {
 					throw new ResponseStatusException(HttpStatus.CONFLICT, "같은 키에 다른 추천 입력을 사용할 수 없습니다.");
 				}
 				return new Execution(response(conversationId, item), false);
 			}
 			AiMessageLimits.validateTotal(AiMessageLimits.length(messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId)));
-			var request = requests.saveAndFlush(new AiRecommendationRequest(conversation, message, mapper.writeValueAsString(conditions), key));
+			var request = requests.saveAndFlush(new AiRecommendationRequest(conversation, message, captured, key));
 			return new Execution(response(conversationId, request), true);
 		});
 		if (!started.created()) return started;
 		long requestId = started.response().requestId();
 		try {
+			String input = started.response().conditions();
+			var requirements = snapshots.requirements(input);
+			var calculated = requirements.isEmpty() ? engine.recommend(conditions(input), snapshots.text(input))
+				: engine.recommend(conditions(input), snapshots.text(input), requirements);
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);
-				var calculated = engine.recommend(conditions(request.getConditions()), conversationText(conversationId, request.getMessageId()));
 				int rank = 1;
 				for (var developer : calculated.developers()) results.save(new AiRecommendation(request,
 					entityManager.getReference(Member.class, developer.id()), null, developer.score().total(),
-					String.join("\n", developer.score().basicReasons()), rank++));
+					AiStoredEvaluation.encode(developer.score()), rank++));
 				rank = 1;
 				for (var project : calculated.projects()) results.save(new AiRecommendation(request, null,
 					entityManager.getReference(Project.class, project.id()), project.score().total(),
-					String.join("\n", project.score().basicReasons()), rank++));
+					AiStoredEvaluation.encode(project.score()), rank++));
 				results.flush();
 				request.complete(AiRecommendationRequest.Status.SUCCESS);
 				requests.flush();
 				return new Execution(response(conversationId, request), true);
 			});
 		} catch (RuntimeException failure) {
-			log.error("추천 요청 {} 실행 실패", requestId, failure);
+			log.error("추천 요청 {} 실행 실패 ({})", requestId, failure.getClass().getSimpleName());
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);

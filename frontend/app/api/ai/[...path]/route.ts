@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/auth/backend';
+import { roleLabels } from '@/lib/projects/projectApiContract';
 
 type Context = { params: Promise<{ path: string[] }> };
 const headers = { 'Cache-Control': 'no-store' };
@@ -20,7 +21,7 @@ async function handle(request: Request, context: Context) {
                 || !Array.isArray(project.recruitmentSlots)) return error(502, '프로젝트 정보를 확인할 수 없습니다.');
             return NextResponse.json({ id: project.id, title: project.title, summary: typeof project.summary === 'string' ? project.summary : '',
                 description: typeof project.description === 'string' ? project.description : '', imageUrl: typeof project.imageUrl === 'string' ? project.imageUrl : null,
-                stacks: project.techStacks, roles: project.recruitmentSlots.filter((v: { role?: unknown }) => typeof v?.role === 'string').map((v: { role: string }) => v.role) }, { headers });
+                stacks: project.techStacks, roles: project.recruitmentSlots.filter((v: { roleCode?: unknown }) => typeof v?.roleCode === 'string').map((v: { roleCode: string }) => roleLabels[v.roleCode] || v.roleCode) }, { headers });
         } catch { return error(502, '프로젝트 정보를 불러올 수 없습니다.'); }
     }
     const allowed = request.method === 'GET'
@@ -36,7 +37,7 @@ async function handle(request: Request, context: Context) {
         return error(400, '조회 조건을 확인해 주세요.');
     }
     const messages = /\/messages$/.test(route);
-    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : 60000) };
+    const init: RequestInit = { method: request.method, signal: AbortSignal.timeout(messages ? 70000 : route.endsWith('/recommendations') && request.method === 'POST' ? 300000 : 60000) };
     if (request.method !== 'GET') {
         if (request.headers.get('origin') !== `${url.protocol}//${request.headers.get('host') || url.host}`) return error(403, '같은 사이트에서 요청해 주세요.');
         if (request.method === 'POST') {

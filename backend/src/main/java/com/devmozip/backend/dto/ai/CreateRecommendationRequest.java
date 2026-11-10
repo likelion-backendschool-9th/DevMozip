@@ -3,7 +3,9 @@ package com.devmozip.backend.dto.ai;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 public record CreateRecommendationRequest(
-	@tools.jackson.databind.annotation.JsonDeserialize(using = com.devmozip.backend.utils.StrictLongDeserializer.class) Long messageId) {
+	@tools.jackson.databind.annotation.JsonDeserialize(using = com.devmozip.backend.utils.StrictLongDeserializer.class) Long messageId,
+	@tools.jackson.databind.annotation.JsonDeserialize(using = com.devmozip.backend.utils.StrictBooleanDeserializer.class) Boolean replay) {
+	public CreateRecommendationRequest(Long messageId) { this(messageId, false); }
 	public CreateRecommendationRequest {
 		if (messageId != null && messageId <= 0) throw new IllegalArgumentException("메시지 ID를 확인해 주세요.");
 	}

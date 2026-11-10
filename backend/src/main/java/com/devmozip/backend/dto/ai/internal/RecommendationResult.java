@@ -9,7 +9,10 @@ public record RecommendationResult(List<Developer> developers, List<SimilarProje
 	List<RoleCoverage> roleCoverage, List<String> notices) {
 	public enum Evaluation { SCORED, NOT_REQUESTED, UNASSESSED }
 	public record ScoreItem(String name, Evaluation evaluation, BigDecimal weight, BigDecimal points) {}
-	public record Score(BigDecimal total, List<ScoreItem> items, List<String> basicReasons) {}
+	public record Score(BigDecimal total, List<ScoreItem> items, List<String> basicReasons,
+		com.devmozip.backend.dto.ai.RequirementEvaluation requirementEvaluation) {
+		public Score(BigDecimal total, List<ScoreItem> items, List<String> basicReasons) { this(total, items, basicReasons, null); }
+	}
 	public record Developer(long id, String nickname, String tag, List<String> matchedRoles, Score score) {}
 	public record SimilarProject(long id, String title, Score score, DurationComparison duration) {}
 	/** 서로 다른 직군의 후보 수는 중복될 수 있다. 실제 팀 배정·충원 완료를 뜻하지 않는다. */
