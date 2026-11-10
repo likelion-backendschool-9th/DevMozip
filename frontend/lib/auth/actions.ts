@@ -7,7 +7,7 @@ import { backendFetch, readErrorMessage } from './backend';
 import { ACCESS_COOKIE, REFRESH_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_FLOW_MAX_AGE, KAKAO_SIGNUP_COOKIE, cookieOptions } from './cookies';
 import { isKakaoIntent, serializeKakaoFlow } from './kakao';
 import { writeSessionCookies } from './sessionCookies';
-import { safeNext } from './paths';
+import { loginNext, safeNext } from './paths';
 
 // 백엔드 로그인을 호출하고 두 쿠키를 쓴다. 화면 이동은 호출한 쪽이 맡는다.
 async function startSession(username: string, password: string): Promise<{ error: string } | null> {
@@ -31,13 +31,7 @@ export async function loginAction(
     );
     if (failure) return failure;
 
-    const target = safeNext(form.get('next'));
-    return {
-        redirectTo:
-            new URL(target, 'https://internal.invalid').pathname === '/login'
-                ? '/'
-                : target,
-    };
+    return { redirectTo: loginNext(form.get('next')) };
 }
 
 // 가입 화면의 직군·기술 스택·관심 분야 선택지. 기준은 백엔드 enum이다.

@@ -1,5 +1,22 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 월간 추천 잔여 횟수 표시 (`feat/ai-prompt`)
+
+- 사용자 요청으로 matching 추천 조건 패널의 `사용 횟수 / 한도` 표시를 서버 `remainingCount` 기준의 `남은 횟수 / 한도`로 변경하고 제목을 ‘월간 추천 잔여’로 명확히 했다. 프리미엄1회 사용은99/100회, 무료1회 사용은4/5회다. 로딩·실패 시 기존 ‘—’ 표시를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/ChatConditions.tsx`, `docs/ai-matching.md`, 이 문서. 사용량 계산·차감·처리 중 예약·API·백엔드·다른 도메인은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/usage.test.ts tests/screens/FollowingMatching.test.tsx` 실행,2개 파일27개 테스트 통과. `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/_components/ChatConditions.tsx` 오류0·종료0. 표시1줄 변경으로 새 테스트는 추가하지 않았다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증: 실제 브라우저 및 서버 연결 검증은 수행하지 않았다. 커밋·푸시·병합·배포는 수행하지 않는다.
+
+## 2026-11-10 메인 첫 프롬프트 분석 연결 (`feat/ai-prompt`)
+
+- 요청 범위: 메인에서 첫 프롬프트를 제출하고 matching으로 이동했을 때 AI가 입력에 응답하고 조건을 처리하도록 수정한다. 기존 저장·이동만 하던 경로에 기존 메시지 분석을 연결하며 다음 AI 개발 단계는 시작하지 않는다.
+- 원인: `startHomeChat`·`resumeLoginPrompt`는 USER 메시지만 저장하고, 분석은 matching의 전송 버튼에서만 호출했다.
+- 변경 파일: `frontend/app/ai/matching/page.tsx`, 신규 `frontend/lib/matching/useInitialChatAnalysis.ts`·`useInitialChatAnalysis.test.tsx`, `docs/ai-matching.md`, 이 문서.
+- 완료: 로그인 및 대화 이력 로딩 후 새 로컬 대화의 첫 메시지를 한 번 분석한다. 기존 답변·조건 반영·로딩·오류·수동 재시도를 재사용하며 분석 중 재시도 버튼을 비활성화한다. 서버 대화·미완료 분석은 자동 실행하지 않는다. 추천 생성·사용량 차감·다른 업무 도메인·백엔드·DDL·인증 설정은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx lib/state/homeStore.test.tsx tests/screens/FollowingMatching.test.tsx` 실행, 3개 파일47개 테스트 통과. 새 테스트는 메인/로그인 입력의 분석 API 호출·원문/clientKey 보존·답변/조건 반영·effect 중복 실행 방지·실패 후 자동 반복 방지·기존 대화 제외를 검증한다. API 응답은 테스트 대역이다.
+- 빌드·정적 검사: `frontend`에서 `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/page.tsx lib/matching/useInitialChatAnalysis.ts lib/matching/useInitialChatAnalysis.test.tsx` 최초 실행은 새 테스트의 렌더 중 외부 변수 대입·일반 함수 내부 hook 호출2건으로 실패했다. 테스트 Probe 컴포넌트로 수정한 뒤 같은 ESLint 명령을 재실행해 오류0·종료0을 확인했다. 수정 후 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx`도4개 통과했다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증·후속: 실제 브라우저·실제 Gemini/DB 연결은 확인하지 않았다. 실제 서버의 분석 기능 설정 및 연결 오류는 기존 API 오류 안내로 처리한다. 커밋·푸시·병합·배포는 수행하지 않았다.
+
 ## 2026-11-10 STEP 7 종료 점검 — 현재 구현 기준
 
 이번 요청은 **문서만 갱신**한다. 현재 코드·이전 실행 로그·JUnit XML을 대조했으며 아래 테스트 수치는 이번 문서 작업에서 새로 실행한 결과가 아니다. 현재 브랜치는 `feat/ai-usage`, 본체 커밋은 `8945056`이다. 이후 CHAR JDBC 매핑 수정·스키마 검증 테스트·관련 문서는 작업 트리에 남아 있으며 커밋되지 않았다. 이전 날짜별 미구현·미적용·테스트 수치는 당시 이력이고 이 절을 최신 기준으로 삼는다.
@@ -1963,3 +1980,17 @@ erDiagram
 ## 2026-11-10 프로젝트 활동/관리 화면 PR 준비
 
 사용자가 커밋·푸시·PR 생성을 요청해 develop 24b524e에서 feat/project-profile-activity 브랜치를 분리했다. 앞선 활동 이력 API·화면·단일 카드 진입·주최자 자동 관리·복귀 경로·헤더/활동 관리 버튼 위치 변경을 함께 반영한다. 원격 develop과 기준 커밋이 동일한 것을 확인했다. PR 준비의 최종 프론트 전체 테스트는 123개 파일·1,397개 통과. 마지막 버튼 위치 변경 단계에서 npm run build/TypeScript와 관련 32개 테스트도 통과했다. 백엔드 전체 테스트의 카카오/결제 로그 실패 2건과 프로젝트 129개 통과·11개 스킵, 실제 DB·브라우저 검증 한계를 PR에 명시한다. 환경설정·YAML·DB 변경을 추가하지 않았으며 다른 worktree의 변경은 포함하지 않는다. 헤더 배치 보고서는 마지막 실측 144×52px로 갱신했다.
+### 2026-11-10 로그인 후 데모 프로필 이동 오류 수정
+
+- 사용자 보고: 카카오 로그인 후 `/users/demo-user`에서 공개 프로필 404, `/profile/me`는 정상. 로그인 복귀 next는 기존 내부 주소를 그대로 사용하고 온보딩 완료/이미 완료 링크도 화면용 user.id를 공개 slug로 사용하던 코드 확인. 실제 사용자 브라우저의 flow 쿠키/로그인은 재현하지 않아 최초 next 생성 지점은 미확정이다.
+- `fix/login-profile-redirect`에서 `frontend/lib/auth/paths.ts`에 로그인 완료 전용 loginNext 추가. 기존 demo-user/demo-premium/demo-admin 공개 경로만 `/profile/me`로 교정하고 탭 query/hash 보존. 일반 공개 프로필·메시지·외부 URL 차단 정책 유지. 일반 로그인 actions와 카카오 callback에 적용하고 온보딩 두 내 프로필 링크 수정. 해당 actions/callback 회귀 테스트 추가.
+- `npm test -- --maxWorkers=2`: 118개 파일·1,374개 성공. 인증 관련 선별 테스트 79개 성공. `npm run build`: 성공. 인증 변경 파일 ESLint 성공. 백엔드·DB·카카오 외부 API는 변경/호출하지 않았고 실제 OAuth 브라우저 재검증·배포·커밋·푸시는 미수행. 빌드 생성 next-env.d.ts는 원복, 기존 frontend/.vite 보존.
+- 남은 사항: 새 로그인으로 실제 next 복귀 검증. 배포 포폴 503은 별개이며 배포 로그 접근 필요. 활동 담당자 작업과 기타 프로필 탭 연동은 이번 단계에서 수정하지 않음.
+
+- 후속 로컬 실행 확인: 카카오 시작 실패 보고를 확인하니 기존 dev 백엔드 프로세스가 최신 WebSocketConfigurer 의존성을 반영하지 못해 기동 실패 상태였다. 사용자 로그인 오류 해결 범위에서 devmozip-backend-1만 재시작해 최신 Gradle 의존성으로 기동. PostgreSQL 연결 및 /actuator/health HTTP 200 확인. 서버 재시작은 공유 DB 스키마/데이터 변경을 수행하지 않았다. 실제 OAuth 동의/콜백은 별도 브라우저 재확인 필요.
+
+## 2026-11-10 PR #124 develop 충돌 해결
+
+사용자 요청으로 별도 pr124-conflicts worktree에서 origin/develop 6cb3d47을 병합했다. 충돌은 이 진행 문서의 말미 한 구간뿐이며 활동/관리 화면 기록과 로그인 프로필 복귀 수정 기록을 모두 보존했다. develop의 AI 초기 분석 및 로그인 수정 코드는 원본을 유지했다. 실행 중인 worktree의 모집 중 필터/개발자 전용 탐색 미커밋 변경과 #128/#131 브랜치는 수정하지 않았다. 이번 작업에서 백엔드 코드·DB·배포 설정은 변경하지 않는다.
+
+- 충돌 해결 최종 검증: 별도 작업 폴더 소스로 npm run build/TypeScript 성공, npm test -- --maxWorkers=1 전체124개 파일1,408개 통과. 실행 서버의 node_modules 의존성 볼륨만 재사용하고 빌드 .next는 독립 볼륨으로 분리했다. 생성된 next-env.d.ts는 기존 dev 경로로 복원했다. git diff --check 및 미해결 충돌 파일0 확인. 백엔드 코드 변경이 없어 백엔드 테스트와 실제 DB/외부 API 검증은 재실행하지 않았다. 기존 #124에 일반 푸시하며 강제 푸시·develop/main 직접 변경·다른 PR 갱신은 하지 않는다.
