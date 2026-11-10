@@ -24,8 +24,9 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
     private final PortfolioQueryService queries;
     private final PortfolioDocumentPolicy policy;
     private final ObjectMapper mapper;
+    private final com.devmozip.backend.storage.LocalPortfolioFileStorage files;
     @Override public PortfolioDetailResponse create(String email,PortfolioWriteRequest input){
-        var member=viewer(email);var value=stored(input);
+        var member=viewer(email);var value=stored(input,member.getId());
         try{return queries.detail(email,repository.create(member.getId(),value,now()));}
         catch(DataAccessException e){throw unavailable();}
     }
@@ -34,7 +35,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         try{
             var old=owned(id,member);
             if(!Objects.equals(input.expectedUpdatedAt(),old.updatedAt()))throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 곳에서 변경되었습니다. 최신 내용을 다시 불러와 주세요.");
-            var value=stored(input);
+            var value=stored(input,member.getId());
             if(!old.visibility().equals(value.visibility()))throw new ResponseStatusException(HttpStatus.CONFLICT,"공개 범위 변경 API는 별도 기능입니다. 현재 공개 범위를 유지해 주세요.");
             var time=now();if(old.updatedAt()!=null&&!time.isAfter(old.updatedAt()))time=old.updatedAt().plusNanos(1000);
             repository.update(id,member.getId(),value,time);return queries.detail(email,id);
@@ -62,11 +63,17 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
         if(m.getStatus()!=Member.MemberStatus.ACTIVE&&m.getStatus()!=Member.MemberStatus.WARNED)throw new ResponseStatusException(HttpStatus.FORBIDDEN,"이 계정은 수정할 수 없습니다.");
         return m;
     }
-    private PortfolioMutationRepository.Stored stored(PortfolioWriteRequest p){
+    private PortfolioMutationRepository.Stored stored(PortfolioWriteRequest p,long ownerId){
         var doc=policy.clean(p.document());
         var stack=policy.labels(p.techStack(),30,100);
         var attachments=p.attachments()==null?List.<PortfolioWriteRequest.PortfolioAttachmentRequest>of():p.attachments().stream()
                 .map(a->new PortfolioWriteRequest.PortfolioAttachmentRequest(a.name(),policy.url(a.url(),false))).toList();
+        verifyFile(p.thumbnailUrl(),ownerId,true);
+        for(var a:attachments)verifyFile(a.url(),ownerId,false);
+        if(doc!=null)for(var b:doc.blocks()){
+            for(var image:b.images())verifyFile(image.src(),ownerId,true);
+            for(var link:b.links())verifyFile(link.url(),ownerId,false);
+        }
         if(doc==null&&p.description()!=null&&p.description().stripLeading().startsWith("{")&&p.description().contains("devmozip.portfolio."))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"구조화 문서는 document 필드로 전달해 주세요.");
         String description=doc==null?p.description():policy.encode(doc);
         if(description!=null&&description.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>2*1024*1024)throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,"문서 크기는 2MB 이내여야 합니다.");
@@ -75,5 +82,11 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
                 p.role().strip(),mapper.writeValueAsString(stack),mapper.writeValueAsString(attachments),p.visibility()==null?"PRIVATE":p.visibility());
     }
     private LocalDateTime now(){return LocalDateTime.now(ZoneId.of("Asia/Seoul")).truncatedTo(ChronoUnit.MICROS);}
+    private void verifyFile(String url,long ownerId,boolean image){
+        if(url==null||!url.startsWith("/api/files/"))return;
+        var file=files.metadata(url.substring("/api/files/".length()));
+        if(file.ownerId()!=ownerId)throw new ResponseStatusException(HttpStatus.FORBIDDEN,"본인이 업로드한 파일만 연결할 수 있습니다.");
+        if(image&&!file.contentType().startsWith("image/"))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"이미지에는 이미지 파일만 연결할 수 있습니다.");
+    }
     private ResponseStatusException unavailable(){return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"포트폴리오 저장소를 사용할 수 없습니다.");}
 }

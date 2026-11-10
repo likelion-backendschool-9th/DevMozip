@@ -29,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProjectPortfolioSnapshotIntegrationTest {
 	@Container @ServiceConnection static PostgreSQLContainer postgres=new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtProvider jwt; @Autowired ObjectMapper mapper;
+	@org.junit.jupiter.api.io.TempDir static Path files;
+	@org.springframework.test.context.DynamicPropertySource static void fileDirectory(org.springframework.test.context.DynamicPropertyRegistry r){r.add("portfolio.files.directory",()->files.toString());}
 	@MockitoBean RefreshTokenStore refresh;
 	@MockitoBean(name="projectClock") Clock clock;
 	@MockitoSpyBean ProjectPortfolioRepository portfolios;
@@ -151,6 +153,21 @@ class ProjectPortfolioSnapshotIntegrationTest {
 		}}
 		mvc.perform(delete("/api/v1/portfolios/"+id(original)).header("Authorization",token(202))).andExpect(status().isConflict());
 		assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM project_application_portfolios WHERE application_id=?",Integer.class,app.path("id").asLong()));
+	}
+
+	@Test void uploadedFileRemainsReadableOnlyToSubmittedPartiesAfterOriginalChangesAndDeletion() throws Exception {
+		var upload=new org.springframework.mock.web.MockMultipartFile("file","result.png","image/png",com.devmozip.backend.storage.ProfileImageTestFiles.png());
+		var file=mapper.readTree(mvc.perform(multipart("/api/v1/files").file(upload).header("Authorization",token(202))).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
+		var value=input();value.put("thumbnailUrl",file.path("url").asString());
+		var original=mapper.readTree(mvc.perform(post("/api/v1/portfolios").header("Authorization",token(202)).contentType("application/json").content(mapper.writeValueAsString(value))).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
+		submitted(project(),original);edit(original).andExpect(status().isOk());String url="/api/v1/files/"+file.path("id").asString();
+		mvc.perform(get(url).header("Authorization",token(101))).andExpect(status().isOk());
+		mvc.perform(delete("/api/v1/portfolios/"+id(original)).header("Authorization",token(202))).andExpect(status().isNoContent());
+		mvc.perform(get(url).header("Authorization",token(101))).andExpect(status().isOk());
+		mvc.perform(get(url).header("Authorization",token(202))).andExpect(status().isOk());
+		jdbc.update("UPDATE users SET role='PREMIUM' WHERE id=303");mvc.perform(get(url).header("Authorization",token(303))).andExpect(status().isNotFound());
+		mvc.perform(get(url)).andExpect(status().isNotFound());jdbc.update("UPDATE users SET role='USER' WHERE id=101");
+		mvc.perform(get(url).header("Authorization",token(101))).andExpect(status().isNotFound());
 	}
 	@Test void missingSetNullConstraintDisablesNewSubmissions() throws Exception {
 		long project=project();var original=portfolio(202,"PUBLIC");jdbc.execute("ALTER TABLE project_application_portfolios DROP CONSTRAINT fk_project_application_portfolio");

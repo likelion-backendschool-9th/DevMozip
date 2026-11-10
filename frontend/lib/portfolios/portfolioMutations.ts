@@ -7,7 +7,7 @@ export function portfolioWriteBody(input: PortfolioInput, visibility: 'PUBLIC' |
     const errors = apiPortfolioErrors(input); if (errors.length) throw new Error(errors.join('\n'));
     return { title: input.title, thumbnailUrl: input.coverImage || null, topic: input.fields?.[0] || null, summary: input.summary,
         description: null, role: input.role, techStack: input.stacks, visibility, document: portfolioDocument(input),
-        attachments: existing?.attachments || [], expectedUpdatedAt: existing?.portfolio.updatedAt || null };
+        attachments: input.attachments ?? existing?.attachments ?? [], expectedUpdatedAt: existing?.portfolio.updatedAt || null };
 }
 export async function savePortfolio(input: PortfolioInput, visibility: 'PUBLIC' | 'PRIVATE', existing?: PortfolioDetail, signal?: AbortSignal) {
     const body = JSON.stringify(portfolioWriteBody(input, visibility, existing));

@@ -17,12 +17,13 @@ describe('포트폴리오 작성·수정·삭제 화면', () => {
         syncServerSession({ identity: null });
         expect(renderToStaticMarkup(<ApiPortfolioComposer />)).toContain('로그인하고 포트폴리오를 작성하세요');
     });
-    it('기존 작성기 배치·미리보기·섹션을 유지하고 업로드만 비활성화한다', () => {
+    it('기존 작성기 배치·미리보기·섹션을 유지하고 서버 업로드를 제공한다', () => {
         syncServerSession({ identity: { username: 'real@test.local', role: 'USER' } });
         const html = renderToStaticMarkup(<ApiPortfolioComposer />);
         for (const label of ['포트폴리오 작성', '전체 미리보기', '프로젝트명', '한 줄 소개', '시작 월', '종료 월', '담당 역할', '팀 구성', '공개 범위', '대표 이미지 URL', '자유롭게 구성하는 본문']) expect(html).toContain(label);
         expect(html).toContain('href="/profile/me?tab=portfolio"');
-        expect(html).toMatch(/<input[^>]*aria-label="대표 이미지"[^>]*disabled/);
+        expect(html).not.toMatch(/<input[^>]*aria-label="대표 이미지"[^>]*disabled/);
+        expect(html).toContain("PDF 첨부");
     });
     it('실제 수정 대상은 조회 완료 전 Mock 내용을 표시하지 않는다', () => {
         syncServerSession({ identity: { username: 'real@test.local', role: 'USER' } });

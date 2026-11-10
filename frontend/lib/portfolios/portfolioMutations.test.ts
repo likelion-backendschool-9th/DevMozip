@@ -35,6 +35,14 @@ describe('문서·쓰기 경계', () => {
         expect(body.expectedUpdatedAt).toBe(existing.portfolio.updatedAt); expect(body.attachments).toEqual(existing.attachments);
         expect(() => portfolioWriteBody(input(), 'PRIVATE', existing)).toThrow('공개 범위');
     });
+    it('업로드 첨부를 편집 입력에 복원하고 연결 해제를 저장에 반영한다', () => {
+        const existing = portfolioDetailFixture();
+        const edit = portfolioInputFromDetail(existing);
+        expect(edit.attachments).toEqual(existing.attachments);
+        expect(portfolioWriteBody({ ...input(), attachments: [] }, 'PUBLIC', existing).attachments).toEqual([]);
+        const attachments = [{ name: 'new.pdf', url: '/api/files/12345678-1234-1234-1234-123456789abc' }];
+        expect(portfolioWriteBody({ ...input(), attachments }, 'PRIVATE').attachments).toEqual(attachments);
+    });
     it('지원하지 않는 문서 버전은 거절한다', () => {
         expect(() => parsePortfolioDocument({ ...portfolioDocument(input()), schema: 'devmozip.portfolio.v99' })).toThrow();
     });
