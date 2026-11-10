@@ -1725,12 +1725,27 @@ erDiagram
 - 일반 ./gradlew test는 develop의 AI 테스트 2곳에서 ProjectJobRole → String 생성자 불일치로 컴파일 실패. 다른 담당 파일은 수정하지 않았다. 포트폴리오 40개 검증은 저장소 외부 임시 Gradle init으로 해당 AI 테스트 소스 2개만 제외하여 수행했으며 전체 성공을 의미하지 않는다.
 - 프론트 전체 827개 및 npm run build, git diff --check 통과. 별도 화면 검증에서는 premium 로그인·등록 ID 3·수정·새로고침·DB 재조회까지 확인했다.
 
+## 2026-11-10 #113 포트폴리오 이미지·첨부파일 업로드
+
+- 사용자의 이어가기 요청 및 이슈 #113에 따라 미병합 CRUD feat/88-portfolio-crud(7ae37e0)에서 feat/113-portfolio-file-upload 분기. 다음 기능·커밋·푸시·PR 생성은 진행하지 않는다.
+- POST /api/v1/files multipart 한 개, GET /api/v1/files/{id}, 동일 출처 Next BFF /api/files 추가. Controller → Service 인터페이스/Impl → 비공개 로컬 파일 저장소와 공개 연결 조회 Repository.
+- DB 테이블/컬럼 추가 없음. 서버 UUID와 소유자·이름·MIME·크기를 비공개 파일 메타데이터로 보존하고, 기존 portfolios.thumbnail_url·문서 images·attachments에 URL 연결. 저장 시 본인 업로드인지 검증한다.
+- PNG/JPEG/WebP 256KB 및 실제 디코딩·1,600만 화소 검증, PDF 10MB 및 MIME/확장자/서명 확인. 저장 파일명·경로는 서버가 생성, traversal·심볼릭 링크 읽기·실제 초과 바이트 거절. PDF는 다운로드만 제공.
+- 업로드 직후·PRIVATE 파일은 본인만. 원 업로더의 ACTIVE/PUBLIC 대표 이미지만 비로그인 공개, 나머지 공개 본문/첨부는 기존 프리미엄 상세 열람 정책 적용. 다른 사용자 파일 연결 거절. 쓰기 출처 검증·no-store·nosniff 유지.
+- 기존 커버·갤러리 버튼을 API 업로드와 연결하고 Mock 작성기는 기존 처리 유지. PDF 첨부·연결 해제·초안/재조회 복원 추가. 업로드 중 저장 차단, 실패 시 입력 유지. 파일 자동 삭제와 지원서 보존 정책은 확장하지 않음.
+- 원래 ./gradlew test는 기존 AI 테스트 소스 2곳의 ProjectJobRole/String 불일치로 컴파일 실패. 저장소 외부 임시 init으로 그 2곳만 제외했다. 최초 Docker 미실행 결과 131개 skip은 실제 DB 성공으로 간주하지 않았으며 Docker 시작 후 재실행했다.
+- 실제 PostgreSQL을 포함한 나머지 전체: 650개 중 639 통과·11개 공유 DB opt-in skip, 실패/오류 0. 최종 파일 저장소·파일 API·CRUD·조회 관련 50개는 skip 없이 통과. 전체 원본 실행 성공을 의미하지 않는다.
+- 프론트 전체 845개 통과, npm run build, 수정 파일 ESLint 및 git diff --check 통과.
+- 로컬 Docker의 ddl validate/sql init never 확인 후 기존 컨테이너 시작. 실제 계정으로 PRIVATE 검증 ID 3에 대표/갤러리 PNG 및 2MB PDF 업로드·저장·새로고침·다운로드 성공, 비로그인 파일 GET 404 및 DB URL/첨부 메타데이터 재조회 확인. 기존 스키마·다른 업무 데이터 변경 없음.
+- 파일은 기본 ./uploads/portfolio-files 또는 PORTFOLIO_FILE_STORAGE 비공개 경로에 보존. 공개 IMAGE_STORAGE와 분리, 영속 볼륨/블루그린 저장소 공유는 배포 단계에서 별도 설정 필요. 미연결 파일 자동 정리·파일 삭제·악성 PDF 검사·AI 분석은 미구현 범위.
+- 주요 파일: PortfolioFileController, PortfolioFileService/Impl, PortfolioFileResponse, LocalPortfolioFileStorage, PortfolioFileAccessRepository, PortfolioMultipartConfiguration, 기존 SecurityConfig/포트폴리오 예외 처리·Mutation 소유권 검증, 프론트 api/files·portfolioFiles·기존 작성기·PortfolioFileAttachments·초안/첨부 매핑·테스트. 상세 docs/portfolio-files-api.md.
+- 이번 변경은 미커밋·미푸시. 이전 frontend/.vite 임시 캐시는 보존하고 작업에 포함하지 않는다.
 ### 2026-11-09 좋아요 조회를 최종 posts 구조에 맞춤
 - 공유 DB와 origin/feat/91-posts의 최신 계획을 대조해 게시글 posts, 원본 original_post_id, 공통 likes.post_id 계약 확인. posts는 0행이므로 VISIBLE/HIDDEN 값은 최신 계획을 근거로 유지한다.
 - LikedPostsQueryRepository와 PostgreSQL 통합 테스트를 posts 구조로 수정했다. 프로젝트 좋아요·잘못된 참조 제외, 본인 격리·공개·퍼가기 조건 및 API 응답은 유지한다.
 - 이번 DB 스키마·데이터 변경 없음.
 - 검증: 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 관련 32개 및 npm run build -- --webpack, git diff --check 통과. 공유 DB 실데이터 화면 검증은 미실행. 이번 수정 미커밋·미푸시.
-- 
+-
 ### 2026-11-10 PR #96 최신 develop 충돌 해결
 
 - 사용자 요청으로 feat/51-project-reports에 origin/develop a04608f를 병합했다. 충돌은 docs/ai-progress.md, docs/project-backend-blueprint.md, frontend/app/projects/_components/api/ApiProjectDetail.tsx의 3곳이었다.
@@ -1774,6 +1789,15 @@ erDiagram
 - 최종 프론트 `npm test -- --maxWorkers=2`: 93개 파일 / 1,066개 모두 통과. `npm run build -- --webpack`: 성공(TypeScript 검사·63개 페이지 생성 포함). next-env.d.ts 생성 변경 복구, 충돌 마커 없음 및 git diff --check 통과. 브라우저 실제 계정 시연은 미실행이다.
 
 
+## 2026-11-10 #102·#105 병합 후 #115 최신화
+
+- 최신 원격에서 #102 좋아요와 #105 포트폴리오 CRUD가 이미 develop에 병합된 것을 확인했다. 해당 브랜치를 중복 수정하지 않았다.
+- 업로드 PR #115 대상도 develop으로 변경된 상태. feat/113-portfolio-file-upload에 origin/develop d6a5720을 병합하고 docs/ai-progress 충돌의 양쪽 기록을 보존했다. SecurityConfig 자동 병합 결과 파일 GET 공개 진입/서비스 권한 검증 규칙 유지 확인.
+- 최신 통합 후 frontend 전체 1,235개 및 npm run build, git diff --check 통과.
+- 원래 backend gradlew test는 RecommendationSummaryRequest.java의 public record RecommendationRequestSummary 파일명 불일치에서 compileJava 실패하며 다수 심볼 오류도 출력됨. 담당자 수정 대상이므로 AI/결제 소스를 변경하거나 테스트를 임의 제외하지 않았다. 이번 통합의 백엔드 테스트 성공으로 보고하지 않는다.
+- 업로드 구현 당시의 실제 PostgreSQL 50개/나머지 회귀/브라우저 검증은 앞 기록이며 최신 통합 상태의 실행 서버·DB·브라우저 재검증을 의미하지 않는다. 이번 공유 DB/파일 변경 없음.
+
+
 ## 2026-11-10 PR #106 순차 통합 준비 — 최신 develop 반영
 
 - 사용자 요청 범위: `feat/gemini-recommend` → `feat/gemini-portfolio-analysis` → `feat/ai-usage` 순서로 develop 충돌을 최소 수정으로 해결한다. PR 브랜치에만 병합 커밋을 전달하며 develop/main 직접 변경·PR 머지·새 기능·외부 AI/공유 DB 연결은 수행하지 않는다.
@@ -1803,3 +1827,4 @@ erDiagram
 - backend에서 앞 단계와 같은 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache` 성공(종료0),154개 중153개 통과·1개 스킵·실패/오류0. 추천·포트폴리오·사용량 및 H2 CHAR(7) 스키마 검증을 포함한다. 로그: `/tmp/devmozip-pr112-ai-test.log`. Docker 응답 대기로 중단한 전체 백엔드 회귀 테스트를 통과로 간주하지 않는다. 실제 Gemini·공유 PostgreSQL·브라우저 통합은 재실행하지 않았다.
 - 순차 병합 관계: 최신 develop `d6a5720` → 추천 병합 `984292e` → 포트폴리오 병합 `a25ac13` → 사용량 병합 순서로 조상을 포함한다. PR 브랜치만 푸시하며 develop/main 직접 변경·PR 머지는 수행하지 않는다. 후속 PR 머지 순서는 #106 → #111 → #112다.
 - 최종 직접 변경 범위는 AI DTO 및 참조3개 파일(제품 코드5줄), AI 테스트2개 파일(각2줄), 이 진행 문서다. API 경로·JSON 계약·점수·권한·월 제한 정책은 기존 각 PR 구현을 유지해 기능/API 문서의 계약 변경은 없다. 다른 팀원 변경은 develop에서 가져온 원본을 유지했다. 새 기능·추가 단계는 시작하지 않는다.
+

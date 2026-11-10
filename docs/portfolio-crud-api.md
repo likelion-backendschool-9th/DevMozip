@@ -110,3 +110,7 @@ ERD에 blocks·기간·팀 규모용 컬럼이 없어 **기존 TEXT description 
 - 새로고침 후 제목·소개·본문 유지. DB에서 user_id=5, PRIVATE, devmozip.portfolio.v1 문서와 수정 시각 변경 확인. 검증용 ID 3은 비공개로 남겨둔다.
 - Docker 내부 Request URL과 외부 Origin 차이로 같은 출처의 POST가 403인 문제를 재현했다. 요청 Host와 URL 프로토콜을 기준으로 비교하도록 보완했다. X-Forwarded-Host는 신뢰하지 않으며 다른 도메인·포트·프로토콜·누락/잘못된 Origin은 거절한다.
 - 파일 업로드·삭제는 이번 브라우저 검증에서 제외.
+
+### 후속 파일 업로드 #113
+
+feat/113-portfolio-file-upload에서 POST /api/v1/files 및 기존 이미지·PDF 첨부 화면 연동을 추가했다. 저장 위치·비공개 접근·파일 크기·보존 및 검증은 docs/portfolio-files-api.md를 따른다. 삭제 API·공개 범위 PATCH·제출 스냅샷은 해당 범위를 확장하지 않았다.
