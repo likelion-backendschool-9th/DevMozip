@@ -47,6 +47,12 @@ public class Report extends BaseEntity {
 		report.projectId = projectId;
 		return report;
 	}
+	public static Report ofProjectMember(Member reporter,Member target,long projectId,String reason,LocalDateTime now){
+		Report report=new Report(reporter,target,reason,now);report.projectId=projectId;return report;
+	}
+	public void handle(Status status,String resolution,long adminId,LocalDateTime now){
+		this.status=status;this.resolution=resolution;this.handledBy=adminId;this.handledAt=now;touch(now);
+	}
 	// 게시글·댓글 신고는 대상 ID만 채우고 reported_user_id는 비운다 (docs/feed-plan.md 4절).
 	public static Report ofPost(Member reporter, long postId, String reason, LocalDateTime now) {
 		Report report = new Report(reporter, null, reason, now);

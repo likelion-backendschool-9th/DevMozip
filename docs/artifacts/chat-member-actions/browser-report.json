@@ -1,0 +1,53 @@
+{
+  "mode": "UI response stubs; no real login or DB writes",
+  "viewport": 1440,
+  "rows": [
+    {
+      "name": "김하늘",
+      "kick": {
+        "x": 931,
+        "y": 468.5,
+        "width": 34,
+        "height": 34
+      },
+      "report": {
+        "x": 973,
+        "y": 468.5,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "name": "긴 이름의 테스트 팀원",
+      "kick": {
+        "x": 931,
+        "y": 549.984375,
+        "width": 34,
+        "height": 34
+      },
+      "report": {
+        "x": 973,
+        "y": 549.984375,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "name": "이유나",
+      "kick": {
+        "x": 931,
+        "y": 631.46875,
+        "width": 34,
+        "height": 34
+      },
+      "report": {
+        "x": 973,
+        "y": 631.46875,
+        "width": 34,
+        "height": 34
+      }
+    }
+  ],
+  "pageErrors": [],
+  "overflow": false
+}
