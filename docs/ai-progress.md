@@ -1718,6 +1718,18 @@ erDiagram
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
 
+### 2026-11-10 minimatch 보안 알림 수정
+
+- 범위: 사용자가 제시한 Dependabot GHSA-g3hv-75wg-m249 대응. develop a04608f 기반 `.worktrees/minimatch-security` / `fix/minimatch-security`에서만 수정하며 원본 작업 폴더의 미커밋 변경과 Docker 실행 설정은 보존했다. 후속 사용자 요청으로 해당 보안 수정만 커밋·푸시하고 develop 대상 PR을 생성한다.
+- 변경 파일: frontend/package.json에 `minimatch@>=7.0.0 <11.0.1` → `11.0.1` override 추가, frontend/package-lock.json 재생성. @typescript-eslint/typescript-estree가 사용하던 10.2.6만 수정 버전으로 교체하며 알림 범위 밖의 3.1.5와 Next.js/ESLint 버전은 유지한다. 새 버전의 간접 의존성 @isaacs/nonrecursive-glob-match가 추가됐다.
+- 공식 npm 레지스트리의 minimatch 11.0.1 Node 요구사항(18 || 20 || >=22)을 확인했다. 현재 Node 24 및 Docker Node 24와 일치한다.
+- `npm ci --prefer-offline --no-audit --no-fund` 및 `npm ls minimatch` 성공. 실제 설치 트리에서 11.0.1 overridden 확인.
+- `npm audit --json`: 취약점 0건, minimatch 알림 없음. GitHub 알림 해소는 수정 사항이 기본 브랜치에 반영되어 Dependabot이 재검사한 뒤 별도 확인해야 한다.
+- `npm test -- --maxWorkers=2`: 71개 파일, 789개 테스트 모두 통과.
+- `npm run lint -- --format json`: 기존 코드에서 오류 81건·경고 68건으로 실패했다. 같은 소스에서 10.2.6으로 실행한 결과와 파일별 메시지가 완전히 일치함을 확인했고, 비교 후 11.0.1을 복원했다. 관련 없는 린트 수정은 하지 않았다.
+- 백엔드 코드·DB·서버 실행 설정 변경 없음. 백엔드 테스트와 브라우저 기능 테스트는 미실행이다.
+- `npm run build -- --webpack`: 성공, Next.js TypeScript 검사 및 57개 페이지 생성 포함. 자동 생성된 next-env.d.ts는 원복했다. `git diff --check` 통과.
+
 ### 2026-11-09 포트폴리오 PR 대상 develop 전환 준비
 
 - 선행 조회 #87 병합 확인. 닫힌 미병합 #99를 develop 대상으로 복구하기 위해 origin/develop a04608f 병합, 진행 문서 양쪽 기록 보존.
@@ -1740,12 +1752,13 @@ erDiagram
 - 파일은 기본 ./uploads/portfolio-files 또는 PORTFOLIO_FILE_STORAGE 비공개 경로에 보존. 공개 IMAGE_STORAGE와 분리, 영속 볼륨/블루그린 저장소 공유는 배포 단계에서 별도 설정 필요. 미연결 파일 자동 정리·파일 삭제·악성 PDF 검사·AI 분석은 미구현 범위.
 - 주요 파일: PortfolioFileController, PortfolioFileService/Impl, PortfolioFileResponse, LocalPortfolioFileStorage, PortfolioFileAccessRepository, PortfolioMultipartConfiguration, 기존 SecurityConfig/포트폴리오 예외 처리·Mutation 소유권 검증, 프론트 api/files·portfolioFiles·기존 작성기·PortfolioFileAttachments·초안/첨부 매핑·테스트. 상세 docs/portfolio-files-api.md.
 - 이번 변경은 미커밋·미푸시. 이전 frontend/.vite 임시 캐시는 보존하고 작업에 포함하지 않는다.
+
 ### 2026-11-09 좋아요 조회를 최종 posts 구조에 맞춤
 - 공유 DB와 origin/feat/91-posts의 최신 계획을 대조해 게시글 posts, 원본 original_post_id, 공통 likes.post_id 계약 확인. posts는 0행이므로 VISIBLE/HIDDEN 값은 최신 계획을 근거로 유지한다.
 - LikedPostsQueryRepository와 PostgreSQL 통합 테스트를 posts 구조로 수정했다. 프로젝트 좋아요·잘못된 참조 제외, 본인 격리·공개·퍼가기 조건 및 API 응답은 유지한다.
 - 이번 DB 스키마·데이터 변경 없음.
 - 검증: 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 관련 32개 및 npm run build -- --webpack, git diff --check 통과. 공유 DB 실데이터 화면 검증은 미실행. 이번 수정 미커밋·미푸시.
--
+
 ### 2026-11-10 PR #96 최신 develop 충돌 해결
 
 - 사용자 요청으로 feat/51-project-reports에 origin/develop a04608f를 병합했다. 충돌은 docs/ai-progress.md, docs/project-backend-blueprint.md, frontend/app/projects/_components/api/ApiProjectDetail.tsx의 3곳이었다.
@@ -1788,7 +1801,6 @@ erDiagram
 - 중복 import 제거 후 남은 프론트 1건 실패는 채팅 PR의 테스트가 Mock OFF에도 `/projects/pocket` Mock 상세를 기대하던 과거 전제였다. DirectChatScreens.test.tsx를 숫자 ID의 실제 API 로딩/Mock 식별자 미전달 및 Mock slug 차단으로 맞췄으며 Mock ON 대화 시작 검사는 유지했다. API 기능·권한을 완화하거나 새 채팅 연동을 추가하지 않았다.
 - 최종 프론트 `npm test -- --maxWorkers=2`: 93개 파일 / 1,066개 모두 통과. `npm run build -- --webpack`: 성공(TypeScript 검사·63개 페이지 생성 포함). next-env.d.ts 생성 변경 복구, 충돌 마커 없음 및 git diff --check 통과. 브라우저 실제 계정 시연은 미실행이다.
 
-
 ## 2026-11-10 #102·#105 병합 후 #115 최신화
 
 - 최신 원격에서 #102 좋아요와 #105 포트폴리오 CRUD가 이미 develop에 병합된 것을 확인했다. 해당 브랜치를 중복 수정하지 않았다.
@@ -1796,7 +1808,6 @@ erDiagram
 - 최신 통합 후 frontend 전체 1,235개 및 npm run build, git diff --check 통과.
 - 원래 backend gradlew test는 RecommendationSummaryRequest.java의 public record RecommendationRequestSummary 파일명 불일치에서 compileJava 실패하며 다수 심볼 오류도 출력됨. 담당자 수정 대상이므로 AI/결제 소스를 변경하거나 테스트를 임의 제외하지 않았다. 이번 통합의 백엔드 테스트 성공으로 보고하지 않는다.
 - 업로드 구현 당시의 실제 PostgreSQL 50개/나머지 회귀/브라우저 검증은 앞 기록이며 최신 통합 상태의 실행 서버·DB·브라우저 재검증을 의미하지 않는다. 이번 공유 DB/파일 변경 없음.
-
 
 ## 2026-11-10 PR #106 순차 통합 준비 — 최신 develop 반영
 
@@ -1809,7 +1820,6 @@ erDiagram
 - backend 관련 검증: backend에서 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache` 성공(종료 0), 10개 클래스·113개 중112개 통과·1개 스킵·실패/오류0. 스킵은 별도 PostgreSQL 부분 인덱스 검증이다. 로그: `/tmp/devmozip-pr106-ai-test.log`. 가짜 Gemini/H2 테스트이며 실제 Gemini·공유 DB·브라우저 검증을 뜻하지 않는다.
 - 점검: 미해결 충돌 없음, `git diff --check origin/develop` 통과. 기존 develop 문서에 있던 끝 공백은 범위 밖이라 보존했다. 다음 작업은 검증된 추천 브랜치를 포트폴리오 분석 브랜치에 전달하고 해당 AI 테스트·프론트 빌드를 확인하는 것이다.
 
-
 ## 2026-11-10 PR #111 순차 통합 준비 — 추천 브랜치 전달
 
 - 기준: `feat/gemini-portfolio-analysis`의 원격 `19a3232`에 검증된 추천 병합 커밋 `984292e`를 병합했다. 최신 develop `d6a5720`과 앞 단계 DTO 이름 수정을 함께 포함한다. 텍스트 충돌은 없었다. PR #106은 푸시 후 GitHub `mergeable: true`를 확인했다.
@@ -1817,7 +1827,6 @@ erDiagram
 - frontend `npm test -- --maxWorkers=2`: 성공, 109개 파일·1,258개 테스트 통과. `npm run build`: 성공(종료 0). 로그: `/tmp/devmozip-pr111-frontend-test.log`, `/tmp/devmozip-pr111-build.log`. 생성된 `next-env.d.ts`만 복원했다. 백엔드 테스트 fixture 변경 후에는 프론트 코드 변화가 없어 프론트 검증을 반복하지 않았다.
 - backend: 앞 단계와 같은 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache`를 backend에서 실행했다. 최초137개 중 포트폴리오19개가 fixture 준비의 컬럼 수 불일치로 실패했고, 위 보정 후 재실행은137개 중136개 통과·1개 스킵·실패/오류0, 종료0이다. 중간 루트에서 wrapper 경로를 잘못 지정한 명령은 종료127이었고 backend에서 재실행했다. 로그: `/tmp/devmozip-pr111-ai-test.log`, `/tmp/devmozip-pr111-ai-test-final.log`. Docker 의존 전체 회귀 테스트는 앞 단계에서 확인한 응답 대기 문제로 다시 실행하지 않았다.
 - 점검: 미해결 충돌 없음, `git diff --check origin/develop` 통과. 실제 Gemini·공유 DB·브라우저 검증은 미실행이다. 다음 작업은 이 병합 결과를 사용량 PR에 전달하고 동일한 테스트 fixture 충돌을 보정하는 것이다. develop/main·기존 로컬 ai-usage의 미푸시 배포 커밋은 보존한다.
-
 
 ## 2026-11-10 PR #112 순차 통합 준비 — 포트폴리오 분석 브랜치 전달
 
