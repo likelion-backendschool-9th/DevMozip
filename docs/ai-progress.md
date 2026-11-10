@@ -2298,6 +2298,12 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 
 검증: npm run build 성공(TypeScript 포함). PortfolioCrud9개 테스트 통과, 아이콘이 링크가 아닌지 확인. git diff --check 통과. 브라우저 수동 확인 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
 
+## 2026-11-11 메인 추천 입력창 크기·정렬 조정
+
+사용자 요청으로 develop에서 frontend/app/_components/MatchingStart.module.css만 수정했다. 상단 소개 문구와 입력 카드의 세로 중심을 맞추고 상단 영역·카드 여백을 줄였다. 입력창 높이는 128px로 설정하고 세로 크기 조절은 유지했다. 하단 안내의 150px 너비 제한을 해제해 추천 버튼과 균형 있게 배치하고 모바일에서는 기존 한 열 배치를 유지한다. 문구·입력 저장·로그인 이동·추천 동작과 다른 영역은 변경하지 않았다.
+
+검증: frontend에서 npm run build 최종 성공(TypeScript 포함). 첫 빌드는 이전 브랜치의 .next/dev/types가 현재 없는 관리자 API를 참조해 실패했으며 해당 생성 캐시를 /tmp에 보관한 뒤 재실행했다. npm test -- lib/matching/loginPrompt.test.ts lib/matching/homeService.test.ts lib/state/homeStore.test.tsx: 3개 파일/35개 테스트 통과. git diff --check 통과. 브라우저 시각 검증은 미실행. 백엔드 변경 없음. 커밋·푸시 없음. 후속 단계는 시작하지 않았다.
+
 ## 2026-11-11 업로드 이미지·파일 저장 경로 통합
 
 사용자 요청으로 프로필·배너 이미지를 게시글 이미지와 같은 public/images(IMAGE_STORAGE)에 저장하고 nginx가 /images/로 제공하게 했다. 포트폴리오 파일은 public/files(FILE_STORAGE)에 저장하고, 백엔드가 기존 정책대로 권한을 확인한 뒤 nginx가 내부 전용 경로(/internal-files/)에서 X-Accel-Redirect로 보낸다(FILE_ACCEL_REDIRECT=true, 운영). nginx 없이 실행하면 지금처럼 백엔드가 파일 내용을 응답한다. 주소 /api/files/{id}는 그대로다. 파일 이름은 profile_·banner_·portfolio_{회원 id}_{yyyyMMddHHmmss}.{확장자}이고, 같은 회원이 같은 초에 올려 겹치면 다음 초 이름을 쓴다(사용자 결정). 정지 회원의 프로필 이미지도 주소를 알면 보이는 공개 범위(게시글 이미지와 같음)는 사용자가 확인했다. GET /api/v1/profile-images/{filename}, MemberRepository.existsPublicImage, PROFILE_IMAGE_DIRECTORY·PROFILE_IMAGE_PUBLIC_BASE_URL·PORTFOLIO_FILE_STORAGE 설정을 없앴다. 기존 파일·DB 값은 일회성 scripts/migrate-upload-storage.py로 옮긴다. 환경별 설정과 이관 절차: docs/portfolio-files-api.md "저장 위치 변경과 기존 파일 이관", 프로필 쪽 변경: docs/profile-local-images.md "저장 위치 변경".
@@ -2314,3 +2320,9 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 - scripts/test_blue_green.py 12개 통과, bash -n deploy/blue-green.sh, git diff --check 통과.
 
 미완료: 운영 배포와 운영 이관, 공유 개발 DB 이관은 실행하지 않았다(실행 전 담당자 확인). 브라우저 화면 수동 확인은 하지 않았다. 로컬 HTTPS nginx를 쓰는 팀원은 Git 제외 compose.yaml에 public/files 연결과 FILE_ACCEL_REDIRECT를 각자 추가한다(docs/portfolio-files-api.md "환경별 설정"). 위의 기존 실패 11개는 이번 범위 밖이다. 커밋·푸시 없음.
+
+## 2026-11-11 PR #151 충돌 해결
+
+fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress.md 끝에 두 브랜치가 각각 기록을 덧붙인 부분만 충돌하여, 먼저 병합된 메인 추천 입력창 기록 뒤에 업로드 경로 통합 기록을 두는 방식으로 둘 다 보존했다. develop의 MatchingStart.module.css·portfolioProxy.ts(403 안내 문구) 변경은 자동 병합되었고, 업로드 경로 변경과 겹치는 코드는 없다(파일 BFF는 portfolioError만 쓰며 서명은 그대로다).
+
+검증: 병합 결과를 복사본에서 npm run build 성공, npm test 전체 172개 파일/1,820개 테스트 통과. develop에서 백엔드 변경이 들어오지 않아 백엔드 테스트는 다시 실행하지 않았다. 충돌 표시 없음, git diff --check 통과.
