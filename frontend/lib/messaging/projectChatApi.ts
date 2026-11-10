@@ -46,6 +46,7 @@ function parseMember(value: unknown): ProjectChatMember {
     if (member.role !== null && member.role !== 'HOST' && member.role !== 'PARTICIPANT') throw new Error(RESPONSE_ERROR);
     return {
         id: member.id, me: member.me, tag: optionalTag(member.tag), nickname: optionalText(member.nickname),
+        ...(member.projectMemberId === undefined ? {} : {projectMemberId: nullableIdentifier(member.projectMemberId)}),
         profileImage: optionalText(member.profileImage), role: member.role as ProjectChatMember['role'],
         lastReadMessageId: nullableIdentifier(member.lastReadMessageId), joinedAt: parseTimestamp(member.joinedAt),
         leftAt: member.leftAt === null ? null : parseTimestamp(member.leftAt),

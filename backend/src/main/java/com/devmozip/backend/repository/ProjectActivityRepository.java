@@ -18,9 +18,9 @@ public class ProjectActivityRepository {
 		from += " AND (p.is_public=true OR EXISTS (SELECT 1 FROM project_members v WHERE v.project_id=p.id AND v.user_id=:viewer AND v.status='ACTIVE'))";
 		long total = jdbc.queryForObject("SELECT count(*)" + from, params, Long.class);
 		params.addValue("limit", size).addValue("offset", (long) page * size);
-		var items = jdbc.query("SELECT p.id,p.title,p.status,p.development_start,p.development_end,p.completed_at,m.role,m.job_role,m.status AS membership_status"
+		var items = jdbc.query("SELECT p.id,p.title,p.image_url,p.status,p.development_start,p.development_end,p.completed_at,m.role,m.job_role,m.status AS membership_status"
 			+ from + " ORDER BY p.development_start DESC,p.id DESC LIMIT :limit OFFSET :offset", params,
-			(rs, row) -> new ProjectActivityResponse(rs.getLong("id"), rs.getString("title"), ProjectStatus.valueOf(rs.getString("status")),
+			(rs, row) -> new ProjectActivityResponse(rs.getLong("id"), rs.getString("title"), rs.getString("image_url"), ProjectStatus.valueOf(rs.getString("status")),
 				rs.getObject("development_start", java.time.LocalDate.class), rs.getObject("development_end", java.time.LocalDate.class),
 				rs.getObject("completed_at", java.time.LocalDateTime.class), rs.getString("role"), rs.getString("job_role"), rs.getString("membership_status")));
 		return new ProjectActivityPageResponse(items, total, page, size, (total + size - 1) / size);

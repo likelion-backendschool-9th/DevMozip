@@ -4,13 +4,14 @@ const mock = vi.hoisted(() => ({ resource: vi.fn(), auth: vi.fn() }));
 vi.mock('@/lib/projects/useProjectApi', () => ({ useProjectResource: mock.resource }));
 vi.mock('@/lib/state/authStore', () => ({ useAuth: mock.auth }));
 import { ApiActivityTab } from '@/app/(user)/users/[userId]/_components/ApiActivityTab';
-const activity = { projectId: 41, title: '프로젝트 활동 연결', status: 'IN_PROGRESS', developmentStart: '2026-11-01', developmentEnd: '2026-12-01', completedAt: null, role: 'PARTICIPANT', jobRole: 'BACKEND', membershipStatus: 'LEFT' };
+const activity = { projectId: 41, title: '프로젝트 활동 연결', imageUrl: 'https://example.test/project-cover.png', status: 'IN_PROGRESS', developmentStart: '2026-11-01', developmentEnd: '2026-12-01', completedAt: null, role: 'PARTICIPANT', jobRole: 'BACKEND', membershipStatus: 'LEFT' };
 beforeEach(() => { mock.auth.mockReturnValue({ user: { email: 'viewer@example.test' } }); mock.resource.mockReturnValue({ data: null, error: null, reload: vi.fn() }); });
 describe('실제 프로필 활동 탭', () => {
     it('프로젝트 제목 링크·직군·기간·참여 종료를 표시한다', () => {
         mock.resource.mockReturnValue({ data: { items: [activity], totalPages: 1 }, error: null });
         const html = renderToStaticMarkup(<ApiActivityTab slug="sample" own={false} />);
         expect(html).toContain('href="/projects/41?returnTo=%2Fusers%2Fsample%3Ftab%3Dactivity"');
+        expect(html).toContain('src="https://example.test/project-cover.png"');
         expect(html).toContain('activity-mark'); expect(html).not.toContain('apiMark'); expect(html).toContain('프로젝트 활동 연결');
         expect(html).toContain('백엔드'); expect(html).toContain('참여 종료'); expect(html).toContain('2026-12-01');
         expect(html).not.toContain('내 프로젝트 관리');
@@ -32,4 +33,10 @@ describe('실제 프로필 활동 탭', () => {
         expect(html).toContain('서버 연결 실패'); expect(html).toContain('다시 시도');
         expect(html).not.toContain('참여 기록이 없습니다');
     });
+});
+
+it('강퇴된 이력은 삭제하지 않고 강퇴됨으로 표시한다',()=>{
+ mock.resource.mockReturnValue({data:{items:[{...activity,membershipStatus:'KICKED'}],totalPages:1},error:null});
+ const html=renderToStaticMarkup(<ApiActivityTab slug="sample" own={false}/>);
+ expect(html).toContain('강퇴됨');expect(html).toContain('프로젝트 활동 연결');
 });

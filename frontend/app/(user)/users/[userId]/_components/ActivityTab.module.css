@@ -19,3 +19,5 @@
 .pagination{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:1.5rem}
 
 .heading{display:flex;align-items:center;justify-content:space-between;gap:24px}.heading>div{min-width:0}.manageLink{flex-shrink:0;white-space:nowrap}
+
+.thumbnail{overflow:hidden}.thumbnail img{display:block;width:100%;height:100%;object-fit:cover}

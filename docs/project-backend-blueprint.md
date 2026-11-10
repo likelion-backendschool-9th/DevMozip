@@ -151,7 +151,7 @@
 | user_id | BIGINT | 참여자 users.id 참조 |
 | role | VARCHAR(20) | HOST·PARTICIPANT, 프로젝트 내 권한 |
 | job_role | VARCHAR(50) / NULL | 담당 모집 직군 코드. 추가 필드, 주최자는 미지정 가능 |
-| status | VARCHAR(20) | ACTIVE·LEFT, 참여·탈퇴 상태 |
+| status | VARCHAR(20) | ACTIVE·LEFT·KICKED, 참여·탈퇴·강퇴 상태 |
 | joined_at | DATETIME | 참여 시각 |
 | left_at | DATETIME / NULL | 참여 종료 시각 |
 | end_requested_at | DATETIME / NULL | 종료 버튼을 누른 시각. NULL은 종료 미동의 |
@@ -184,7 +184,7 @@
 
 원본 agree·voted_at의 NOT NULL을 NULL 허용으로 바꾸는 안이다. 시작 시 대상자를 제외한 투표권자 행을 만들고 그 개수를 eligible_voter_count와 함께 저장한다. 투표+투표자는 유일하며, 미투표 행에 한 번만 기록한다. 고정 인원의 절반을 초과하는 찬성이면 가결한다. 두 인원 표현은 시작 트랜잭션에서 일치시킨다.
 
-가결은 현재 정책상 채팅 접근 제한이며 project_members 참여 이력은 유지한다. 실제 퇴장과 재접근 제한은 기존 chat_members 및 채팅 기능과 결합한다. 종료 투표 목록은 votes.status로 조회한다.
+가결 시 project_members.status=KICKED와 left_at을 기록하고 현재 프로젝트 참여 및 채팅 접근에서 제외한다. 행과 지원·활동 이력은 보존한다. 주최자는 대상에서 제외하며 투표권은 동일한 1표다. API·72시간 임시 정책·알림 연동 경계는 [강퇴 투표 계약](project-member-removal.md)을 따른다. 종료 투표 목록은 votes.status로 조회한다.
 
 ### reviews — 팀원 리뷰·임시 링크
 
@@ -498,7 +498,7 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 - `GET /api/v1/users/me/projects`: 인증된 본인의 주최·참여 이력. 사용자 ID를 요청으로 받지 않는다.
 - `GET /api/v1/users/{slug}/projects`: 해당 활성 회원의 주최·참여 이력. `slug`는 프로필 @태그다.
 - `page`는 0부터, `size`는 1~50(기본 10). 개발 시작일 내림차순, 프로젝트 ID 내림차순으로 정렬한다.
-- 응답은 프로젝트 ID·제목·진행 상태·예정 개발 기간·실제 종료 시각·대상자의 HOST/PARTICIPANT·담당 직군·ACTIVE/LEFT와 페이지 정보다.
+- 응답은 프로젝트 ID·제목·대표 이미지 URL(imageUrl)·진행 상태·예정 개발 기간·실제 종료 시각·대상자의 HOST/PARTICIPANT·담당 직군·ACTIVE/LEFT와 페이지 정보다.
 - 승인 전 지원서는 포함하지 않는다. LEFT는 기존 참여 이력으로 남기고 화면에 ‘참여 종료’를 별도로 표시한다. 논리 삭제된 프로젝트는 제외한다.
 - 공개 프로젝트는 누구나 볼 수 있다. 비공개는 조회자가 해당 프로젝트의 현재 ACTIVE 팀원일 때만 목록과 개수에 포함한다. 본인이라도 이미 탈퇴한 비공개 프로젝트는 노출하지 않는다.
 - 현재 Member 엔티티에는 프로필 전체 공개 범위 필드가 없어 해당 권한을 새로 만들지 않는다. 대상 회원 활성 상태는 기존 공개 프로필 조회 계약을 따른다.

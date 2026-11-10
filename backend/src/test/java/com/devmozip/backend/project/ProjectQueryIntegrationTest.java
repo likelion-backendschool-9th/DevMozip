@@ -79,6 +79,7 @@ class ProjectQueryIntegrationTest {
 		mvc.perform(get("/api/v1/users/activity-host/projects"))
 			.andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2))
 			.andExpect(jsonPath("$.items[0].projectId").value(second))
+			.andExpect(jsonPath("$.items[0].imageUrl").value("https://example.com/a.png"))
 			.andExpect(jsonPath("$.items[0].role").value("PARTICIPANT"))
 			.andExpect(jsonPath("$.items[0].membershipStatus").value("LEFT"))
 			.andExpect(jsonPath("$.items[1].role").value("HOST"));

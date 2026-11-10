@@ -9,7 +9,7 @@ export interface DirectChatDetail {id:number;peer:DirectChatPeer;canSend:boolean
 export type ProjectChatStatus='RECRUITING'|'RECRUITMENT_COMPLETED'|'IN_PROGRESS'|'COMPLETED';
 export interface ProjectChatSummary {id:number;title:string;status:ProjectChatStatus;memberCount:number;unreadCount:number}
 export interface ProjectChatList {items:ProjectChatSummary[];nextCursor:number|null}
-export interface ProjectChatMember {id:number;me:boolean;tag:string|null;nickname:string|null;profileImage:string|null;role:'HOST'|'PARTICIPANT'|null;lastReadMessageId:number|null;joinedAt:string;leftAt:string|null}
+export interface ProjectChatMember {id:number;projectMemberId?:number|null;me:boolean;tag:string|null;nickname:string|null;profileImage:string|null;role:'HOST'|'PARTICIPANT'|null;lastReadMessageId:number|null;joinedAt:string;leftAt:string|null}
 export interface ProjectChatMessage {id:number;body:string;mine:boolean;sender:{memberId:number;tag:string|null;nickname:string|null};createdAt:string}
 export interface ProjectChatDetail {projectId:number;title:string;status:ProjectChatStatus;canSend:boolean;isHost:boolean;members:ProjectChatMember[];messages:ProjectChatMessage[];nextBefore:number|null}
 export interface ChatMessage {id:string;senderId:string;body:string;kind:'text'|'proposal'|'system';proposalTitle?:string;createdAt:string;readBy:string[]}

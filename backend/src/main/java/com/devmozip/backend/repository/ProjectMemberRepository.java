@@ -6,6 +6,7 @@ import com.devmozip.backend.entity.ProjectMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Long> {
+	Optional<ProjectMember> findByProjectIdAndUserId(long projectId,long userId);
 	boolean existsByProjectIdAndUserId(long projectId,long userId);
 	Optional<ProjectMember> findByProjectIdAndUserIdAndStatus(long projectId, long userId, ProjectMember.Status status);
 	long countByProjectIdAndStatusAndEndRequestedAtIsNotNull(long projectId, ProjectMember.Status status);

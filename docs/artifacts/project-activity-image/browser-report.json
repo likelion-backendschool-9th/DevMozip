@@ -1,0 +1,33 @@
+{
+  "viewport": 1440,
+  "usesRealDatabase": true,
+  "images": [
+    {
+      "storedUrl": "http://localhost:3000/portfolio-cover.svg",
+      "width": 58,
+      "height": 58,
+      "loaded": true
+    },
+    {
+      "storedUrl": "http://localhost:3000/portfolio-cover.svg",
+      "width": 58,
+      "height": 58,
+      "loaded": true
+    },
+    {
+      "storedUrl": "http://localhost:3000/portfolio-cover.svg",
+      "width": 58,
+      "height": 58,
+      "loaded": true
+    },
+    {
+      "storedUrl": "http://localhost:3000/portfolio-cover.svg",
+      "width": 58,
+      "height": 58,
+      "loaded": true
+    }
+  ],
+  "failureFallback": true,
+  "pageErrors": [],
+  "overflow": false
+}

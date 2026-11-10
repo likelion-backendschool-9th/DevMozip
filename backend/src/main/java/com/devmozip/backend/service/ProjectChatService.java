@@ -142,6 +142,7 @@ public class ProjectChatService {
 			.collect(Collectors.toMap(ChatMember::getId, Function.identity()));
 		Map<Long, String> roles = entered.projectMembers().stream()
 			.collect(Collectors.toMap(ProjectMember::getUserId, member -> member.getRole().name()));
+		Map<Long, Long> projectMemberIds = entered.projectMembers().stream().collect(Collectors.toMap(ProjectMember::getUserId, ProjectMember::getId));
 		Map<Long, Long> readPositions = new HashMap<>();
 		messages.findReadPositions(roomId).forEach(position ->
 			readPositions.put(position.getChatMemberId(), position.getLastReadMessageId()));
@@ -149,7 +150,7 @@ public class ProjectChatService {
 		long mineId = entered.mine().getId();
 		List<ProjectChatMemberResponse> memberResponses = entered.chatMembers().stream()
 			.map(chatMember -> ProjectChatMemberResponse.from(chatMember, chatMember.getId() == mineId,
-				roles.get(chatMember.getMember().getId()), readPositions.get(chatMember.getId())))
+				roles.get(chatMember.getMember().getId()), readPositions.get(chatMember.getId()), projectMemberIds.get(chatMember.getMember().getId())))
 			.toList();
 		List<ProjectChatMessageResponse> messageResponses = page.messages().stream().map(message -> {
 			ChatMember sender = senders.get(message.getChatMember().getId());

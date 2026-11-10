@@ -1963,3 +1963,40 @@ erDiagram
 ## 2026-11-10 프로젝트 활동/관리 화면 PR 준비
 
 사용자가 커밋·푸시·PR 생성을 요청해 develop 24b524e에서 feat/project-profile-activity 브랜치를 분리했다. 앞선 활동 이력 API·화면·단일 카드 진입·주최자 자동 관리·복귀 경로·헤더/활동 관리 버튼 위치 변경을 함께 반영한다. 원격 develop과 기준 커밋이 동일한 것을 확인했다. PR 준비의 최종 프론트 전체 테스트는 123개 파일·1,397개 통과. 마지막 버튼 위치 변경 단계에서 npm run build/TypeScript와 관련 32개 테스트도 통과했다. 백엔드 전체 테스트의 카카오/결제 로그 실패 2건과 프로젝트 129개 통과·11개 스킵, 실제 DB·브라우저 검증 한계를 PR에 명시한다. 환경설정·YAML·DB 변경을 추가하지 않았으며 다른 worktree의 변경은 포함하지 않는다. 헤더 배치 보고서는 마지막 실측 144×52px로 갱신했다.
+
+
+## 2026-11-10 활동 카드의 프로젝트 대표 이미지 연결
+
+- 사용자 요청: 활동 왼쪽 글자 마크 대신 저장된 프로젝트 대표 이미지 표시. ProjectActivityResponse에 imageUrl, ProjectActivityRepository에 기존 p.image_url 반환을 추가하고 frontend projectActivity 타입·ApiActivityTab·ActivityProjectCard·ActivityTab.module.css에 연결했다. 기존 58×58px 영역/둥근 모서리 유지, object-fit:cover, 이미지 없음/로드 실패 시 기존 글자/색상 마크 복원.
+- DB 스키마·데이터를 변경하지 않는다. Mock 모델에 이미지가 없으면 마크 유지. 리뷰 연결 롤백은 유지하며 기존 PR #124에 자동 푸시하지 않는다.
+- frontend NODE_ENV=production npm run build/TypeScript 성공, ApiActivityTab·ApiProfilePage·ProfilePage 32개 통과. backend ./gradlew test --tests '*ProjectQueryIntegrationTest' --no-daemon --max-workers=1 (/tmp 별도 빌드/캐시)로 격리 PostgreSQL 12개 통과·스킵/실패 없음. 기존 활동 테스트에 저장된 imageUrl 응답 확인을 추가했다. 전체 백엔드는 변경 범위에 맞춰 재실행하지 않았다.
+- Docker 백엔드 재시작 후 실제 DB/API 이미지 4개와 화면 src 일치·58×58px·로드 성공, 1440px Chromium에서 이미지 요청 실패 주입 시 마크 복원·pageerror 0·가로 넘침 없음. 검증한 4개 프로젝트의 저장 URL은 모두 기존 기본 이미지였고 임의로 교체하지 않았다. 보고서 docs/artifacts/project-activity-image/browser-report.json.
+- 청사진·project-profile-activity.md·project-navigation-layout.md를 현재 이미지 정책으로 갱신. git diff --check 통과, next-env.d.ts 생성 차이만 기존 dev 경로 복구. 커밋·푸시·PR 생성 없음.
+
+## 2026-11-10 프로젝트 #49 — 채팅 강퇴 투표 연결
+
+사용자 요청에 따라 프로젝트 도메인만 변경한다. 주최자는 강퇴 대상에서 제외하고, 가결 시 채팅뿐 아니라 현재 프로젝트 팀원에서도 제외하되 KICKED 상태·처리 시각·승인 지원서·활동·기존 메시지를 보존한다. AI·회원·인증·결제 설정과 다른 PR의 프로필 리뷰 연결은 변경하지 않는다. 앞선 활동 대표 이미지 미커밋 변경도 보존한다.
+
+### 변경 파일
+
+- 백엔드 신규: MemberRemovalVoteController/Service, MemberRemovalVote/Ballot 엔티티·Repository, CreateMemberRemovalVoteRequest/CastMemberRemovalBallotRequest/MemberRemovalVoteResponse, ProjectMembersChangedFrame, ProjectMemberRemovalResolved, ProjectMemberRemovalIntegrationTest.
+- 백엔드 수정: ProjectMember, ProjectMemberRepository, ProjectChatService/ProjectChatMemberResponse, ProjectApplicationController/Service/Impl/Response. 프로젝트 상태·채팅 멤버 변경과 같은 프로젝트 행 잠금을 사용한다.
+- 프론트: 프로젝트 members BFF 및 kick-votes/ballots BFF, ApiKickVotePanel/ServerProjectChat 및 멤버 버튼 CSS, 기존 Mock KickVotePanel/채팅 페이지, messengerSocket/parser 및 projectChatStore, 프로젝트 selectors/서비스/Mock 정책, ApiProjectApplications, ActivityTab/ApiActivityTab 및 관련 타입·테스트.
+- 문서: project-member-removal.md, project-backend-blueprint.md, messenger-plan.md, 이 진행 기록. 브라우저 근거: docs/artifacts/project-member-removal.
+
+### 이번 실행 결과
+
+- 백엔드 compileJava 성공. Docker 소유 build 디렉터리 삭제 실패 후 /tmp 전용 build·Gradle project cache로 분리해 검증했다.
+- 격리 PostgreSQL 강퇴 통합 최종 8개 통과(스킵/실패/오류 0): 투표권 스냅샷·주최자/본인 대상 제한·중복·과반수·KICKED 이력·메시지 보존·접근 차단·기한·명단 변경·동시 요청·결과 이벤트·짝수 정족수·다른 프로젝트/비로그인·종료 동의 재계산 검증. 명령: `./gradlew --project-cache-dir /tmp/devmozip-kick-gradle-cache -I /tmp/devmozip-kick-build.gradle test --tests '*ProjectMemberRemovalIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m`.
+- 프론트 최종 전체 `npm test -- --maxWorkers=1`: 124개 파일 1,412개 통과. 강퇴 실시간 접근 차단·활동 이력 테스트를 포함한다. 앞선 전체 1,410개 및 관련 67개 실행과 중복 합산하지 않는다.
+- 프론트 `NODE_ENV=production npm run build`: 성공. TypeScript 검사·정적 페이지 77개 생성 완료, 신규 강퇴 BFF 라우트 포함.
+- Chromium 1440px 응답 대역: 초기 투표 숨김, 주최자 대상 버튼 없음, 멤버→사유→생성, 채팅 message-history 내부 표시, 찬성 후 중복 버튼 비활성 확인. 가로 넘침 없음, pageerror 없음. 실제 로그인/공유 DB 쓰기 시연을 뜻하지 않는다.
+- 환경 재시작 전 백엔드 컨테이너의 PostgreSQL ddl-auto=validate 기동 성공과 /actuator/health 200을 확인했다. 이후 환경 재시작으로 해당 서버는 중지되었다. 현재 서버 실행 중을 뜻하지 않는다. 공유 DB 테이블·샘플 데이터를 변경하지 않았다.
+
+### 남은 연동
+
+실시간 결과 신호·토스트와 ProjectMemberRemovalResolved 계약을 제공한다. 전역 알림함 DB 저장/발송은 알림 담당 소비자 연결이 남아 있다. 72시간·기권·명단 변경 취소는 기존 Mock의 임시 정책이다. 실제 전역 알림 전달을 완료했다고 보고하지 않는다. 커밋·푸시·PR 수정은 요청받지 않아 하지 않는다. 다음 이슈를 자동 시작하지 않는다.
+
+- 전체 백엔드 `./gradlew test`도 실행했으나 KakaoClientTest:153 및 PortOneClientTest:105의 기존 로그 검증 실패가 나타났다. MessengerWebSocketTest의 종료 대기 중 환경 재시작으로 실행 세션과 /tmp 산출물이 소실되어 최종 전체 결과는 확정하지 않는다. 신규 강퇴 8개는 재실행하여 통과를 확인했다. 포트를 점유한 다른 프로젝트 서버는 중지하지 않고 프론트 검증은 임시 컨테이너에서 수행했다.
+
+- 환경 재시작 후 최종 프로젝트 관련 회귀 `./gradlew test --tests '*Project*'` (/tmp 별도 build/cache, max-workers=1): 26개 클래스, 187개 중 176개 통과·11개 스킵·실패/오류 0, BUILD SUCCESSFUL. 강퇴 8개를 포함하므로 별도 합산하지 않는다. 최종 프론트 전체 1,412개와 빌드도 재실행 성공. 집계 근거 docs/artifacts/project-member-removal/verification.json.

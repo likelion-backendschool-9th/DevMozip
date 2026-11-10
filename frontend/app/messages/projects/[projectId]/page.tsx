@@ -117,7 +117,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                                             <small>{id === project?.hostId ? '주최자' : '팀원'}</small>
                                         </span>
                                     </Link>
-                                    {id !== user?.id && (
+                                    {id !== user?.id && id !== project?.hostId && (
                                         <button
                                             className={[memberStyles.scope, 'kick-request-button'].join(' ')}
                                             disabled={
