@@ -40,3 +40,9 @@ DB 엔티티·DDL·데이터는 변경하지 않는다. Member에 프로필 전�
 ## 활동 관리 버튼 위치 변경 (2026-11-10)
 
 프로젝트 수가 늘어도 목록 아래로 내려가지 않도록 ‘내 프로젝트 관리’를 활동 제목 오른쪽 상단으로 이동했다. 실제 ApiActivityTab과 Mock ActivityTab에 동일하게 적용하고 본인에게만 표시하는 조건은 유지한다. ActivityTab.module.css에 제목/버튼 정렬을 추가하고 사용하지 않는 footer 스타일은 제거했다. frontend 빌드/TypeScript 및 프로필 관련 3개 파일·32개 테스트 통과. 이번 단순 배치 변경의 별도 브라우저 검증은 실행하지 않았다. 백엔드·DB 변경 없음.
+
+## 프로젝트 대표 이미지 표시 (2026-11-10)
+
+활동 왼쪽 마크에 projects.image_url을 표시한다. 기존 활동 DTO/조회에 imageUrl만 추가하며 DB 스키마나 이미지는 변경하지 않는다. ActivityProjectCard는 이미지가 있으면 58×58px 영역에 object-fit:cover로 표시하고, 없거나 로드 실패 시 기존 마크를 복원한다. Mock에 대표 이미지가 없는 경우 마크를 유지한다.
+
+프론트 빌드/TypeScript 및 프로필 관련 32개 테스트, 격리 PostgreSQL ProjectQueryIntegrationTest 12개 모두 통과. 실제 공개 프로필에서 API 저장 URL과 화면 이미지 4개가 일치하고 58×58px·정상 로드·실패 시 마크 복원·pageerror 0·가로 넘침 없음 확인. 검증한 4개 공고는 현재 DB에 같은 기본 이미지 URL이 저장돼 있어 같은 이미지가 표시됐다. [결과](artifacts/project-activity-image/browser-report.json). 전체 백엔드는 재실행하지 않았다. 커밋·푸시 없음.

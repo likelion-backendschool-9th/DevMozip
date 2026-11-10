@@ -260,3 +260,9 @@ describe('세션 확인', () => {
         expect(fetchMock).toHaveBeenCalledWith('/api/auth/session', { cache: 'no-store' });
     });
 });
+
+it('프로젝트 강퇴 신호는 프로젝트 방과 유효한 투표 정보에만 허용한다',()=>{
+ const frame={type:'project.members.changed',roomType:'project',roomId:7,voteId:8,status:'PASSED'};
+ expect(parseMessengerFrame(JSON.stringify(frame))).toEqual(frame);
+ for(const invalid of [{...frame,roomType:'direct'},{...frame,voteId:0},{...frame,status:'UNKNOWN'}])expect(parseMessengerFrame(JSON.stringify(invalid))).toBeNull();
+});

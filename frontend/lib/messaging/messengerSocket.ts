@@ -4,6 +4,7 @@ export type MessengerRoomType = 'direct' | 'project';
 export type MessengerSignal =
     | { type: 'message.created'; roomType: MessengerRoomType; roomId: number; messageId: number }
     | { type: 'message.read'; roomType: MessengerRoomType; roomId: number; lastReadMessageId: number; memberTag: string | null }
+    | { type: 'project.members.changed'; roomType: 'project'; roomId: number; voteId: number; status: string }
     | { type: 'typing'; roomType: MessengerRoomType; roomId: number; nickname: string | null };
 
 export type SessionState = 'active' | 'expired' | 'unknown';
@@ -47,6 +48,7 @@ export function parseMessengerFrame(data: unknown): MessengerSignal | 'ping' | n
     if (value.type === 'message.read' && identifier(value.lastReadMessageId)) {
         return { type: 'message.read', ...room, lastReadMessageId: value.lastReadMessageId, memberTag: optionalText(value.memberTag) };
     }
+    if (value.type === 'project.members.changed' && value.roomType === 'project' && identifier(value.voteId) && typeof value.status === 'string' && ['ACTIVE','PASSED','REJECTED','EXPIRED','CANCELLED'].includes(value.status)) return {type: 'project.members.changed', roomType: 'project', roomId: value.roomId, voteId: value.voteId, status: value.status};
     if (value.type === 'typing') return { type: 'typing', ...room, nickname: optionalText(value.nickname) };
     return null;
 }
