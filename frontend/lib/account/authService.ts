@@ -12,7 +12,7 @@ export function validateSignup(input:SignupInput):SignupErrors{
  if(!validNickname(input.nickname))errors.nickname='한글·영문·숫자·공백·밑줄로 2~20자를 입력해 주세요.';
  if(!input.job)errors.job='개발 직군을 선택해 주세요.';
  if(!careerOptions.includes(input.career))errors.career='경력을 선택해 주세요.';
- if(input.stacks.length===0)errors.stacks='기술 스택을 하나 이상 선택해 주세요.';
+ if(input.skills.length===0)errors.skills='기술 스택을 하나 이상 선택해 주세요.';
  if(input.interests.length===0)errors.interests='관심 분야를 하나 이상 선택해 주세요.';
  return errors;
 }

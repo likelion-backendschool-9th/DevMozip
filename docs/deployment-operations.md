@@ -7,6 +7,7 @@
 - 서버: team2@cloud.newlecture.com, Docker 프로젝트 이름 devmozip.
 - 정식 Git 작업 폴더: /home/team2/DevMozip, main 브랜치.
 - 공개 HTTPS → 호스트 nginx → 127.0.0.1:3002 → 팀 nginx → 활성 색 frontend/backend → 공유 PostgreSQL·Redis.
+- 메신저 WebSocket은 `/ws/messages` 경로만 호스트 nginx와 팀 nginx를 거쳐 활성 색의 backend로 간다. 팀 nginx의 `backend_upstream`은 블루그린 스크립트가 `nginx/upstream/active.conf`에 함께 쓴다. `nginx/server.conf`가 바뀌면 스크립트가 nginx를 다시 시작하므로 그때 전체 트래픽이 잠깐 끊긴다. 배포 끝의 WebSocket 확인이 실패하면 배포는 유지하고 종료 코드 3으로 끝난다([메신저 API](messenger-api.md) 7번).
 - linker는 다른 조 서비스이므로 변경·정지·정리하지 않는다.
 - 인증서 발급과 Certbot 자동 갱신 예약을 확인했다. 최초 인증서 만료일은 2027-02-01이다.
 - 최초 정식 배포 커밋은 080c7d9(PR #23 병합), 이미지는 ghcr.io/likelion-backendschool-9th/devmozip-backend:sha-080c7d9 및 devmozip-frontend:sha-080c7d9였다. 최초 활성 색은 green이다. 이후 배포마다 색과 sha 태그는 바뀐다.
@@ -50,7 +51,7 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 
 로그아웃은 헤더 프로필 옆의 로그아웃 버튼으로 실행한다. 다른 계정으로 바꾸려면 로그아웃 후 다시 로그인한다. 로그인 상태는 운영 쿠키 정책(액세스·리프레시 HttpOnly 쿠키)을 따른다.
 
-업무 데이터는 계속 Mock이다. JWT+BFF 인증과 회원가입은 users 테이블을 쓰지만 실제 프로젝트·SNS·메시지·결제 API는 구현하지 않았다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
+업무 데이터는 계속 Mock이다. JWT+BFF 인증과 회원가입은 users 테이블을 쓰지만 실제 프로젝트·SNS·결제 API는 구현하지 않았다. 메신저는 Mock 토글을 끈 회원에게 `chat_rooms`·`chat_members`·`messages`·`reports` 테이블과 Redis Pub/Sub으로 동작한다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
 
 .env, 기존 PostgreSQL 볼륨, JWT_SECRET과 DB 비밀번호를 임의로 초기화하지 않는다. DB_PASSWORD 환경변수만 바꿔도 기존 DB 사용자의 비밀번호가 변경되는 것은 아니다. 비밀값 교체는 영향 범위를 확인하고 진행한다.
 

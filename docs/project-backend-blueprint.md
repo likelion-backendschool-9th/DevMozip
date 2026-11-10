@@ -303,7 +303,7 @@ erDiagram
 | 7.15 | 프로젝트 신고 | /projects/{id} | POST /api/v1/projects/{id}/reports |
 | 7.16 | 북마크 추가·해제 | /projects/{id}, /explore?type=projects | POST /api/v1/projects/{id}/bookmark, DELETE /api/v1/projects/{id}/bookmark |
 | 7.17 | 외부 공유 | /projects/{id} | URL 복사, 별도 API 없음 |
-| 7.18 | 프로젝트 단톡방 | /messages/projects/{id} | GET /api/v1/messages/projects/{id}, POST /api/v1/messages/projects/{id} |
+| 7.18~7.23 | 프로젝트 단톡방(현재 WBS 7.19 생성·관리 등) | /messages/projects/{id} | GET·POST /api/v1/messages/projects/{id}, POST /api/v1/messages/projects/{id}/delete, PATCH /api/v1/messages/projects/{id}/read, GET /api/v1/messages/projects/unread-count, 목록은 GET /api/v1/messages/chats?type=project. 계약은 [메신저 API](messenger-api.md) |
 
 ### 7.4 프로젝트 수정 상세 계획
 
@@ -370,7 +370,7 @@ PUT 요청은 수정 가능한 공고 필드 전체를 받는다. 기술·분야
 - **7.13:** WBS대로 PATCH /api/v1/projects/{id}/update를 사용한다. 일반 공고 전체 수정은 7.4 PUT으로, PATCH는 상태·기간 변경과 팀원의 종료 요청을 별도 DTO/명령으로 구분해 처리한다. 상태·기간 동시 요청은 검증 후 한 트랜잭션으로 반영한다.
 - **7.14:** 기한이 지나면 신규 지원을 차단하고 모집 마감 표시를 계산한다. 운영 상태를 자동으로 프로젝트 종료로 바꾸지 않는다. 관리자 알림 배치는 이벤트 키로 중복을 막으며 실제 스케줄러는 해당 단계에서 구현한다.
 - **7.16:** WBS의 POST·DELETE를 유지한다. 반복 추가는 중복 저장 없이 같은 결과를 반환하고 삭제도 안전하게 처리한다. 공통 bookmarks를 사용한다.
-- **7.18:** GET/POST 모두 WBS의 /api/v1/messages/projects/{id}를 사용한다. POST의 동작이 방 생성인지 메시지 전송인지는 채팅 담당자와 요청·응답 계약으로 명시한다. 이 문서에서 경로를 추가하거나 바꾸지 않는다.
+- **7.18:** GET/POST 모두 WBS의 /api/v1/messages/projects/{id}를 사용한다. 메신저 작업에서 계약을 정했다. POST는 메시지 전송이고, 방은 모집 시작일 이후 첫 GET·POST 때 서버가 만든다. 방 삭제는 POST .../delete 논리 삭제다. 채팅은 project_members의 ACTIVE를 읽기만 하고 프로젝트 코드를 바꾸지 않는다. 세부는 [메신저 API](messenger-api.md)와 [메신저 계획](messenger-plan.md) 3.5에 있다.
 
 PUT/PATCH 구분 근거: [HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html#name-put), [PATCH 정의](https://www.rfc-editor.org/rfc/rfc5789.html). 이 청사진은 제공된 WBS의 URL·HTTP 메서드를 그대로 따른다.
 
