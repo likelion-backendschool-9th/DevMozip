@@ -27,7 +27,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.ObjectMapper;
 import com.devmozip.backend.dto.project.*;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import com.devmozip.backend.event.ProjectLifecycleChanged;
 import com.devmozip.backend.security.jwt.JwtProvider;
@@ -49,6 +48,7 @@ import static com.devmozip.backend.dto.project.ProjectLifecycleRequest.Action.*;
 @Sql("classpath:project/lifecycle-applications.sql")
 @Import(ProjectLifecycleIntegrationTest.EventsConfiguration.class)
 class ProjectLifecycleIntegrationTest {
+	@MockitoBean com.devmozip.backend.service.ProjectCreationPolicy creationPolicy;
 	@Container @ServiceConnection static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc;
 	@Autowired JdbcTemplate jdbc;
@@ -65,7 +65,7 @@ class ProjectLifecycleIntegrationTest {
 	private final LocalDate today = LocalDate.of(2026,11,5);
 
 	@BeforeEach void reset() {
-		jdbc.update("DELETE FROM project_applications"); jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
+		jdbc.update("DELETE FROM project_applications"); jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
 		actor.set(101L); when(user.getCurrentUserId()).thenAnswer(invocation -> actor.get());
 		when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
 		when(clock.instant()).thenReturn(Instant.parse("2026-11-04T15:30:00Z"));
@@ -73,7 +73,7 @@ class ProjectLifecycleIntegrationTest {
 	}
 	private long fixture() {
 		return projects.create(new CreateProjectRequest("Lifecycle", "요약", "상태와 기간 테스트", null, "https://example.test/a.png", true,
-			List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND, 5, 0)),List.of("Java"),List.of("교육"),
+			List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND", 5, 0)),List.of("Java"),List.of("교육"),
 			today.minusDays(1),today.plusDays(7),today,today.plusDays(90))).id();
 	}
 	private ProjectLifecycleRequest command(ProjectLifecycleRequest.Action action) { return new ProjectLifecycleRequest(action,null,null,null); }

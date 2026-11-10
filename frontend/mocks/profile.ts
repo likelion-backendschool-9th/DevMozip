@@ -5,7 +5,7 @@ import { developers, posts } from '@/mocks/home';
 import type { AuthUser } from '@/types/auth';
 import type { Collaboration, Profile, ProfileState, PortfolioInput } from '@/types/profile';
 export const profileTabs=[{id:'about',label:'소개'},{id:'portfolio',label:'포트폴리오'},{id:'posts',label:'포스팅'},{id:'activity',label:'활동'},{id:'reviews',label:'리뷰'}] as const;
-export const reviewKeywords=['소통이 원활해요','약속을 잘 지켜요','문제 해결이 뛰어나요','함께 성장해요'];
+export const reviewKeywords=['소통이 원활해요','약속을 잘 지켜요','문제 해결이 뛰어나요','함께 성장해요','피드백이 구체적이에요','지식을 아낌없이 공유해요','책임감 있게 완수해요','일정을 체계적으로 관리해요','코드를 깔끔하게 작성해요','문서를 알기 쉽게 정리해요','새로운 아이디어를 제안해요','동료의 의견을 존중해요','꾸준히 학습하고 성장해요','어려운 상황에도 적극적이에요'];
 export const emptyPortfolio:PortfolioInput={coverImage:'',field:'',title:'',summary:'',start:'',end:'',role:'',stacks:[],description:'',features:'',challenge:'',outcome:''};
 export function profileFromAccount(user:AuthUser):Profile{return {id:user.id,nickname:user.nickname,handle:user.id.startsWith('demo-')?user.id:user.id.slice(0,8),job:user.job,career:user.career,bio:'함께 배우고 만드는 협업을 기다리고 있어요.',introduction:'안녕하세요! 작은 아이디어를 실제 경험으로 연결하고 싶은 개발자입니다.\n서로의 생각을 나누고 꾸준히 성장하는 팀을 만나고 싶어요.',joinedAt:'2026-10-30',github:'https://github.com',blog:'https://example.com',contact:'평일 19:00–22:00 · 주말 협의',available:user.available,stacks:[...user.stacks],interests:[...user.interests],color:'lavender'};}
 const profiles:Record<string,Profile>=Object.fromEntries(demoAccounts.map(a=>[a.id,profileFromAccount(a)]));

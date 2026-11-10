@@ -1,0 +1,4 @@
+import {projectGuard,projectError,proxyProject,readProjectBody} from '@/lib/projects/projectProxy';
+import {validProjectId} from '@/lib/projects/projectApiContract';
+type Context={params:Promise<{projectId:string;applicationId:string}>};
+export async function PATCH(request:Request,{params}:Context){const blocked=await projectGuard(request);if(blocked)return blocked;const {projectId,applicationId}=await params;if(!validProjectId(projectId)||!validProjectId(applicationId))return projectError(400,'지원서 ID를 확인해 주세요.');let value;try{const body=await readProjectBody(request);value={status:body.status,rejectionReason:body.rejectionReason,acknowledgePenalty:body.acknowledgePenalty===true};}catch{return projectError(400,'지원 처리 내용을 확인해 주세요.');}return proxyProject('/api/v1/projects/'+projectId+'/applications/'+applicationId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});}

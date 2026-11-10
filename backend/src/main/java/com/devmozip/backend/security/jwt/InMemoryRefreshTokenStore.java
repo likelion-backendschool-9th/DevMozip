@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** local(H2) 프로필용 저장소. Redis 없이 실행하며 서버를 재시작하면 모두 사라진다. */
+/** local 프로필용 리프레시 토큰 저장소(DB 종류와 무관). Redis 없이 실행하며 서버를 재시작하면 모두 사라진다. */
 @Component
 @Profile("local")
 public class InMemoryRefreshTokenStore implements RefreshTokenStore {

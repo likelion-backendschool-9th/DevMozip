@@ -1,8 +1,8 @@
-const protectedPrefixes = ['/ai/matching', '/my-projects', '/onboarding', '/profile/me', '/bookmarks', '/settings', '/messages', '/chats', '/notifications', '/portfolios', '/admin'];
+const protectedPrefixes = ['/my-projects', '/onboarding', '/profile/me', '/bookmarks', '/settings', '/messages', '/chats', '/notifications', '/portfolios', '/admin'];
 export const hasPrefix = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 export function isProtectedPath(path: string) {
     return protectedPrefixes.some(prefix => hasPrefix(path, prefix))
-        || /^\/projects\/(new|[^/]+\/(manage|reviews(?:\/write)?))(?:\/|$)/.test(path)
+        || /^\/projects\/(new|[^/]+\/(manage|edit|reviews(?:\/write)?))(?:\/|$)/.test(path)
         || /^\/(?:posts|feeds)\/(new|[^/]+\/edit)(?:\/|$)/.test(path)
         // 상품 안내(/subscription)는 공개하고 결제·관리·내역만 로그인이 필요하다.
         || /^\/subscription\/(checkout|manage|history)(?:\/|$)/.test(path);

@@ -1,3 +1,4 @@
+import {projectRoleCode,validProjectChoice} from './projectChoices';
 import { api } from '@/lib/shared/api';
 import type { CreateProjectInput } from '@/types/project';
 import type { CreateProjectRequest, ProjectCreationReceipt, ProjectRoleCode } from '@/types/projectApi';
@@ -16,8 +17,8 @@ export function toProjectCreationRequest(input: CreateProjectInput, imageUrl: st
         title: input.title.trim(), summary: input.summary.trim() || null, description: input.description.trim(), goal: input.goal.trim() || null,
         imageUrl: imageUrl.trim(), isPublic,
         recruitmentSlots: input.slots.map(slot => {
-            const roleCode = roleCodes[slot.role];
-            if (!roleCode) throw new Error('모집 직군을 확인해 주세요.');
+            const roleCode = Object.hasOwn(roleCodes,slot.role)?roleCodes[slot.role]:projectRoleCode(slot.role);
+            if (!validProjectChoice(roleCode)) throw new Error('모집 직군을 확인해 주세요.');
             return { roleCode, capacity: slot.count, minimumYears: slot.minYears };
         }),
         techStacks: input.stacks, interests: [input.field], recruitmentStart: input.recruitmentStart,

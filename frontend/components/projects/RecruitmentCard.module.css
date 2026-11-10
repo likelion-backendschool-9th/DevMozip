@@ -4,7 +4,7 @@
 @layer devmozip-home{:where(.scope):global(.cover-glyph span){font-size:68px}}
 @layer devmozip-home{:where(.scope):global(.recruit-badge){position:absolute;bottom:13px;right:15px;background:#ffffffd9;padding:3px 9px;border-radius:5px;color:#67616e;font-size:14px}}
 @layer devmozip-home{:where(.scope):global(.project-content){padding:20px}}
-@layer devmozip-home{:where(.scope):global(.project-content h3){font-size:15px;letter-spacing:-.4px;margin:0 0 8px;line-height:1.65}}
+@layer devmozip-home{:where(.scope):global(.project-content h3){font-size:20px;font-weight:750;letter-spacing:-.5px;margin:0 0 10px;line-height:1.45}}
 @layer devmozip-home{:where(.scope):global(.project-content h3:hover){color:var(--purple)}}
 @layer devmozip-home{:where(.scope):global(.project-content>p){font-size:14px;line-height:1.8;color:var(--muted);min-height:40px;margin:0 0 17px}}
 @layer devmozip-home{:where(.scope):global(.project-bottom){border-top:1px solid var(--border);padding-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:14px;color:#97909f}}
@@ -13,7 +13,7 @@
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.project-cover){height:150px}}}
 @layer devmozip-home{@media(max-width:800px){:where(.scope):global(.project-content>p){min-height:0}}}
 @layer devmozip-project{:where(.scope):global(.recruitment-card-title){display:flex;gap:6px;align-items:flex-start}}
-@layer devmozip-project{:where(.scope):global(.recruitment-card-title h3){font-size:15px}}
+@layer devmozip-project{:where(.scope):global(.recruitment-card-title h3){font-size:20px}}
 @layer devmozip-project{:where(.scope):global(.recruitment-card-title .icon-button){width:24px;height:27px;flex-shrink:0;color:#a18ab5;margin-left:auto}}
 @layer devmozip-project{:where(.scope):global(.recruitment-card .project-content>p){font-size:14px;min-height:40px}}
 @layer devmozip-project{:where(.scope):global(.recruitment-slots){margin:17px 0 13px;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--border);padding-top:14px}}
@@ -27,3 +27,7 @@
 @layer devmozip-project{:where(.scope):global(.recruitment-card-title h3){overflow-wrap:anywhere}}
 @layer devmozip-presentation{:where(.scope):global(.recruitment-slots>div){font-size:14px}}
 @layer devmozip-responsive{:where(.scope):global(.project-cover){width:100%}}
+
+.bookmark{position:absolute;top:12px;right:12px;z-index:2}
+.bookmark>button,.bookmark>a{background:#fff;border:1px solid #e8e2ef;box-shadow:0 2px 8px #21152d12}
+:where(.scope):global(.project-cover>span:first-child){display:block;padding-right:46px;overflow-wrap:anywhere}
