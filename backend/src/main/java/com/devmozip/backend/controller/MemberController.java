@@ -1,9 +1,6 @@
 package com.devmozip.backend.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +14,7 @@ import com.devmozip.backend.dto.member.AccountLockRequest;
 import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.MeResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.service.MemberService;
 
@@ -60,15 +58,16 @@ public class MemberController {
         return memberService.updateAccountLock(authentication.getName(), request);
     }
 
-    // 로그인 확인 - 프론트엔드 BFF가 쿠키의 액세스 토큰 주인과 역할을 확인한다
+    // 로그인 확인 - 프론트엔드 BFF가 쿠키의 액세스 토큰 주인과 역할을 확인한다.
+    // 경고 회원의 상단 안내를 위해 계정 상태와 경고 사유도 함께 준다 (docs/admin-plan.md D8).
     @GetMapping("/me")
-    public ResponseEntity<Map<String, String>> getMe(Authentication authentication) {
+    public MeResponse getMe(Authentication authentication) {
         // JwtAuthenticationFilter는 토큰의 역할 하나에 "ROLE_" 접두어를 붙여 넣는다.
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(authority -> authority.replaceFirst("^ROLE_", ""))
                 .findFirst()
                 .orElse("USER");
-        return ResponseEntity.ok(Map.of("username", authentication.getName(), "role", role));
+        return memberService.me(authentication.getName(), role);
     }
 }

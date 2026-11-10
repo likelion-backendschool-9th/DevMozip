@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.devmozip.backend.config.SecurityConfig;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.MeResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.repository.MemberRepository;
@@ -61,10 +62,15 @@ class MemberControllerTest {
 
     @Test
     void 토큰의_주인과_역할을_접두어_없이_돌려준다() throws Exception {
+        // 역할은 토큰 값을 접두어 없이 넘기고, 계정 상태·경고 사유는 서비스가 DB에서 더한다 (docs/admin-plan.md D8).
+        when(memberService.me("premium@devmozip.demo", "PREMIUM"))
+                .thenReturn(new MeResponse("premium@devmozip.demo", "PREMIUM", "WARNED", "운영 정책 위반"));
         mvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("premium@devmozip.demo"))
-                .andExpect(jsonPath("$.role").value("PREMIUM"));
+                .andExpect(jsonPath("$.role").value("PREMIUM"))
+                .andExpect(jsonPath("$.status").value("WARNED"))
+                .andExpect(jsonPath("$.warningReason").value("운영 정책 위반"));
     }
 
     @Test

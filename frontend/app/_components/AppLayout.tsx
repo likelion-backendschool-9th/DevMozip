@@ -7,7 +7,7 @@ import { useNavigation as useNavigate, useCurrentLocation as useLocation } from 
 import { Bell, MessageSquare, ArrowUpRight, LogOut } from 'lucide-react';
 import { navigation } from '@/mocks/routes';
 import { routeTitle } from '@/lib/shared/routeService';
-import { useAuth } from '@/lib/state/authStore';
+import { useAuth, useServerWarning } from '@/lib/state/authStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { useMessaging } from '@/lib/state/messagingStore';
 import { useDirectChats } from '@/lib/state/directChatStore';
@@ -46,6 +46,11 @@ function AppShell({ children }: { children?: React.ReactNode }) {
     const { reset: resetHome } = useHome();
     const { state: projectState } = useProjects();
     const { user, logout, administration, needsOnboarding } = useAuth();
+    // 경고 안내: 토글 ON은 Mock 제재 기록, OFF는 서버가 확인한 경고 사유를 쓴다 (docs/admin-plan.md D8).
+    const serverWarning = useServerWarning();
+    const warning = mockEnabled
+        ? (user && administration.members[user.id]?.status === 'warned' ? administration.members[user.id].reason : null)
+        : (user ? serverWarning : null);
     const navigate = useNavigate();
     const location = useLocation();
     const main = useRef<HTMLElement>(null);
@@ -127,9 +132,9 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                 </div>
             </div>
 
-            {user && administration.members[user.id]?.status === 'warned' && (
+            {warning !== null && (
                 <div className={[styles.scope, "member-warning"].join(" ")} role="status">
-                    운영 안내 · {administration.members[user.id].reason}
+                    운영 안내 · {warning || '운영 정책에 따라 경고를 받은 계정입니다.'}
                 </div>
             )}
             {projectState.simulationDate && (

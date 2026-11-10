@@ -161,6 +161,19 @@ public class Post extends BaseEntity {
 		touch(now);
 	}
 
+	/**
+	 * 관리자 숨김 (WBS 14.7, docs/admin-plan.md 5.6). true면 RESTRICTED로 바꾼다(작성자 숨김이어도 바꾼다).
+	 * false는 RESTRICTED일 때만 VISIBLE로 돌린다. 관리자는 작성자 숨김(HIDDEN)을 풀지 않는다.
+	 * 내용 수정이 아니므로 수정 시각(수정됨 표시)은 바꾸지 않는다.
+	 */
+	public void restrictByAdmin(boolean restricted) {
+		if (restricted) {
+			this.visibility = PostVisibility.RESTRICTED;
+		} else if (this.visibility == PostVisibility.RESTRICTED) {
+			this.visibility = PostVisibility.VISIBLE;
+		}
+	}
+
 	public boolean isDeleted() {
 		return deletedAt != null;
 	}

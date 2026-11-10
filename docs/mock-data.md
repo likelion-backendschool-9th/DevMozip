@@ -15,7 +15,7 @@
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
 | `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수. Mock 토글 OFF의 1:1·프로젝트 채팅·메신저 신고·알림은 서버에 저장하고 이 키를 쓰지 않는다. `notificationReads`는 토글 ON의 Mock 알림에만 쓴다 |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |
-| `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 회원 제재·운영 화면. `subscriptions`·`payments`는 관리자 구독 현황의 Mock이며 로그인 계정의 역할에는 반영하지 않는다 |
+| `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 회원 제재·운영 화면. `subscriptions`·`payments`는 관리자 구독 현황의 Mock이며 로그인 계정의 역할에는 반영하지 않는다. Mock 토글 ON의 관리자 화면만 쓰며, OFF의 관리자 화면은 서버 값을 쓴다([admin-plan.md](admin-plan.md)) |
 
 이번 마이그레이션은 키/스키마/버전을 변경하지 않았습니다. 접이식 메뉴의 펼침 상태는 화면 로컬 상태이며 새로고침 시 작은 화면에서 기본 접힘으로 시작합니다. 기존 저장 데이터와 대화/사용량은 그대로 복원합니다.
 

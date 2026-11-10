@@ -40,7 +40,8 @@ public class ProjectSearchRepository {
 	/** @param today 모집 마감 여부를 가르는 오늘 날짜(Asia/Seoul) */
 	public Result search(Criteria criteria, LocalDate today, int page, int size) {
 		var params = new MapSqlParameterSource("today", today).addValue("baseRoles", BASE_ROLE_CODES);
-		StringBuilder where = new StringBuilder(" WHERE p.deleted_at IS NULL AND p.is_public = true");
+		// 관리자가 숨긴 공고(is_restricted)도 뺀다 (docs/admin-plan.md 5.5).
+		StringBuilder where = new StringBuilder(" WHERE p.deleted_at IS NULL AND p.is_public = true AND p.is_restricted = false");
 
 		for (int i = 0; i < criteria.tokens().size(); i++) {
 			String token = criteria.tokens().get(i);

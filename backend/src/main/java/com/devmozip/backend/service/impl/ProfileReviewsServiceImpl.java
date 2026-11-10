@@ -43,7 +43,7 @@ public class ProfileReviewsServiceImpl implements ProfileReviewsService {
 			// 기존 프로젝트 서비스의 SUBMITTED·별점·키워드 연결 집계를 재사용한다.
 			var result=reviews.received(userId);
 			var visibleProjects=own?java.util.Set.<Long>of():projects.findAllById(result.reviews().stream().map(r->r.projectId()).distinct().toList()).stream()
-				.filter(p->p.isPublic()&&p.getDeletedAt()==null).map(p->p.getId()).collect(java.util.stream.Collectors.toSet());
+				.filter(p->p.isPubliclyVisible()&&p.getDeletedAt()==null).map(p->p.getId()).collect(java.util.stream.Collectors.toSet());
 			var items=result.reviews().stream().sorted(java.util.Comparator
 				.comparing(com.devmozip.backend.dto.project.ProjectReviewSummaryResponse.Received::submittedAt,java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
 				.thenComparing(com.devmozip.backend.dto.project.ProjectReviewSummaryResponse.Received::id,java.util.Comparator.reverseOrder()))

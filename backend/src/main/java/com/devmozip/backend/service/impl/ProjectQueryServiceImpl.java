@@ -48,7 +48,8 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 	public ProjectDetailResponse detail(long id, boolean signedIn) {
 		if (id<=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "프로젝트 ID를 확인해 주세요.");
 		Project project = projects.findLiveForUpdate(id).orElseThrow(this::notFound);
-		if (!project.isPublic() && (!signedIn || !members.existsByProjectIdAndUserIdAndStatus(id, currentUser.getCurrentUserId(), ProjectMember.Status.ACTIVE))) throw notFound();
+		// 비공개 공고와 관리자가 숨긴 공고는 현재 팀원만 본다.
+		if (!project.isPubliclyVisible() && (!signedIn || !members.existsByProjectIdAndUserIdAndStatus(id, currentUser.getCurrentUserId(), ProjectMember.Status.ACTIVE))) throw notFound();
 		project.recordView();
 		return response(project, signedIn);
 	}
