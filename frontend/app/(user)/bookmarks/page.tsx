@@ -1,5 +1,9 @@
 'use client';
 import styles from './page.module.css';
+import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
+import {useProjectBookmarks} from '@/lib/projects/projectBookmarkStore';
+import {ProjectSummaryCard} from '@/components/projects/ProjectSummaryCard';
+import {ApiError} from '@/app/projects/_components/api/ApiCommon';
 import Link from 'next/link';
 import { useQueryState as useSearchParams } from '@/lib/navigation';
 import { useAuth } from '@/lib/state/authStore';
@@ -10,13 +14,15 @@ import { RecruitmentCard } from '@/components/projects/RecruitmentCard';
 import { bookmarkedPosts, bookmarkedProjects } from '@/lib/social/personalLibraryService';
 export default function BookmarksPage() {
     const { user, canViewProfile } = useAuth();
+    const {enabled}=useMockVisibility();
+    const api=useProjectBookmarks(!enabled);
     const { state } = useProfiles();
     const { state: recruitment, projects } = useProjects();
     const [params, setParams] = useSearchParams();
     const tab = params.get('tab') === 'projects' ? 'projects' : 'posts';
     const posts = user ? bookmarkedPosts(state, user.id).filter(p => canViewProfile(p.authorId)) : [];
     const savedProjects = user ? bookmarkedProjects(projects, recruitment, user.id) : [];
-    const empty = tab === 'posts' ? !posts.length : !savedProjects.length;
+    const empty = tab === 'posts' ? !posts.length : enabled?!savedProjects.length:!api.loading&&!api.error&&!api.items.length;
     return (
         <>
             <header className={[styles.scope, 'personal-page-heading'].join(' ')}>
@@ -39,9 +45,10 @@ export default function BookmarksPage() {
                     className={[styles.scope, tab === 'projects' ? 'active' : ''].join(' ')}
                     onClick={() => setParams({ tab: 'projects' })}
                 >
-                    프로젝트 {savedProjects.length}
+                    프로젝트 {enabled?savedProjects.length:api.items.length}
                 </button>
             </div>
+            {!enabled&&tab==='projects'&&<>{api.loading&&<p role="status">북마크를 불러오고 있습니다.</p>}{api.error&&<ApiError error={api.error} retry={api.reload}/>}</>}
             {tab === 'posts' ? (
                 <div className={[styles.scope, 'personal-post-list'].join(' ')}>
                     {posts.map(p => (
@@ -50,7 +57,7 @@ export default function BookmarksPage() {
                 </div>
             ) : (
                 <div className={[styles.scope, 'personal-project-grid'].join(' ')}>
-                    {savedProjects.map(p => (
+                    {!enabled?api.items.map((p,index)=><ProjectSummaryCard key={p.id} project={p} index={index}/>):savedProjects.map(p => (
                         <RecruitmentCard key={p.id} project={p} />
                     ))}
                 </div>

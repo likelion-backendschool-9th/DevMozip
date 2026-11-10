@@ -118,7 +118,7 @@ class KakaoMemberAuthIntegrationTest {
     private static String signupBody(String email, String nickname, String extraFields) {
         return """
                 {"email":"%s","nickname":"%s","job":"백엔드 개발자","career":"3년 차",
-                 "stacks":["Java"],"interests":["AI"],"available":true%s}""".formatted(email, nickname, extraFields);
+                 "skills":["Java"],"interests":["AI"],"available":true%s}""".formatted(email, nickname, extraFields);
     }
 
     private static String kakaoToken(String token) {

@@ -2,6 +2,10 @@
 
 2026-11-05 사용자 요청으로 팀 PostgreSQL `cloud.newlecture.com:5442/devmozip`에 적용했다. 다른 도메인 테이블은 생성·수정하지 않았다.
 
+## 현재 SQL 적용 순서
+
+신규 DB는 project-schema.sql → review-keywords.sql → review-keyword-selections.sql → project-demo-data.sql 순서로 적용한다. reviews에는 selected_keywords 컬럼이 없고 선택값은 연결 테이블에 넣는다. 기존 DB의 JSONB 제거는 review-keyword-selections.sql로 이관한 뒤 reviews-normalize-keywords.sql로 일치 검증 후 처리한다. 샘플 데이터 SQL은 기존 데이터가 있는 팀 DB에 재실행하지 않았다.
+
 ## 적용 내역
 
 | 테이블 | 삽입 건수 | 원본 |

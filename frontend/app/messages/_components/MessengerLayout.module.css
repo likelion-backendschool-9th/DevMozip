@@ -19,6 +19,7 @@
 @layer devmozip-messaging{:where(.scope):global(.conversation-pane){min-width:0;background:#fff}}
 @layer devmozip-messaging{:where(.scope):global(.conversation-header){display:flex;align-items:center;justify-content:space-between;gap:15px;padding:20px 25px;border-bottom:1px solid var(--border)}}
 @layer devmozip-messaging{:where(.scope):global(.conversation-header>a){display:flex;gap:11px;align-items:center}}
+@layer devmozip-messaging{:where(.scope):global(.conversation-peer){display:flex;gap:11px;align-items:center;min-width:0}}
 @layer devmozip-messaging{:where(.scope):global(.conversation-header strong){font-size:15px;color:#8e739f}}
 @layer devmozip-messaging{:where(.scope):global(.conversation-header span){display:block;font-size:14px;color:#b399c3;margin-top:3px}}
 @layer devmozip-messaging{:where(.scope):global(.conversation-header .button){font-size:14px;padding:8px 11px}}

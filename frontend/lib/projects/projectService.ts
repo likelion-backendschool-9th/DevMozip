@@ -43,7 +43,7 @@ function applyBaseAction(state:RecruitmentState,action:Exclude<RecruitmentAction
  next.created.unshift(project);return {state:next,projectId:id,message:'Mock 모집 공고를 등록했습니다.'};
  }
  const project=allProjects(next).find(p=>p.id===action.projectId);if(!project)throw new Error('프로젝트를 찾을 수 없습니다.');
- if(action.type==='bookmark'){const current=next.bookmarks[user.id]||[];const existing=current.includes(project.id);next.bookmarks[user.id]=existing?current.filter(id=>id!==project.id):[...current,project.id];return {state:next,message:existing?'북마크를 해제했습니다.':'프로젝트를 북마크했습니다.'};}
+ if(action.type==='bookmark'||action.type==='like'){const collection=action.type==='bookmark'?next.bookmarks:(next.likes??={});const current=collection[user.id]||[];const existing=current.includes(project.id);collection[user.id]=existing?current.filter(id=>id!==project.id):[...current,project.id];return {state:next,message:action.type==='bookmark'?(existing?'북마크를 해제했습니다.':'프로젝트를 북마크했습니다.'):(existing?'좋아요를 취소했습니다.':'프로젝트를 좋아요했습니다.')};}
  if(action.type==='report'){if(project.hostId===user.id)throw new Error('본인 공고는 신고할 수 없습니다.');if(next.reports.some(r=>r.projectId===project.id&&r.userId===user.id))throw new Error('이미 신고한 프로젝트입니다.');if(!reportReasons.includes(action.reason)||action.detail.length>1000)throw new Error('신고 사유와 내용을 확인해 주세요.');next.reports.push({id:createMockId(),projectId:project.id,userId:user.id,reason:action.reason,detail:action.detail,createdAt:now.toISOString()});return {state:next,message:'Mock 신고를 기록했습니다. 실제 서버에는 전송하지 않습니다.'};}
  const application=applicationFor(next,project.id,user.id);
  if(action.type==='cancel'){if(!application||!['지원 완료','지원 승인'].includes(application.status))throw new Error('취소할 지원 내역이 없습니다.');if(project.status==='프로젝트 종료')throw new Error('종료된 프로젝트의 지원은 취소할 수 없습니다.');if(isLateCancellation(project,now)&&!action.acknowledgePenalty)throw new Error('마감 임박 취소에 대한 임시 패널티 안내를 확인해 주세요.');application.status='지원 취소';application.cancelledAt=now.toISOString();return {state:next,message:'지원을 취소했습니다. 신뢰 온도는 변경하지 않았습니다.'};}
@@ -71,6 +71,7 @@ export function parseRecruitmentState(raw:string|null):RecruitmentState{
  if(!v.applications.every((a:any)=>text(a,['id','projectId','userId','role','portfolioId','portfolioTitle','message','createdAt'])&&projectIds.includes(a.projectId)&&['지원 완료','지원 취소','지원 승인','지원 거절'].includes(a.status)))return freshRecruitmentState();
  if(new Set(v.applications.map((a:any)=>`${a.projectId}:${a.userId}`)).size!==v.applications.length)return freshRecruitmentState();
  if(!Object.values(v.bookmarks).every(a=>strings(a)&&(a as string[]).every(id=>projectIds.includes(id))))return freshRecruitmentState();
+ if(v.likes!==undefined&&(!v.likes||typeof v.likes!=='object'||Array.isArray(v.likes)||!Object.values(v.likes).every(a=>strings(a)&&(a as string[]).every(id=>projectIds.includes(id)))))return freshRecruitmentState();
  if(!v.reports.every((a:any)=>text(a,['id','projectId','userId','reason','detail','createdAt'])&&projectIds.includes(a.projectId)&&reportReasons.includes(a.reason)))return freshRecruitmentState();
  const defaults=freshRecruitmentState();
  if(v.kickVotes!==undefined&&(!validKickVotes(v.kickVotes)||v.kickVotes.some((vote:any)=>!projectIds.includes(vote.projectId))))return defaults;

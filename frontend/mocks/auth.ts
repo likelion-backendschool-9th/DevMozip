@@ -9,4 +9,4 @@ export const roleLabels = {free:'일반 회원',premium:'프리미엄 회원',ad
 // Mock 화면의 직군 선택지. 회원가입 선택지는 백엔드 enum에서 받는다.
 export const jobOptions=['프론트엔드 개발자','백엔드 개발자','풀스택 개발자','모바일 개발자','AI 엔지니어','DevOps 엔지니어','디자이너'];
 export const careerOptions=['신입 / 학습 중','1년 미만','1년 차','2년 차','3년 차','4년 차','5년 이상'];
-export const emptySignup: SignupInput={email:'',password:'',confirmPassword:'',nickname:'',job:'',career:'',stacks:[],interests:[],available:true};
+export const emptySignup: SignupInput={email:'',password:'',confirmPassword:'',nickname:'',job:'',career:'',skills:[],interests:[],available:true};
