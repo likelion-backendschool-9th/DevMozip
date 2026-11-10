@@ -36,6 +36,11 @@ public class ProjectMember extends BaseEntity {
 	public void requestEnd(LocalDateTime now) { endRequestedAt = now; touch(now); }
 	public void cancelEndRequest(LocalDateTime now) { endRequestedAt = null; touch(now); }
 
+	public static ProjectMember participant(Project project,long userId,String jobRole,LocalDateTime now) {
+		var member=new ProjectMember(project,userId,now);member.role=Role.PARTICIPANT;member.jobRole=jobRole;return member;
+	}
+	public void leave(LocalDateTime now){status=Status.LEFT;leftAt=now;endRequestedAt=null;touch(now);}
+
 	public static ProjectMember host(Project project, long userId, LocalDateTime now) {
 		return new ProjectMember(project, userId, now);
 	}

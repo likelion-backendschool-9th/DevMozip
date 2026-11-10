@@ -32,7 +32,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 	}
 	@Override public ProjectPageResponse search(ProjectSearchRequest request) { return page(request, null, null); }
 	@Override public ProjectPageResponse mine(ProjectSearchRequest request, MyProjectsTab tab) {
-		if (tab == MyProjectsTab.APPLYING) throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "지원 중 목록은 #48 지원 기능에서 연결합니다.");
 		return page(request, currentUser.getCurrentUserId(), tab);
 	}
 	private ProjectPageResponse page(ProjectSearchRequest request, Long userId, MyProjectsTab tab) {

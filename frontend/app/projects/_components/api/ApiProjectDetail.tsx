@@ -19,6 +19,8 @@ import {ProjectShareButton} from '@/components/projects/ProjectShareButton';
 import {ProjectReportButton} from '@/components/projects/ProjectReportButton';
 import {ProjectIconActions} from '@/components/projects/ProjectIconActions';
 import {ProjectBookmarkButton} from '@/components/projects/ProjectBookmarkButton';
+
+import {ApiProjectApplications} from './ApiProjectApplications';
 import styles from './ApiCommon.module.css';
 export function ApiProjectDetail({manage=false}:{manage?:boolean}){
  const {projectId=''}=useParams<{projectId:string}>();const router=useRouter();
@@ -56,17 +58,18 @@ export function ApiProjectDetail({manage=false}:{manage?:boolean}){
     <Card className={cls('profile-section')}><h2>기술 스택</h2><div className="profile-tags">{p.techStacks.map(s=><span key={s}>{s}</span>)}</div><h2 className="sub-heading">모집 직군과 인원</h2><div className={cls('role-requirements')}>
      <div className={cls('role-row role-table-heading')}><span>모집 직군</span><span>모집 인원</span><span>최소 경력</span></div>
      {p.recruitmentSlots.map(s=><div className={cls('role-row')} key={s.roleCode}><strong>{projectRoleLabel(s.roleCode)}</strong><span>{s.capacity}명</span><span>{s.minimumYears?`${s.minimumYears}년 이상`:'경력 무관'}</span></div>)}
-    </div><p className="auth-hint">정원은 주최자를 포함합니다. 직군별 참여 인원은 현재 제공되는 정보에 포함되지 않습니다.</p></Card>
+    </div><p className="auth-hint">정원은 주최자를 포함합니다. 직군별 잔여 인원은 지원 시 다시 확인합니다.</p></Card>
     <Card className={cls('profile-section')}><h2>진행 일정</h2><dl className={cls('project-schedule')}><div><dt>개발 기간</dt><dd>{p.developmentStart} — {p.developmentEnd}</dd></div><div><dt>모집 기간</dt><dd>{p.recruitmentStart} — {p.recruitmentEnd}</dd></div></dl></Card>
     {manage&&own&&<Card className={cls('profile-section')}><h2>프로젝트 관리</h2><div className={styles.actions}>
      {p.status==='RECRUITING'&&<Button disabled={pending} onClick={()=>run({action:'CHANGE_STATUS',status:'RECRUITMENT_COMPLETED'})}>모집 완료</Button>}
      {p.status==='RECRUITMENT_COMPLETED'&&<><Button disabled={pending} onClick={()=>run({action:'CHANGE_STATUS',status:'IN_PROGRESS'})}>프로젝트 시작</Button><Button disabled={pending} variant="secondary" onClick={()=>run({action:'CHANGE_STATUS',status:'RECRUITING'})}>모집 재개</Button></>}
      {p.status==='RECRUITING'&&<Button disabled={pending} variant="secondary" onClick={()=>setRemove(true)}>공고 삭제</Button>}
-    </div>{!completed&&<form className={styles.form} onSubmit={e=>{e.preventDefault();run({action:'EXTEND_PERIOD',recruitmentEnd,developmentEnd});}}><h3>기간 연장</h3><div className="auth-two-columns"><label>모집 종료일<Input type="date" required min={p.recruitmentEnd} value={recruitmentEnd} onChange={e=>setRecruitmentEnd(e.target.value)}/></label><label>개발 종료일<Input type="date" required min={p.developmentEnd} value={developmentEnd} onChange={e=>setDevelopmentEnd(e.target.value)}/></label></div><Button disabled={pending} type="submit">기간 연장 저장</Button></form>}<p className="auth-hint">대기 지원서가 남아 있으면 시작할 수 없습니다. 지원자 관리·채팅·리뷰 발송은 아직 연결되지 않았습니다.</p></Card>}
+    </div>{!completed&&<form className={styles.form} onSubmit={e=>{e.preventDefault();run({action:'EXTEND_PERIOD',recruitmentEnd,developmentEnd});}}><h3>기간 연장</h3><div className="auth-two-columns"><label>모집 종료일<Input type="date" required min={p.recruitmentEnd} value={recruitmentEnd} onChange={e=>setRecruitmentEnd(e.target.value)}/></label><label>개발 종료일<Input type="date" required min={p.developmentEnd} value={developmentEnd} onChange={e=>setDevelopmentEnd(e.target.value)}/></label></div><Button disabled={pending} type="submit">기간 연장 저장</Button></form>}<p className="auth-hint">대기 지원서가 남아 있으면 시작할 수 없습니다. 지원자 관리와 참여 팀원은 아래에서 확인할 수 있습니다. 채팅·리뷰 발송은 별도 연결이 필요합니다.</p></Card>}
+    <ApiProjectApplications projectId={p.id} title={p.title} host={own} team={!!membership} onChanged={resource.reload}/>
     {membership&&<Card className={cls('profile-section')}><h2>프로젝트 종료 동의</h2><p>{membership.endRequestCount}명 동의 · 과반수 기준 {membership.requiredEndRequestCount}명</p><p className="auth-hint">진행 중 현재 팀원의 과반수가 동의하면 종료됩니다. 확정 전에는 본인 요청을 취소할 수 있습니다.</p>{p.status==='IN_PROGRESS'&&<Button disabled={pending} onClick={()=>run({action:membership.myEndRequested?'CANCEL_END_REQUEST':'REQUEST_END'})}>{membership.myEndRequested?'종료 요청 취소':'프로젝트 종료 요청'}</Button>}{completed&&<p>프로젝트가 종료되었습니다. 종료 요청을 취소할 수 없습니다.</p>}</Card>}
    </div>
    <aside className={cls('project-detail-sidebar')}>
-    <Card className={cls('profile-section apply-summary')}><span className="eyebrow">YOUR NEXT CHALLENGE</span><h2>함께 만들어볼까요?</h2><p><Users size={14}/>현재 {resource.data.memberCount} / {p.totalCapacity}명</p><p><CalendarDays size={14}/>모집 마감 {p.recruitmentEnd}</p><p className="auth-hint">지원·승인·지원 취소 기능은 아직 연결되지 않았습니다.</p>{membership&&<p>내 역할: {membership.myRole==='HOST'?'주최자':'참여자'}</p>}</Card>
+    <Card className={cls('profile-section apply-summary')}><span className="eyebrow">YOUR NEXT CHALLENGE</span><h2>함께 만들어볼까요?</h2><p><Users size={14}/>현재 {resource.data.memberCount} / {p.totalCapacity}명</p><p><CalendarDays size={14}/>모집 마감 {p.recruitmentEnd}</p><p className="auth-hint">아래 프로젝트 지원 영역에서 지원 상태를 확인할 수 있습니다.</p>{membership&&<p>내 역할: {membership.myRole==='HOST'?'주최자':'참여자'}</p>}</Card>
     <Card className={cls('profile-section project-host')}><h3>프로젝트 주최자</h3><div className={styles.host}><span className={styles.avatar} aria-hidden="true">{(host?.nickname??'회원').charAt(0)}</span><strong>{host?.nickname??`회원 ${p.hostMemberId}`}</strong></div>{host?.tag&&<Link className="button secondary" href={'/users/'+encodeURIComponent(host.tag)}>프로필 보기</Link>}</Card>
    </aside>
   </div>

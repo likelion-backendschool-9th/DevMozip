@@ -428,3 +428,8 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 ## 공통 좋아요 연결 — 2026-11-09
 
 사용자 요청으로 `bookmarks`와 동일한 구조의 `likes`를 사용한다. 컬럼은 `id`, `user_id`, `project_id`, `post_id`, `created_at`, `updated_at`이며 사용자+프로젝트/사용자+게시글 중복을 방지하고 대상은 하나만 지정한다. 프로젝트 좋아요에는 `project_id`만 채운다. `POST·DELETE /api/v1/projects/{id}/like`, `GET /api/v1/projects/likes`를 인증된 회원 기준으로 처리한다. 게시글 API 및 post_id FK는 공통 게시글 담당 범위다.
+
+
+## #48 구현 반영 (2026-11-06)
+
+지원·승인·취소 API, 기존 지원 연결 테이블, 정원 동시성 및 취소 경계 정책을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 포트폴리오 원본 테이블/소유권 어댑터, 알림·채팅·신뢰 계산 소비자는 미연결이며 실제 신규 지원은 차단한다.
