@@ -2229,3 +2229,13 @@ stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-
 검증: npm run build 성공(TypeScript 포함), 표시 설정·헤더·공통 레이아웃 관련3개 파일/17개 테스트 통과. 홈 HTTP200·git diff --check 통과. 브라우저 수동 검증은 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
 
 PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했다. npm run build 성공·전체 프론트 1662개 테스트 통과. 백엔드 변경 없음. 계획서·이슈 감사 문서는 PR에서 제외하고 보존했다.
+
+## 2026-11-11 프로젝트 상세 팀원 조회
+
+사용자 확정 정책: 공개 프로젝트는 누구나, 비공개는 현재 ACTIVE 팀원만 현재 팀원 명단을 조회한다. 기존 상세 접근 검사를 재사용하고 상세·관리 응답에 공개 프로필용 team 배열을 추가했다. 탈퇴·강퇴 이력·지원서·연락처는 노출하지 않고 기존 관리용 members API 권한은 유지한다. DB 스키마 변경 없음.
+
+주요 변경: ProjectDetailResponse·ProjectQueryRepository·ProjectQueryServiceImpl, frontend projectApi 타입·계약 파서, ApiProjectDetail 및 새 ProjectTeamCard/CSS Module. 주최자 옆 왕관, 아래 참여 팀원과 직군, 프로필 링크, 빈 명단·구버전 서버 안내를 표시한다. docs/project-query.md에 계약을 기록했다.
+
+검증: 격리된 Docker 환경 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체150개 파일/1665개 테스트 통과. ./gradlew test의 ProjectQueryIntegrationTest·ProjectApplicationIntegrationTest·ProjectMemberRemovalIntegrationTest 총36개 성공(실패·오류·건너뜀0, 격리 PostgreSQL Testcontainers). 공개/비공개 접근·현재 팀원만 제공·중복/잘못된 응답 거부·왕관 및 프로필 링크를 검증했다. git diff --check 통과. 브라우저 수동 화면 검증은 미실행. 기존 미추적 계획서·이슈 감사 문서는 보존. 커밋·푸시 없음.
+
+로컬 백엔드 재시작 후 공개 목록·상세 HTTP200 및 실제 team 배열 응답 확인. 이 확인 과정의 상세 조회는 기존 정책대로 조회수1회를 증가시킨다.
