@@ -24,6 +24,14 @@ public class PortfolioFileServiceImpl implements PortfolioFileService {
         return storage.save(member.getId(), file).response();
     }
     public FileContent read(String email, String id) {
+        var meta = authorize(email, id);
+        return new FileContent(meta, storage.read(meta));
+    }
+    public FileLocation locate(String email, String id) {
+        var meta = authorize(email, id);
+        return new FileLocation(meta, storage.storedName(meta));
+    }
+    private LocalPortfolioFileStorage.Metadata authorize(String email, String id) {
         var meta = storage.metadata(id); Member member = viewer(email);
         if (member == null || member.getId() != meta.ownerId()) {
             try {
@@ -32,7 +40,7 @@ public class PortfolioFileServiceImpl implements PortfolioFileService {
                 if (!cover && !(premium && (access.publicReference(meta.ownerId(), meta.response().url(), false) || access.submittedReference(meta.ownerId(),member.getId(),meta.response().url())))) throw failure(404, "파일을 찾을 수 없습니다.");
             } catch (DataAccessException e) { throw failure(503, "파일 접근 정보를 확인할 수 없습니다."); }
         }
-        return new FileContent(meta, storage.read(meta));
+        return meta;
     }
     private Member viewer(String email) {
         if (email == null || email.isBlank()) return null;

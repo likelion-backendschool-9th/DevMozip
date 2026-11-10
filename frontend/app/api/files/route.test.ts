@@ -47,6 +47,21 @@ describe('파일 업로드·읽기 BFF', () => {
         vi.mocked(backendFetch).mockResolvedValue(new Response(null, { status: 404 }));
         expect((await GET(new Request(`http://localhost/api/files/${id}`), { params: Promise.resolve({ id }) })).status).toBe(404);
     });
+    it('새 형식 id를 백엔드로 넘기고, nginx 내부 경로는 이 파일을 가리킬 때만 본문 없이 전달한다', async () => {
+        const current = 'portfolio_5_20261111093000';
+        const call = () => GET(new Request(`http://localhost/api/files/${current}`), { params: Promise.resolve({ id: current }) });
+        vi.mocked(backendFetch).mockResolvedValue(new Response(null, { headers: { 'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename=a.pdf', 'X-Accel-Redirect': `/internal-files/${current}.pdf` } }));
+        let response = await call();
+        expect(vi.mocked(backendFetch).mock.calls[0][0]).toBe(`/api/v1/files/${current}`);
+        expect(response.status).toBe(200); expect(response.headers.get('X-Accel-Redirect')).toBe(`/internal-files/${current}.pdf`);
+        expect(response.headers.get('Content-Disposition')).toContain('attachment'); expect(response.headers.get('Cache-Control')).toBe('no-store');
+        expect(await response.text()).toBe('');
+        for (const accel of [`/internal-files/${current}.json`, `/internal-files/${id}.pdf`, `/internal-files/../${current}.pdf`, `/images/${current}.pdf`]) {
+            vi.mocked(backendFetch).mockResolvedValue(new Response(null, { headers: { 'Content-Type': 'application/pdf', 'X-Accel-Redirect': accel } }));
+            response = await call(); expect(response.status).toBe(502); expect(response.headers.get('X-Accel-Redirect')).toBeNull();
+        }
+    });
     it('임의 ID와 HTML 응답을 차단한다', async () => {
         expect((await GET(new Request('http://localhost/api/files/bad'), { params: Promise.resolve({ id: 'bad' }) })).status).toBe(404);
         expect(backendFetch).not.toHaveBeenCalled();

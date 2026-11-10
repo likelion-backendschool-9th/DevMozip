@@ -55,6 +55,9 @@ public class AccountWithdrawalCleanup {
 				try {
 					String url = images.url(filename);
 					if (!members.existsByProfileImageOrBannerImage(url, url)) images.delete(filename);
+				} catch (org.springframework.web.server.ResponseStatusException e) {
+					// 저장 형식이 바뀌기 전(/api/v1/profile-images/)의 파일 이름이다. 지금 저장소의 파일이 아니므로 다시 시도하지 않는다
+					log.warn("이전 형식의 탈퇴 이미지 파일 이름은 정리하지 않습니다: userId={}", job.userId());
 				} catch (java.io.IOException | RuntimeException e) { pending.add(filename); }
 			}
 			if (billingKey == null && pending.isEmpty()) tasks.removePrepared(job);

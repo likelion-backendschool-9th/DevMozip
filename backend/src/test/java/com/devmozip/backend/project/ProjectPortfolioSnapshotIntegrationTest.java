@@ -30,7 +30,7 @@ class ProjectPortfolioSnapshotIntegrationTest {
 	@Container @ServiceConnection static PostgreSQLContainer postgres=new PostgreSQLContainer("postgres:17");
 	@Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtProvider jwt; @Autowired ObjectMapper mapper;
 	@org.junit.jupiter.api.io.TempDir static Path files;
-	@org.springframework.test.context.DynamicPropertySource static void fileDirectory(org.springframework.test.context.DynamicPropertyRegistry r){r.add("portfolio.files.directory",()->files.toString());}
+	@org.springframework.test.context.DynamicPropertySource static void fileDirectory(org.springframework.test.context.DynamicPropertyRegistry r){r.add("FILE_STORAGE",()->files.toString());}
 	@MockitoBean RefreshTokenStore refresh;
 	@MockitoBean(name="projectClock") Clock clock;
 	@MockitoSpyBean ProjectPortfolioRepository portfolios;

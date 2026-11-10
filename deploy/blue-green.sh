@@ -67,12 +67,13 @@ restart_nginx_if_config_changed() {
   return 1
 }
 
-# 업로드 이미지 폴더(public/images)를 만들고 backend 가 쓸 수 있게 한다 (docs/feed-plan.md 3절 "운영 서버").
+# 업로드 이미지 폴더(public/images)와 포트폴리오 파일 폴더(public/files)를 만들고 backend 가 쓸 수 있게 한다
+# (docs/feed-plan.md 3절 "운영 서버", docs/portfolio-files-api.md "환경별 설정").
 # 폴더가 없으면 Docker 가 root 소유로 만들고, backend 이미지는 root 가 아닌 app 사용자로 실행되어 쓸 수 없다.
 # 새 색의 backend 이미지를 root 로 한 번 실행해, 이미지 안의 app 사용자로 소유자를 바꾼다(UID 를 따로 알 필요가 없다)
 prepare_image_storage() {
-  mkdir -p public/images
-  $COMPOSE run --rm --no-deps -T --user root --entrypoint chown "backend-$1" app:app /public/images
+  mkdir -p public/images public/files
+  $COMPOSE run --rm --no-deps -T --user root --entrypoint chown "backend-$1" app:app /public/images /public/files
 }
 
 env_value() {
@@ -152,7 +153,7 @@ cmd_deploy() {
     $COMPOSE pull --quiet "backend-$new" "frontend-$new"
   fi
   $COMPOSE up -d --no-build postgres redis            # 공유 서비스. 이미 떠 있으면 그대로
-  prepare_image_storage "$new"                         # 두 색이 같이 쓰는 업로드 이미지 폴더
+  prepare_image_storage "$new"                         # 두 색이 같이 쓰는 업로드 이미지·파일 폴더
   $COMPOSE up -d --no-build "backend-$new" "frontend-$new"  # 쉬는 색을 새 이미지로 교체. 활성 색은 건드리지 않는다
 
   if ! health "$new"; then

@@ -8,8 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.devmozip.backend.storage.FeedImageStorage;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
@@ -24,7 +23,8 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * nginx 없이 실행할 때(compose 기본 실행으로 3000번 직접 접속, local 프로필) 업로드 이미지(IMAGE_STORAGE 폴더)를 제공한다.
  * nginx가 있는 환경에서는 nginx가 /images/를 먼저 처리한다. nginx가 없으면 Next.js의 /images/{filename} Route Handler가 이 경로를 부른다.
- * nginx와 같이 권한 확인 없이 제공한다(docs/feed-plan.md 3절 "이미지 저장").
+ * nginx와 같이 권한 확인 없이 제공한다(docs/feed-plan.md 3절 "이미지 저장", docs/profile-local-images.md).
+ * 게시글(FeedImageStorage)과 프로필·배너(LocalProfileImageStorage) 이미지가 같은 폴더를 쓴다.
  */
 @RestController
 public class PublicImageController {
@@ -38,8 +38,8 @@ public class PublicImageController {
 
 	private final Path root;
 
-	public PublicImageController(FeedImageStorage storage) {
-		this.root = storage.root();
+	public PublicImageController(@Value("${IMAGE_STORAGE:../public/images}") String directory) {
+		this.root = Path.of(directory).toAbsolutePath().normalize();
 	}
 
 	@GetMapping("/images/{filename}")
