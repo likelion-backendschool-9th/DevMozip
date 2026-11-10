@@ -1,5 +1,4 @@
 'use client';
-import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import { useState } from 'react';

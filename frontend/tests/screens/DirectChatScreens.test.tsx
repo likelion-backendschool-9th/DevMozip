@@ -197,12 +197,13 @@ describe('사용자 신고 창', () => {
 });
 
 describe('프로젝트 상세의 주최자 연락', () => {
-    const detail = () => renderToStaticMarkup(<MemoryRouter initialEntries={['/projects/pocket']}><Routes><Route path="/projects/:projectId" element={<ProjectDetailPage />} /></Routes></MemoryRouter>);
-    it('토글 OFF에서는 Mock 회원 ID 없이 대화 목록으로 보낸다', () => {
-        const html = detail();
-        expect(html).toContain('메신저로 이동');
-        expect(html).toContain('메신저에서 내 대화 목록을 확인할 수 있습니다.');
+    const detail = (url = '/projects/pocket') => renderToStaticMarkup(<MemoryRouter initialEntries={[url]}><Routes><Route path="/projects/:projectId" element={<ProjectDetailPage />} /></Routes></MemoryRouter>);
+    it('토글 OFF에서는 실제 프로젝트 조회로 전환하고 Mock 회원 ID를 전달하지 않는다', () => {
+        const html = detail('/projects/123');
+        expect(html).toContain('프로젝트를 불러오고 있습니다.');
         expect(html).not.toContain('/messages/chats?userId=');
+        expect(html).not.toContain('주최자와 Mock 1:1 대화');
+        expect(detail()).toContain('프로젝트 ID를 확인해 주세요.');
     });
     it('토글 ON에서는 기존 Mock 대화 시작을 유지한다', () => {
         mockMode.enabled = true;

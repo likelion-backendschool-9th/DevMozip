@@ -41,6 +41,11 @@ public class Report extends BaseEntity {
 	public static Report ofUser(Member reporter, Member reportedUser, String reason, LocalDateTime now) {
 		return new Report(reporter, reportedUser, reason, now);
 	}
+	public static Report ofProject(Member reporter, long projectId, String reason, LocalDateTime now) {
+		Report report = new Report(reporter, null, reason, now);
+		report.projectId = projectId;
+		return report;
+	}
 	private Report(Member reporter, Member reportedUser, String reason, LocalDateTime now) {
 		super(now);
 		this.reporter = reporter;

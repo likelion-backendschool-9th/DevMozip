@@ -235,6 +235,29 @@
 - 미완료: 팀 PostgreSQL 17의 전체 공개 계약·실제 다중 사용자/실패·삭제 통합 검증, 포트폴리오 연동, AI BFF/로컬 초안 동기화·프론트 버튼 연결, 5~7단계. 프로세스 강제 종료·DB 장애로 남는 PENDING의 자동 복구/만료는 없다. FK NO ACTION으로 참조 대상 물리 삭제를 차단하므로 탈퇴·다른 도메인의 삭제 계약은 후속 조율 대상이다. 앱/DB 기준 시간대는 기존과 같이 미확정이다.
 
 
+## 2026-11-09 프로젝트 신고 PR 준비
+
+- 사용자 요청으로 `feat/51-project-reports`의 프로젝트 신고 페이지·API·빨간 사이렌 버튼 변경을 커밋·푸시하고 develop 대상 PR을 작성한다. #51의 프로젝트 자체 신고 범위만 구현했으므로 팀원 신고까지 완료한 것으로 처리하지 않는다.
+- 선행 PR #93(및 #81)에 기반하며, 공통 Report/Repository는 #90 기준에 프로젝트 기능을 확장했다. 공통 파일 병합 시 기존 사용자 신고 메서드와 프로젝트 확장을 모두 보존해야 한다. 이번 변경은 YAML·실제 환경 설정·DB DDL을 포함하지 않는다.
+- 직전 검증 기록을 확인했다: 최신 UI 빌드·TypeScript와 관련 테스트 16개 통과, 신고 구현 시 프론트 전체 742개 및 신고 PostgreSQL/JWT 6개 통과. 백엔드 전체는 565개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패다. PR 준비에서 기능 코드를 추가 변경하거나 같은 테스트를 재실행하지 않았다.
+
+
+## 2026-11-09 신고 아이콘 위치 변경
+
+- 사용자 요청으로 Mock/API 프로젝트 상세의 신고를 북마크 바로 오른쪽으로 이동했다. 공통 ProjectReportButton에 빨간 Siren 아이콘·연한 빨간 배경·접근 가능한 이름·툴팁을 적용했다. 본인 공고 숨김과 기존 신고 페이지 연결은 유지한다.
+- 변경 파일: `ProjectReportButton.tsx`, `ProjectIconActions.module.css`, `ProjectActions.tsx`, `ApiProjectDetail.tsx`. 실행 폴더에도 UI 변경만 반영했다. 백엔드·DB는 변경하지 않았다.
+- `npm run build -- --webpack` 및 TypeScript 성공. 프로젝트 화면·신고 페이지·코로케이션 관련 테스트 3개 파일 16개 통과. 이번 배치의 브라우저 시각 검증과 백엔드 테스트는 재실행하지 않았다. 커밋·푸시는 하지 않았다.
+
+
+## 2026-11-09 프로젝트 자체 신고 #51 일부
+
+- 사용자 요청으로 `feat/51-project-reports`에서 프로젝트 자체 신고만 구현했다. 기존 reports를 재사용하며 PR #90의 공통 Report/Repository에 프로젝트 생성·중복 조회를 확장했다. 사용자·팀원·게시글 신고와 관리자 처리는 구현하지 않았고 DB 스키마는 변경하지 않았다.
+- 별도 `/projects/{id}/report` 페이지, 사유·선택 설명·완료 화면, Mock/실제 API 분기와 상세 링크를 추가했다. Controller/Service/DTO/사유 enum, BFF·입력 검증·페이지·테스트 파일과 계약은 [프로젝트 신고](project-reports.md)에 정리했다. 실행 폴더에는 관련 변경만 반영해 기존 지원·리뷰를 유지했다.
+- frontend 빌드·TypeScript 및 전체 742개 테스트 통과. backend 전체 577개 중 565개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패. 프로젝트 신고 PostgreSQL/JWT 테스트 6개 통과.
+- 실행 서버의 누락된 기존 StrictStringDeserializer를 보완한 뒤 신고 페이지 200·양쪽 비로그인 신고 API 401·기존 프로젝트 목록 200을 확인했다.
+- 1440px Chrome 빌드 프리뷰에서 테스트 세션 주입으로 Mock 제출·중복·본인 공고·비로그인 UI와 가로 넘침/콘솔 오류 없음을 확인했다. 실제 로그인이나 팀 DB 신고 저장을 검증한 결과로 보지 않는다. 실제 팀 DB 인증 후 접수와 관리자·팀원 신고는 남아 있다. 커밋·푸시·이슈 상태 변경은 하지 않았다.
+
+
 ## 2026-11-09 북마크·좋아요 PR 준비
 
 - 사용자 요청으로 `feat/56-project-bookmarks`의 현재 변경을 커밋·푸시하고 develop 대상 PR을 준비한다. 이 브랜치는 미병합 PR #81을 기반으로 하므로 선행 의존성을 PR에 명시한다. YAML·실제 환경 설정은 이번 변경에 포함하지 않는다.
@@ -1164,6 +1187,13 @@ erDiagram
 - 검증: frontend npm test 651개·npm run build 통과. 로컬 HTTP: tag=NULL 본인 BFF 200, 최초 아이디 설정 PUT 200, 공개 BFF GET 200, 빈 아이디 거절 400, 재조회 값 유지 확인. 백엔드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 실제 PostgreSQL·브라우저 수동 UI 검증은 미실행.
 - 아직 커밋·푸시는 하지 않았다. 프론트는 기존 5173 포트와 backend 18080 연결로 복구했다.
 
+### 2026-11-10 PR #96 YAML 예외 규칙 복구
+
+- 사용자 요청으로 feat/51-project-reports의 .gitignore에서 삭제됐던 `!.github/workflows/*.yml`, `!/compose.prod.yaml`, `!/backend/src/main/resources/application.yaml` 및 기존 설명을 복구했다. `*.yaml`·`*.yml` 기본 제외와 .env·개인 설정 제외는 유지한다.
+- `git check-ignore --no-index`로 공통 설정 3종은 포함 가능, application-local.yaml·임의 개인 yml·.env는 제외됨을 확인했다. `git diff --check` 통과.
+- Git 제외 규칙과 문서만 수정했으며 실제 YAML 내용·앱 코드·DB·실행 서버는 변경하지 않았다. 앱 빌드 및 기능 테스트는 미실행이다. 후속 사용자 요청으로 해당 변경만 커밋하고 기존 PR #96 브랜치에 푸시한다.
+
+
 ## #50 PR #86 추가 develop 충돌 해결
 
 - PR 생성 도중 #63이 develop에 병합되어 f47ca02를 추가 반영했다. 충돌 파일을 비교하고 직접 입력 직군·프리미엄 생성 인가·상태/기간·실제 지원 직군 보호·확장 테스트 및 양쪽 문서 이력을 보존했다. 해결 직후 파일 트리는 이전 검증 상태와 동일하며 프론트 704개/빌드 결과를 유지한다. 추가 백엔드 검증 결과는 리뷰 문서/PR에 기록한다.
@@ -1182,6 +1212,16 @@ erDiagram
 - 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
+
+### 2026-11-10 PR #96 최신 develop 충돌 해결
+
+- 사용자 요청으로 feat/51-project-reports에 origin/develop a04608f를 병합했다. 충돌은 docs/ai-progress.md, docs/project-backend-blueprint.md, frontend/app/projects/_components/api/ApiProjectDetail.tsx의 3곳이었다.
+- 양쪽 진행 기록·청사진을 보존하고, 상세 화면에서 신고·좋아요·공유·북마크 import와 지원/승인 컴포넌트 import를 모두 유지했다. 최신 지원·팀원 참여/이탈 구현도 보존했다. 복구한 공통 YAML Git 제외 예외는 유지하며 YAML 파일 내용은 변경하지 않았다.
+- 테스트 컴파일을 위해 기존 AI 픽스처 2곳의 ProjectRecruitmentSlot 직군 인수를 String 계약에 맞췄다. 좋아요 Entity와 최신 게시글 좋아요 테스트의 충돌은 앞서 PR #93에서 검증한 동일 픽스처로 정리했다(updated_at 필수값, 실제 프로젝트 FK, 프로젝트 좋아요 제외 검사). 앱 기능이나 DB 스키마를 완화하지 않았다.
+- 기존 PR #96 브랜치에 충돌 해결 커밋을 푸시하며 develop 자체 병합·팀 DB·실행 중 Docker 서버 변경은 하지 않는다.
+- `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 648개 중 635 통과·1 실패·12 건너뜀. 신고 PostgreSQL 통합 6개는 모두 통과했다. 유일한 실패는 기존 KakaoClientTest.java:153의 DEBUG 폼 로그 비밀값 검사이며 이번 범위에서 수정하지 않았다.
+- `frontend npm test -- --maxWorkers=2`: 810개 통과. 실제 팀 계정 브라우저 접수는 미실행이며 Mock/격리 테스트 결과를 실제 접수 검증으로 보지 않는다.
+- `frontend npm run build -- --webpack`: 성공(TypeScript 검사·60개 페이지 생성 포함). 자동 생성 next-env.d.ts 변경은 병합 인덱스 기준으로 복구했다. 충돌 마커·미해결 파일 없음, git diff --check 및 git diff --cached --check 통과.
 
 ### 2026-11-10 PR #86 리뷰 DTO·알림 이벤트 명명 정리
 
@@ -1203,3 +1243,14 @@ erDiagram
 - 백엔드 전체 `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 652개 중 639 통과·1 실패·12 건너뜀. 북마크 4개·좋아요 4개·리뷰 10개 통합 테스트는 모두 통과했다. 실패는 기존 KakaoClientTest.java:153의 DEBUG HTTP 폼 로그 검사이며 관련 없는 카카오 코드는 변경하지 않았다.
 - 프론트 `npm test -- --maxWorkers=2`: 810개 모두 통과. 실제 계정 브라우저 시연 및 팀 DB 실데이터 왕복은 이번 충돌 해결 범위에서 미실행이다.
 - 프론트 `npm run build -- --webpack`: 성공(TypeScript 검사·59개 페이지 생성 포함). 생성된 next-env.d.ts는 병합 인덱스 기준으로 복구했다. 충돌 마커·미해결 파일 없음, git diff --check / git diff --cached --check 통과.
+
+### 2026-11-10 PR #96 채팅·북마크 병합 후 재충돌 해결
+
+- 사용자 요청으로 feat/51-project-reports에 origin/develop edd4610(PR #90 채팅·#93 북마크 병합)을 반영했다. Report.java, ReportRepository.java, 진행 문서, 프로젝트 청사진, ApiProjectDetail.tsx 총 5곳의 충돌을 해결했다.
+- 공통 Report.ofUser 및 사용자 신고 중복 검사와 프로젝트 신고 ofProject/프로젝트별 중복 검사를 모두 보존했다. 기존 컬럼·신고 상태·테이블 이름은 변경하지 않았다. 상세 화면의 신고·좋아요·공유·북마크와 지원·리뷰 요청 현황도 함께 유지했다.
+- 개발 브랜치에 들어온 채팅·리뷰·배포 코드는 원본대로 보존했다. 복구한 .gitignore YAML 예외도 유지했다. 병합에는 develop의 공통 application.yaml/test YAML 변경이 포함되지만 개인 YAML·.env 내용은 추가하지 않았으며 별도 환경 설정을 수정하지 않았다. 팀 DB와 실행 서버는 변경하지 않는다.
+- 충돌 해결 결과를 검증하고 기존 PR #96 브랜치에 커밋·푸시하며 develop 직접 병합이나 다음 기능 구현은 하지 않는다.
+- 최종 백엔드 `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 성공. 총 900개 중 888 통과·12 건너뜀·실패/오류 0. 이번 실행에서는 기존 카카오 로그 검사도 통과했다. 격리 테스트 컨테이너를 사용했으며 실제 공유 DB/운영 채팅 연결 검증을 의미하지 않는다.
+- 첫 프론트 검증은 상세 페이지 자동 병합에서 useMockVisibility import가 중복돼 테스트 파일 3개 파싱 및 빌드에 실패했다. frontend/app/projects/[projectId]/page.tsx에서 동일 import 한 줄만 제거했고 기능·Hook 호출은 유지했다. 백엔드 코드는 재변경하지 않았다.
+- 중복 import 제거 후 남은 프론트 1건 실패는 채팅 PR의 테스트가 Mock OFF에도 `/projects/pocket` Mock 상세를 기대하던 과거 전제였다. DirectChatScreens.test.tsx를 숫자 ID의 실제 API 로딩/Mock 식별자 미전달 및 Mock slug 차단으로 맞췄으며 Mock ON 대화 시작 검사는 유지했다. API 기능·권한을 완화하거나 새 채팅 연동을 추가하지 않았다.
+- 최종 프론트 `npm test -- --maxWorkers=2`: 93개 파일 / 1,066개 모두 통과. `npm run build -- --webpack`: 성공(TypeScript 검사·63개 페이지 생성 포함). next-env.d.ts 생성 변경 복구, 충돌 마커 없음 및 git diff --check 통과. 브라우저 실제 계정 시연은 미실행이다.
