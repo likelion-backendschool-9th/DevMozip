@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
+import com.devmozip.backend.dto.member.AccountLockRequest;
+import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
@@ -125,6 +127,23 @@ public class MemberService {
         String contactHours = request.contactHours() != null ? request.contactHours().trim() : null;
         member.updateAvailability(request.collaborationStatus(), contactHours);
         return new AvailabilityResponse(member.getCollaborationStatus(), member.getContactHours());
+    }
+
+    /** 로그인한 회원의 비공개 계정 여부 (WBS 17.7 계정 잠금 조회) */
+    @Transactional(readOnly = true)
+    public AccountLockResponse getAccountLock(String email) {
+        return new AccountLockResponse(findMember(email).isPrivate());
+    }
+
+    /**
+     * 로그인한 회원의 비공개 계정 여부를 바꾼다 (WBS 17.7). 원하는 최종 값을 받으므로 같은 요청을 반복해도 결과가 같다.
+     * Member는 @DynamicUpdate라 is_private만 갱신해 같은 회원의 다른 칼럼 변경을 덮어쓰지 않는다.
+     */
+    @Transactional
+    public AccountLockResponse updateAccountLock(String email, AccountLockRequest request) {
+        Member member = findMember(email);
+        member.changePrivacy(request.isPrivate());
+        return new AccountLockResponse(member.isPrivate());
     }
 
     /** 카카오 연동 상태와 비밀번호 설정 여부 */
