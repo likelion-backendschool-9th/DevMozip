@@ -37,7 +37,7 @@ public class ProjectReportManagementService {
 	public ManagedProjectReportResponse handle(long id,HandleProjectReportRequest request){
 		long admin=admin();var row=reports.findProjectReportForUpdate(id).orElseThrow(()->error(404,"프로젝트 신고가 없습니다."));
 		if(row.getStatus()==Report.Status.RESOLVED||row.getStatus()==Report.Status.REJECTED)throw error(409,"이미 처리가 끝난 신고입니다.");
-		if(request.status()==Report.Status.RECEIVED)throw error(400,"접수 상태로 되돌릴 수 없습니다.");
+		if(request.status()==Report.Status.AWATING)throw error(400,"접수 상태로 되돌릴 수 없습니다.");
 		var note=request.resolution()==null?"":request.resolution().strip();
 		if(request.status()!=Report.Status.REVIEWING&&note.isEmpty())throw error(400,"처리 결과를 입력해 주세요.");
 		row.handle(request.status(),note,admin,LocalDateTime.now(clock));reports.flush();return response(row);

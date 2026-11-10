@@ -1,5 +1,22 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 월간 추천 잔여 횟수 표시 (`feat/ai-prompt`)
+
+- 사용자 요청으로 matching 추천 조건 패널의 `사용 횟수 / 한도` 표시를 서버 `remainingCount` 기준의 `남은 횟수 / 한도`로 변경하고 제목을 ‘월간 추천 잔여’로 명확히 했다. 프리미엄1회 사용은99/100회, 무료1회 사용은4/5회다. 로딩·실패 시 기존 ‘—’ 표시를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/ChatConditions.tsx`, `docs/ai-matching.md`, 이 문서. 사용량 계산·차감·처리 중 예약·API·백엔드·다른 도메인은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/usage.test.ts tests/screens/FollowingMatching.test.tsx` 실행,2개 파일27개 테스트 통과. `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/_components/ChatConditions.tsx` 오류0·종료0. 표시1줄 변경으로 새 테스트는 추가하지 않았다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증: 실제 브라우저 및 서버 연결 검증은 수행하지 않았다. 커밋·푸시·병합·배포는 수행하지 않는다.
+
+## 2026-11-10 메인 첫 프롬프트 분석 연결 (`feat/ai-prompt`)
+
+- 요청 범위: 메인에서 첫 프롬프트를 제출하고 matching으로 이동했을 때 AI가 입력에 응답하고 조건을 처리하도록 수정한다. 기존 저장·이동만 하던 경로에 기존 메시지 분석을 연결하며 다음 AI 개발 단계는 시작하지 않는다.
+- 원인: `startHomeChat`·`resumeLoginPrompt`는 USER 메시지만 저장하고, 분석은 matching의 전송 버튼에서만 호출했다.
+- 변경 파일: `frontend/app/ai/matching/page.tsx`, 신규 `frontend/lib/matching/useInitialChatAnalysis.ts`·`useInitialChatAnalysis.test.tsx`, `docs/ai-matching.md`, 이 문서.
+- 완료: 로그인 및 대화 이력 로딩 후 새 로컬 대화의 첫 메시지를 한 번 분석한다. 기존 답변·조건 반영·로딩·오류·수동 재시도를 재사용하며 분석 중 재시도 버튼을 비활성화한다. 서버 대화·미완료 분석은 자동 실행하지 않는다. 추천 생성·사용량 차감·다른 업무 도메인·백엔드·DDL·인증 설정은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx lib/state/homeStore.test.tsx tests/screens/FollowingMatching.test.tsx` 실행, 3개 파일47개 테스트 통과. 새 테스트는 메인/로그인 입력의 분석 API 호출·원문/clientKey 보존·답변/조건 반영·effect 중복 실행 방지·실패 후 자동 반복 방지·기존 대화 제외를 검증한다. API 응답은 테스트 대역이다.
+- 빌드·정적 검사: `frontend`에서 `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/page.tsx lib/matching/useInitialChatAnalysis.ts lib/matching/useInitialChatAnalysis.test.tsx` 최초 실행은 새 테스트의 렌더 중 외부 변수 대입·일반 함수 내부 hook 호출2건으로 실패했다. 테스트 Probe 컴포넌트로 수정한 뒤 같은 ESLint 명령을 재실행해 오류0·종료0을 확인했다. 수정 후 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx`도4개 통과했다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증·후속: 실제 브라우저·실제 Gemini/DB 연결은 확인하지 않았다. 실제 서버의 분석 기능 설정 및 연결 오류는 기존 API 오류 안내로 처리한다. 커밋·푸시·병합·배포는 수행하지 않았다.
+
 ## 2026-11-10 STEP 7 종료 점검 — 현재 구현 기준
 
 이번 요청은 **문서만 갱신**한다. 현재 코드·이전 실행 로그·JUnit XML을 대조했으며 아래 테스트 수치는 이번 문서 작업에서 새로 실행한 결과가 아니다. 현재 브랜치는 `feat/ai-usage`, 본체 커밋은 `8945056`이다. 이후 CHAR JDBC 매핑 수정·스키마 검증 테스트·관련 문서는 작업 트리에 남아 있으며 커밋되지 않았다. 이전 날짜별 미구현·미적용·테스트 수치는 당시 이력이고 이 절을 최신 기준으로 삼는다.
@@ -1892,6 +1909,39 @@ erDiagram
 - 최종 backend: 총 1,138개 중 1,126개 통과·12개 건너뜀·실패/오류 0. 변경28·조회18·파일5·제출본12 통합은 모두 건너뜀 없이 통과. frontend 전체 1,367개·npm run build·수정 파일 ESLint·git diff --check 통과.
 - 실제 공유 DB 브라우저 전환은 이번 통합 후 미실행. 직전 payments.currency schema validate 실패와 실행 환경/파일 공유 저장소 확인 등은 실제 통합 시 남은 검증이다.
 
+### 2026-11-10 포트폴리오 임시저장 동선 보완
+
+- 사용자 요청으로 확인한 결과, 기존 API/Mock 작성기 모두 500ms localStorage 자동 저장·beforeunload 저장·다음 진입 복원 기능은 있었지만 수동 버튼이 없고 취소는 초안을 삭제했다. develop 24b524e 기준 fix/portfolio-draft-actions에서 기능 자체의 신규 서버 구현 대신 명시적 동선을 보완한다.
+- PortfolioComposer 상단 ‘임시저장’ 추가. 취소 창에 ‘임시저장 후 나가기’를 추가하고 ‘계속 작성’/‘변경 취소’를 유지한다. 일반 돌아가기도 현재 입력을 먼저 저장하며 저장소 실패 시 이동하지 않는다. 파일 업로드/등록 중에는 수동 저장·저장 후 이동을 차단한다. 수정키/새 탭 열기는 유지한다. 초안을 삭제하는 동작은 기존 변경 취소와 등록 성공 경로에만 유지한다.
+- ApiPortfolioComposer에서 로드한 초안 여부를 전달하고 API/Mock 양쪽에 복원 안내와 현재 기기·브라우저 저장 한계를 표시한다. 기존 계정·문서별 v1 키, 미완성 입력·파일 참조·원래 수정 버전 저장 형식, 공개 범위 및 등록 API/DB는 변경하지 않는다. SSR 복원/수동 버튼/안내 회귀 검증 추가, portfolio-crud-api.md 갱신.
+- 최종 frontend npm test -- --maxWorkers=2: 118개 파일·1,368개 통과(기존 localStorage 계정 분리·미완성 초안·저장 실패·첨부 복원 테스트 포함). npm run build/TypeScript, 변경 파일 ESLint, git diff --check 통과. backend 변경이 없어 backend 테스트 미실행. 실제 브라우저 클릭으로 새 나가기 동작·저장소 용량 오류를 재현하는 검증은 미실행이며 SSR/기존 저장 로직 테스트와 구분한다. 새 DB 초안 API·기기 간 동기화 기능은 추가하지 않는다.
+### 2026-11-10 Docker 프로필 쓰기 출처 검사 수정
+
+- 사용자 이미지 업로드의 "같은 사이트에서 요청해 주세요" 보고를 확인했다. profileRequestGuard만 request.url.origin을 직접 비교해 Next 내부 0.0.0.0 주소에서 정상 브라우저 Origin을 거절하고 있었다. 팔로우·포트폴리오의 기존 Host 비교 코드는 변경하지 않았다.
+- develop 24b524e 기반 fix/profile-origin-guard 별도 브랜치. lib/profiles/profileProxy.ts에서 브라우저 Host를 엄격히 검증하고 URL hostname/port를 함께 교체해 Origin과 비교한다. HTTPS 기본 포트가 내부 포트로 남지 않도록 처리. 다른 Origin·포트·프로토콜·Origin 누락/손상·위조 forwarded-host 차단은 유지한다. 공통 guard를 사용하는 이미지·기본 수정·소개·옵션·링크에 적용되며 파일 제한/백엔드/DB 변경 없음.
+- profileProxy.test.ts와 기존 이미지 route.test.ts에 Docker 내부 URL/Host 불일치·배포 HTTPS·외부/위조 출처 차단 및 업로드 전달 회귀 검증 추가. 첫 검사에서 HTTPS 기본 포트 처리 누락을 발견해 수정 후 전체 frontend 119개 파일·1,372개 통과, npm run build/ESLint/git diff --check 통과. 백엔드 변경이 없어 backend 테스트 재실행 없음.
+- 실제 Docker 프론트 재시작 후 localhost Origin의 지원하지 않는 SVG 요청은403이 아닌 파일 검증415까지 도달, 외부 Origin은403 차단 확인. 저장되지 않는 입력으로 검사해 실제 파일/DB 변경 없음. 정상 이미지 실제 저장·배포 환경 검증은 미수행. 생성 next-env.d.ts 원복, 기존 frontend/.vite 보존. 커밋·푸시·PR은 아직 하지 않았다.
+### 2026-11-10 #123 프로필 포스팅 목록 조회·화면 연결
+
+- develop 24b524e에서 feat/123-profile-posts 생성. 이전 로그인 PR #122는 별도 브랜치로 유지한다. #91 SNS 쓰기 기능/공통 게시글 Entity·테이블은 변경하지 않는다.
+- 공유 개발 PostgreSQL의 posts 15개 컬럼과 users 비공개 컬럼 부재를 읽기 전용 확인. 현재 글 0건. 기존 좋아요 조회의 POST/REPOST/VISIBLE 계약을 재사용한 조회 전용 API: GET /api/v1/users/me/posts, GET /api/v1/users/{slug}/posts. 인증 주체로 본인을 찾고 공개 slug는 ACTIVE만 허용. 삭제·숨김·원본 조회 불가 퍼간 글 제외, 최신순 페이지/카운트 같은 필터 사용.
+- 신규 ProfilePostsController/ExceptionHandler, service 인터페이스 및 impl, JDBC Repository, profile DTO 2종, PostgreSQL 통합 테스트 추가. SecurityConfig는 본인 인증 경로를 공개 경로보다 먼저 배치한다. DB/배포 설정 변경 없음.
+- frontend types/profilePosts, lib/profiles/profilePostsApi, /api/profiles/[slug]/posts BFF, 프로필 근처 ApiProfilePosts 및 테스트 추가. 기존 탭 구조·Card를 유지하고 글/원본 링크·페이지·로딩·빈 상태·오류·재시도를 연결했다. ApiProfileTabs 및 ApiProfilePage 회귀 기대값 갱신. 내부 SQL/타인 신원 쿼리 전달 차단·응답 구조/페이지/공개 작성자 일치 검증·HTML 이스케이프.
+- frontend npm test -- --maxWorkers=2: 121개 파일 / 1,376개 통과. npm run build: 성공. 첫 빌드에서 분기 축소 후 남은 불가능한 posts 비교를 TypeScript가 지적해 제거하고 재빌드 성공. 수정/신규 제품·테스트 파일 ESLint 및 git diff --check 통과. 빌드 생성 next-env.d.ts 원복, 기존 frontend/.vite 보존.
+- backend ./gradlew test --no-daemon --max-workers=2 전체 시도: KakaoClientTest.java:153, PortOneClientTest.java:105 기존 CapturedOutput 로그 검증 실패가 출력되고 종료1. 전체 성공으로 보고하지 않는다. 해당 도메인 파일은 수정하지 않았다. 별도 ./gradlew test --tests '*ProfilePostsIntegrationTest' --no-daemon --max-workers=2 성공: 5개 통과, 스킵/실패/오류0. 실제 격리 PostgreSQL에서 작성/퍼간 글·본인 신원·정렬/페이지·삭제/숨김/정지 원본 제외·잘못된 조건·DB 미준비503 검증.
+- 실제 로컬 공유 DB 조회: backend 공개 목록200·0건, 비로그인 본인401. BFF 첫 경로 컴파일 중 시간초과 후 재조회 공개200·0건/본인401 확인. 공유 데이터 생성·수정 없음. 카드 데이터·원본 링크는 SSR/격리 테스트 검증이며 실제 브라우저 데이터 있는 게시글 상세 이동은 미검증.
+- 미완료: #91 담당자와 조회 경로/DTO/공개·퍼간 글 처리 계약 최종 합의, #110 계정 비공개 공통 정책 연결(현 develop·DB에 컬럼 없음), 실제 데이터 및 피드 상세 연동 확인. docs/profile-posts-api.md에 현행/미확정을 구분했다. 활동·리뷰·배포 포폴503 해결·커밋/푸시/PR 생성은 이번 단계에 포함하지 않았다.
+
+### 2026-11-10 #123 받은 리뷰 통합 확장
+
+- 사용자 요청으로 포스팅·리뷰를 같은 브랜치에서 구현하고 GitHub #123 제목/본문에 받은 리뷰 범위를 추가했다. 사용자는 타인의 공개 프로필에서도 별점·키워드·작성자·프로젝트명 표시를 확정했다. 비공개/삭제 프로젝트명·상세 ID는 타인 응답에서 가리고 본인 기존 협업 기록은 유지한다.
+- 신규 ProfileReviewsController/ExceptionHandler, profile/ProfileReviewsResponse, ProfileReviewsService 인터페이스/impl, ProfileReviewsIntegrationTest 추가. 기존 ProjectReviewService.received의 SUBMITTED·유효 별점·정규화된 키워드 집계를 재사용하며 기존 리뷰 Entity/Repository/업무 서비스·활동 기능은 수정하지 않았다. SecurityConfig 본인/공개 GET 경로를 순서대로 추가했다.
+- frontend types/profileReviews, lib/profiles/profileReviewsApi, /api/profiles/[slug]/reviews BFF와 각 테스트, 프로필 경로 근처 ApiProfileReviews 및 SSR 테스트 추가. 기존 리뷰 CSS의 요약·키워드 버블·작성자·별점·프로젝트 기록 배치를 보존하고 페이지·로딩·빈 상태·오류·재시도 연결. ApiProfileContent에서 실제 trustScore 전달하고 임의 Mock 온도 계산은 적용하지 않았다. 응답/집계/페이지 검증과 내부 오류 비노출·no-store 유지.
+- 격리 PostgreSQL 포스팅5+리뷰4 통합 테스트 9개 모두 통과(스킵/실패/오류0). 실제 Entity·기존 리뷰 집계 서비스·키워드 연결을 사용해 제출 전 리뷰 제외, 비활성 키워드 과거 기록, 평균/분포, 본인 신원, 공개/비공개/삭제 프로젝트 차이, 토큰/이메일 비노출, 저장소503을 검증했다.
+- frontend 전체 npm test -- --maxWorkers=2: 124개 파일 / 1,385개 통과. npm run build 및 신규 리뷰/수정 제품·테스트 파일 ESLint 성공. 빌드 생성 next-env.d.ts는 원복했다. 실제 로컬 공개 리뷰 backend/BFF 모두200·2건, 비로그인 본인401 확인. 공유 DB에 리뷰·글·키워드를 생성하거나 변경하지 않았다.
+- 문서: docs/profile-reviews-api.md 추가, profile-posts-api/project-reviews와 진행 기록 갱신. 미완료: #91 포스팅 계약 최종협의, #110 대상/작성자 계정 비공개 공통 정책, 실제 브라우저 카드/상세 이동, 전체 리뷰를 읽는 기존 집계의 DB 페이징 최적화. 배포 포폴503은 별개로 보류. 커밋·푸시·PR은 아직 하지 않았다.
+
+- 리뷰 통합 후 전체 backend 회귀 재실행에서도 기존 KakaoClientTest.java:153 및 PortOneClientTest.java:105 CapturedOutput 검증 실패를 확인했다. 새 포스팅/리뷰 9개 통합 성공과 전체 회귀 성공은 구분한다. 로그: /private/tmp/devmozip-123-reviews-backend-full.log. 최종 전체 실행은 6분22초 후 종료1: 1,147개 중 1,133 통과·2 실패·12 스킵·오류0. 실패 XML은 KakaoClientTest/PortOneClientTest 두 파일이며 새 포스팅5·리뷰4는 모두 통과했다.
 
 ## 2026-11-10 프로필 활동 탭 프로젝트 실제 연결
 
@@ -2066,3 +2116,43 @@ npm run build/TypeScript 성공(실행 중인 개발 서버 .next와 분리한 �
 KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px 모서리·상태 배지·4개 집계 칸·찬성 진행 막대·만료 보조 표시를 적용했다. 실제 API의 긴 임시 정책은 details 안내로 유지하고 기본 접는다. 완료된 투표에는 추가 투표를 유도하는 문구를 표시하지 않는다. Mock도 같은 카드 스타일과 날짜 형식을 사용한다.
 
 격리 .next 볼륨에서 npm run build/TypeScript 성공, 채팅·투표·신고 관련4개 파일43개 테스트 통과. Node에서 서버 2026-11-13T10:15:59.123456과 Mock 2026-11-13T01:15:59.123Z가 모두 2026. 11. 13. 10:15로 표시됨을 확인했다. Chromium 1440px 응답 대역에서 분 단위 만료·안내 접힘·진행값1·페이지 오류/가로 넘침0을 확인하고 스크린샷을 직접 점검했다. 근거 docs/artifacts/chat-vote-design/browser-report.json 및 vote-1440.png. 백엔드·DB·결제·투표 데이터는 변경하지 않았으며 커밋·푸시하지 않았다.
+### 2026-11-10 로그인 후 데모 프로필 이동 오류 수정
+
+- 사용자 보고: 카카오 로그인 후 `/users/demo-user`에서 공개 프로필 404, `/profile/me`는 정상. 로그인 복귀 next는 기존 내부 주소를 그대로 사용하고 온보딩 완료/이미 완료 링크도 화면용 user.id를 공개 slug로 사용하던 코드 확인. 실제 사용자 브라우저의 flow 쿠키/로그인은 재현하지 않아 최초 next 생성 지점은 미확정이다.
+- `fix/login-profile-redirect`에서 `frontend/lib/auth/paths.ts`에 로그인 완료 전용 loginNext 추가. 기존 demo-user/demo-premium/demo-admin 공개 경로만 `/profile/me`로 교정하고 탭 query/hash 보존. 일반 공개 프로필·메시지·외부 URL 차단 정책 유지. 일반 로그인 actions와 카카오 callback에 적용하고 온보딩 두 내 프로필 링크 수정. 해당 actions/callback 회귀 테스트 추가.
+- `npm test -- --maxWorkers=2`: 118개 파일·1,374개 성공. 인증 관련 선별 테스트 79개 성공. `npm run build`: 성공. 인증 변경 파일 ESLint 성공. 백엔드·DB·카카오 외부 API는 변경/호출하지 않았고 실제 OAuth 브라우저 재검증·배포·커밋·푸시는 미수행. 빌드 생성 next-env.d.ts는 원복, 기존 frontend/.vite 보존.
+- 남은 사항: 새 로그인으로 실제 next 복귀 검증. 배포 포폴 503은 별개이며 배포 로그 접근 필요. 활동 담당자 작업과 기타 프로필 탭 연동은 이번 단계에서 수정하지 않음.
+
+- 후속 로컬 실행 확인: 카카오 시작 실패 보고를 확인하니 기존 dev 백엔드 프로세스가 최신 WebSocketConfigurer 의존성을 반영하지 못해 기동 실패 상태였다. 사용자 로그인 오류 해결 범위에서 devmozip-backend-1만 재시작해 최신 Gradle 의존성으로 기동. PostgreSQL 연결 및 /actuator/health HTTP 200 확인. 서버 재시작은 공유 DB 스키마/데이터 변경을 수행하지 않았다. 실제 OAuth 동의/콜백은 별도 브라우저 재확인 필요.
+
+## 2026-11-10 PR #124 develop 충돌 해결
+
+사용자 요청으로 별도 pr124-conflicts worktree에서 origin/develop 6cb3d47을 병합했다. 충돌은 이 진행 문서의 말미 한 구간뿐이며 활동/관리 화면 기록과 로그인 프로필 복귀 수정 기록을 모두 보존했다. develop의 AI 초기 분석 및 로그인 수정 코드는 원본을 유지했다. 실행 중인 worktree의 모집 중 필터/개발자 전용 탐색 미커밋 변경과 #128/#131 브랜치는 수정하지 않았다. 이번 작업에서 백엔드 코드·DB·배포 설정은 변경하지 않는다.
+
+- 충돌 해결 최종 검증: 별도 작업 폴더 소스로 npm run build/TypeScript 성공, npm test -- --maxWorkers=1 전체124개 파일1,408개 통과. 실행 서버의 node_modules 의존성 볼륨만 재사용하고 빌드 .next는 독립 볼륨으로 분리했다. 생성된 next-env.d.ts는 기존 dev 경로로 복원했다. git diff --check 및 미해결 충돌 파일0 확인. 백엔드 코드 변경이 없어 백엔드 테스트와 실제 DB/외부 API 검증은 재실행하지 않았다. 기존 #124에 일반 푸시하며 강제 푸시·develop/main 직접 변경·다른 PR 갱신은 하지 않는다.
+
+## 2026-11-10 PR #125 develop 충돌 해결
+
+사용자 요청으로 별도 pr125-conflicts worktree에서 최신 develop 5592e21을 병합했다. 진행 문서와 ApiProfileTabs·ApiProfilePage 테스트가 충돌했다. #125 포스팅/받은 리뷰와 #124 활동 API 연결을 모두 보존해 소개·포트폴리오·포스팅·활동·리뷰 5개 탭을 함께 연결했다. 기존 본인/공개 slug·own·trustScore 전달을 유지하며 연결 전 안내가 잘못 나오지 않게 했다. 진행 문서는 양쪽 기록을 보존했다. 다른 PR과 실행 서버/미커밋 검색 수정·공유 DB·배포 설정은 변경하지 않는다.
+
+검증 결과: 별도 컨테이너에서 `npm run build` 성공, `npm test -- --maxWorkers=1` 130개 파일·1,426개 테스트 통과. 백엔드는 격리된 Testcontainers 환경에서 `./gradlew test --tests '*ProfilePostsIntegrationTest' --tests '*ProfileReviewsIntegrationTest' --tests '*ProjectQueryIntegrationTest'` 성공 (21개, 실패·오류·건너뜀 0/0/0). 전체 백엔드 테스트와 브라우저 수동 검증은 이번 작업에서 실행하지 않았다. 공유 DB와 실행 중 서버는 변경하지 않았다.
+
+## 2026-11-10 PR #127 충돌 해결
+
+최신 develop 37d40f6 병합 중 진행 문서만 충돌하여 양쪽 기록을 보존했다. 프로필 쓰기 요청 출처 검사 수정과 develop의 프로필·검색 연결 코드는 유지한다. 기존 미커밋 작업과 실행 서버, DB, 배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 `npm run build` 성공. `npm test -- --maxWorkers=1` 133개 파일·1,455개 테스트 통과(출처 검사·이미지 업로드 회귀 포함). `git diff --check` 통과. 백엔드 충돌/수정은 없어 백엔드 테스트 재실행은 생략했으며 실제 이미지 저장 및 배포 브라우저 검증은 미실행.
+
+## 2026-11-10 PR #129 충돌 해결
+
+최신 develop 07412db 병합에서 AGENTS.md와 SecurityConfig.java가 충돌했다. SNS 피드·업로드 이미지의 공개 GET 경로와 통합 검색 공개 GET 경로를 모두 보존했다. 인증이 필요한 쓰기 및 팔로잉 경로 정책은 유지했다. 작업 규칙 문서는 SNS와 개발자 탐색 범위를 함께 보존했다. 별도 worktree를 사용해 기존 미커밋 작업·실행 서버·공유 DB는 변경하지 않았다.
+
+검증: 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 137개 파일·1,505개 테스트 통과. 격리된 PostgreSQL 환경에서 `./gradlew test --tests '*FeedPostgresIntegrationTest*' --tests '*SearchIntegrationTest*'` 67개 통과(실패·오류·건너뜀 0). `git diff --check` 통과. 전체 백엔드 및 브라우저 수동 검증은 미실행. 빌드 생성 next-env.d.ts 변경은 원복했다.
+
+## 2026-11-10 PR #131 충돌 해결
+
+최신 develop 7a6fee3 병합에서 공통 Report 엔티티·Repository와 진행 문서가 충돌했다. 프로젝트 팀원 신고 생성·관리자 처리·중복 검사·잠금 조회와 SNS 게시글·댓글 신고 생성·중복 조회를 모두 보존했다. 진행 기록도 양쪽을 유지했다. 별도 worktree에서 작업하며 기존 미커밋 변경·실행 서버·공유 DB는 변경하지 않았다.
+
+추가 통합 불일치: develop의 신고 초기 상태 AWATING과 #131의 RECEIVED 참조가 달라 첫 backend 컴파일이 실패했다. ProjectReportManagementService·관리자 BFF 필터·관리자 UI·관련 테스트·project-reports 문서를 AWATING으로 통일했다. DB 변경은 하지 않는다.
+
+최종 검증: 수정 후 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 139개 파일·1,521개 테스트 통과. backend `./gradlew test`에 ProjectMemberReportIntegrationTest·ProjectMemberRemovalIntegrationTest·UserReportApiIntegrationTest·ProjectReportIntegrationTest·FeedPostgresIntegrationTest 필터를 적용해 격리 PostgreSQL에서 89개 통과(실패·오류·건너뜀 0). 첫 컴파일 실패는 위 상태 값 통일 후 해소했다. 전체 백엔드 테스트 및 브라우저 수동 검증은 미실행. 생성 next-env.d.ts 원복, git diff --check 통과.

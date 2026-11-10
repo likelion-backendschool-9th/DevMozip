@@ -44,13 +44,13 @@ class ProjectMemberReportIntegrationTest extends MessengerApiTestSupport {
 	}
 	@Test void adminFiltersAndHandlesWithoutSanctionsAndCannotReopenFinalDecision() throws Exception {
 		long id=report();assertEquals(1,json(list("").andExpect(status().isOk())).get("totalElements").asInt());postAs(reporter,"/api/v1/users/"+target.getTag()+"/reports",Map.of("reason","기타")).andExpect(status().isCreated());
-		var rows=json(list("?status=RECEIVED").andExpect(status().isOk()));assertEquals(1,rows.get("totalElements").asInt());assertEquals("MEMBER",rows.get("items").get(0).get("type").asText());
-		handle(id,Map.of("status","RECEIVED","resolution","되돌림")).andExpect(status().isBadRequest());handle(id,Map.of("status","RESOLVED","resolution"," ")).andExpect(status().isBadRequest());
+		var rows=json(list("?status=AWATING").andExpect(status().isOk()));assertEquals(1,rows.get("totalElements").asInt());assertEquals("MEMBER",rows.get("items").get(0).get("type").asText());
+		handle(id,Map.of("status","AWATING","resolution","되돌림")).andExpect(status().isBadRequest());handle(id,Map.of("status","RESOLVED","resolution"," ")).andExpect(status().isBadRequest());
 		handle(id,Map.of("status","REVIEWING","resolution","검토 중")).andExpect(status().isOk());
 		handle(id,Map.of("status","RESOLVED","resolution","안내 완료","handledBy",999)).andExpect(status().isOk()).andExpect(jsonPath("$.handledBy").value(admin.getId()));
 		assertNotNull(jdbc.queryForObject("SELECT handled_at FROM reports WHERE id=?",java.time.LocalDateTime.class,id));handle(id,Map.of("status","REJECTED","resolution","다시 처리")).andExpect(status().isConflict());
 		assertEquals("ACTIVE",jdbc.queryForObject("SELECT status FROM users WHERE id=?",String.class,target.getId()));assertEquals("ACTIVE",jdbc.queryForObject("SELECT status FROM project_members WHERE id=?",String.class,mid(target)));
-		assertEquals(0,json(list("?status=RECEIVED").andExpect(status().isOk())).get("totalElements").asInt());
+		assertEquals(0,json(list("?status=AWATING").andExpect(status().isOk())).get("totalElements").asInt());
 	}
 	@Test void deniesUnauthorizedAdminAndWrongTargets() throws Exception {
 		long id=report();mvc.perform(get("/api/v1/admin/project-reports").header("Authorization","Bearer "+jwt.createAccessToken(reporter.getEmail(),"ADMIN"))).andExpect(status().isForbidden());getAs(reporter,"/api/v1/admin/project-reports").andExpect(status().isForbidden());mvc.perform(get("/api/v1/admin/project-reports")).andExpect(status().isUnauthorized());

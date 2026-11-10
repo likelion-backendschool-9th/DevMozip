@@ -100,3 +100,7 @@ Mock ON은 기존 시연 상태·날짜 시뮬레이션을 유지한다. OFF는 
 응답 record는 dto/project에 ProjectReviewResponse, ProjectReviewLinkResponse, ProjectReviewRequestStatusResponse, ProjectReviewSummaryResponse, ProjectReviewReminderResponse로 구분한다. SubmitProjectReviewsRequest는 입력 DTO로 유지한다. API 경로·JSON 필드와 기존 정책은 바꾸지 않는다.
 
 ProjectReviewNotificationEvent는 최초 리뷰 요청과 재알림을 알림 담당자에게 전달하는 내부 이벤트다. HTTP 요청 DTO나 실제 발송 완료 이벤트가 아니며 AFTER_COMMIT 소비·영속 발송은 기존 후속 연동 범위다. 링크 및 이벤트의 toString에서는 토큰을 계속 숨긴다.
+
+## 프로필 받은 리뷰 조회 연결 (2026-11-10, #123)
+
+사용자 요청으로 프로필 담당 브랜치 feat/123-profile-posts에서 기존 received 집계를 재사용하는 본인/공개 리뷰 API와 화면을 추가했다. [프로필 리뷰 계약](profile-reviews-api.md)을 따른다. 공개 프로필에서도 별점·키워드·작성자·프로젝트명을 표시하되 타인에게 비공개/삭제 프로젝트 이름·링크는 숨긴다. 기존 리뷰 요청·제출·Entity·집계 서비스는 수정하지 않는다. 신뢰 온도는 기존 프로필의 저장값을 표시할 뿐 실제 점수 계산식 연결을 완료한 것은 아니다. #110 계정 비공개 공통 정책과의 통합은 여전히 남는다.
