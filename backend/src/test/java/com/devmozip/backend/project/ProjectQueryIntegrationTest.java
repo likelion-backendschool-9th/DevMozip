@@ -73,6 +73,24 @@ class ProjectQueryIntegrationTest {
 	private void participant(long id, long userId, String status) {
 		jdbc.update("INSERT INTO project_members(project_id,user_id,role,job_role,status,joined_at,created_at,updated_at) VALUES (?,?,'PARTICIPANT','BACKEND',?,?,?,?)", id,userId,status,now,now,now);
 	}
+	@Test void detailExposesOnlyCurrentTeamAndPreservesPrivateAccess() throws Exception {
+		participant(first,303,"ACTIVE"); participant(first,304,"LEFT"); participant(first,305,"KICKED");
+		mvc.perform(get(BASE+"/"+first)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.team.length()").value(2))
+			.andExpect(jsonPath("$.team[0].userId").value(101))
+			.andExpect(jsonPath("$.team[0].role").value("HOST"))
+			.andExpect(jsonPath("$.team[1].userId").value(303))
+			.andExpect(jsonPath("$.team[1].jobRole").value("BACKEND"))
+			.andExpect(jsonPath("$.team[1].email").doesNotExist());
+		mvc.perform(get(BASE+"/"+privateId)).andExpect(status().isNotFound());
+		when(currentUser.getCurrentUserId()).thenReturn(303L);
+		mvc.perform(get(BASE+"/"+privateId).header("Authorization",token())).andExpect(status().isNotFound());
+		participant(privateId,303,"ACTIVE");
+		mvc.perform(get(BASE+"/"+privateId).header("Authorization",token())).andExpect(status().isOk())
+			.andExpect(jsonPath("$.team.length()").value(2));
+		jdbc.update("UPDATE project_members SET status='KICKED' WHERE project_id=? AND user_id=303",privateId);
+		mvc.perform(get(BASE+"/"+privateId).header("Authorization",token())).andExpect(status().isNotFound());
+	}
 	@Test void publicProfileActivitiesExcludePrivateDeletedAndApplications() throws Exception {
 		jdbc.update("INSERT INTO users(id,email,tag,role,status) VALUES (101,'activity@project.test','activity-host','USER','ACTIVE') ON CONFLICT(id) DO UPDATE SET tag='activity-host',status='ACTIVE'");
 		participant(second,101,"LEFT");
