@@ -15,7 +15,7 @@ import { projectChatStatusLabel } from '@/lib/messaging/projectChatApi';
 import { currentMemberKeys, projectMemberKey, projectMemberName, projectTypingText, toProjectChatMessages } from '@/lib/messaging/projectChatView';
 import { profileImageUrl } from '@/lib/profiles/profileDetail';
 import { useAuth } from '@/lib/state/authStore';
-import { submitUserReport } from '@/lib/state/directChatStore';
+import {submitProjectMemberReport} from '@/lib/projects/projectMemberReport';
 import {
     loadOlderProjectMessages, notifyProjectChatTyping, openProjectChat, sendOpenProjectMessage, setProjectChatAtBottom, useProjectChats,
 } from '@/lib/state/projectChatStore';
@@ -137,14 +137,16 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                             </>;
                             return (
                                 <div className={memberStyles.memberRow} key={member.id}>
-                                    {href ? <Link href={href}>{label}</Link> : <div>{label}</div>}
+                                    {href ? <Link className={memberStyles.memberIdentity} href={href}>{label}</Link> : <div className={memberStyles.memberIdentity}>{label}</div>}
+                                    <div className={memberStyles.memberActions}>
                                     {!member.me && !completed && ready.canSend && member.role!=='HOST' && member.projectMemberId && <button type="button" className={memberStyles.kickIcon} aria-label={`${name} 강퇴 투표 요청`} title="강퇴 투표 요청" onClick={()=>{setShowMembers(false);setKickTarget(member);}}><UserRoundMinus size={17}/></button>}
-                                    {!member.me && member.tag && (
+                                    {!member.me && member.projectMemberId && (
                                         <button type="button" className={memberStyles.reportIcon} aria-label={`${name} 신고`} title="사용자 신고"
                                             onClick={() => { setShowMembers(false); setReportTarget(member); }}>
                                             <Siren size={16} aria-hidden="true" />
                                         </button>
                                     )}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -155,10 +157,10 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                 </Modal>
             )}
             {kickTarget?.projectMemberId && <ApiKickVoteDialog projectId={id} targetMemberId={kickTarget.projectMemberId} name={projectMemberName(kickTarget)} onClose={()=>setKickTarget(null)} onCreated={()=>setVoteVersion(v=>v+1)}/>}
-            {reportTarget?.tag && (
+            {reportTarget?.projectMemberId && (
                 <UserReportDialog
                     key={reportTarget.id}
-                    server={{ name: projectMemberName(reportTarget), onSubmit: reason => submitUserReport(reportTarget.tag!, reason) }}
+                    server={{projectContext:true, name: projectMemberName(reportTarget), onSubmit:(reason,detail)=>submitProjectMemberReport(id,reportTarget.projectMemberId!,reason,detail)}}
                     onClose={() => setReportTarget(null)}
                 />
             )}

@@ -46,6 +46,12 @@ public class Report extends BaseEntity {
 		report.projectId = projectId;
 		return report;
 	}
+	public static Report ofProjectMember(Member reporter,Member target,long projectId,String reason,LocalDateTime now){
+		Report report=new Report(reporter,target,reason,now);report.projectId=projectId;return report;
+	}
+	public void handle(Status status,String resolution,long adminId,LocalDateTime now){
+		this.status=status;this.resolution=resolution;this.handledBy=adminId;this.handledAt=now;touch(now);
+	}
 	private Report(Member reporter, Member reportedUser, String reason, LocalDateTime now) {
 		super(now);
 		this.reporter = reporter;

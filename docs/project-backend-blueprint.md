@@ -261,7 +261,7 @@ erDiagram
 | resolution | TEXT / NULL | 처리 결과 |
 | handled_at | DATETIME / NULL | 처리 시각 |
 
-프로젝트 신고는 project_id, 팀원에 대한 회원 신고는 reported_user_id를 대상으로 사용한다. 프로젝트 자체 신고는 #51 일부로 구현했으며 `POST /api/v1/projects/{id}/reports`로 공통 reports에 저장한다. 상세 계약과 검증은 [프로젝트 신고](project-reports.md)를 참조한다. 대상 컬럼 중 하나를 선택하는 공통 계약을 제안한다. 여러 대상을 동시에 저장하거나 팀원 신고의 프로젝트 맥락까지 보관하려면 공통 신고 담당자와 별도 확정한다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
+프로젝트 신고는 project_id만, 프로젝트 팀원 신고는 project_id(프로젝트 맥락)와 reported_user_id(대상 회원)를 함께 사용한다. 프로젝트 자체 신고는 #51 일부로 구현했으며 `POST /api/v1/projects/{id}/reports`로 공통 reports에 저장한다. 상세 계약과 검증은 [프로젝트 신고](project-reports.md)를 참조한다. 일반 사용자 신고는 reported_user_id만 채우며 프로젝트 맥락은 NULL이다. #51 사용자 요청으로 팀원 신고는 프로젝트+대상 회원의 복합 맥락을 사용하고 중복 범위도 분리한다. 관리자 처리 API는 프로젝트 관련 신고만 다루며 상세 계약은 project-reports.md를 따른다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
 
 ### bookmarks — 공통 북마크(#56 구현)
 
