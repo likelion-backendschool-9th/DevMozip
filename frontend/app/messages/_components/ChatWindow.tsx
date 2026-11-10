@@ -1,4 +1,5 @@
 'use client';
+import { chatTimelineTime } from '@/lib/messaging/chatTimeline';
 import styles from './ChatWindow.module.css';
 import { useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -8,6 +9,8 @@ import { useProfiles } from '@/lib/state/profileStore';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/common/Input';
 import type { ChatMessage } from '@/types/messaging';
+
+export interface ChatHistoryItem { id: string; createdAt: string; content: ReactNode }
 
 export type ChatSendResult = { ok: boolean; error?: string };
 
@@ -34,12 +37,13 @@ export interface ChatTypingControls {
     display?: 'text' | 'bubble';
 }
 
-export function ChatWindow({ channelKey, messages, members, disabled = false, historyContent, historyVersion, onSend, author, footerText = MOCK_FOOTER, history, typing }: {
+export function ChatWindow({ channelKey, messages, members, disabled = false, historyContent, historyItems = [], historyVersion, onSend, author, footerText = MOCK_FOOTER, history, typing }: {
     channelKey: string;
     messages: ChatMessage[];
     members: string[];
     disabled?: boolean;
     historyContent?: ReactNode;
+    historyItems?: ChatHistoryItem[];
     historyVersion?: number;
     onSend: (body: string) => ChatSendResult | Promise<ChatSendResult>;
     /** 작성자 이름과 링크. href가 null이면 링크 없이 이름만 표시한다. 없으면 Mock 프로필에서 찾는다. */
@@ -62,8 +66,10 @@ export function ChatWindow({ channelKey, messages, members, disabled = false, hi
     const firstId = messages[0]?.id;
     const lastId = messages.at(-1)?.id;
     const lastSender = messages.at(-1)?.senderId;
-    const seen = useRef<{ channelKey: string; firstId?: string; lastId?: string } | null>(null);
+    const seen = useRef<{ channelKey: string; firstId?: string; lastId?: string; lastEventId?: string } | null>(null);
     const olderBase = useRef<{ height: number; top: number } | null>(null);
+    const timeline = [...messages.map(message => ({ id: 'message:'+message.id, createdAt: message.createdAt, message })), ...historyItems.map(item => ({ ...item, id: 'event:'+item.id }))].sort((a,b) => chatTimelineTime(a.createdAt)-chatTimelineTime(b.createdAt));
+    const lastEventId = timeline.at(-1)?.id;
     const typingBubble = typing?.display === 'bubble' && typing.text !== null;
 
     useLayoutEffect(() => {
@@ -76,7 +82,7 @@ export function ChatWindow({ channelKey, messages, members, disabled = false, hi
         // 폴링으로 메시지를 받으므로 페이지 전체가 움직이지 않게 대화 영역 안에서만 내린다.
         const toBottom = () => { if (box) box.scrollTop = box.scrollHeight; };
         const before = seen.current;
-        seen.current = { channelKey, firstId, lastId };
+        seen.current = { channelKey, firstId, lastId, lastEventId };
         if (!before || before.channelKey !== channelKey) {
             atBottom.current = true;
             toBottom();
@@ -85,11 +91,11 @@ export function ChatWindow({ channelKey, messages, members, disabled = false, hi
             const base = olderBase.current;
             olderBase.current = null;
             if (box && base) box.scrollTop = base.top + box.scrollHeight - base.height;
-        } else if (before.lastId !== lastId && (atBottom.current || lastSender === user?.id)) {
+        } else if ((before.lastId !== lastId || before.lastEventId !== lastEventId) && (atBottom.current || (before.lastId !== lastId && lastSender === user?.id))) {
             // 위로 올려 읽는 중에는 상대 메시지가 와도 움직이지 않는다. 내가 보낸 메시지는 따라간다.
             toBottom();
         }
-    }, [channelKey, messages.length, historyVersion, firstId, lastId]);
+    }, [channelKey, messages.length, historyVersion, firstId, lastId, lastEventId]);
 
     useLayoutEffect(() => {
         // 입력 중 말풍선이 생기거나 사라질 때 맨 아래를 보고 있었다면 말풍선이 보이게 따라간다. 위로 올려 읽는 중에는 움직이지 않는다.
@@ -145,8 +151,10 @@ export function ChatWindow({ channelKey, messages, members, disabled = false, hi
                     {history.loadingOlder ? '불러오는 중…' : '이전 메시지 더 보기'}
                 </Button>
             </div>}
-            {!messages.length && <div className={[styles.scope, "chat-empty"].join(" ")}>첫 메시지로 대화를 시작해 보세요.</div>}
-            {messages.map(m => {
+            {!messages.length && !historyItems.length && <div className={[styles.scope, "chat-empty"].join(" ")}>첫 메시지로 대화를 시작해 보세요.</div>}
+            {timeline.map(item => {
+                if ('content' in item) return <div key={item.id}>{item.content}</div>;
+                const m = item.message;
                 if (m.kind === 'system') return <p className={[styles.scope, "system-message"].join(" ")} key={m.id}>{m.body}</p>;
                 const mine = m.senderId === user?.id;
                 const others = members.filter(id => id !== m.senderId);

@@ -91,8 +91,9 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                                 </div>
                                 <Button variant="secondary" onClick={() => setShowMembers(true)}>멤버 {current.length}명</Button>
                             </header>
-                            <ChatWindow
-                                historyContent={<ApiKickVotePanel projectId={id} version={voteVersion}/>}
+                            <ApiKickVotePanel projectId={id} version={voteVersion}>{(items,error)=><ChatWindow
+                                historyItems={items}
+                                historyContent={error?<p role="alert">{error}</p>:undefined}
                                 historyVersion={voteVersion}
                                 channelKey={projectId}
                                 messages={toProjectChatMessages(ready.members, ready.messages, ready.nextBefore !== null, user.id)}
@@ -111,7 +112,7 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                                     onBottomChange: setProjectChatAtBottom,
                                 }}
                                 typing={{ text: projectTypingText(ready.typing), onTyping: () => notifyProjectChatTyping() }}
-                            />
+                            />}</ApiKickVotePanel>
                         </>
                     ) : (
                         <div className={[styles.scope, 'chat-empty'].join(' ')}>

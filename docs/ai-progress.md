@@ -2239,3 +2239,11 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 검증: 격리된 Docker 환경 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체150개 파일/1665개 테스트 통과. ./gradlew test의 ProjectQueryIntegrationTest·ProjectApplicationIntegrationTest·ProjectMemberRemovalIntegrationTest 총36개 성공(실패·오류·건너뜀0, 격리 PostgreSQL Testcontainers). 공개/비공개 접근·현재 팀원만 제공·중복/잘못된 응답 거부·왕관 및 프로필 링크를 검증했다. git diff --check 통과. 브라우저 수동 화면 검증은 미실행. 기존 미추적 계획서·이슈 감사 문서는 보존. 커밋·푸시 없음.
 
 로컬 백엔드 재시작 후 공개 목록·상세 HTTP200 및 실제 team 배열 응답 확인. 이 확인 과정의 상세 조회는 기존 정책대로 조회수1회를 증가시킨다.
+
+## 2026-11-11 강퇴 투표 카드 시간순 배치
+
+사용자 요청으로 채팅 마지막에 별도 부착하던 강퇴 투표를 생성 시각 기준 메시지 사이에 배치했다. 이후 대화는 투표 아래에 쌓이고, 찬반·결과 갱신 시 원래 위치를 유지한다. 실제 API 채팅·Mock 채팅 모두 적용했다. 서버 LocalDateTime은 한국 시각으로 해석해 offset 포함 메시지와 비교한다. 새 투표가 마지막에 추가되면 하단 열람 중에만 따라가며 기존 이전 기록 스크롤 보존 로직은 유지한다.
+
+변경 파일: ChatWindow.tsx·새 ChatWindow.test.tsx, 새 lib/messaging/chatTimeline.ts, ApiKickVotePanel.tsx·ServerProjectChat.tsx·KickVotePanel.tsx·프로젝트 채팅 page.tsx, docs/messenger-plan.md.
+
+검증: 독립 Docker 컨테이너에서 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체151개 파일/1667개 성공. 새 테스트로 투표 전후 대화 배치, 여러 투표 시간순 정렬, 한국 시각·UTC 혼합 비교와 투표만 있는 화면의 빈 대화 안내 제거를 확인했다. git diff --check 통과. 브라우저 수동 스크롤·실제 투표 생성 검증은 미실행. 백엔드·DB 변경 없어 백엔드 테스트는 재실행하지 않았다. 커밋·푸시 없음.

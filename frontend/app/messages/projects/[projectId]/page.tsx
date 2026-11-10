@@ -90,9 +90,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                         messages={room?.messages || []}
                         members={members}
                         disabled={!access.canWrite}
-                        historyContent={
-                            <KickVotePanel projectId={projectId} members={members} canWrite={access.canWrite} />
-                        }
+                        historyItems={projects.kickVotes.filter(v=>v.projectId===projectId).map(v=>({id:v.id,createdAt:v.createdAt,content:<KickVotePanel projectId={projectId} members={members} canWrite={access.canWrite} voteId={v.id}/>}))}
                         historyVersion={projects.kickVotes.filter(v => v.projectId === projectId).length}
                         onSend={body => act({ type: 'send-group', projectId, body })}
                     />
