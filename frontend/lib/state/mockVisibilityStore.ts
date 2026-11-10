@@ -4,7 +4,7 @@ import { mockVisibilityStore, MOCK_VISIBILITY_KEY } from '@/lib/demo/mockVisibil
 
 import { resetMockStores } from '@/lib/localStore';
 const store = mockVisibilityStore;
-const serverSnapshot = () => true;
+const serverSnapshot = () => false;
 function subscribe(listener: () => void) {
     const unsubscribe = store.subscribe(listener);
     const onStorage = (event: StorageEvent) => {

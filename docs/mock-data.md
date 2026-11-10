@@ -6,7 +6,7 @@
 
 | 키 | 주요 필드/역할 | 공유 상태 |
 |---|---|---|
-| `devmozip:mock-visibility:v1` | `version`, `enabled` | Mock 표시 설정만 저장, 다른 도메인/인증 불변 |
+| `devmozip:mock-visibility:v2` | `version`, `enabled` | 표시 설정 version 2, 기본 OFF·전환 버튼 숨김. 다른 도메인/인증 불변 |
 | `devmozip:empty-mode:v1:<원래 키>` | OFF에서 직접 작성한 도메인 상태 | ON 샘플 저장소와 분리 |
 | `devmozip:prototype:v1` | 안내 표시 설정 | 공통 안내 |
 | `devmozip:auth:v1` | 계정 ID 세션 | 로그인 유지 시 localStorage, 해제 시 sessionStorage |
