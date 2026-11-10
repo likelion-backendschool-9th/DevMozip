@@ -91,3 +91,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.manage-metrics .date-metric){font-size:1rem}
 }}
+
+.kickedBadge{color:#b42336;background:#fff0f2;border:1px solid #f5c5cd;font-weight:600}

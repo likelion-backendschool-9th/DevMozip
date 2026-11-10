@@ -11,3 +11,8 @@ describe('프로젝트 팀원 카드',()=>{
   expect(renderToStaticMarkup(<ProjectTeamCard host={null} hostMemberId={1} team={undefined}/>)).toContain('팀원 정보를 아직 불러오지 못했습니다.');
  });
 });
+
+it('강퇴 이력은 이름 옆에 표시하되 현재 인원에서 제외한다',()=>{
+ const html=renderToStaticMarkup(<ProjectTeamCard host={{id:1,tag:'host',nickname:'주최'}} hostMemberId={1} team={[{userId:2,tag:'former',nickname:'이전팀원',role:'PARTICIPANT',jobRole:'BACKEND',status:'KICKED'}]}/>);
+ expect(html).toContain('강퇴됨');expect(html).toContain('href="/users/former"');expect(html).toContain('0명');expect(html).not.toContain('참여 완료');
+});

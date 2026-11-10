@@ -76,12 +76,12 @@ public class ProjectQueryRepository {
 			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.Host(rs.getLong("id"),rs.getString("tag"),rs.getString("nickname")));
 		return result.isEmpty()?null:result.getFirst();
 	}
-	/** 공고를 열람할 수 있는 사용자에게 현재 팀원의 공개 프로필 식별 정보만 제공한다. */
-	public List<com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember> team(long projectId) {
-		return jdbc.query("SELECT m.user_id, CASE WHEN u.status='ACTIVE' THEN u.tag ELSE NULL END AS tag, u.nickname, m.role, m.job_role "
-			+ "FROM project_members m LEFT JOIN users u ON u.id=m.user_id WHERE m.project_id=:id AND m.status='ACTIVE' "
-			+ "ORDER BY CASE WHEN m.role='HOST' THEN 0 ELSE 1 END, m.joined_at, m.id",new MapSqlParameterSource("id",projectId),
-			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember(rs.getLong("user_id"),rs.getString("tag"),rs.getString("nickname"),rs.getString("role"),rs.getString("job_role")));
+	/** 현재 팀원에게만 강퇴 이력을 추가하고, 나머지 조회자에게는 현재 명단만 제공한다. */
+	public List<com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember> team(long projectId,boolean includeKicked) {
+		return jdbc.query("SELECT m.user_id, CASE WHEN u.status='ACTIVE' THEN u.tag ELSE NULL END AS tag, u.nickname, m.role, m.job_role, m.status "
+			+ "FROM project_members m LEFT JOIN users u ON u.id=m.user_id WHERE m.project_id=:id AND (m.status='ACTIVE' OR (:includeKicked AND m.status='KICKED')) "
+			+ "ORDER BY CASE WHEN m.role='HOST' THEN 0 ELSE 1 END, m.joined_at, m.id",new MapSqlParameterSource("id",projectId).addValue("includeKicked",includeKicked),
+			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember(rs.getLong("user_id"),rs.getString("tag"),rs.getString("nickname"),rs.getString("role"),rs.getString("job_role"),rs.getString("status")));
 	}
 
 	private String normalize(String value) { return Normalizer.normalize(value, Normalizer.Form.NFKC).strip().toLowerCase(Locale.ROOT); }
