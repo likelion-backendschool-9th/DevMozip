@@ -17,6 +17,7 @@ public class PortfolioMutationController {
         var result=service.create(email(auth),input);return ResponseEntity.created(URI.create("/api/v1/portfolios/"+result.portfolio().id())).body(result);
     }
     @PutMapping("/{id}") public PortfolioDetailResponse update(Authentication auth,@PathVariable long id,@Valid @RequestBody PortfolioWriteRequest input){return service.update(email(auth),id,input);}
+    @PatchMapping("/{id}/visibility") public PortfolioDetailResponse visibility(Authentication auth,@PathVariable long id,@Valid @RequestBody PortfolioVisibilityRequest input){return service.changeVisibility(email(auth),id,input);}
     @DeleteMapping("/{id}") public ResponseEntity<Void> delete(Authentication auth,@PathVariable long id){service.delete(email(auth),id);return ResponseEntity.noContent().build();}
     private String email(Authentication auth){return auth==null||!auth.isAuthenticated()||auth instanceof AnonymousAuthenticationToken?null:auth.getName();}
 }

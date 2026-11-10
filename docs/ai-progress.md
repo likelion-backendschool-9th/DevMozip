@@ -1825,6 +1825,23 @@ erDiagram
 - 원래 backend gradlew test는 RecommendationSummaryRequest.java의 public record RecommendationRequestSummary 파일명 불일치에서 compileJava 실패하며 다수 심볼 오류도 출력됨. 담당자 수정 대상이므로 AI/결제 소스를 변경하거나 테스트를 임의 제외하지 않았다. 이번 통합의 백엔드 테스트 성공으로 보고하지 않는다.
 - 업로드 구현 당시의 실제 PostgreSQL 50개/나머지 회귀/브라우저 검증은 앞 기록이며 최신 통합 상태의 실행 서버·DB·브라우저 재검증을 의미하지 않는다. 이번 공유 DB/파일 변경 없음.
 
+## 2026-11-10 #116 포트폴리오 공개 범위 변경
+
+- 사용자 요청으로 feat/116-portfolio-visibility를 업로드 #115의 8079707에서 분기. 업로드 PR은 아직 미병합이며 이후 develop 통합이 필요하다. 커밋·푸시·PR 생성은 이번 단계에 수행하지 않았다.
+- PortfolioVisibilityRequest enum/expectedUpdatedAt, Controller PATCH /api/v1/portfolios/{id}/visibility, Service/Impl, Repository의 visibility/updated_at 전용 UPDATE 추가. 작성자·본문·파일·등록 시각을 변경하지 않는다.
+- 본인 ACTIVE/WARNED만 변경 가능. 행 잠금·수정 버전 검사·단조 증가 시각·동일 값 no-op 구현. 제출 이력은 담당자 합의 전 409로 보류하고 참조 저장소 미준비 시 503. 프로젝트 지원서 자체·정책·스냅샷은 변경하지 않는다.
+- 프론트 PATCH BFF는 출처·JSON·크기·ID·입력/응답을 검사하고 공개 값·수정 시각만 전달. 본인 상세에 선택·저장·변경 중 차단·성공 안내·오류/최신 불러오기 추가, 성공 응답으로 상세와 수정 버전 갱신. 일반 편집 PUT의 공개 값 유지 계약은 그대로다.
+- 프론트 전체 1,246개·npm run build·수정 파일 ESLint·git diff --check 통과.
+- 원래 backend test는 develop의 AI DTO 파일명/public record명 불일치에서 compileJava 실패. Git 추적 소스는 변경하지 않고 외부 임시 Gradle init으로 원본 내용을 올바른 파일명에 복사한 조건에서 PostgreSQL 통합 50개(변경27/조회18/파일5) 건너뜀 없이 통과. 일반 빌드·CI 성공으로 보고하지 않는다.
+- 테스트: 공개/비공개 목록·타인 상세, 일반 소유자/타인 ADMIN 제한, enum/null·과거 버전·동시 요청·동일 값·NULL 시각, 제출/참조 장애 보류, 비공개 PATCH 후 파일 404. 공유 DB 데이터·스키마 변경 없음.
+- 최신 검증 클래스 반영으로 로컬 백엔드 재시작 시 payments.currency의 DB CHAR/bpchar와 Entity VARCHAR 기대 타입 불일치에서 schema validate 부팅 실패 확인. 타 담당자 파일·공유 DB를 임의로 바꾸지 않았다. 따라서 이번 실제 공유 DB 브라우저 전환은 미실행이며 결제 매핑·AI 파일명 해결 후 추가 확인 필요.
+- 주요 파일: PortfolioVisibilityRequest, 기존 Mutation Controller/Service/Impl/Repository, Next visibility route, portfolioVisibility, PortfolioVisibilityControl/CSS, ApiPortfolioDetail 및 관련 테스트. 상세 docs/portfolio-visibility-api.md.
+
+### 2026-11-10 #116 커밋 전 최신 원격 확인
+
+- 사용자 요청으로 origin fetch 및 로컬 main을 원격 main까지 fast-forward 확인. origin/main 080c7d9, origin/develop d6a5720, 선행 업로드 8079707 모두 현재 HEAD의 조상으로 확인되어 추가 병합 변경·충돌 없음.
+- 공개 범위 변경 구현은 직전 검증 후 소스 변경 없이 유지. frontend 1,246개·빌드·lint, 임시 AI 파일명 검증본 조건의 PostgreSQL 관련 50개 결과를 재사용하며 이번 Git 정리에서 재실행 성공으로 보고하지 않는다.
+- 원본 AI DTO 파일명 오류 및 로컬 payments.currency schema validate 제한은 남아 있으며 해당 업무 코드·DB는 변경하지 않는다. 임시 캐시를 제외하고 이슈 #116 변경만 커밋·푸시한다.
 ## 2026-11-10 PR #106 순차 통합 준비 — 최신 develop 반영
 
 - 사용자 요청 범위: `feat/gemini-recommend` → `feat/gemini-portfolio-analysis` → `feat/ai-usage` 순서로 develop 충돌을 최소 수정으로 해결한다. PR 브랜치에만 병합 커밋을 전달하며 develop/main 직접 변경·PR 머지·새 기능·외부 AI/공유 DB 연결은 수행하지 않는다.
@@ -1865,3 +1882,12 @@ erDiagram
 - 최신 통합 상태 backend 전체: 1,132개 중 1,120 통과·12 건너뜀·실패/오류 0. 신규 스냅샷 12개(서버 업로드 파일 보존/권한 포함)도 모두 통과했다. 이전 단계 로그 검증 2건 실패는 이번 최종 실행에서는 발생하지 않았다.
 - 최신 develop의 FollowingMatching.test.tsx에서 AppLayout Route 시작 태그가 빠져 JSX 파싱에 실패했다. 기존 닫는 태그에 맞춰 시작 태그 하나만 복구했다. 기능 코드는 변경하지 않았다.
 - 최종 frontend: 116개 파일 / 1,356개 테스트 통과. npm run build -- --webpack 및 TypeScript 검사 성공(77개 페이지 생성). 빌드 뒤 테스트 픽스처만 수정했으므로 프로덕션 소스는 같은 빌드 상태다. 생성된 next-env.d.ts는 병합 인덱스 기준으로 복구한다. 최종 diff 검증과 충돌 해소 여부는 커밋·PR 단계에서 확인한다.
+
+### 2026-11-10 #116 PR 준비 및 #117 제출본 보관 통합
+
+- 사용자 PR 생성 요청 시 #115 업로드와 #117 제출본 보관이 develop d61e585에 병합된 것을 확인했다. 최신 develop 병합에서 Repository·상세 컴포넌트·진행 문서 충돌을 해결했다.
+- changeVisibility와 submittedCopiesReady 메서드를 모두 보존하고, 상세의 공개 범위 조작과 제출본 화면의 backHref/backLabel·읽기 전용 계약을 함께 유지했다.
+- 새 확정 정책에 맞춰 모든 제출본 보관이 확인되면 원본 공개 범위 변경 허용, 보관 누락 시 409. 제출본 JSON/지원 연결은 변경하지 않는 테스트 추가. 공유 DB 변경 없음.
+- 이전 검증용 AI 임시 어댑터는 최신 수정된 타입과 맞지 않아 실행 실패했다. 원본 소스에서 파일명 수정이 반영됐음을 확인하고 임시 보정·제외 없이 일반 ./gradlew test로 전환했다.
+- 최종 backend: 총 1,138개 중 1,126개 통과·12개 건너뜀·실패/오류 0. 변경28·조회18·파일5·제출본12 통합은 모두 건너뜀 없이 통과. frontend 전체 1,367개·npm run build·수정 파일 ESLint·git diff --check 통과.
+- 실제 공유 DB 브라우저 전환은 이번 통합 후 미실행. 직전 payments.currency schema validate 실패와 실행 환경/파일 공유 저장소 확인 등은 실제 통합 시 남은 검증이다.
