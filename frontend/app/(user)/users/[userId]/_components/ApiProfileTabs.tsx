@@ -4,13 +4,15 @@ import { useQueryState } from '@/lib/navigation';
 import { ApiProfileLinks } from './ApiProfileLinks';
 import { ApiProfileOptions } from './ApiProfileOptions';
 import { ApiProfileIntroduction } from './ApiProfileIntroduction';
+import { ApiProfileReviews } from './ApiProfileReviews';
+import { ApiProfilePosts } from './ApiProfilePosts';
 import { ApiPortfolioTab } from './ApiPortfolioTab';
 import { Card } from '@/components/common/Card';
 import styles from '../page.module.css';
 import aboutStyles from './AboutTab.module.css';
 
 // 탭과 섹션 배치를 유지하되 아직 조회하지 않은 데이터를 빈 목록/실제 값으로 단정하지 않는다.
-export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: string; slug?: string; canEdit?: boolean }) {
+export function ApiProfileTabs({ nickname, slug, canEdit = false, trustScore = null }: { nickname: string; slug?: string; canEdit?: boolean; trustScore?: number | null }) {
     const [params, setParams] = useQueryState();
     const tab = profileTabs.find(item => item.id === params.get('tab'))?.id || 'about';
     function select(id: string) {
@@ -36,7 +38,7 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                 }}>{item.label}</button>)}
         </div>
         <section className={scope('profile-tab-panel')} role="tabpanel" id={`profile-panel-${tab}`} aria-labelledby={`profile-tab-${tab}`} tabIndex={0}>
-            {tab !== 'about' && tab !== 'portfolio' && <p className="text-muted">이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.</p>}
+            {tab !== 'about' && tab !== 'portfolio' && tab !== 'posts' && tab !== 'reviews' && <p className="text-muted">이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.</p>}
             {tab === 'about' ? <div className={aboutStyles.wrapper}>
                 <div className={`${aboutStyles.layout} about-grid`}>
                     <Card className={`${aboutStyles.introduction} profile-section about-intro`}>
@@ -47,8 +49,8 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                         {slug && <ApiProfileLinks key={`links:${slug}`} slug={slug} canEdit={canEdit} />}
                     </Card>
                 </div>
-            </div> : tab === 'portfolio' ? <ApiPortfolioTab key={canEdit ? 'me' : slug} slug={slug} own={canEdit} /> : <Card className="profile-section">
-                <div className="tab-section-title"><div><h2>{tab === 'posts' ? '생각과 경험의 기록' : tab === 'activity' ? '함께 만들어온 프로젝트' : '함께한 동료들의 리뷰'}</h2></div></div>
+            </div> : tab === 'portfolio' ? <ApiPortfolioTab key={canEdit ? 'me' : slug} slug={slug} own={canEdit} /> : tab === 'posts' ? <ApiProfilePosts key={canEdit ? 'me' : slug} slug={slug} own={canEdit} /> : tab === 'reviews' ? <ApiProfileReviews key={canEdit ? 'me' : slug} slug={slug} own={canEdit} trustScore={trustScore} /> : <Card className="profile-section">
+                <div className="tab-section-title"><div><h2>{'함께 만들어온 프로젝트'}</h2></div></div>
                 <div className="empty-state">{profileTabs.find(item => item.id === tab)?.label} 조회 연결 전</div>
             </Card>}
         </section>
