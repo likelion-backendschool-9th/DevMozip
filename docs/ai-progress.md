@@ -2000,3 +2000,69 @@ erDiagram
 - 전체 백엔드 `./gradlew test`도 실행했으나 KakaoClientTest:153 및 PortOneClientTest:105의 기존 로그 검증 실패가 나타났다. MessengerWebSocketTest의 종료 대기 중 환경 재시작으로 실행 세션과 /tmp 산출물이 소실되어 최종 전체 결과는 확정하지 않는다. 신규 강퇴 8개는 재실행하여 통과를 확인했다. 포트를 점유한 다른 프로젝트 서버는 중지하지 않고 프론트 검증은 임시 컨테이너에서 수행했다.
 
 - 환경 재시작 후 최종 프로젝트 관련 회귀 `./gradlew test --tests '*Project*'` (/tmp 별도 build/cache, max-workers=1): 26개 클래스, 187개 중 176개 통과·11개 스킵·실패/오류 0, BUILD SUCCESSFUL. 강퇴 8개를 포함하므로 별도 합산하지 않는다. 최종 프론트 전체 1,412개와 빌드도 재실행 성공. 집계 근거 docs/artifacts/project-member-removal/verification.json.
+
+## 2026-11-10 #51 프로젝트 팀원 신고·관리자 처리
+
+### 범위와 구현
+
+사용자가 #51 진행을 요청해 프로젝트 맥락의 팀원 신고와 관리자 검토 결과 저장을 구현했다. 기존 reports 필드·사용자 신고·공고 신고·채팅의 작은 사이렌·관리자 화면 디자인을 재사용한다. 팀원 신고는 project_id와 reported_user_id를 함께 저장하고, 일반 사용자 신고/다른 프로젝트/공고 신고와 중복 판정을 분리한다. 현재 ACTIVE 팀원만 같은 프로젝트 참여 이력자를 신고하며 본인 신고는 차단한다. 신고 접수/처리만으로 강퇴·정지·감점하지 않는다.
+
+관리자는 공고·팀원 신고만 상태별 페이지 조회하고 REVIEWING/RESOLVED/REJECTED로 처리한다. JWT와 실제 DB ADMIN 역할·회원 상태를 검증한다. 처리자와 시각은 서버에서 설정하고 최종 결과는 재처리할 수 없다. 일반 사용자·SNS·댓글 신고 관리자 영역은 확장하지 않는다.
+
+### 변경 파일
+
+- backend 신규: dto/project의 CreateProjectMemberReportRequest, HandleProjectReportRequest, ManagedProjectReportResponse, ProjectReportPageResponse; service/ProjectReportManagementService; controller/ProjectReportManagementController; message/ProjectMemberReportIntegrationTest.
+- backend 수정: entity/Report의 팀원 신고 생성/관리자 처리, repository/ReportRepository의 중복·목록·잠금 조회, service/UserReportService의 일반 사용자 신고 중복 범위 분리.
+- frontend 신규: app/api/projects/[projectId]/members/[memberId]/reports, app/api/admin/project-reports 및 [id] BFF; admin/reports/_components/ApiProjectReports; lib/projects/projectMemberReport, adminReportProxy 및 신고 BFF·Mock 테스트; types/projectReportAdmin.
+- frontend 수정: 프로젝트 ServerProjectChat/Mock 채팅, 공통 UserReportDialog, 관리자 reports 페이지, Mock messagingService 및 messaging 타입. optional projectId로 기존 v1 저장 데이터 호환을 유지한다.
+- 문서: project-reports.md, project-backend-blueprint.md, 이 기록.
+
+### 검증 진행
+
+- compileJava 성공.
+- 격리 PostgreSQL/JWT 신규 팀원 신고·관리자 통합 6개 통과(스킵/실패/오류 0). 일반 사용자 신고 응답을 잘못 204로 기대한 초기 테스트 3건 실패는 기존 201 계약에 맞춰 수정했다. 제품 응답 계약을 변경한 것이 아니다. 이후 DB 실제 역할 검증을 추가한 최종 관련 테스트에서도 같은 6개가 통과했다.
+- 프론트 전체 테스트 126개 파일 1,427개 통과. 최종 Mock 처리 버튼의 완료 상태 제한을 포함해 npm run build/TypeScript도 성공.
+- 전체 백엔드 ./gradlew test는 실패했다. 기존 KakaoClientTest:153, PortOneClientTest:105 로그 검증 실패와 MessengerRedisSignalIntegrationTest의 OutOfMemoryError가 나타나 해당 테스트 JVM에 TERM을 보내 종료했다. 전체 통과나 전체 테스트 개수를 확정하지 않는다.
+
+### 경계와 미완료
+
+공유 팀 DB·운영 DB/컨테이너·인증 설정·결제·배포 YAML은 변경하지 않는다. 실제 팀 DB의 신규 접수/실계정 관리자 종단 검증은 아직 수행하지 않았다. 최신 ERDCloud export는 받지 않았고 새 스키마를 추가하지 않았다. 별도의 대상 배타 CHECK 제약이 실제 DB에 있다면 팀원 신고의 복합 맥락과 대조해야 한다. 코드만으로 공유 DB에서 검증됐다고 보고하지 않는다. 커밋·푸시·PR·GitHub 이슈 종료는 하지 않는다. 로컬 feat/51-project-member-reports 브랜치에 기존 #128 선행 커밋을 보존했다.
+
+- Chromium 1440px 응답 대역: 채팅 멤버의 사이렌 → 프로젝트 팀원 신고/상세 설명 → 관리자 접수 조회 → 완료 처리/메모 → 완료 후 처리 버튼 제거 → 접수 필터 빈 목록을 검증했다. 가로 넘침·pageerror 0. 보고서 docs/artifacts/project-member-reports/browser-report.json. 임시 프리뷰(3011)는 검증 후 종료했다. 상태 필터 테스트의 정확한 label 선택자 때문에 최초 자동화가 대기해, 표시된 combobox 선택자로 수정 후 통과했다.
+- 기존 읽기 전용 dev-postgres.py로 실제 reports 제약 대조를 시도했으나 이 worktree 루트에 .env가 없어 연결하지 못했다. 접속 정보 탐색이나 공유 DB 변경은 하지 않았다. 실제 DB 제약 대조는 미완료로 남긴다.
+
+- 관련 회귀 첫 재실행은 앞선 JVM의 종료 정리와 같은 build 디렉터리를 공유해 JUnit binary 결과 파일 NoSuchFileException으로 실패했다. 이를 제품 코드 실패/통과로 집계하지 않는다. 독립 /tmp/devmozip-project51-related-build·cache, 테스트 heap 768m와 Spring 컨텍스트 캐시 8개를 사용하는 임시 init script로 최종 관련 회귀를 재실행한다. 저장소 Gradle 설정은 바꾸지 않았다.
+
+- 최종 독립 관련 회귀: `./backend/gradlew -p backend --project-cache-dir /tmp/devmozip-project51-related-cache -I /tmp/devmozip-project51-related.gradle test --tests '*Project*' --tests '*UserReport*' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m` → 29개 클래스, 총 219개 중 208개 통과·11개 스킵·실패/오류 0, BUILD SUCCESSFUL(1분48초). 신규 신고 6개가 포함되므로 별도 합산하지 않는다. 집계 근거 docs/artifacts/project-member-reports/verification.json.
+
+## 2026-11-10 #51 테스트용 프로젝트 팀원 추가
+
+사용자가 개발 DB를 명시적으로 선택해 김선아(users.id=10) 주최의 진행 중 43번 `[데모] TeamFlow 팀 일정 관리`에 기존 데모 계정 김하늘(1, FRONTEND)·이유나(6, BACKEND)·박민준(7, DESIGNER)을 ACTIVE 팀원으로 추가했다. project_members 신규 ID는 66·67·68이다. PROJECT 채팅방과 주최자를 포함한 4명의 chat_members를 같은 트랜잭션으로 생성했다. 주최자·계정·프로젝트 내용·지원서·포트폴리오·결제는 변경하지 않았다. 승인 흐름을 실행한 것이 아니라 신고/채팅 시연을 위한 직접 팀원 픽스처다. 정원·사용자 상태·프로젝트 상태·기존 탈퇴/강퇴·활성 투표 유무를 먼저 검사하고 기존 이력은 덮어쓰지 않았다.
+
+기존 프로젝트 루트 /home/luvsuna/DevMozip의 앱 Compose 설정을 사용했고, 호스트 cloud.newlecture.com·포트5442·DB devmozip이 일치할 때만 실행했다. 자격 증명은 출력/복사/문서 저장하지 않았다. COMMIT 후 별도 읽기 전용 연결에서 ACTIVE 프로젝트 팀원4·채팅 멤버4를 확인했다. 운영 DB는 변경하지 않았다. 소스 변경 없이 데이터만 추가하여 빌드·테스트는 재실행하지 않았다.
+
+같은 읽기 전용 점검에서 개발 DB reports 제약은 PK·reporter/reported_user FK·상태 CHECK만 존재함을 확인했다. project_id+reported_user_id를 함께 쓰는 것을 막는 배타 CHECK는 없다. 위 #51 단계의 .env 부재로 인한 제약 대조 미완료는 개발 DB에 한해 해소됐으며 실제 로그인으로 신고를 접수한 검증이나 운영 DB 대조를 뜻하지 않는다.
+
+## 2026-11-10 #51 로컬 Compose 실행
+
+사용자 요청으로 프로젝트 루트의 Compose를 사용해 최신 worktree 소스를 마운트한 backend/frontend/redis를 실행했다. ncafe가 3000을 사용해 해당 컨테이너는 유지하고 DevMozip 프론트를 3011→3000, 백엔드를 8080으로 실행했다. 개발 DB는 cloud.newlecture.com:5442/devmozip, Hibernate validate·SQL init never·payment renewal false를 실제 컨테이너 환경에서 확인했다. 메신저 allowed-origin은 localhost:3011로 지정했다. 설정은 저장소 밖 /tmp/devmozip-local-3011.yaml이며 프로젝트 YAML/.env는 수정하지 않았다.
+
+최초 `docker compose ... up --build`는 호스트 docker-buildx 실행 파일 부재로 이미지 빌드에 실패했다. 의존성 변경이 없고 기존 dev 이미지에 최신 소스를 마운트하므로 `up -d --no-deps --no-build backend frontend`로 실행했다. 백엔드 자체 compileJava/bootRun 후 Started BackendApplication 및 실제 PostgreSQL 17.11 validate 기동을 확인했다. 초기 프론트 health 503은 백엔드 시작 대기 중이었고 기동 완료 후 /api/health는 UP을 반환했다. 운영 서버·데이터·타 프로젝트 컨테이너는 변경하지 않았다.
+
+### Compose 포트 전환 — 후속 사용자 요청
+
+사용자가 기존 3000 서비스 중지를 명시적으로 요청해 ncafe-frontend만 정지하고 DevMozip을 3000으로 전환했다. 컨테이너/볼륨 삭제나 ncafe 백엔드·DB 정지는 하지 않았다. 최신 실행 override는 /tmp/devmozip-local-3000.yaml이며 messenger allowed-origin도 localhost:3000이다. 기존 개발 DB·validate·SQL init never·자동 갱신 false를 유지했다. 프론트 / HTTP200 및 /api/health HTTP200·UP을 전환 후 직접 확인했다. 앞선 3011 안내는 이 기록으로 대체한다.
+
+## 2026-11-10 채팅 멤버 강퇴·신고 버튼 정렬
+
+사용자 디자인 수정 요청으로 프로젝트 채팅 page.module.css의 신고 absolute 배치와 강퇴 버튼의 독립 margin 배치를 제거했다. ServerProjectChat 및 Mock page.tsx에서 프로필/이름과 작업 버튼을 각각 memberIdentity/memberActions로 묶고 2열 Grid를 사용한다. 버튼은 우측에 34×34px·간격8px로 통일했으며 강퇴 보라색, 신고 빨간색의 작은 아이콘·hover·focus 표시를 유지한다. Mock의 텍스트 강퇴 버튼도 같은 아이콘으로 통일했다. 기존 신고·투표 권한과 동작은 변경하지 않았다.
+
+npm run build/TypeScript 성공(실행 중인 개발 서버 .next와 분리한 임시 볼륨). 관련 채팅·투표·신고 회귀4개 파일43개 통과. 1440px Chromium 응답 대역에서 일반/긴 이름/프로필 링크 없는 멤버3명의 버튼을 측정해 동일Y·34px 크기·8px 간격·동일 우측 정렬을 확인했다. 페이지 오류·가로 넘침0, 스크린샷을 직접 확인했다. 실제 DB 신고 접수는 하지 않았다. 근거 docs/artifacts/chat-member-actions/browser-report.json 및 members-1440.png. 백엔드 변경 없이 프론트 소스만 수정했고 커밋·푸시하지 않았다.
+
+## 2026-11-10 강퇴 투표 카드·만료 표시 정리
+
+사용자 요청으로 ApiKickVotePanel/KickVotePanel의 만료를 분까지만 표시한다. lib/projects/kickVoteView.ts에서 서버 LocalDateTime은 KST로 해석하고 Mock UTC/오프셋도 KST로 변환한다. 마이크로초를 받아도 화면에는 연·월·일·시·분만 표시한다. 원본 만료 값과 투표 기간/판정 로직은 변경하지 않는다.
+
+KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px 모서리·상태 배지·4개 집계 칸·찬성 진행 막대·만료 보조 표시를 적용했다. 실제 API의 긴 임시 정책은 details 안내로 유지하고 기본 접는다. 완료된 투표에는 추가 투표를 유도하는 문구를 표시하지 않는다. Mock도 같은 카드 스타일과 날짜 형식을 사용한다.
+
+격리 .next 볼륨에서 npm run build/TypeScript 성공, 채팅·투표·신고 관련4개 파일43개 테스트 통과. Node에서 서버 2026-11-13T10:15:59.123456과 Mock 2026-11-13T01:15:59.123Z가 모두 2026. 11. 13. 10:15로 표시됨을 확인했다. Chromium 1440px 응답 대역에서 분 단위 만료·안내 접힘·진행값1·페이지 오류/가로 넘침0을 확인하고 스크린샷을 직접 점검했다. 근거 docs/artifacts/chat-vote-design/browser-report.json 및 vote-1440.png. 백엔드·DB·결제·투표 데이터는 변경하지 않았으며 커밋·푸시하지 않았다.
