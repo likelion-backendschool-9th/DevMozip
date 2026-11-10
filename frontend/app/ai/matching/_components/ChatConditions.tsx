@@ -89,7 +89,7 @@ export function ChatConditions({ onRecommend, onClose, busy = false, retry = fal
             {message && <p id={errorId} role="alert" className={styles.error}>{message}</p>}
         </fieldset>
         <footer className={styles.footer}>
-            <div className={styles.usage}><span>월간 추천</span><strong>{used?.usedCount ?? '—'} <small>/ {used?.limit ?? '—'}회</small></strong></div>
+            <div className={styles.usage}><span>월간 추천 잔여</span><strong>{used?.remainingCount ?? '—'} <small>/ {used?.limit ?? '—'}회</small></strong></div>
             <p>{!account ? '로그인 후 사용량을 확인할 수 있습니다.' : used ? `${used.usageMonth} · 남은 ${used.remainingCount}회 · 처리 중 ${used.pendingCount}회 · 지금 실행 가능 ${used.availableCount}회` : currentUsage?.failed ? '사용량을 불러오지 못했습니다.' : '사용량 확인 중입니다.'}
                 {account && <button type="button" onClick={() => setUsageVersion(v => v + 1)}>사용량 새로고침</button>}</p>
             <button type="button" className={styles.recommend} disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={16} />{busy ? '추천 처리 중…' : retry ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}<ArrowRight size={15} /></button>
