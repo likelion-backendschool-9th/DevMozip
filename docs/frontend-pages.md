@@ -99,3 +99,7 @@ URL과 기능/권한은 유지하고 실행 라우터를 App Router 파일 구�
 - `/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]`: 제출 당시 내용의 읽기 전용 상세. 기존 포트폴리오 상세 디자인을 재사용한다. 본인 지원자 또는 프리미엄/관리자 주최자만 조회한다.
 - BFF `/api/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]` → GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`.
 - 실제 지원 내역의 제목 링크는 원본 /portfolios/{id}가 아닌 제출본으로 연결한다. 원본 수정·삭제 후에도 유지한다. Mock 시연 데이터 구조를 실제 DB로 임의 이관하지 않는다.
+
+프로필 활동 탭: 실제 API 프로필에서 `/api/projects/activity/{slug}`로 주최·참여 이력을 조회한다. 본인은 `me`, 타인은 프로필 태그를 사용한다. 기존 활동 카드 디자인·프로젝트 제목 링크·본인 관리 버튼을 유지하며 비공개는 현재 팀원에게만 표시한다. 상세: [프로필 프로젝트 활동](project-profile-activity.md).
+
+내 프로젝트/상세 복귀: 목록과 프로필 활동에서 상세에 `returnTo`를 전달한다. 내 프로젝트의 탭·검색 조건과 프로필 활동 탭을 유지해 돌아간다. 내 프로젝트 카드와 모집 카드를 재사용하며 활동 Mock/API도 같은 카드 컴포넌트를 사용한다. [변경·검증](project-navigation-layout.md).

@@ -3,6 +3,8 @@ import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import Link from 'next/link';
+import { useQueryState } from '@/lib/navigation';
+import { projectDetailHref, projectReturnTarget } from '@/lib/projects/projectNavigation';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/lib/state/authStore';
 import { useProjects } from '@/lib/state/projectStore';
@@ -18,6 +20,8 @@ function MockMyProjectManagePage() {
         postId: string;
         userId: string;
     }>();
+    const [params] = useQueryState();
+    const returnTo = projectReturnTarget(params.get('returnTo'), '/my-projects');
     const { user } = useAuth();
     const { projects, state } = useProjects();
     const { state: profiles } = useProfiles();
@@ -49,7 +53,7 @@ function MockMyProjectManagePage() {
                     <h1>{p.title}</h1>
                     <p>참여자 화면 · {p.status || '모집 중'}</p>
                 </div>
-                <Link className={[styles.scope, 'button secondary'].join(' ')} href={`/projects/${p.id}`}>
+                <Link className={[styles.scope, 'button secondary'].join(' ')} href={projectDetailHref(p.id,returnTo)}>
                     프로젝트 상세
                 </Link>
             </header>

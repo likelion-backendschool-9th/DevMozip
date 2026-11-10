@@ -490,3 +490,19 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 #49는 사용자 요청으로 보류했다. #50은 종료 당시 리뷰 요청 생성·30일 기한·전체 제출·재발급·3일 재알림을 구현했다. 실제 review_keywords와 review_keyword_selections를 사용하며 리뷰마다 등록된 활성 긍정 키워드 0~5개를 선택한다. 기본 선택지는 14개다. reviews에 키워드 중복 컬럼을 두지 않는다. 선택 목록과 제출 검증은 ReviewKeywordRepository로 직접 처리한다.
 
 기존 DB는 [선택값 이관 SQL](sql/review-keyword-selections.sql)을 적용한 뒤 [검증 후 중복 컬럼 제거 SQL](sql/reviews-normalize-keywords.sql)을 적용한다. 새 DB는 [원본 스키마](sql/project-schema.sql), [키워드](sql/review-keywords.sql), 연결 테이블 순서로 생성한다. 기존 리뷰 9건과 선택 연결 12건을 보존했다. 실제 알림 발송·프로필 신뢰 계산은 미연결이다. API 경로·변경 파일·검증 결과는 [프로젝트 리뷰](project-reviews.md)를 참조한다.
+
+## 프로필 활동 탭의 프로젝트 이력 (2026-11-10)
+
+초기 기획의 활동 탭을 실제 프로젝트 데이터로 연결한다. `projects`와 `project_members`를 조회하며 별도 이력 테이블·컬럼은 추가하지 않는다.
+
+- `GET /api/v1/users/me/projects`: 인증된 본인의 주최·참여 이력. 사용자 ID를 요청으로 받지 않는다.
+- `GET /api/v1/users/{slug}/projects`: 해당 활성 회원의 주최·참여 이력. `slug`는 프로필 @태그다.
+- `page`는 0부터, `size`는 1~50(기본 10). 개발 시작일 내림차순, 프로젝트 ID 내림차순으로 정렬한다.
+- 응답은 프로젝트 ID·제목·진행 상태·예정 개발 기간·실제 종료 시각·대상자의 HOST/PARTICIPANT·담당 직군·ACTIVE/LEFT와 페이지 정보다.
+- 승인 전 지원서는 포함하지 않는다. LEFT는 기존 참여 이력으로 남기고 화면에 ‘참여 종료’를 별도로 표시한다. 논리 삭제된 프로젝트는 제외한다.
+- 공개 프로젝트는 누구나 볼 수 있다. 비공개는 조회자가 해당 프로젝트의 현재 ACTIVE 팀원일 때만 목록과 개수에 포함한다. 본인이라도 이미 탈퇴한 비공개 프로젝트는 노출하지 않는다.
+- 현재 Member 엔티티에는 프로필 전체 공개 범위 필드가 없어 해당 권한을 새로 만들지 않는다. 대상 회원 활성 상태는 기존 공개 프로필 조회 계약을 따른다.
+- 기존 PrototypeProfilePage/ActivityTab는 보존하고 실제 프로필의 ApiProfileTabs에 연결한다. 현재 실제 프로필은 기존 라우팅대로 Mock 토글과 무관하게 API를 사용한다. 프로젝트 제목으로 상세 이동, 본인만 활동 제목 오른쪽 상단에 ‘내 프로젝트 관리’를 제공한다.
+- 조회로 프로젝트 조회수를 올리지 않는다. 통신 오류·로딩·빈 목록을 구분하고 실제 이력을 localStorage에 저장하지 않는다.
+
+구현 파일과 검증 결과: [프로필 프로젝트 활동](project-profile-activity.md).
