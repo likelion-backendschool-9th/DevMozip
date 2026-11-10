@@ -2156,3 +2156,9 @@ KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px �
 추가 통합 불일치: develop의 신고 초기 상태 AWATING과 #131의 RECEIVED 참조가 달라 첫 backend 컴파일이 실패했다. ProjectReportManagementService·관리자 BFF 필터·관리자 UI·관련 테스트·project-reports 문서를 AWATING으로 통일했다. DB 변경은 하지 않는다.
 
 최종 검증: 수정 후 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 139개 파일·1,521개 테스트 통과. backend `./gradlew test`에 ProjectMemberReportIntegrationTest·ProjectMemberRemovalIntegrationTest·UserReportApiIntegrationTest·ProjectReportIntegrationTest·FeedPostgresIntegrationTest 필터를 적용해 격리 PostgreSQL에서 89개 통과(실패·오류·건너뜀 0). 첫 컴파일 실패는 위 상태 값 통일 후 해소했다. 전체 백엔드 테스트 및 브라우저 수동 검증은 미실행. 생성 next-env.d.ts 원복, git diff --check 통과.
+
+## 2026-11-10 PR #132 충돌 해결
+
+최신 develop 0d6f533을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 알림·개발자 탐색·SNS 및 이미지 제공 범위와 관련 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 미커밋 작업과 실행 서버·공유 DB·배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공, npm test -- --maxWorkers=1 전체 143개 파일·1,613개 테스트 통과. backend ./gradlew test --tests '*notification.*' 49개, 실패 0·오류 0·건너뜀 0. 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
