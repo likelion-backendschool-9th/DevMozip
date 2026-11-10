@@ -2297,3 +2297,9 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 사용자 정정에 따라 ApiPortfolioTab의 눈 아이콘 링크를 비대화형 span으로 바꿨다. 본인에게만 눈 아이콘을 표시하고 공개/비공개는 접근성 이름·툴팁으로 안내한다. 텍스트 버튼과 수정 화면 이동은 제거했다. 공개 범위 변경은 작성기에서만 수행한다. PortfolioTab.module.css·PortfolioCrud 테스트·공개 범위 문서도 갱신했다.
 
 검증: npm run build 성공(TypeScript 포함). PortfolioCrud9개 테스트 통과, 아이콘이 링크가 아닌지 확인. git diff --check 통과. 브라우저 수동 확인 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
+
+## 2026-11-11 메인 추천 입력창 크기·정렬 조정
+
+사용자 요청으로 develop에서 frontend/app/_components/MatchingStart.module.css만 수정했다. 상단 소개 문구와 입력 카드의 세로 중심을 맞추고 상단 영역·카드 여백을 줄였다. 입력창 높이는 128px로 설정하고 세로 크기 조절은 유지했다. 하단 안내의 150px 너비 제한을 해제해 추천 버튼과 균형 있게 배치하고 모바일에서는 기존 한 열 배치를 유지한다. 문구·입력 저장·로그인 이동·추천 동작과 다른 영역은 변경하지 않았다.
+
+검증: frontend에서 npm run build 최종 성공(TypeScript 포함). 첫 빌드는 이전 브랜치의 .next/dev/types가 현재 없는 관리자 API를 참조해 실패했으며 해당 생성 캐시를 /tmp에 보관한 뒤 재실행했다. npm test -- lib/matching/loginPrompt.test.ts lib/matching/homeService.test.ts lib/state/homeStore.test.tsx: 3개 파일/35개 테스트 통과. git diff --check 통과. 브라우저 시각 검증은 미실행. 백엔드 변경 없음. 커밋·푸시 없음. 후속 단계는 시작하지 않았다.
