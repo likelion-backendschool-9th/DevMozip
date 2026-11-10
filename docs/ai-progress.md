@@ -2213,3 +2213,19 @@ stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-
 첫 격리 DB 검증에서 users에 존재하지 않는 updated_at을 참조하는 SQL 오류로 감점 테스트5개가 실패했다. 실제 Member 매핑에 맞춰 해당 참조를 제거하고 재검증한다. Member 엔티티나 DB 컬럼을 새로 추가하지 않는다. 추가 검증은 7일 경계·미승인 취소 면제·중복 취소·NULL 초기값·0 하한·다른 프로젝트 동시 취소 누적·감점 실패 시 상태 롤백을 다룬다.
 
 최종 검증: backend ./gradlew test에 ProjectApplicationIntegrationTest·ProjectAuthenticatedUserIntegrationTest·ProjectMemberRemovalIntegrationTest·NotificationProjectEventIntegrationTest 필터 적용, 격리 PostgreSQL에서 33개 통과(실패 0·오류 0·건너뜀 0). 최초 SQL 오류는 수정 후 재통과했다. frontend 별도 컨테이너 npm run build 성공(TypeScript 포함), 전체147개 파일·1,652개 테스트 통과. 공유 DB 감점 쓰기·DDL 적용 및 실제 로그인 브라우저 취소 시나리오는 미실행. 새 강퇴 결과 알림은 추가하지 않았다. 커밋·푸시·이슈 완료 체크는 하지 않았다.
+
+## 2026-11-11 Mock 제거 취소·기본 OFF·전환 버튼 숨김
+
+사용자가 Mock 제거 요청을 취소했다. 제거 작업 직전 frontend에 미커밋 변경이 없었던 기록과 변경 목록을 대조하고, /tmp/devmozip-mock-removal-rollback에 원본 ZIP·binary patch를 보관한 뒤 제거 단계의 frontend 변경139개를 복원했다. 새로 만든 config 모듈과 관리자 안내 컴포넌트도 제거했다. 이전 계획서·감사 문서 및 진행 기록은 보존했다.
+
+요청한 최종 변경은 AppLayout의 전환 버튼 렌더링 제거, 표시 설정의 기본값·서버 스냅샷 OFF다. v2 표시 설정을 사용해 과거 v1 ON 설정은 적용하지 않되 원래 시연 데이터·저장 콘텐츠·인증은 삭제하지 않는다. README·Mock 문서도 갱신했다.
+
+기존 시연 테스트가 암묵적으로 ON에 의존해 첫 실행과 첫 보완 후 실패했다. 공통 테스트 fixture에서 ON을 명시하고 모듈 초기화 때도 일관되게 적용했다. 제품 기본값·과거 ON 설정 무시·실제 서버 스냅샷 OFF는 별도 실제 구현 검사로 검증했다. 최종 npm run build 성공(TypeScript 포함), npm test -- --maxWorkers=1 전체147개 파일·1,654개 통과. 홈 HTTP200·git diff --check 통과. 브라우저 수동 화면 검증은 미실행이며 백엔드 변경이 없어 backend 테스트 재실행은 생략했다. 생성 next-env.d.ts 원복. 커밋·푸시 없음.
+
+## 2026-11-11 샘플 데이터 표시 안내 숨김
+
+사용자 요청으로 AppLayout 상단 표시 상태 바·푸터의 샘플 안내와 홈의 MockDataNote를 제거했다. 표시 로직과 Mock OFF 기본값은 유지한다. 이번 변경은 화면 문구/레이아웃에 한정한다.
+
+검증: npm run build 성공(TypeScript 포함), 표시 설정·헤더·공통 레이아웃 관련3개 파일/17개 테스트 통과. 홈 HTTP200·git diff --check 통과. 브라우저 수동 검증은 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
+
+PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했다. npm run build 성공·전체 프론트 1662개 테스트 통과. 백엔드 변경 없음. 계획서·이슈 감사 문서는 PR에서 제외하고 보존했다.
