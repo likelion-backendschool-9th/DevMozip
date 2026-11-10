@@ -1,0 +1,229 @@
+{
+  "frontend": {
+    "build": "passed",
+    "testFiles": 126,
+    "testsPassed": 1427
+  },
+  "backendNewIntegration": {
+    "tests": 6,
+    "failures": 0,
+    "skipped": 0,
+    "database": "isolated PostgreSQL Testcontainers"
+  },
+  "backendFull": "KakaoClientTest:153 and PortOneClientTest:105 log assertions failed; MessengerRedisSignalIntegrationTest failed with OutOfMemoryError; full test worker terminated after OOM; no all-suite pass claim",
+  "browser": "1440px UI response stubs; see browser-report.json",
+  "actualSharedDatabase": "not validated: worktree .env missing; no shared or production DB writes",
+  "backendRelated": {
+    "command": "./gradlew test --tests '*Project*' --tests '*UserReport*' (isolated build/cache, 768m heap, 8 cached contexts)",
+    "suites": 29,
+    "tests": 219,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 11,
+    "details": [
+      {
+        "name": "com.devmozip.backend.ai.engine.AiRecommendationDatabaseTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.ai.engine.AiRecommendationServiceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.controller.PortfolioQueryIntegrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.ChatEntityH2Test",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.ChatSchemaIntegrationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.ProjectChatApiIntegrationTest",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.ProjectMemberRemovalIntegrationTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.ProjectMemberReportIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.UserReportApiH2Test",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.message.UserReportApiIntegrationTest",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectApplicationIntegrationTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectAuthenticatedUserIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectBookmarkIntegrationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectConfigurationTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectCreationIntegrationTest",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectLifecycleIntegrationTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectLifecycleTeamDatabaseIntegrationTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectLikeIntegrationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectPortfolioSnapshotIntegrationTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectQueryIntegrationTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectQueryTeamDatabaseIntegrationTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectReportIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectReviewIntegrationTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectRoleValuesTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectTeamDatabaseIntegrationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectUpdateDeleteIntegrationTest",
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.project.ProjectUpdateDeleteTeamDatabaseIntegrationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      },
+      {
+        "name": "com.devmozip.backend.security.project.AuthenticatedProjectCurrentUserProviderTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.devmozip.backend.websocket.ProjectChatRealtimeIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  }
+}

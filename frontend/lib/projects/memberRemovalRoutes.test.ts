@@ -1,0 +1,15 @@
+import {beforeEach,expect,it,vi} from 'vitest';
+const mocks=vi.hoisted(()=>({guard:vi.fn(),proxy:vi.fn()}));
+vi.mock('@/lib/projects/projectProxy',()=>({projectGuard:mocks.guard,proxyProject:mocks.proxy,projectError:(status:number,message:string)=>Response.json({message},{status}),readProjectBody:(r:Request)=>r.json()}));
+import {POST as start,GET as members} from '@/app/api/projects/[projectId]/members/route';
+import {POST as cast} from '@/app/api/projects/[projectId]/kick-votes/[voteId]/ballots/route';
+const context={params:Promise.resolve({projectId:'7'})};
+const ballot={params:Promise.resolve({projectId:'7',voteId:'8'})};
+const req=(body:unknown)=>new Request('http://localhost/api/projects/7/members',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+beforeEach(()=>{vi.clearAllMocks();mocks.guard.mockResolvedValue(null);mocks.proxy.mockResolvedValue(Response.json({id:8}));});
+it('대상 프로젝트 멤버와 사유만 전달하고 요청자 신원은 전달하지 않는다',async()=>{await start(req({projectMemberId:3,reason:'기타',userId:999,status:'PASSED'}),context);expect(mocks.guard).toHaveBeenCalledWith(expect.any(Request));const [path,init]=mocks.proxy.mock.calls[0];expect(path).toBe('/api/v1/projects/7/members');expect(JSON.parse(init.body)).toEqual({projectMemberId:3,reason:'기타'});});
+it.each([0,-1,'3',null])('잘못된 대상 %s을 전달하지 않는다',async id=>{expect((await start(req({projectMemberId:id,reason:'기타'}),context)).status).toBe(400);expect(mocks.proxy).not.toHaveBeenCalled();});
+it.each(['true',1,null,undefined])('명시적인 boolean 이외의 투표를 거절한다',async agree=>{expect((await cast(req({agree}),ballot)).status).toBe(400);expect(mocks.proxy).not.toHaveBeenCalled();});
+it('반대 false도 정상적으로 전달한다',async()=>{await cast(req({agree:false,userId:999}),ballot);expect(JSON.parse(mocks.proxy.mock.calls[0][1].body)).toEqual({agree:false});});
+it('관리자의 이력 조회 옵션을 전달하고 사용자 ID는 버린다',async()=>{await members(new Request('http://localhost?includeInactive=true&userId=999'),context);expect(mocks.proxy).toHaveBeenCalledWith('/api/v1/projects/7/members?includeInactive=true');});
+it('보안 검사가 실패하면 투표를 요청하지 않는다',async()=>{mocks.guard.mockResolvedValue(new Response(null,{status:403}));expect((await start(req({projectMemberId:3,reason:'기타'}),context)).status).toBe(403);expect(mocks.proxy).not.toHaveBeenCalled();});

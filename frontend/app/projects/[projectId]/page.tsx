@@ -1,10 +1,11 @@
 'use client';
+import ProjectManagePage from './manage/page';
 import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, CalendarDays, MessageSquare, Users } from 'lucide-react';
+import { CalendarDays, MessageSquare, Users } from 'lucide-react';
 import { useProjects } from '@/lib/state/projectStore';
 import { useProfiles } from '@/lib/state/profileStore';
 import { useAuth } from '@/lib/state/authStore';
@@ -15,6 +16,7 @@ import { Button } from '@/components/common/Button';
 import { ApplicationModal, CancelApplicationModal } from '@/app/projects/[projectId]/_components/ApplicationModal';
 import { ProjectActions } from '@/app/projects/[projectId]/_components/ProjectActions';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
+import { ProjectBackLink } from '@/components/projects/ProjectBackLink';
 import { validProjectId } from '@/lib/projects/projectApiContract';
 function ProjectDetail({ projectId }: { projectId: string }) {
     const { projects, state, now } = useProjects();
@@ -39,12 +41,10 @@ function ProjectDetail({ projectId }: { projectId: string }) {
     const application = applicationFor(state, p.id, user?.id);
     const restriction = applicationRestriction(p, user, now, state);
     const owner = p.hostId === user?.id;
+    if (owner) return <ProjectManagePage />;
     return (
         <div className={[styles.scope, 'container project-detail-page'].join(' ')}>
-            <Link href="/projects" className={[styles.scope, 'text-link'].join(' ')}>
-                <ArrowLeft size={14} />
-                프로젝트 모집
-            </Link>
+            <ProjectBackLink className={[styles.scope, 'text-link'].join(' ')} />
             <header className={[styles.scope,styles.heading,'project-detail-heading'].join(' ')}>
                 <div className={[styles.scope, 'project-detail-labels'].join(' ')}>
                     <span className={[styles.scope, 'outline-badge'].join(' ')}>{p.field}</span>
@@ -154,10 +154,6 @@ function ProjectDetail({ projectId }: { projectId: string }) {
                         ) : !user ? (
                             <Link className={[styles.scope, 'button'].join(' ')} href="/login">
                                 로그인하고 지원하기
-                            </Link>
-                        ) : owner ? (
-                            <Link className={[styles.scope, 'button'].join(' ')} href={`/projects/${p.id}/manage`}>
-                                주최자 관리
                             </Link>
                         ) : (
                             <>

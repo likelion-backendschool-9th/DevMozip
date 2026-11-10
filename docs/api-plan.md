@@ -160,3 +160,9 @@
 - GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`: 지원 당시 보관본 조회. 본인 지원자 또는 프리미엄/관리자 주최자에게만 제공한다. 수정·삭제 API 없음.
 - POST `/api/v1/projects/{projectId}/applications`는 공개 원본 1~3개 검증 후 지원서·연결·제출본을 함께 저장한다. 응답의 submittedPortfolios는 제출본 ID·원본 ID·당시 제목을 제공한다.
 - 원본 수정·삭제는 허용하며 제출본을 변경하지 않는다. 원본 삭제 시 연결 ID만 SET NULL로 처리한다. 상세는 docs/project-portfolio-snapshots.md를 따른다.
+
+## 프로필 프로젝트 활동 — 2026-11-10 실제 구현
+
+- GET /api/v1/users/me/projects: 인증 본인의 주최/참여 이력.
+- GET /api/v1/users/{slug}/projects: 활성 프로필 태그의 주최/참여 이력, 비공개 프로젝트는 조회자 현재 팀원 권한으로 제한.
+- page(0부터)/size(1~50, 기본 10); 상세 계약: [프로필 프로젝트 활동](project-profile-activity.md).

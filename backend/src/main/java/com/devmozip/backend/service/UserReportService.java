@@ -41,7 +41,7 @@ public class UserReportService {
 
 		// 중복 판정의 DB 제약은 팀원 신고(#51)와 함께 정한다. 그 전까지 신고자 행을 잠가 동시 요청의 중복을 막는다.
 		members.findForMessengerById(reporter.getId());
-		if (reports.existsByReporter_IdAndReportedUser_Id(reporter.getId(), target.getId())) {
+		if (reports.existsByReporter_IdAndReportedUser_IdAndProjectIdIsNullAndPostIdIsNullAndCommentIdIsNull(reporter.getId(), target.getId())) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 신고한 사용자입니다.");
 		}
 		reports.save(Report.ofUser(reporter, target, reason, LocalDateTime.now(clock)));

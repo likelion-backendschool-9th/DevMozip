@@ -42,3 +42,5 @@ certs/
 # Local profile image uploads
 backend/uploads/
 /uploads/
+# 게시글 등 업로드 이미지 (IMAGE_STORAGE, docs/feed-plan.md). 서버의 git pull 은 추적하지 않는 파일을 지우지 않는다
+/public/images/

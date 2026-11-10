@@ -1,0 +1,29 @@
+{
+  "viewport": 1440,
+  "titleBox": {
+    "x": 48,
+    "y": 282.859375,
+    "width": 1168,
+    "height": 54.65625
+  },
+  "editBox": {
+    "x": 1248,
+    "y": 232.765625,
+    "width": 144,
+    "height": 52
+  },
+  "viewsBox": {
+    "x": 48,
+    "y": 404.265625,
+    "width": 68,
+    "height": 22.390625
+  },
+  "socialBox": {
+    "x": 1248,
+    "y": 296.765625,
+    "width": 144,
+    "height": 52
+  },
+  "pageErrors": [],
+  "data": "화면 응답 대역"
+}

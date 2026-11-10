@@ -1,4 +1,8 @@
 'use client';
+import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
+import {ApiProjectReports} from './_components/ApiProjectReports';
+import {useMessaging} from '@/lib/state/messagingStore';
+import {useProfiles} from '@/lib/state/profileStore';
 import { useState } from 'react';
 import Link from 'next/link';
 import { adminStyles as styles } from '../_components/AdminShell';
@@ -7,9 +11,11 @@ import { useProjects } from '@/lib/state/projectStore';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 
-export default function AdminReportsPage() {
+function MockAdminReportsPage() {
     const { administration, administer } = useAuth();
     const { state: recruitment, projects } = useProjects();
+    const {state:messaging}=useMessaging();const {state:profiles}=useProfiles();
+    const reports=[...recruitment.reports.map(r=>({...r,key:`project:${r.id}`})),...messaging.userReports.filter(r=>r.projectId).map(r=>({id:r.id,key:`member:${r.id}`,projectId:r.projectId!,reason:'팀원 신고 · '+(profiles.profiles[r.targetId]?.nickname||r.targetId)+' · '+r.reason,detail:''}))];
     const [report, setReport] = useState<{ id: string; status: 'resolved' | 'dismissed' } | null>(null);
     const [note, setNote] = useState('');
 
@@ -21,11 +27,11 @@ export default function AdminReportsPage() {
             >
                 <h2>프로젝트 신고 처리</h2>
                 <p>검토 결과를 저장합니다. 신고 처리만으로 공고나 지원 내역을 삭제하지 않습니다.</p>
-                {!recruitment.reports.length && (
+                {!reports.length && (
                     <p>접수된 신고가 없습니다. 프로젝트 상세에서 신고를 접수해 시연할 수 있습니다.</p>
                 )}
-                {recruitment.reports.map(r => {
-                    const outcome = administration.resolutions[`project:${r.id}`];
+                {reports.map(r => {
+                    const outcome = administration.resolutions[r.key];
                     return (
                         <article className={[styles.scope, 'admin-row'].join(' ')} key={r.id}>
                             <div>
@@ -43,18 +49,20 @@ export default function AdminReportsPage() {
                             <div className={[styles.scope, 'governance-actions'].join(' ')}>
                                 <Button
                                     variant="secondary"
+                                    disabled={!!outcome}
                                     onClick={() => {
                                         setNote('');
-                                        setReport({ id: `project:${r.id}`, status: 'resolved' });
+                                        setReport({ id: r.key, status: 'resolved' });
                                     }}
                                 >
                                     처리 완료
                                 </Button>
                                 <Button
                                     variant="secondary"
+                                    disabled={!!outcome}
                                     onClick={() => {
                                         setNote('');
-                                        setReport({ id: `project:${r.id}`, status: 'dismissed' });
+                                        setReport({ id: r.key, status: 'dismissed' });
                                     }}
                                 >
                                     기각
@@ -88,3 +96,5 @@ export default function AdminReportsPage() {
         </>
     );
 }
+
+export default function AdminReportsPage(){const {enabled}=useMockVisibility();return enabled?<MockAdminReportsPage/>:<ApiProjectReports/>;}

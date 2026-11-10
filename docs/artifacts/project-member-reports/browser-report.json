@@ -1,0 +1,28 @@
+{
+  "mode": "UI response stubs; no real login or shared DB writes",
+  "viewport": 1440,
+  "projectMemberReport": true,
+  "adminResolved": true,
+  "finalReadOnly": true,
+  "statusFilter": true,
+  "overflow": false,
+  "pageErrors": [],
+  "calls": [
+    {
+      "path": "/api/projects/5/members/103/reports",
+      "method": "POST",
+      "body": {
+        "reason": "스팸 또는 광고",
+        "detail": "함께 검토해야 할 상황입니다."
+      }
+    },
+    {
+      "path": "/api/admin/project-reports/10",
+      "method": "PATCH",
+      "body": {
+        "status": "RESOLVED",
+        "resolution": "내용 확인 후 안내 완료"
+      }
+    }
+  ]
+}

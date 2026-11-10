@@ -7,3 +7,7 @@
 .title h3{font-size:20px;font-weight:750;line-height:1.45;letter-spacing:-.5px;margin:0 0 10px}
 
 .field{position:relative;display:inline-block;max-width:calc(100% - 46px);overflow-wrap:anywhere;font-size:14px}
+
+.workspaceDetails{display:grid;gap:8px;margin:14px 0 0;padding-top:14px;border-top:1px solid var(--border);font-size:14px}.workspaceDetails>div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px}.workspaceDetails dt{color:var(--muted)}.workspaceDetails dd{margin:0;overflow-wrap:anywhere}
+
+.clickableCard{position:relative;transition:border-color .15s,box-shadow .15s}.clickableCard:hover{border-color:var(--purple);box-shadow:0 8px 24px #7955df12}.cardLink::after{content:'';position:absolute;inset:0;z-index:1;border-radius:inherit}.cardLink:focus-visible{outline:none}.cardLink:focus-visible::after{outline:2px solid var(--purple);outline-offset:3px}
