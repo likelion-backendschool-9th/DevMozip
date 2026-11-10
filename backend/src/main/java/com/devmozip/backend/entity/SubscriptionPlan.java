@@ -35,6 +35,7 @@ public class SubscriptionPlan {
 	@Column(nullable = false, precision = 12, scale = 2)
 	private BigDecimal price;
 
+	@JdbcTypeCode(SqlTypes.CHAR)
 	@Column(nullable = false, length = 3, columnDefinition = "char(3)")
 	private String currency;
 
