@@ -1,4 +1,6 @@
 'use client';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -10,7 +12,7 @@ import ProjectManagePage from '@/app/projects/[projectId]/manage/page';
 import { ReviewRequestStatus } from '@/components/projects/ReviewRequestStatus';
 import { ProjectDateSimulator } from '@/components/projects/ProjectDateSimulator';
 import { ProjectNotices } from '@/components/projects/ProjectNotices';
-export default function MyProjectManagePage() {
+function MockMyProjectManagePage() {
     const { projectId = '' } = useParams<{
         projectId: string;
         postId: string;
@@ -110,3 +112,5 @@ export default function MyProjectManagePage() {
         </div>
     );
 }
+
+export default function MyProjectManagePage(){const {enabled}=useMockVisibility();return enabled?<MockMyProjectManagePage/>:<ApiProjectDetail/>;}

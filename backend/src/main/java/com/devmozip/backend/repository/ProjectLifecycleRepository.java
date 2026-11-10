@@ -3,7 +3,7 @@ package com.devmozip.backend.repository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/** #48의 지원 처리 코드를 구현하지 않고 기존 청사진 테이블의 대기 여부만 조회한다. */
+/** 프로젝트 시작 전 대기 지원서 존재 여부를 조회한다. */
 @Repository
 public class ProjectLifecycleRepository {
 	private final JdbcTemplate jdbc;

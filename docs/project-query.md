@@ -1,5 +1,7 @@
 # 프로젝트 조회 API — #45
 
+현재 실제 회원·프리미엄 인가와 프론트 모드별 연결은 [프로젝트 API 통합 계약](project-api-integration.md)을 기준으로 합니다. 아래 과거 단계의 미연결 항목은 해당 통합 문서의 최신 범위와 함께 확인합니다.
+
 > 2026-11-05 후속 변경: 기본 프로젝트 사용자 공급을 실제 JWT 이메일→users.id로 연결했다. 과거 개발용 고정 ID/실회원 미연결 설명은 당시 기록이며 현재 동작은 [실제 회원 ID 연결](project-authenticated-user.md)을 따른다. 프론트 API 활성화·백엔드 프리미엄 인가는 별도다.
 
 
@@ -35,7 +37,7 @@
 GET /api/v1/projects?interests=교육&interests=게임&techStacks=React&techStacks=Java&jobRole=BACKEND&sort=LATEST&page=0&size=20
 ```
 
-분야·기술은 각각 NFKC·앞뒤 공백 정리·소문자 비교한다. 모든 필터는 함께 적용한다. 잘못된 enum·범위·배열 입력은 400이다. 빈 검색 결과는 200과 빈 items, totalElements=0, totalPages=0이다. 범위를 벗어난 정상 페이지 번호도 빈 items와 실제 전체 개수를 반환한다.
+분야·기술은 각각 NFKC·앞뒤 공백 정리·소문자 비교한다. 모든 필터는 함께 적용한다. 모집 직군은 기본 코드/라벨 또는 직접 입력 문자열로 조회하며 대소문자를 무시한다. 잘못된 상태·정렬 enum, 직군 길이·범위·배열 입력은 400이다. 빈 검색 결과는 200과 빈 items, totalElements=0, totalPages=0이다. 범위를 벗어난 정상 페이지 번호도 빈 items와 실제 전체 개수를 반환한다.
 
 - LATEST: created_at DESC, id DESC.
 - POPULAR: view_count DESC, created_at DESC, id DESC.

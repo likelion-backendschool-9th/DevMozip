@@ -49,6 +49,7 @@ public class AiRecommendation {
 		this.createdAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
 	}
 	public Long getId() { return id; }
+	public Member getUser() { return user; }
 	public Long getUserId() { return user == null ? null : user.getId(); }
 	public Long getProjectId() { return project == null ? null : project.getId(); }
 	public BigDecimal getMatchScore() { return matchScore; }

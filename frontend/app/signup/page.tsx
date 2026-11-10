@@ -255,12 +255,12 @@ function SignupForm() {
                         <button
                             type="button"
                             key={s}
-                            aria-pressed={form.stacks.includes(s)}
-                            className={[styles.scope, `chip ${form.stacks.includes(s) ? 'selected' : ''}`].join(' ')}
+                            aria-pressed={form.skills.includes(s)}
+                            className={[styles.scope, `chip ${form.skills.includes(s) ? 'selected' : ''}`].join(' ')}
                             onClick={() =>
                                 edit(
-                                    'stacks',
-                                    form.stacks.includes(s) ? form.stacks.filter(x => x !== s) : [...form.stacks, s],
+                                    'skills',
+                                    form.skills.includes(s) ? form.skills.filter(x => x !== s) : [...form.skills, s],
                                 )
                             }
                         >
@@ -268,7 +268,7 @@ function SignupForm() {
                         </button>
                     ))}
                 </div>
-                {err('stacks')}
+                {err('skills')}
             </fieldset>
             <fieldset disabled={busy}>
                 <legend>

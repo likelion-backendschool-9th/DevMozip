@@ -100,6 +100,17 @@ class AiConversationTests {
 		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE role='ASSISTANT'", Integer.class));
 		assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
 	}
+	@Test void messageAndConversationLimitsAreCheckedWithoutDeletingExistingHistory() throws Exception {
+		long id = create("limits");
+		mvc.perform(authenticated(post(BASE + "/" + id + "/messages")).contentType("application/json")
+			.content(mapper.writeValueAsString(Map.of("content", "가".repeat(1501))))).andExpect(status().isBadRequest());
+		for (int i = 0; i < 6; i++) message(id, "가".repeat(1500));
+		message(id, "나".repeat(988));
+		mvc.perform(authenticated(post(BASE + "/" + id + "/messages")).contentType("application/json")
+			.content("{\"content\":\"더\"}")).andExpect(status().isBadRequest());
+		assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
+	}
+
 	@Test void otherOwnersAndMissingIdsCannotBeReadWrittenOrDeleted() throws Exception {
 		otherConversation(9001);
 		for (long id : new long[]{9001, 9002}) {
@@ -400,5 +411,82 @@ class AiConversationTests {
 				.andExpect(status().isBadRequest());
 		}
 		assertNull(jdbc.queryForObject("SELECT current_conditions FROM ai_conversations WHERE id=9001", String.class));
+	}
+
+	private String draft(String key, Long conversationId, String text) {
+		var body = new java.util.HashMap<String, Object>();
+		body.put("clientKey", key);
+		body.put("conversationId", conversationId);
+		body.put("title", "draft");
+		body.put("conditions", mapper.readTree(MINIMUM_CONDITIONS));
+		body.put("messages", java.util.List.of(Map.of("clientKey", "message-1", "content", text)));
+		return mapper.writeValueAsString(body);
+	}
+	private org.springframework.test.web.servlet.ResultActions sync(String body) throws Exception {
+		return mvc.perform(authenticated(post(BASE + "/sync")).contentType("application/json").content(body));
+	}
+	@Test void draftSyncCumulativeLimitRollsBackNewBatchAndAllowsExactReplay() throws Exception {
+		String body = draft("limit-sync", null, "가".repeat(1500));
+		String first = sync(body).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+		long id = mapper.readTree(first).get("id").asLong();
+		for (int i = 0; i < 5; i++) message(id, "가".repeat(1500));
+		message(id, "나".repeat(988));
+		sync(body).andExpect(status().isOk()).andExpect(jsonPath("$.messages.length()").value(7));
+		sync(body.replace("message-1", "overflow").replace("가".repeat(1500), "더"))
+			.andExpect(status().isBadRequest());
+		assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM ai_messages WHERE conversation_id=?", Integer.class, id));
+	}
+
+	@Test void draftSyncRetriesKeepOneConversationAndMessageAndServerTimestamps() throws Exception {
+		String body = draft("draft-1", null, "first");
+		String first = sync(body).andExpect(status().isOk()).andExpect(jsonPath("$.clientKey").value("draft-1"))
+			.andExpect(jsonPath("$.messages[0].clientKey").value("message-1")).andReturn().getResponse().getContentAsString();
+		long id = mapper.readTree(first).get("id").asLong();
+		sync(body).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id))
+			.andExpect(jsonPath("$.messages.length()").value(1));
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations", Integer.class));
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_recommendation_requests", Integer.class));
+	}
+	@Test void draftSyncRejectsReusedMessageContentAndRollsBack() throws Exception {
+		sync(draft("draft-conflict", null, "first")).andExpect(status().isOk());
+		sync(draft("draft-conflict", null, "changed")).andExpect(status().isConflict());
+		assertEquals("first", jdbc.queryForObject("SELECT content FROM ai_messages", String.class));
+		String invalid = draft("draft-invalid", null, "first").replace("경력 무관", "invalid");
+		sync(invalid).andExpect(status().isBadRequest());
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations", Integer.class));
+	}
+	@Test void draftAndHistoryRequireAuthenticationAndOwnership() throws Exception {
+		otherConversation(9001);
+		sync(draft("another", 9001L, "forbidden")).andExpect(status().isNotFound());
+		mvc.perform(authenticated(get(BASE + "/9001/recommendations/history"))).andExpect(status().isNotFound());
+		mvc.perform(post(BASE + "/sync").contentType("application/json").content(draft("guest", null, "first")))
+			.andExpect(status().isUnauthorized());
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
+	}
+	@Test void concurrentDraftUploadsDoNotDuplicateRows() throws Exception {
+		String body = draft("concurrent-draft", null, "same");
+		try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+			var gate = new java.util.concurrent.CountDownLatch(1);
+			java.util.concurrent.Callable<Integer> call = () -> { gate.await(); return sync(body).andReturn().getResponse().getStatus(); };
+			var first = executor.submit(call);
+			var second = executor.submit(call);
+			gate.countDown();
+			assertEquals(200, first.get(20, java.util.concurrent.TimeUnit.SECONDS));
+			assertEquals(200, second.get(20, java.util.concurrent.TimeUnit.SECONDS));
+		}
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_conversations", Integer.class));
+		assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM ai_messages", Integer.class));
+	}
+	@Test void recommendationHistoryListsNewestRequestsAndDoesNotExecute() throws Exception {
+		long id = create("history");
+		jdbc.update("INSERT INTO ai_recommendation_requests(ai_conversation_id,conditions,idempotency_key,status,created_at,completed_at) "
+			+ "VALUES (?, '{}' FORMAT JSON, 'history-1','FAILED',TIMESTAMP '2026-11-06 00:00:00',CURRENT_TIMESTAMP), "
+			+ "(?, '{}' FORMAT JSON, 'history-2','PENDING',TIMESTAMP '2026-11-07 00:00:00',NULL)", id, id);
+		mvc.perform(authenticated(get(BASE + "/" + id + "/recommendations/history"))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].status").value("PENDING"))
+			.andExpect(jsonPath("$[1].status").value("FAILED"));
+		assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM ai_recommendations", Integer.class));
+		jdbc.update("DELETE FROM ai_recommendation_requests");
 	}
 }

@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties="project.current-user.development-enabled=false")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@org.springframework.test.context.jdbc.Sql("classpath:project/lifecycle-applications.sql")
 @Testcontainers(disabledWithoutDocker=true)
 class ProjectAuthenticatedUserIntegrationTest {
 	@Container @ServiceConnection static PostgreSQLContainer postgres=new PostgreSQLContainer("postgres:17");
@@ -36,7 +37,7 @@ class ProjectAuthenticatedUserIntegrationTest {
 	@MockitoBean RefreshTokenStore refresh;
 	private static final String PASSWORD="Test-member123!";
 	@BeforeEach void reset(){
-		jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
+		jdbc.update("DELETE FROM project_applications");jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
 		for(long id:new long[]{101,202})jdbc.update("INSERT INTO users(id,email,password_hash,role,status) VALUES (?,?,?,?,?)",id,id+"@project.test",encoder.encode(PASSWORD),id==101?"PREMIUM":"USER","ACTIVE");
 	}
 	private String login(long id) throws Exception {
@@ -81,4 +82,35 @@ class ProjectAuthenticatedUserIntegrationTest {
 		mvc.perform(get("/api/v1/projects")).andExpect(status().isOk());
 		mvc.perform(get("/api/v1/me/projects")).andExpect(status().isUnauthorized());
 	}
+	@Test void freeMemberCannotCreateButPremiumMemberCan() throws Exception {
+		String free=login(202);
+		LocalDate today=LocalDate.now(ZoneId.of("Asia/Seoul"));
+		String body="""
+			{"title":"무료 공고","description":"권한 검사 공고","imageUrl":"https://example.test/a.png","isPublic":true,
+			"recruitmentSlots":[{"roleCode":"BACKEND","capacity":1,"minimumYears":0}],"techStacks":[],"interests":[],
+			"recruitmentStart":"%s","recruitmentEnd":"%s","developmentStart":"%s","developmentEnd":"%s"}
+			""".formatted(today,today.plusDays(2),today,today.plusDays(90));
+		mvc.perform(post("/api/v1/projects").header("Authorization",free).contentType("application/json").content(body)).andExpect(status().isForbidden());
+		assertEquals(0L,jdbc.queryForObject("SELECT count(*) FROM projects",Long.class));
+		create(login(101));
+	}
+
+	@Test void realApplicationsProtectTheirRecruitmentRole() throws Exception {
+		String host=login(101);long id=create(host);
+		String response=mvc.perform(get("/api/v1/projects/"+id).header("Authorization",host)).andReturn().getResponse().getContentAsString();
+		String update=mapper.readTree(response).get("project").toString().replace("BACKEND","FRONTEND");
+		jdbc.update("INSERT INTO project_applications(project_id,applicant_member_id,job_role,status,applied_at,created_at,updated_at) VALUES (?,202,'BACKEND','PENDING',localtimestamp,localtimestamp,localtimestamp)",id);
+		mvc.perform(put("/api/v1/projects/"+id).header("Authorization",host).contentType("application/json").content(update)).andExpect(status().isConflict());
+		jdbc.update("UPDATE project_applications SET status='APPROVED' WHERE project_id=?",id);
+		mvc.perform(put("/api/v1/projects/"+id).header("Authorization",host).contentType("application/json").content(update)).andExpect(status().isConflict());
+		jdbc.update("UPDATE project_applications SET status='REJECTED' WHERE project_id=?",id);
+		mvc.perform(put("/api/v1/projects/"+id).header("Authorization",host).contentType("application/json").content(update)).andExpect(status().isOk());
+	}
+	@Test void publicDetailDoesNotExposeMembershipButHostCanSeeOwnState() throws Exception {
+		String host=login(101),other=login(202);long id=create(host);
+		mvc.perform(get("/api/v1/projects/"+id)).andExpect(status().isOk()).andExpect(jsonPath("$.membership").doesNotExist());
+		mvc.perform(get("/api/v1/projects/"+id).header("Authorization",other)).andExpect(status().isOk()).andExpect(jsonPath("$.membership").doesNotExist());
+		mvc.perform(get("/api/v1/projects/"+id).header("Authorization",host)).andExpect(status().isOk()).andExpect(jsonPath("$.membership.myRole").value("HOST")).andExpect(jsonPath("$.membership.myEndRequested").value(false)).andExpect(jsonPath("$.membership.requiredEndRequestCount").value(1));
+	}
+
 }

@@ -5,7 +5,6 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.function.LongConsumer;
 import com.devmozip.backend.dto.project.*;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import com.devmozip.backend.repository.ProjectLifecycleRepository;
 import com.devmozip.backend.security.project.ProjectCurrentUserProvider;
@@ -47,7 +46,7 @@ class ProjectLifecycleTeamDatabaseIntegrationTest {
 		try{
 			new TransactionTemplate(transactions).executeWithoutResult(tx->{try{
 				id[0]=projects.create(new CreateProjectRequest("db47_"+UUID.randomUUID(),"검증","#47 팀 DB 롤백 검증",null,
-					"http://localhost:3000/portfolio-cover.svg",true,List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND,5,0)),
+					"http://localhost:3000/portfolio-cover.svg",true,List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND",5,0)),
 					List.of("Java"),List.of("교육"),today,today.plusDays(7),today,today.plusDays(90))).id();
 				action.accept(id[0]);
 			}finally{tx.setRollbackOnly();}});

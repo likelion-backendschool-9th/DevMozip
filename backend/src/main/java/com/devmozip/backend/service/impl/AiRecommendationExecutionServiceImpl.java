@@ -1,12 +1,15 @@
 package com.devmozip.backend.service.impl;
 
 import com.devmozip.backend.dto.ai.RecommendationResponse;
+import com.devmozip.backend.utils.AiMessageLimits;
+import java.util.stream.Collectors;
 import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
 import com.devmozip.backend.entity.*;
 import com.devmozip.backend.repository.*;
 import com.devmozip.backend.security.ai.CurrentUserProvider;
 import com.devmozip.backend.service.AiRecommendationExecutionService;
 import com.devmozip.backend.service.AiRecommendationService;
+import com.devmozip.backend.service.AiConditionsDocument;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Objects;
@@ -33,10 +36,12 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 	private final EntityManager entityManager;
 	private final TransactionTemplate transaction;
 	private final TransactionTemplate read;
+	private final AiConditionsDocument documents;
 
 	public AiRecommendationExecutionServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
 		AiMessageRepository messages, AiRecommendationRequestRepository requests, AiRecommendationRepository results,
-		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager) {
+		AiRecommendationService engine, ObjectMapper mapper, EntityManager entityManager, PlatformTransactionManager manager,
+		AiConditionsDocument documents) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
@@ -45,6 +50,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		this.engine = engine;
 		this.mapper = mapper;
 		this.entityManager = entityManager;
+		this.documents = documents;
 		transaction = new TransactionTemplate(manager);
 		transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		read = new TransactionTemplate(manager);
@@ -72,6 +78,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 				}
 				return new Execution(response(conversationId, item), false);
 			}
+			AiMessageLimits.validateTotal(AiMessageLimits.length(messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId)));
 			var request = requests.saveAndFlush(new AiRecommendationRequest(conversation, message, mapper.writeValueAsString(conditions), key));
 			return new Execution(response(conversationId, request), true);
 		});
@@ -81,7 +88,7 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 			return transaction.execute(tx -> {
 				owned(conversationId, userId, true);
 				var request = request(conversationId, requestId);
-				var calculated = engine.recommend(conditions(request.getConditions()), request.getMessageContent());
+				var calculated = engine.recommend(conditions(request.getConditions()), conversationText(conversationId, request.getMessageId()));
 				int rank = 1;
 				for (var developer : calculated.developers()) results.save(new AiRecommendation(request,
 					entityManager.getReference(Member.class, developer.id()), null, developer.score().total(),
@@ -119,6 +126,14 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		});
 	}
 
+	private String conversationText(long conversationId, Long boundaryId) {
+		if (boundaryId == null) return null;
+		var included = messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
+			.filter(m -> m.getRole() == AiMessage.Role.USER && m.getId() <= boundaryId).toList();
+		AiMessageLimits.validateTotal(AiMessageLimits.length(included));
+		return included.stream().map(AiMessage::getContent).collect(Collectors.joining("\n\n"));
+	}
+
 	private AiConversation owned(long id, long userId, boolean lock) {
 		if (id <= 0) throw bad("대화 ID를 확인해 주세요.");
 		return (lock ? conversations.findOwnedForUpdate(id, userId) : conversations.findByIdAndUserId(id, userId))
@@ -128,8 +143,13 @@ public class AiRecommendationExecutionServiceImpl implements AiRecommendationExe
 		return requests.findByIdAndConversationId(requestId, conversationId).orElseThrow(AiRecommendationExecutionServiceImpl::notFound);
 	}
 	private UpdateConditionsRequest conditions(String json) {
-		try { return Objects.requireNonNull(mapper.readValue(json, UpdateConditionsRequest.class)); }
-		catch (RuntimeException invalid) { throw bad("저장된 추천 조건을 확인해 주세요."); }
+		try { return Objects.requireNonNull(documents.recommendation(json)); }
+		catch (RuntimeException invalid) {
+			List<String> questions;
+			try { questions = documents.missingRequiredQuestions(json); }
+			catch (RuntimeException unreadable) { questions = List.of(); }
+			throw bad(questions.isEmpty() ? "저장된 추천 조건을 확인해 주세요." : String.join("\n", questions));
+		}
 	}
 	private RecommendationResponse response(long conversationId, AiRecommendationRequest request) {
 		List<RecommendationResponse.Item> items = results.findByRequestIdOrderByRankAscIdAsc(request.getId())

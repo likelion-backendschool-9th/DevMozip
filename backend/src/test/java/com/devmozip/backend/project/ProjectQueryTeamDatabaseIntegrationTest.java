@@ -11,7 +11,6 @@ import jakarta.persistence.EntityManagerFactory;
 import com.devmozip.backend.dto.project.CreateProjectRequest;
 import com.devmozip.backend.dto.project.MyProjectsTab;
 import com.devmozip.backend.dto.project.ProjectSearchRequest;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import com.devmozip.backend.repository.ProjectQueryRepository;
 import com.devmozip.backend.service.ProjectQueryService;
@@ -51,7 +50,7 @@ class ProjectQueryTeamDatabaseIntegrationTest {
 	private long fixture(String name, boolean visible, List<String> stacks, String interest, int days, List<Long> ids) {
 		var result = service.create(new CreateProjectRequest(name, "검증", "#45 팀 DB 검증용 롤백 공고", null,
 			"http://localhost:3000/portfolio-cover.svg", visible,
-			List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND, 2, 0)),
+			List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND", 2, 0)),
 			stacks, List.of(interest), today, today.plusDays(days), today, today.plusMonths(3)));
 		ids.add(result.id()); return result.id();
 	}
@@ -86,7 +85,7 @@ class ProjectQueryTeamDatabaseIntegrationTest {
 			long first = fixture(key + " Alpha", true, List.of("React", "Java"), "교육", 1, ids);
 			long second = fixture(key + " Beta", true, List.of("React"), "게임", 2, ids);
 			fixture(key + " Private", false, List.of("React", "Java"), "교육", 1, ids);
-			var filtered = queries.search(new ProjectSearchRequest(key, ProjectJobRole.BACKEND, ProjectStatus.RECRUITING,
+			var filtered = queries.search(new ProjectSearchRequest(key, "BACKEND", ProjectStatus.RECRUITING,
 				List.of("교육", "게임"), List.of(" react ", "JAVA"), null, 0, 10));
 			assertEquals(List.of(first), filtered.items().stream().map(p -> p.id()).toList());
 			var page = queries.search(new ProjectSearchRequest(key, null, null, List.of("교육", "게임"), List.of("React"), null, 0, 1));
@@ -115,7 +114,7 @@ class ProjectQueryTeamDatabaseIntegrationTest {
 			assertEquals(2, mine.totalElements()); assertTrue(mine.items().stream().allMatch(p -> "HOST".equals(p.myRole())));
 			assertEquals(1, queries.search(search(key, null)).totalElements());
 			assertEquals(404, assertThrows(ResponseStatusException.class, () -> queries.detail(deletedId, false)).getStatusCode().value());
-			assertEquals(501, assertThrows(ResponseStatusException.class, () -> queries.mine(search(key, null), MyProjectsTab.APPLYING)).getStatusCode().value());
+			assertEquals(0, queries.mine(search(key, null), MyProjectsTab.APPLYING).totalElements());
 		});
 	}
 	@TestConfiguration(proxyBeanMethods = false)

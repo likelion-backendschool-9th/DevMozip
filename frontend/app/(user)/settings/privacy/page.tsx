@@ -1,24 +1,22 @@
 'use client';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { KakaoNotice } from '@/app/_components/KakaoNotice';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Modal } from '@/components/common/Modal';
-import { mockDataEnabled } from '@/lib/demo/mockVisibility';
-import { mockPaymentMethod } from '@/mocks/account';
 import { needsFirstPassword, passwordChangeErrors, passwordSetErrors } from '@/lib/account/accountAreaService';
 import { changePasswordAction, kakaoAccountStatusAction, setPasswordAction, startKakaoAction } from '@/lib/auth/actions';
 import { AccountPasswordForm, passwordCopy } from './_components/AccountPasswordForm';
+import { PaymentInfoPanel } from './_components/PaymentInfoPanel';
 import type { PasswordChangeInput } from '@/types/account';
 import type { KakaoAccountStatus } from '@/types/auth';
 const blankPassword = (): PasswordChangeInput => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
 const ACCOUNT_LOAD_ERROR = '계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 function AccountSettingsContent() {
-    const { accountUser: user, accountArea, accountAct, administration } = useAuth();
+    const { accountUser: user, accountArea, accountAct } = useAuth();
     const [password, setPassword] = useState(blankPassword);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -48,8 +46,6 @@ function AccountSettingsContent() {
     const kakaoLinked = !!account?.kakaoLinked;
     const prefs = user ? accountArea.accounts[user.id] : undefined;
     const isPrivate = !!prefs?.isPrivate;
-    const premium = user?.role === 'premium';
-    const payments = administration.payments.filter(p => p.userId === user?.id);
     return (
         <>
             <header className={[styles.scope, 'personal-page-heading'].join(' ')}>
@@ -116,36 +112,7 @@ function AccountSettingsContent() {
                         </p>
                     )}
                 </section>
-                <section className={[styles.scope, 'account-panel'].join(' ')}>
-                    <h2>결제 정보</h2>
-                    <dl className={[styles.scope, 'account-details'].join(' ')}>
-                        <div>
-                            <dt>현재 구독</dt>
-                            <dd>{user?.role === 'admin' ? '관리자' : premium ? '프리미엄 활성' : '무료 요금제'}</dd>
-                        </div>
-                        <div>
-                            <dt>결제 수단</dt>
-                            <dd>{premium && mockDataEnabled() ? mockPaymentMethod : '등록된 결제 수단 없음'}</dd>
-                        </div>
-                    </dl>
-                    <h3>결제 내역 예시</h3>
-                    {payments.length ? (
-                        <ul className={[styles.scope, 'payment-list'].join(' ')}>
-                            {payments.map(p => (
-                                <li key={p.id}>
-                                    <time>{p.date}</time>
-                                    <span>{p.status}</span>
-                                    <b>₩{p.amount.toLocaleString()}</b>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p>표시할 결제 내역이 없습니다.</p>
-                    )}
-                    <Link className={[styles.scope, 'button secondary'].join(' ')} href="/subscription">
-                        구독 관리 페이지로 이동
-                    </Link>
-                </section>
+                <PaymentInfoPanel role={user?.role} />
                 <section className={[styles.scope, 'account-panel'].join(' ')}>
                     <h2>
                         <ShieldCheck size={20} /> 계정 공개 설정

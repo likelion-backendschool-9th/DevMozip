@@ -4,10 +4,10 @@ import com.devmozip.backend.dto.ai.ConversationDetailResponse;
 import com.devmozip.backend.dto.ai.ConversationResponse;
 import com.devmozip.backend.dto.ai.CreateConversationRequest;
 import com.devmozip.backend.dto.ai.CreateMessageRequest;
-import com.devmozip.backend.dto.ai.MessageResponse;
 import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
 import com.devmozip.backend.dto.ai.ConversationConditionsResponse;
 import com.devmozip.backend.service.AiConversationService;
+import com.devmozip.backend.service.AiMessageAnalysisService;
 import com.devmozip.backend.dto.common.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/ai/conversations")
 public class AiConversationController {
 	private final AiConversationService service;
+	private final AiMessageAnalysisService analysis;
 
-	public AiConversationController(AiConversationService service) {
+	public AiConversationController(AiConversationService service, AiMessageAnalysisService analysis) {
 		this.service = service;
+		this.analysis = analysis;
 	}
 
 	@PostMapping
@@ -52,7 +54,11 @@ public class AiConversationController {
 	}
 
 	@PostMapping("/{id}/messages")
-	public ResponseEntity<MessageResponse> message(@PathVariable long id, @RequestBody CreateMessageRequest request) {
+	public ResponseEntity<?> message(@PathVariable long id, @RequestBody CreateMessageRequest request) {
+		if (Boolean.TRUE.equals(request.analyze())) {
+			var response = analysis.analyze(id, request);
+			return ResponseEntity.status(response.replayed() ? 200 : 201).body(response);
+		}
 		return ResponseEntity.status(201).body(service.addMessage(id, request));
 	}
 

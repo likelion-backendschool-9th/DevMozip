@@ -10,6 +10,8 @@ import { routeTitle } from '@/lib/shared/routeService';
 import { useAuth } from '@/lib/state/authStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { useMessaging } from '@/lib/state/messagingStore';
+import { useDirectChats } from '@/lib/state/directChatStore';
+import { useProjectChats } from '@/lib/state/projectChatStore';
 import { useProjects } from '@/lib/state/projectStore';
 import { useHome } from '@/lib/state/homeStore';
 import { OwnProfileProvider } from '@/app/(user)/_components/OwnProfileProvider';
@@ -26,7 +28,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
 function AppShell({ children }: { children?: React.ReactNode }) {
     const { enabled: mockEnabled } = useMockVisibility();
-    const { unreadCount, unreadMessages } = useMessaging();
+    const { unreadCount, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unread: serverDirectUnread } = useDirectChats();
+    const { unread: serverProjectUnread } = useProjectChats();
+    // 토글 OFF는 1:1(11.7)과 프로젝트 채팅(7.21)을 합산한다(D12). ON은 지금처럼 Mock 1:1만 센다.
+    const unreadMessages = mockEnabled ? mockUnreadMessages : serverDirectUnread + serverProjectUnread;
+    const unreadMessageLabel = mockEnabled ? '안 읽은 쪽지' : '안 읽은 메시지';
     const { notify } = usePrototype();
     const { reset: resetHome } = useHome();
     const { state: projectState } = useProjects();
@@ -74,7 +81,7 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                                 <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="쪽지" href="/messages/chats">
                                     <MessageSquare size={20} />
                                     {unreadMessages > 0 && (
-                                        <span className={[styles.scope, "header-count"].join(" ")} aria-label={`안 읽은 쪽지 ${unreadMessages}개`}>
+                                        <span className={[styles.scope, "header-count"].join(" ")} aria-label={`${unreadMessageLabel} ${unreadMessages}개`}>
                                             {unreadMessages > 99 ? '99+' : unreadMessages}
                                         </span>
                                     )}

@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import jakarta.persistence.EntityManagerFactory;
 import com.devmozip.backend.dto.project.*;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.security.project.ProjectCurrentUserProvider;
 import com.devmozip.backend.service.ProjectQueryService;
 import com.devmozip.backend.service.ProjectService;
@@ -44,14 +43,14 @@ class ProjectUpdateDeleteTeamDatabaseIntegrationTest {
 	private long fixture(List<Long> ids) {
 		var response = service.create(new CreateProjectRequest("db46_" + UUID.randomUUID(), "이전 소개", "#46 팀 DB 롤백 검증", "이전 목표",
 			"http://localhost:3000/portfolio-cover.svg", true,
-			List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND, 2, 0)),
+			List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND", 2, 0)),
 			List.of("Java"), List.of("교육"), today, today.plusDays(7), today, today.plusDays(90)));
 		ids.add(response.id()); return response.id();
 	}
 	private UpdateProjectRequest update(int capacity) {
 		return new UpdateProjectRequest("db46_수정 공고", null, "수정한 프로젝트 상세 소개", null,
 			"https://example.test/changed.png", false,
-			List.of(new CreateProjectRequest.RecruitmentSlot(ProjectJobRole.BACKEND, capacity, 1)),
+			List.of(new CreateProjectRequest.RecruitmentSlot("BACKEND", capacity, 1)),
 			List.of(" Spring Boot ", "PostgreSQL"), List.of("생산성"), today, today.plusDays(14), today, today.plusDays(120));
 	}
 	private void clear() { SharedEntityManagerCreator.createSharedEntityManager(factory).clear(); }

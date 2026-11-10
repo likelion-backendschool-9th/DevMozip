@@ -181,6 +181,23 @@ public class Member {
     public void unlinkKakao() { this.kakaoId = null; }
     public void changePasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
+    // 결제 수단 (docs/premium-payment-plan.md 4절). 빌링키는 암호화된 값으로만 들어온다. null이면 등록된 결제 수단이 없다.
+    public void changePaymentMethods(String paymentMethods) { this.paymentMethods = paymentMethods; }
+
+    // 구독 결제는 USER ↔ PREMIUM만 바꾼다. 다른 역할 관리는 관리자 범위다.
+    public void upgradeToPremium() {
+        if (role != null && role != MemberRole.USER) {
+            throw new IllegalStateException("USER만 프리미엄으로 바꿀 수 있습니다.");
+        }
+        this.role = MemberRole.PREMIUM;
+    }
+
+    public void downgradeFromPremium() {
+        if (role == MemberRole.PREMIUM) {
+            this.role = MemberRole.USER;
+        }
+    }
+
     @Builder
     public Member(String email, String passwordHash, String kakaoId,
                   String nickname, String tag, MemberRole role, MemberStatus status,
