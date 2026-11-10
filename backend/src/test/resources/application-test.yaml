@@ -3,3 +3,8 @@
 jwt:
   # 테스트에서만 쓰는 값. 실제 서버의 JWT_SECRET과 다르다 (HS256은 32바이트 이상 필요)
   secret: test-only-secret-key-at-least-32-bytes!!
+# Redis가 없는 테스트 컨텍스트에서 구독을 시도하지 않는다. Redis를 시험하는 테스트만 실행 인자로 켠다.
+messenger:
+  realtime:
+    redis:
+      enabled: false

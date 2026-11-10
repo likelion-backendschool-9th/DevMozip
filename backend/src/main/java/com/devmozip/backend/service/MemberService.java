@@ -252,7 +252,7 @@ public class MemberService {
         if (!JobCategory.contains(request.job().trim())) {
             throw badRequest("선택할 수 없는 개발 직군입니다.");
         }
-        if (!distinct(request.stacks()).stream().allMatch(Skill::contains)) {
+        if (!distinct(request.skills()).stream().allMatch(Skill::contains)) {
             throw badRequest("선택할 수 없는 기술 스택이 포함되어 있습니다.");
         }
         if (!distinct(request.interests()).stream().allMatch(Interest::contains)) {
@@ -291,7 +291,7 @@ public class MemberService {
                 .collaborationStatus(request.available() ? CollaborationStatus.AVAILABLE : CollaborationStatus.UNAVAILABLE)
                 .career(request.career())
                 .jobCategories(List.of(request.job().trim()))
-                .skills(distinct(request.stacks()))
+                .skills(distinct(request.skills()))
                 .interests(distinct(request.interests()));
     }
 

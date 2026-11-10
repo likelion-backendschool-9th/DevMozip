@@ -1,0 +1,13 @@
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+vi.mock('@/lib/auth/backend',()=>({backendFetch:vi.fn()}));
+vi.mock('@/lib/auth/session',()=>({getSession:vi.fn()}));
+import {backendFetch} from '@/lib/auth/backend';
+import {getSession} from '@/lib/auth/session';
+import {POST} from './route';
+const context=(projectId='1')=>({params:Promise.resolve({projectId})});
+const request=(body:unknown={reason:'기타',detail:''},origin='http://localhost')=>new Request('http://localhost/api/projects/1/reports',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+beforeEach(()=>{vi.stubEnv('PROJECT_API_ENABLED','true');vi.mocked(backendFetch).mockReset();vi.mocked(getSession).mockResolvedValue({username:'member',role:'USER',isAdmin:false,token:'secret'});});
+afterEach(()=>vi.unstubAllEnvs());
+it('프로젝트 신고 내용만 전달하고 신고자·대상 사용자 ID는 제거한다',async()=>{vi.mocked(backendFetch).mockResolvedValueOnce(Response.json({id:2,projectId:1,status:'RECEIVED'},{status:201}));expect((await POST(request({reason:'기타',detail:'설명',reporterId:999,reportedUserId:123,projectId:55}),context())).status).toBe(201);const [path,init]=vi.mocked(backendFetch).mock.calls[0];expect(path).toBe('/api/v1/projects/1/reports');expect(JSON.parse(String(init?.body))).toEqual({reason:'기타',detail:'설명'});});
+it('교차 출처·비로그인·잘못된 프로젝트와 입력을 차단한다',async()=>{expect((await POST(request(undefined,'https://other.test'),context())).status).toBe(403);vi.mocked(getSession).mockResolvedValueOnce(null);expect((await POST(request(),context())).status).toBe(401);expect((await POST(request(),context('../2'))).status).toBe(400);for(const body of [{reason:'없음'},{reason:'기타',detail:123},{reason:'기타',detail:'가'.repeat(1001)}])expect((await POST(request(body),context())).status).toBe(400);expect(backendFetch).not.toHaveBeenCalled();});
+it('중복과 연결 실패를 신고 오류로 안내하고 내부 응답을 숨긴다',async()=>{vi.mocked(backendFetch).mockResolvedValueOnce(new Response('sensitive',{status:409}));const duplicate=await POST(request(),context());expect(duplicate.status).toBe(409);expect(await duplicate.text()).toContain('이미 신고');vi.mocked(backendFetch).mockRejectedValueOnce(new Error('private'));const failure=await POST(request(),context());expect(failure.status).toBe(502);expect(await failure.text()).not.toContain('private');});

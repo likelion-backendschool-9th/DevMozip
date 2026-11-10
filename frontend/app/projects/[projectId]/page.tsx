@@ -1,5 +1,4 @@
 'use client';
-import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { ApiProjectDetail } from '@/app/projects/_components/api/ApiProjectDetail';
 import styles from './page.module.css';
 import { useState } from 'react';
@@ -9,6 +8,7 @@ import { ArrowLeft, CalendarDays, MessageSquare, Users } from 'lucide-react';
 import { useProjects } from '@/lib/state/projectStore';
 import { useProfiles } from '@/lib/state/profileStore';
 import { useAuth } from '@/lib/state/authStore';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { applicationFor, applicationRestriction, projectStatus } from '@/lib/projects/projectService';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -19,6 +19,7 @@ function ProjectDetail({ projectId }: { projectId: string }) {
     const { projects, state, now } = useProjects();
     const { state: profiles } = useProfiles();
     const { user } = useAuth();
+    const { enabled: mockEnabled } = useMockVisibility();
     const [modal, setModal] = useState<'apply' | 'cancel' | null>(null);
     const p = projects.find(p => p.id === projectId);
     if (!p)
@@ -43,14 +44,14 @@ function ProjectDetail({ projectId }: { projectId: string }) {
                 <ArrowLeft size={14} />
                 프로젝트 모집
             </Link>
-            <header className={[styles.scope, 'project-detail-heading'].join(' ')}>
+            <header className={[styles.scope,styles.heading,'project-detail-heading'].join(' ')}>
                 <div className={[styles.scope, 'project-detail-labels'].join(' ')}>
                     <span className={[styles.scope, 'outline-badge'].join(' ')}>{p.field}</span>
                     <span className={[styles.scope, 'availability-badge'].join(' ')}>{projectStatus(p, now)}</span>
                 </div>
                 <h1>{p.title}</h1>
                 <p>{p.summary}</p>
-                <ProjectActions project={p} />
+                <div className={styles.headerActions}><ProjectActions project={p} /></div>
             </header>
             <div className={[styles.scope, 'project-detail-layout'].join(' ')}>
                 <div className={[styles.scope, 'project-detail-main'].join(' ')}>
@@ -198,13 +199,13 @@ function ProjectDetail({ projectId }: { projectId: string }) {
                         )}
                         <Link
                             className={[styles.scope, 'button secondary'].join(' ')}
-                            href={user ? (owner ? '/messages/chats' : `/messages/chats?userId=${p.hostId}`) : '/login'}
+                            href={user ? (owner || !mockEnabled ? '/messages/chats' : `/messages/chats?userId=${p.hostId}`) : '/login'}
                         >
                             <MessageSquare size={14} />
-                            {owner ? '내 메신저' : '주최자에게 쪽지'}
+                            {owner ? '내 메신저' : mockEnabled ? '주최자에게 쪽지' : '메신저로 이동'}
                         </Link>
                         <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                            주최자와 Mock 1:1 대화를 시작할 수 있습니다.
+                            {mockEnabled ? '주최자와 Mock 1:1 대화를 시작할 수 있습니다.' : '메신저에서 내 대화 목록을 확인할 수 있습니다.'}
                         </p>
                     </Card>
                 </aside>
