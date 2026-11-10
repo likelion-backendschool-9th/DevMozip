@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { CalendarDays, Clock3, Pencil, Star } from 'lucide-react';
-import { StartChatButton } from './StartChatButton';
+import { StartChatButton } from '@/components/profile/StartChatButton';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { collaborationLabel, formatCareer, profileImageUrl } from '@/lib/profiles/profileDetail';
 import { starColor } from '@/lib/profiles/profileService';
