@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.UUID;
 
 @Component
@@ -101,6 +102,11 @@ public class JwtProvider {
     // 토큰에서 권한(Role) 정보 추출
     public String getRole(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    // 토큰 만료 시각 (메신저 WebSocket 연결을 이 시각에 닫는다)
+    public Instant getExpiration(String token) {
+        return parseClaims(token).getExpiration().toInstant();
     }
 
     // 액세스 토큰 검증: 서명·만료가 유효하고 type이 access인지 (리프레시 토큰은 false)

@@ -32,6 +32,11 @@ public class AiRecommendationRequest {
 	private LocalDateTime createdAt;
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ai_usage_id")
+	private AiUsage usage;
+	@Column(name = "reservation_expires_at")
+	private LocalDateTime reservationExpiresAt;
 
 	protected AiRecommendationRequest() {}
 	public AiRecommendationRequest(AiConversation conversation, AiMessage message, String conditions, String key) {
@@ -43,13 +48,21 @@ public class AiRecommendationRequest {
 		this.createdAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
 	}
 	public void complete(Status status) {
+		complete(status, LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+	}
+	public void complete(Status status, LocalDateTime time) {
 		if (this.status != Status.PENDING || status == Status.PENDING) throw new IllegalStateException("이미 완료된 추천 요청입니다.");
 		this.status = status;
-		this.completedAt = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+		this.completedAt = time;
 	}
+	public void reserve(AiUsage usage, LocalDateTime receivedAt, LocalDateTime expiresAt) {
+		if (this.usage != null || status != Status.PENDING) throw new IllegalStateException("이미 예약된 추천 요청입니다.");
+		this.usage = usage; this.createdAt = receivedAt; this.reservationExpiresAt = expiresAt;
+	}
+	public Long getUsageId() { return usage == null ? null : usage.getId(); }
+	public LocalDateTime getReservationExpiresAt() { return reservationExpiresAt; }
 	public Long getId() { return id; }
 	public Long getMessageId() { return message == null ? null : message.getId(); }
-	public String getMessageContent() { return message == null ? null : message.getContent(); }
 	public String getConditions() { return conditions; }
 	public Status getStatus() { return status; }
 	public LocalDateTime getCreatedAt() { return createdAt; }

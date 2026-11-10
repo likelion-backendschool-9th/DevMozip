@@ -6,13 +6,13 @@ import { getSession } from '@/lib/auth/session';
 import { POST } from './route';
 const request = (body: unknown = {}, origin = 'http://localhost') => new Request('http://localhost/api/projects', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 beforeEach(() => {
- vi.stubEnv('PROJECT_CREATION_API_ENABLED', 'true'); vi.mocked(backendFetch).mockReset();
+ vi.stubEnv('PROJECT_API_ENABLED', 'true'); vi.mocked(backendFetch).mockReset();
  vi.mocked(getSession).mockReset(); vi.mocked(getSession).mockResolvedValue({ username: 'premium', role: 'PREMIUM', isAdmin: false, token: 'not-exposed' });
 });
 afterEach(() => vi.unstubAllEnvs());
 describe('프로젝트 생성 BFF', () => {
  it('준비 전에는 백엔드 호출을 차단한다', async () => {
-  vi.stubEnv('PROJECT_CREATION_API_ENABLED', 'false'); expect((await POST(request())).status).toBe(503); expect(backendFetch).not.toHaveBeenCalled();
+  vi.stubEnv('PROJECT_API_ENABLED', 'false'); expect((await POST(request())).status).toBe(503); expect(backendFetch).not.toHaveBeenCalled();
  });
  it('외부 출처와 잘못된 본문을 차단한다', async () => {
   expect((await POST(request({}, 'https://external.test'))).status).toBe(403);

@@ -47,6 +47,7 @@ class AiRecommendationExecutionTests {
 	@Autowired AiMessageRepository messages;
 	@Autowired AiRecommendationRequestRepository requestRepository;
 	@MockitoBean RefreshTokenStore tokens;
+	@MockitoBean com.devmozip.backend.client.GeminiAnalysisClient gemini;
 	@MockitoSpyBean AiRecommendationService engine;
 	long ownerId, developerId, projectId, conversationId;
 	String authorization;
@@ -72,18 +73,21 @@ class AiRecommendationExecutionTests {
 			new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(
 				new org.springframework.core.io.FileSystemResource("../docs/sql/ai-recommendations.sql"))
 				.execute(java.util.Objects.requireNonNull(jdbc.getDataSource()));
+			var usage = new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(new org.springframework.core.io.FileSystemResource("../docs/sql/ai-usages.sql"));
+			usage.setSeparator(org.springframework.jdbc.datasource.init.ScriptUtils.EOF_STATEMENT_SEPARATOR);
+			usage.execute(jdbc.getDataSource());
 		}
 	}
 
 	@BeforeEach void setup() {
 		reset(engine);
-		for (String table : List.of("ai_recommendations", "ai_recommendation_requests", "ai_messages", "ai_conversations", "projects", "users")) jdbc.update("DELETE FROM " + table);
+		for (String table : List.of("ai_recommendations", "ai_recommendation_requests", "ai_usages", "ai_messages", "ai_conversations", "projects", "users")) jdbc.update("DELETE FROM " + table);
 		ownerId = member("owner").getId();
 		developerId = member("developer").getId();
 		authorization = "Bearer " + jwt.createAccessToken("owner@example.com", "USER");
 		var start = LocalDate.of(2026, 1, 31);
 		projectId = projects.saveAndFlush(new Project(ownerId, "교육 플랫폼", null, "교육 Java", null, "https://example.com/a.png",
-			true, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND, 1, 3)), List.of("Java"), List.of("교육"),
+			true, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND.name(), 1, 3)), List.of("Java"), List.of("교육"),
 			start, start, start, start.plusMonths(3), LocalDateTime.now())).getId();
 		var conversation = new AiConversation(ownerId, "추천", LocalDateTime.now());
 		conversation.replaceConditions(CONDITIONS, LocalDateTime.now());
@@ -130,6 +134,51 @@ class AiRecommendationExecutionTests {
 			.andExpect(jsonPath("$.conditions.career").value("3년 이상")).andExpect(jsonPath("$.developers.length()").value(1));
 	}
 
+	@Test void naturalLanguagePreferenceChangesNewScoresButSavedEvaluationAndReplayStayFixed() throws Exception {
+		var conversation = conversations.findById(conversationId).orElseThrow();
+		var conditions = (tools.jackson.databind.node.ObjectNode) mapper.readTree(CONDITIONS);
+		conditions.set("_analysis", mapper.valueToTree(java.util.Map.of("facts", List.of(java.util.Map.of(
+			"kind", "PROJECT_PREFERENCE", "value", "신뢰온도 40도 이상인 사용자 선호", "origin", "EXPLICIT",
+			"evidence", "신뢰온도 40도 이상", "messageId", 1)))));
+		conversation.replaceConditions(mapper.writeValueAsString(conditions), LocalDateTime.now());
+		conversations.saveAndFlush(conversation);
+		when(gemini.generate(anyString(), anyString(), any())).thenAnswer(call -> {
+			var rows = mapper.createArrayNode();
+			for (var candidate : mapper.readTree((String) call.getArgument(0)).path("candidates")) {
+				for (var source : candidate.path("sources")) {
+					if (!"trustScore".equals(source.path("field").asText())) continue;
+					String quote = source.path("text").asText();
+					rows.add(mapper.valueToTree(java.util.Map.of("candidate", candidate.path("ref").asText(),
+						"requirement", "r0", "source", source.path("ref").asText(), "quote", quote,
+						"status", new BigDecimal(quote).compareTo(new BigDecimal("40")) >= 0 ? "MET" : "MISMATCH")));
+				}
+			}
+			return mapper.createObjectNode().set("evaluations", rows);
+		});
+		long old = execute("trust-old");
+		jdbc.update("UPDATE users SET trust_score=36.5 WHERE id=?", developerId);
+		long latest = execute("trust-new");
+		mvc.perform(auth(get(path()).param("requestId", String.valueOf(latest)))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].baseScore").value(75.0))
+			.andExpect(jsonPath("$.developers[0].requirementScore").value(0.0))
+			.andExpect(jsonPath("$.developers[0].matchScore").value(60.0))
+			.andExpect(jsonPath("$.developers[0].requirementAssessments[0].status").value("MISMATCH"));
+		conversation = conversations.findById(conversationId).orElseThrow();
+		conversation.replaceConditions(CONDITIONS, LocalDateTime.now());
+		conversations.saveAndFlush(conversation);
+		clearInvocations(engine, gemini);
+		for (var request : List.of(auth(get(path()).param("requestId", String.valueOf(old))),
+			auth(post(path())).header("Idempotency-Key", "trust-old").contentType("application/json").content("{\"replay\":true}"))) {
+			mvc.perform(request).andExpect(status().isOk())
+				.andExpect(jsonPath("$.developers[0].matchScore").value(100.0))
+				.andExpect(jsonPath("$.developers[0].requirementScore").value(100.0))
+				.andExpect(jsonPath("$.developers[0].requirementAssessments[0].status").value("MET"))
+				.andExpect(jsonPath("$.developers[0].requirementAssessments[0].quote").value("50.00"))
+				.andExpect(jsonPath("$.developers[0].developer.trustScore").value(36.5));
+		}
+		verifyNoInteractions(engine, gemini);
+	}
+
 	@Test void sameKeyReplaysAndDifferentInputConflicts() throws Exception {
 		long id = execute("key");
 		mvc.perform(auth(post(path())).header("Idempotency-Key", "key")).andExpect(status().isOk()).andExpect(jsonPath("$.requestId").value(id));
@@ -170,6 +219,57 @@ class AiRecommendationExecutionTests {
 		verify(engine).recommend(any(), eq("교육 플랫폼"));
 	}
 
+	@Test void cumulativeUserMessagesUseBoundaryAndReplayNeverIncludesLaterMessages() throws Exception {
+		var own = conversations.findById(conversationId).orElseThrow();
+		messages.saveAndFlush(new AiMessage(own, "교육 프로젝트", LocalDateTime.now()));
+		long boundary = messages.saveAndFlush(new AiMessage(own, "Java로 만들어요", LocalDateTime.now())).getId();
+		String body = "{\"messageId\":" + boundary + "}";
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "cumulative").contentType("application/json").content(body))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.messageId").value(boundary));
+		verify(engine).recommend(any(), eq("교육 프로젝트\n\nJava로 만들어요"));
+		messages.saveAndFlush(new AiMessage(own, "나중에 추가한 메시지", LocalDateTime.now()));
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "cumulative").contentType("application/json").content(body))
+			.andExpect(status().isOk());
+		verify(engine, times(1)).recommend(any(), any());
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "same-boundary").contentType("application/json").content(body))
+			.andExpect(status().isCreated());
+		verify(engine, times(2)).recommend(any(), eq("교육 프로젝트\n\nJava로 만들어요"));
+	}
+
+	@Test void publicDeveloperMetadataUsesRealMemberAndUnavailableProfilesAreHidden() throws Exception {
+		long id = execute("metadata");
+		mvc.perform(auth(get(path()))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer.nickname").value("developer"))
+			.andExpect(jsonPath("$.developers[0].developer.tag").value("developer"))
+			.andExpect(jsonPath("$.developers[0].developer.jobCategories[0]").value("백엔드 개발자"))
+			.andExpect(jsonPath("$.developers[0].developer.skills[0]").value("Java"))
+			.andExpect(jsonPath("$.developers[0].developer.career").value("3년 차"))
+			.andExpect(jsonPath("$.developers[0].developer.trustScore").value(50.0))
+			.andExpect(jsonPath("$.developers[0].developer.collaborationStatus").value("AVAILABLE"))
+			.andExpect(jsonPath("$.developers[0].developer.email").doesNotExist());
+		jdbc.update("UPDATE users SET nickname='새 닉네임', collaboration_status='BUSY', career='5년 차' WHERE id=?", developerId);
+		mvc.perform(auth(get(path()).param("requestId", String.valueOf(id)))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer.nickname").value("새 닉네임"))
+			.andExpect(jsonPath("$.developers[0].developer.career").value("5년 차"))
+			.andExpect(jsonPath("$.developers[0].developer.collaborationStatus").value("BUSY"))
+			.andExpect(jsonPath("$.developers[0].matchScore").value(100.0));
+		jdbc.update("UPDATE users SET status='WARNED' WHERE id=?", developerId);
+		mvc.perform(auth(get(path()))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer").isEmpty())
+			.andExpect(jsonPath("$.developers[0].matchScore").value(100.0));
+	}
+
+	@Test void oversizedExistingHistoryStaysReadableButCannotStartNewRecommendation() throws Exception {
+		var own = conversations.findById(conversationId).orElseThrow();
+		for (int i = 0; i < 7; i++) messages.saveAndFlush(new AiMessage(own, "가".repeat(1500), LocalDateTime.now()));
+		mvc.perform(auth(get("/api/v1/ai/conversations/" + conversationId))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.messages.length()").value(7));
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "too-long")).andExpect(status().isBadRequest());
+		assertEquals(0, count("ai_recommendation_requests"));
+		assertEquals(7, count("ai_messages"));
+		verifyNoInteractions(engine);
+	}
+
 	@Test void engineFailureIsDurablyRecordedAndSameKeyDoesNotRetry() throws Exception {
 		doThrow(new IllegalStateException("test failure")).when(engine).recommend(any(), any());
 		String body = mvc.perform(auth(post(path())).header("Idempotency-Key", "fail")).andExpect(status().isInternalServerError())
@@ -192,6 +292,8 @@ class AiRecommendationExecutionTests {
 			.andExpect(jsonPath("$.status").value("FAILED"));
 		assertEquals(0, count("ai_recommendations"));
 		assertEquals(1, count("ai_recommendation_requests"));
+		assertEquals(0, jdbc.queryForObject("SELECT used_count FROM ai_usages WHERE user_id=?", Integer.class, ownerId));
+		assertEquals(0, jdbc.queryForObject("SELECT pending_count FROM ai_usages WHERE user_id=?", Integer.class, ownerId));
 	}
 
 	@Test void databaseRejectsBothOrNeitherTargetsAndMissingForeignKeys() throws Exception {

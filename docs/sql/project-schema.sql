@@ -1,4 +1,5 @@
--- 프로젝트 청사진 기준. 외부 users/portfolios/review_keywords/chat_members FK는 결합 시 추가.
+-- 프로젝트 청사진 기준. 외부 users/portfolios/chat_members FK는 결합 시 추가.
+-- review_keywords 원본은 review-keywords.sql로 별도 생성한다.
 -- 기존 테이블이 있으면 오류로 중단한다. 재실행용 IF NOT EXISTS로 불일치를 숨기지 않는다.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -95,7 +96,6 @@ CREATE TABLE public.reviews (
  token_hash VARCHAR(255) NOT NULL,
  expires_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
  rating INTEGER,
- selected_keywords JSONB NOT NULL,
  submitted_at TIMESTAMP WITHOUT TIME ZONE,
  last_reminded_at TIMESTAMP WITHOUT TIME ZONE,
  created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,

@@ -1,48 +1,99 @@
 'use client';
-import styles from './ChatConditions.module.css';
-import { useId, useRef, useState } from 'react';
-import { chatCareerOptions, chatDurationOptions, chatInterestOptions, chatRequirementLabels, chatRoleOptions } from '@/mocks/matchingChat';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ArrowRight, Check, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { chatCareerOptions, chatDurationOptions, chatInterestOptions, chatRequirementLabels, chatRoleOptions, emptyChatRequirements } from '@/mocks/matchingChat';
 import { stackOptions } from '@/mocks/home';
 import { useHome } from '@/lib/state/homeStore';
-import { emptyChatRequirements } from '@/mocks/matchingChat';
+import { useAuth } from '@/lib/state/authStore';
 import { addChatStack, missingChatRequirements } from '@/lib/matching/matchingChatService';
-import { Input, Textarea } from '@/components/common/Input';
-import { Button } from '@/components/common/Button';
-export function ChatConditions({ onRecommend }: { onRecommend: () => void }) {
-    const { conversation, editChat } = useHome();
+import styles from './ChatConditions.module.css';
+import { fetchAiUsage, type AiUsage } from '@/lib/matching/usage';
+export function ChatConditions({ onRecommend, onClose, busy = false, retry = false, signedIn = true }: {
+    onRecommend: () => void; onClose?: () => void; busy?: boolean; retry?: boolean; signedIn?: boolean;
+}) {
+    const { conversation, editChat, recommendationUnchanged } = useHome();
+    const { user } = useAuth();
     const r = conversation?.requirements || emptyChatRequirements;
-    const [role, setRole] = useState('');
-    const [otherRole, setOtherRole] = useState(false);
-    const [error, setError] = useState('');
     const [stack, setStack] = useState('');
+    const [role, setRole] = useState('');
+    const [error, setError] = useState('');
     const [showMissing, setShowMissing] = useState(false);
-    const interestRef = useRef<HTMLFieldSetElement>(null);
-    const careerRef = useRef<HTMLSelectElement>(null);
-    const durationRef = useRef<HTMLSelectElement>(null);
+    const root = useRef<HTMLDivElement>(null);
     const errorId = useId();
     const missing = missingChatRequirements(r);
-    const message = error || (showMissing && missing.length ? `${missing.map(key => chatRequirementLabels[key]).join('·')} 항목을 선택해 주세요.` : '');
-    const addStack = () => {
-        try { editChat({ stacks: addChatStack(r.stacks, stack) }); setStack(''); setError(''); }
-        catch (e) { setError(e instanceof Error ? e.message : '기술 스택을 확인해 주세요.'); }
-    };
+    const message = error || (showMissing && !retry && missing.length ? `${missing.map(k => chatRequirementLabels[k]).join('·')} 항목을 선택해 주세요.` : '');
+    const account = signedIn && user ? `${user.id}:${user.email}:${user.role}` : '';
+    const [usage, setUsage] = useState<{ account: string; value?: AiUsage; failed?: boolean }>();
+    const [usageVersion, setUsageVersion] = useState(0);
+    useEffect(() => {
+        if (!account) return;
+        const controller = new AbortController();
+        const load = async () => {
+            try {
+                const value = await fetchAiUsage(controller.signal);
+                if (!controller.signal.aborted) setUsage({ account, value });
+            } catch {
+                if (!controller.signal.aborted) setUsage({ account, failed: true });
+            }
+        };
+        void load();
+        const focus = () => setUsageVersion(v => v + 1);
+        window.addEventListener('focus', focus);
+        return () => { controller.abort(); window.removeEventListener('focus', focus); };
+    }, [account, busy, usageVersion]);
+    const currentUsage = usage?.account === account ? usage : undefined;
+    const used = currentUsage?.value;
+    const tags = (key: 'interests' | 'stacks', options: string[]) => <div className={styles.chips}>{options.map(value => <button type="button" key={value} aria-pressed={r[key].includes(value)} onClick={() => {
+        try { editChat({ [key]: r[key].includes(value) ? r[key].filter(v => v !== value) : key === 'stacks' ? addChatStack(r.stacks, value) : [...r[key], value] }); setError(''); }
+        catch (e) { setError(e instanceof Error ? e.message : '조건을 확인해 주세요.'); }
+    }}>{r[key].includes(value) && <Check size={11} />}{value}</button>)}</div>;
+    const status = (values: string[]) => values.length ? values.join(', ') : '미설정';
     const recommend = () => {
-        setError('');
-        setShowMissing(true);
-        if (missing.length) {
-            const target = { interests: interestRef.current, career: careerRef.current, duration: durationRef.current }[missing[0]];
-            target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            (target?.querySelector('button') || target)?.focus({ preventScroll: true });
+        if (!signedIn) { onRecommend(); return; }
+        if (recommendationUnchanged) return;
+        setShowMissing(true); setError('');
+        if (missing.length && !retry) {
+            const target = root.current?.querySelector<HTMLElement>(`[data-condition="${missing[0]}"]`);
+            target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            target?.querySelector<HTMLElement>('button,select')?.focus({ preventScroll: true });
             return;
         }
         onRecommend();
     };
-    const tags = (key: 'interests' | 'stacks', options: string[]) => <div className={[styles.scope, "chips"].join(" ")}>{options.map(value => <button type="button" className={[styles.scope, `chip ${r[key].includes(value) ? 'selected' : ''}`].join(" ")} aria-pressed={r[key].includes(value)} key={value} onClick={() => {
-        try { editChat({ [key]: r[key].includes(value) ? r[key].filter(v => v !== value) : key === 'stacks' ? addChatStack(r.stacks, value) : [...r[key], value] }); setError(''); }
-        catch (e) { setError(e instanceof Error ? e.message : '선택 조건을 확인해 주세요.'); }
-    }}>{value}</button>)}</div>;
-    return <details className={[styles.scope, "chat-conditions"].join(" ")}><summary>프로젝트 조건 설정 <span>{missing.length ? `${missing.length}개 항목 확인 필요` : '조건 준비 완료'}</span></summary><div className={[styles.scope, "chat-condition-body"].join(" ")}><p>여러 분야와 직군을 선택할 수 있어요. 선택/삭제만으로는 횟수가 차감되지 않습니다.</p><label>프로젝트 설명<Textarea rows={2} maxLength={1500} value={r.description} onChange={e => editChat({ description: e.target.value })}/></label><fieldset ref={interestRef} aria-required="true" aria-invalid={showMissing && missing.includes('interests')} aria-describedby={showMissing && missing.includes('interests') ? errorId : undefined}><legend>관심 분야 · 복수 선택 <span className={styles.required}>(필수)</span></legend>{tags('interests', chatInterestOptions)}</fieldset><fieldset><legend>기술 스택 · 복수 선택</legend>{tags('stacks', stackOptions)}<div className={[styles.scope, "chat-selected-tags"].join(" ")}>{r.stacks.filter(value => !stackOptions.includes(value)).map(value => <button type="button" aria-label={`${value} 기술 삭제`} key={value} onClick={() => editChat({ stacks: r.stacks.filter(item => item !== value) })}>{value} ×</button>)}</div><div className={[styles.scope, "chat-custom"].join(" ")}><Input aria-label="기술 스택 직접 입력" placeholder="예: Vue" maxLength={50} value={stack} onChange={e => setStack(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addStack(); } }}/><Button type="button" variant="secondary" onClick={addStack}>기술 추가</Button></div></fieldset><fieldset><legend>모집 개발 직군 · 복수 선택</legend><div className={[styles.scope, "chips"].join(" ")}>{chatRoleOptions.filter(v => v !== '기타').map(name => <button type="button" key={name} className={[styles.scope, `chip ${r.roles.some(v => v.name === name) ? 'selected' : ''}`].join(" ")} aria-pressed={r.roles.some(v => v.name === name)} onClick={() => editChat({ roles: r.roles.some(v => v.name === name) ? r.roles.filter(v => v.name !== name) : [...r.roles, { name, count: 1 }] })}>{name}</button>)}</div><button className={[styles.scope, "chat-other"].join(" ")} type="button" onClick={() => setOtherRole(v => !v)}>기타 직군 직접 입력</button>{otherRole && <div className={[styles.scope, "chat-custom"].join(" ")}><Input aria-label="기타 모집 직군" value={role} maxLength={30} onChange={e => setRole(e.target.value)}/><Button variant="secondary" onClick={() => { if (!role.trim() || r.roles.some(v => v.name === role.trim()) || r.roles.length >= 12) {
-        setError('중복 없는 직군을 입력해 주세요. 최대 12개입니다.');
-        return;
-    } editChat({ roles: [...r.roles, { name: role.trim(), count: 1 }] }); setRole(''); setError(''); }}>직군 추가</Button></div>}<div className={[styles.scope, "chat-role-counts"].join(" ")}>{r.roles.map(v => <div key={v.name}><label>{v.name}<Input type="number" aria-label={`${v.name} 모집 인원`} min={1} max={20} value={v.count || ''} onChange={e => editChat({ roles: r.roles.map(x => x.name === v.name ? { ...x, count: Math.max(1, Math.min(20, Number(e.target.value) || 1)) } : x) })}/>명</label><button type="button" aria-label={`${v.name} 직군 삭제`} onClick={() => editChat({ roles: r.roles.filter(x => x.name !== v.name) })}>×</button></div>)}</div></fieldset><div className={[styles.scope, "chat-condition-selects"].join(" ")}><label><span>요구 경력 <span className={styles.required}>(필수)</span></span><select ref={careerRef} required aria-invalid={showMissing && missing.includes('career')} aria-describedby={showMissing && missing.includes('career') ? errorId : undefined} aria-label="요구 경력" value={r.career} onChange={e => editChat({ career: e.target.value })}><option value="">선택해 주세요</option>{chatCareerOptions.map(v => <option key={v}>{v}</option>)}</select></label><label><span>예상 프로젝트 기간 <span className={styles.required}>(필수)</span></span><select ref={durationRef} required aria-invalid={showMissing && missing.includes('duration')} aria-describedby={showMissing && missing.includes('duration') ? errorId : undefined} aria-label="예상 프로젝트 기간" value={r.duration} onChange={e => editChat({ duration: e.target.value })}><option value="">선택해 주세요</option>{[...new Set([...chatDurationOptions, r.duration].filter(Boolean))].map(v => <option key={v}>{v}</option>)}</select></label></div>{message && <p id={errorId} role="alert" className={[styles.scope, "form-error"].join(" ")}>{message}</p>}<Button type="button" onClick={recommend}>조건으로 추천 받기</Button></div></details>;
+    return <div className={styles.panel} ref={root}>
+        <header className={styles.header}><div><SlidersHorizontal size={17} /><strong>추천 조건</strong></div>{onClose && <button type="button" aria-label="추천 조건 패널 접기" onClick={onClose}><X size={17} /></button>}</header>
+        <div className={styles.intro}><span className={styles.badge}>{missing.length ? `${missing.length}개 항목 확인 필요` : '조건 준비 완료'}</span><p>아이디어에 맞게 조건을 정리해 보세요.<br />선택한 조건으로 동료와 프로젝트를 찾아요.</p></div>
+        <fieldset disabled={busy || !signedIn} className={styles.body}>
+            <div className={styles.group} data-condition="interests">
+                <label>관심 분야 <span className={styles.required}>(필수)</span></label><small className={styles.value}>{status(r.interests)}</small>{tags('interests', chatInterestOptions)}
+                <small className={styles.help}>관심 분야를 하나 이상 선택해 주세요.</small>
+            </div>
+            <details className={styles.group}>
+                <summary>기술 스택 <span>{r.stacks.length || '선택'}</span></summary><small className={styles.value}>{status(r.stacks)}</small>{tags('stacks', [...new Set([...stackOptions, ...r.stacks])])}
+                <div className={styles.custom}><input aria-label="기술 스택 직접 입력" placeholder="기술 직접 입력" maxLength={50} value={stack} onChange={e => setStack(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); try { editChat({ stacks: addChatStack(r.stacks, stack) }); setStack(''); setError(''); } catch (e) { setError(e instanceof Error ? e.message : '입력을 확인해 주세요.'); } } }} /><button type="button" onClick={() => { try { editChat({ stacks: addChatStack(r.stacks, stack) }); setStack(''); setError(''); } catch (e) { setError(e instanceof Error ? e.message : '입력을 확인해 주세요.'); } }}>기술 추가</button></div>
+            </details>
+            <details className={styles.group}>
+                <summary>모집 직군 <span>{r.roles.length || '선택'}</span></summary><small className={styles.value}>{status(r.roles.map(v => `${v.name} ${v.count}명`))}</small>
+                <div className={styles.chips}>{chatRoleOptions.filter(v => v !== '기타').map(name => <button type="button" key={name} aria-pressed={r.roles.some(v => v.name === name)} onClick={() => {
+                    if (!r.roles.some(v => v.name === name) && r.roles.length >= 12) { setError('모집 직군은 최대 12개입니다.'); return; }
+                    editChat({ roles: r.roles.some(v => v.name === name) ? r.roles.filter(v => v.name !== name) : [...r.roles, { name, count: 1 }] });
+                }}>{name}</button>)}</div>
+                <div className={styles.custom}><input aria-label="기타 모집 직군" placeholder="기타 직군 직접 입력" maxLength={30} value={role} onChange={e => setRole(e.target.value)} /><button type="button" onClick={() => {
+                    if (!role.trim() || r.roles.some(v => v.name === role.trim()) || r.roles.length >= 12) { setError('중복 없는 직군을 입력해 주세요. 최대 12개입니다.'); return; }
+                    editChat({ roles: [...r.roles, { name: role.trim(), count: 1 }] }); setRole(''); setError('');
+                }}>직군 추가</button></div>
+                {r.roles.map(v => <div key={v.name} className={styles.count}><label>{v.name}<input type="number" aria-label={`${v.name} 모집 인원`} min={1} max={20} value={v.count} onChange={e => editChat({ roles: r.roles.map(x => x.name === v.name ? { ...x, count: Math.max(1, Math.min(20, Number(e.target.value) || 1)) } : x) })} />명</label><button type="button" aria-label={`${v.name} 직군 삭제`} onClick={() => editChat({ roles: r.roles.filter(x => x.name !== v.name) })}><X size={13} /></button></div>)}
+            </details>
+            <div className={styles.group} data-condition="career"><label htmlFor={`${errorId}-career`}>요구 경력 <span className={styles.required}>(필수)</span></label><select id={`${errorId}-career`} aria-label="요구 경력" aria-invalid={showMissing && missing.includes('career')} value={r.career} onChange={e => editChat({ career: e.target.value })}><option value="">미설정</option>{chatCareerOptions.map(v => <option key={v}>{v}</option>)}</select></div>
+            <div className={styles.group} data-condition="duration"><label htmlFor={`${errorId}-duration`}>예상 프로젝트 기간 <span className={styles.required}>(필수)</span></label><select id={`${errorId}-duration`} aria-label="예상 프로젝트 기간" aria-invalid={showMissing && missing.includes('duration')} value={r.duration} onChange={e => editChat({ duration: e.target.value })}><option value="">미설정</option>{[...new Set([...chatDurationOptions, r.duration].filter(Boolean))].map(v => <option key={v}>{v}</option>)}</select></div>
+            {message && <p id={errorId} role="alert" className={styles.error}>{message}</p>}
+        </fieldset>
+        <footer className={styles.footer}>
+            <div className={styles.usage}><span>월간 추천</span><strong>{used?.usedCount ?? '—'} <small>/ {used?.limit ?? '—'}회</small></strong></div>
+            <p>{!account ? '로그인 후 사용량을 확인할 수 있습니다.' : used ? `${used.usageMonth} · 남은 ${used.remainingCount}회 · 처리 중 ${used.pendingCount}회 · 지금 실행 가능 ${used.availableCount}회` : currentUsage?.failed ? '사용량을 불러오지 못했습니다.' : '사용량 확인 중입니다.'}
+                {account && <button type="button" onClick={() => setUsageVersion(v => v + 1)}>사용량 새로고침</button>}</p>
+            <button type="button" className={styles.recommend} disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={16} />{busy ? '추천 처리 중…' : retry ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}<ArrowRight size={15} /></button>
+            <small>{recommendationUnchanged ? '추천 조건을 변경하면 다시 추천받을 수 있어요.' : signedIn ? '대화·조건 변경은 추천 횟수에 영향을 주지 않아요.' : '로그인 후 추천을 실행할 수 있어요.'}</small>
+        </footer>
+    </div>;
 }

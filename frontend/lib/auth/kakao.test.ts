@@ -57,7 +57,7 @@ describe('비밀번호 없는 카카오 회원', () => {
         const errors = validateKakaoSignup(emptySignup);
         expect(errors).not.toHaveProperty('password');
         expect(errors).not.toHaveProperty('confirmPassword');
-        for (const key of ['email', 'nickname', 'job', 'career', 'stacks', 'interests']) expect(errors).toHaveProperty(key);
-        expect(validateKakaoSignup({ ...emptySignup, email: 'new@devmozip.test', nickname: '새회원', job: '백엔드 개발자', career: '3년 차', stacks: ['Java'], interests: ['AI'] })).toEqual({});
+        for (const key of ['email', 'nickname', 'job', 'career', 'skills', 'interests']) expect(errors).toHaveProperty(key);
+        expect(validateKakaoSignup({ ...emptySignup, email: 'new@devmozip.test', nickname: '새회원', job: '백엔드 개발자', career: '3년 차', skills: ['Java'], interests: ['AI'] })).toEqual({});
     });
 });

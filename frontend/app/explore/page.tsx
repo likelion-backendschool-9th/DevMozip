@@ -1,4 +1,6 @@
 'use client';
+import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
+import {ApiProjectList} from '@/app/projects/_components/api/ApiProjectList';
 import styles from './page.module.css';
 import { useState } from 'react';
 import { AdvancedSearch } from '@/app/explore/_components/AdvancedSearch';
@@ -79,6 +81,8 @@ export default function SearchPage() {
                   { key: 'status', value: filters.status },
               ]),
     ].filter(v => v.value);
+    const {enabled}=useMockVisibility();
+    if(!enabled&&filters.target==='project')return <><Link href="/explore?type=developers">개발자 탐색</Link><ApiProjectList initialQuery={filters.q}/></>;
     return (
         <div className={[styles.scope, 'container search-page'].join(' ')}>
             <header className={[styles.scope, 'search-page-heading'].join(' ')}>

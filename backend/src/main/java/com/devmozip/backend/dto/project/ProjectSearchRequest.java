@@ -1,13 +1,12 @@
 package com.devmozip.backend.dto.project;
 
 import java.util.List;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import com.devmozip.backend.entity.enums.ProjectStatus;
 import jakarta.validation.constraints.*;
 
 public record ProjectSearchRequest(
 	@Size(max = 255) String query,
-	ProjectJobRole jobRole,
+	@Size(max = 30) String jobRole,
 	ProjectStatus status,
 	@Size(max = 5) List<@NotBlank @Size(max = 30) String> interests,
 	@Size(max = 5) List<@NotBlank @Size(max = 30) String> techStacks,
