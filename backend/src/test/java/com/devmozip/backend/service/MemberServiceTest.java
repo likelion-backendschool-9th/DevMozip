@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -36,6 +38,7 @@ import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.security.jwt.RefreshTokenStore;
 
 /** 가입 규칙과 저장 값을 DB 없이 확인한다. */
 @ExtendWith(MockitoExtension.class)
@@ -47,6 +50,10 @@ class MemberServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
+    @Mock
+    private PasswordResetService passwordResetService;
     @InjectMocks
     private MemberService memberService;
 
@@ -358,33 +365,75 @@ class MemberServiceTest {
     }
 
     @Test
-    void 카카오_회원의_첫_비밀번호를_해시로_저장한다() {
+    void 카카오_회원의_첫_비밀번호를_해시로_저장하고_세션을_유지한다() {
         Member member = account(null, "123456789");
         lockedLookupReturns(member);
         when(passwordEncoder.encode(PASSWORD)).thenReturn("hash");
 
-        memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD));
+        memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(null, PASSWORD, PASSWORD));
 
         assertThat(member.getPasswordHash()).isEqualTo("hash");
+        verifyNoInteractions(refreshTokenStore, passwordResetService);
     }
 
     @Test
-    void 이미_비밀번호가_있으면_설정할_수_없다() {
+    void 비밀번호가_있으면_현재_비밀번호를_확인해_바꾸고_토큰을_모두_지운다() {
+        Member member = account("old-hash", "123456789");
+        lockedLookupReturns(member);
+        when(passwordEncoder.matches("Current123", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches(PASSWORD, "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("new-hash");
+
+        memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest("Current123", PASSWORD, PASSWORD));
+
+        assertThat(member.getPasswordHash()).isEqualTo("new-hash");
+        verify(refreshTokenStore).remove(MEMBER_EMAIL);
+        verify(passwordResetService).removeToken(MEMBER_EMAIL);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void 비밀번호가_있는데_현재_비밀번호가_없으면_400(String currentPassword) {
         Member member = account("old-hash", "123456789");
         lockedLookupReturns(member);
 
-        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD)),
-                HttpStatus.CONFLICT, "이미 비밀번호가 설정된 계정입니다.");
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(currentPassword, PASSWORD, PASSWORD)),
+                HttpStatus.BAD_REQUEST, "현재 비밀번호를 입력해 주세요.");
 
         assertThat(member.getPasswordHash()).isEqualTo("old-hash");
-        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(passwordEncoder, refreshTokenStore, passwordResetService);
+    }
+
+    @Test
+    void 현재_비밀번호가_틀리면_400이고_아무것도_바뀌지_않는다() {
+        Member member = account("old-hash", null);
+        lockedLookupReturns(member);
+        when(passwordEncoder.matches("Wrong1234", "old-hash")).thenReturn(false);
+
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest("Wrong1234", PASSWORD, PASSWORD)),
+                HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다.");
+
+        assertThat(member.getPasswordHash()).isEqualTo("old-hash");
+        verifyNoInteractions(refreshTokenStore, passwordResetService);
+    }
+
+    @Test
+    void 새_비밀번호가_현재와_같으면_400이고_토큰을_지우지_않는다() {
+        Member member = account("old-hash", null);
+        lockedLookupReturns(member);
+        when(passwordEncoder.matches(PASSWORD, "old-hash")).thenReturn(true);
+
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD, PASSWORD)),
+                HttpStatus.BAD_REQUEST, "현재 비밀번호와 다른 값을 입력해 주세요.");
+
+        verifyNoInteractions(refreshTokenStore, passwordResetService);
     }
 
     @Test
     void 카카오를_연동하지_않았으면_비밀번호를_설정할_수_없다() {
         lockedLookupReturns(account(null, null));
 
-        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, PASSWORD)),
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(null, PASSWORD, PASSWORD)),
                 HttpStatus.CONFLICT, "비밀번호를 설정할 수 없는 계정입니다.");
 
         verifyNoInteractions(passwordEncoder);
@@ -392,7 +441,7 @@ class MemberServiceTest {
 
     @Test
     void 새_비밀번호_확인이_다르면_400() {
-        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(PASSWORD, "Different123")),
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(null, PASSWORD, "Different123")),
                 HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다.");
 
         verifyNoInteractions(memberRepository);
@@ -402,7 +451,7 @@ class MemberServiceTest {
     void 새_비밀번호가_72바이트를_넘으면_400() {
         String password = "가".repeat(30) + "a1";
 
-        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(password, password)),
+        assertAccountStatus(() -> memberService.setPassword(MEMBER_EMAIL, new PasswordSetRequest(null, password, password)),
                 HttpStatus.BAD_REQUEST, "비밀번호가 너무 깁니다. 한글을 줄이거나 더 짧게 입력해 주세요.");
 
         verifyNoInteractions(memberRepository);

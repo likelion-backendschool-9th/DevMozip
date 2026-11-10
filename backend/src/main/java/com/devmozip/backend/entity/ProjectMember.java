@@ -1,7 +1,6 @@
 package com.devmozip.backend.entity;
 
 import java.time.LocalDateTime;
-import com.devmozip.backend.entity.enums.ProjectJobRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,8 +22,8 @@ public class ProjectMember extends BaseEntity {
 	private long userId;
 	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
 	private Role role;
-	@Enumerated(EnumType.STRING) @Column(name = "job_role", length = 50)
-	private ProjectJobRole jobRole;
+	@Column(name = "job_role", length = 50)
+	private String jobRole;
 	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
 	private Status status;
 	@Column(name = "joined_at", nullable = false)
@@ -33,6 +32,14 @@ public class ProjectMember extends BaseEntity {
 	private LocalDateTime leftAt;
 	@Column(name = "end_requested_at")
 	private LocalDateTime endRequestedAt;
+
+	public void requestEnd(LocalDateTime now) { endRequestedAt = now; touch(now); }
+	public void cancelEndRequest(LocalDateTime now) { endRequestedAt = null; touch(now); }
+
+	public static ProjectMember participant(Project project,long userId,String jobRole,LocalDateTime now) {
+		var member=new ProjectMember(project,userId,now);member.role=Role.PARTICIPANT;member.jobRole=jobRole;return member;
+	}
+	public void leave(LocalDateTime now){status=Status.LEFT;leftAt=now;endRequestedAt=null;touch(now);}
 
 	public static ProjectMember host(Project project, long userId, LocalDateTime now) {
 		return new ProjectMember(project, userId, now);

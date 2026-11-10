@@ -215,23 +215,23 @@ class KakaoAccountManagementIntegrationTest {
     }
 
     @Test
-    void 비밀번호를_한_번_설정한_뒤에는_같은_API로_바꿀_수_없다() throws Exception {
+    void 비밀번호를_한_번_설정한_뒤에는_현재_비밀번호_없이_바꿀_수_없다() throws Exception {
         Member member = saveMember("kakao@devmozip.test", null, KAKAO_ID);
         setPassword(member, PASSWORD).andExpect(status().isNoContent());
 
         setPassword(member, OTHER_PASSWORD)
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("이미 비밀번호가 설정된 계정입니다."));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("현재 비밀번호를 입력해 주세요."));
 
         emailLogin("kakao@devmozip.test", PASSWORD).andExpect(status().isOk());
         emailLogin("kakao@devmozip.test", OTHER_PASSWORD).andExpect(status().isUnauthorized());
     }
 
     @Test
-    void 비밀번호가_있는_일반_회원의_비밀번호는_바뀌지_않는다() throws Exception {
+    void 비밀번호가_있는_일반_회원은_현재_비밀번호_없이_바꿀_수_없다() throws Exception {
         Member member = saveMember("email@devmozip.test", PASSWORD, null);
 
-        setPassword(member, OTHER_PASSWORD).andExpect(status().isConflict());
+        setPassword(member, OTHER_PASSWORD).andExpect(status().isBadRequest());
 
         emailLogin("email@devmozip.test", PASSWORD).andExpect(status().isOk());
     }

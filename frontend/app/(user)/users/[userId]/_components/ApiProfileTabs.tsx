@@ -1,8 +1,10 @@
 'use client';
 import { profileTabs } from '@/mocks/profile';
 import { useQueryState } from '@/lib/navigation';
+import { ApiProfileLinks } from './ApiProfileLinks';
 import { ApiProfileOptions } from './ApiProfileOptions';
 import { ApiProfileIntroduction } from './ApiProfileIntroduction';
+import { ApiPortfolioTab } from './ApiPortfolioTab';
 import { Card } from '@/components/common/Card';
 import styles from '../page.module.css';
 import aboutStyles from './AboutTab.module.css';
@@ -34,21 +36,19 @@ export function ApiProfileTabs({ nickname, slug, canEdit = false }: { nickname: 
                 }}>{item.label}</button>)}
         </div>
         <section className={scope('profile-tab-panel')} role="tabpanel" id={`profile-panel-${tab}`} aria-labelledby={`profile-tab-${tab}`} tabIndex={0}>
-            <p className="text-muted">{tab === 'about' ? '외부 링크는 아직 조회 API에 연결되지 않았습니다.' : '이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.'}</p>
+            {tab !== 'about' && tab !== 'portfolio' && <p className="text-muted">이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.</p>}
             {tab === 'about' ? <div className={aboutStyles.wrapper}>
                 <div className={`${aboutStyles.layout} about-grid`}>
                     <Card className={`${aboutStyles.introduction} profile-section about-intro`}>
                         {slug ? <ApiProfileIntroduction key={slug} nickname={nickname} slug={slug} canEdit={canEdit} /> : <><div className={`${aboutStyles.title} tab-section-title`}><div><span className={aboutStyles.eyebrow}>ABOUT ME</span><h2>반가워요, {nickname}입니다.</h2></div></div><p>자기소개 조회 연결 전</p></>}
                     </Card>
                     <Card className={`${aboutStyles.sidebar} profile-section`}>
-                        {slug && <ApiProfileOptions key={slug} slug={slug} canEdit={canEdit} />}
-                        {['외부 링크'].map(label => <section key={label} className={aboutStyles.group} aria-label={label}>
-                            <div className={aboutStyles.groupHeading}><h2>{label}</h2></div><p className={aboutStyles.empty}>조회 연결 전</p>
-                        </section>)}
+                        {slug && <ApiProfileOptions key={`options:${slug}`} slug={slug} canEdit={canEdit} />}
+                        {slug && <ApiProfileLinks key={`links:${slug}`} slug={slug} canEdit={canEdit} />}
                     </Card>
                 </div>
-            </div> : <Card className="profile-section">
-                <div className="tab-section-title"><div><h2>{tab === 'portfolio' ? '경험으로 쌓아온 포트폴리오' : tab === 'posts' ? '생각과 경험의 기록' : tab === 'activity' ? '함께 만들어온 프로젝트' : '함께한 동료들의 리뷰'}</h2></div></div>
+            </div> : tab === 'portfolio' ? <ApiPortfolioTab key={canEdit ? 'me' : slug} slug={slug} own={canEdit} /> : <Card className="profile-section">
+                <div className="tab-section-title"><div><h2>{tab === 'posts' ? '생각과 경험의 기록' : tab === 'activity' ? '함께 만들어온 프로젝트' : '함께한 동료들의 리뷰'}</h2></div></div>
                 <div className="empty-state">{profileTabs.find(item => item.id === tab)?.label} 조회 연결 전</div>
             </Card>}
         </section>

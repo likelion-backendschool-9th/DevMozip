@@ -20,6 +20,19 @@ spring:
       port: ${REDIS_PORT:6379}
       connect-timeout: 2s
       timeout: 2s
+  # 비밀번호 재설정 메일. 값이 없어도 서버는 뜬다. 시간 제한의 기본값은 무제한이므로 지정한다
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   web:
     error:
       include-stacktrace: never
@@ -37,7 +50,23 @@ kakao:
   domain-name: ${DOMAINNAME:}
   redirect-path: ${KAKAO_REDIRECT_URI:}
 
+# 비밀번호 재설정. 값이 없으면 재설정 요청만 쓸 수 없고 서버는 정상 기동한다.
+password-reset:
+  mail-host: ${spring.mail.host:}
+  mail-username: ${spring.mail.username:}
+  mail-password: ${spring.mail.password:}
+  from-address: ${MAIL_FROM:}
+  base-url: ${DOMAINNAME:}
+  token-ttl: 30m
+  email-cooldown: 60s
+  email-hourly-limit: 5
+  ip-hourly-limit: 20
+
 management:
+  health:
+    # SMTP 장애가 /actuator/health DOWN → 블루그린 배포 실패로 이어지지 않게 끈다
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
@@ -75,3 +104,6 @@ management:
   health:
     redis:
       enabled: false
+# DOMAINNAME이 없어도 콘솔에 출력한 재설정 링크를 그대로 쓸 수 있게 한다
+password-reset:
+  base-url: ${DOMAINNAME:http://localhost:3000}

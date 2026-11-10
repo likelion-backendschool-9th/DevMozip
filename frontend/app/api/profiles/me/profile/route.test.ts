@@ -41,3 +41,19 @@ describe('본인 프로필 BFF', () => {
         expect((await jobs()).ok).toBe(false);
     });
 });
+
+
+it('신규 가입자의 tag=null 응답은 내 프로필에서 502로 변환하지 않는다', async () => {
+    vi.mocked(backendFetch).mockResolvedValue(Response.json({ ...apiProfileFixture, tag: null, email: 'private' }));
+    const response = await GET();
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ...apiProfileFixture, tag: null });
+});
+it('연결 오류와 응답 형식 오류를 구분하며 내부 응답은 숨긴다', async () => {
+    vi.mocked(backendFetch).mockResolvedValue(Response.json({ ...apiProfileFixture, tag: '../invalid', passwordHash: 'private' }));
+    const invalid = await GET(); expect(invalid.status).toBe(502);
+    expect(await invalid.json()).toEqual({ message: '프로필 서버의 응답 형식을 확인할 수 없어요.' });
+    vi.mocked(backendFetch).mockRejectedValue(new Error('private connection'));
+    const unavailable = await GET(); expect(unavailable.status).toBe(502);
+    expect(await unavailable.json()).toEqual({ message: '프로필 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+});

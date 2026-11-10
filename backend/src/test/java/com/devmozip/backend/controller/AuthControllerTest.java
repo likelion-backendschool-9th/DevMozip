@@ -34,6 +34,7 @@ import com.devmozip.backend.security.jwt.SuspendedMemberStore;
 import com.devmozip.backend.service.AuthService;
 import com.devmozip.backend.service.KakaoAuthService;
 import com.devmozip.backend.service.MemberService;
+import com.devmozip.backend.service.PasswordResetFlowService;
 
 /** 요청·응답 DTO(record)가 JSON과 그대로 오가는지 확인한다. */
 @WebMvcTest(AuthController.class)
@@ -54,6 +55,8 @@ class AuthControllerTest {
     private MemberService memberService;
     @MockitoBean
     private KakaoAuthService kakaoAuthService;
+    @MockitoBean
+    private PasswordResetFlowService passwordResetFlowService;
     @MockitoBean
     private JwtProvider jwtProvider;
     @MockitoBean

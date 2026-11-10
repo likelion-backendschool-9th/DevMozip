@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { collaborationLabel, fetchProfileDetail, formatCareer, parseProfileDetail, profileImageUrl } from './profileDetail';
+import { collaborationLabel, fetchProfileDetail, formatCareer, parseProfileDetail, parseOwnProfileDetail, profileImageUrl } from './profileDetail';
 import { apiProfileFixture } from '@/tests/helpers/apiProfileFixture';
 afterEach(() => vi.unstubAllGlobals());
 describe('프로필 API 계약', () => {
@@ -40,5 +40,15 @@ describe('프로필 API 계약', () => {
     it('다른 사용자의 응답으로 대체하지 않는다', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(apiProfileFixture)));
         await expect(fetchProfileDetail('other', new AbortController().signal)).rejects.toThrow('태그 불일치');
+    });
+});
+
+
+describe('최초 사용자 아이디 미설정', () => {
+    it('본인 응답의 null 아이디만 허용하고 공개 응답은 계속 거절한다', () => {
+        expect(parseOwnProfileDetail({ ...apiProfileFixture, tag: null, email: 'private' })).toEqual({ ...apiProfileFixture, tag: null });
+        expect(() => parseProfileDetail({ ...apiProfileFixture, tag: null })).toThrow();
+        for (const tag of [undefined, '', '../me', '한글']) expect(() => parseOwnProfileDetail({ ...apiProfileFixture, tag })).toThrow();
+        expect(() => parseOwnProfileDetail({ ...apiProfileFixture, tag: null, id: -1 })).toThrow();
     });
 });
