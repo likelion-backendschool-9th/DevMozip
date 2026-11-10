@@ -47,6 +47,8 @@
 | Message | POST | /conversations/{id}/messages | 1:1 메시지 작성 | 예 (참여자) | body | message | 아니오 |
 | Notification | GET | /notifications | 알림 조회 | 예 | cursor, unread | notifications | 아니오 |
 | Notification | PATCH | /notifications/{id} | 읽음 처리 | 예 | read | notification | 아니오 |
+
+> 알림은 구현되었다. 확정 계약은 [알림 API](notification-api.md)다(`GET /api/v1/notifications`의 `status`·`page`·`size`, `PATCH /api/v1/notifications/{id}/read`, `PATCH /api/v1/notifications/read-all`). 위 두 행과 아래 `read-all` 행은 이전 초안이다.
 | Premium | GET | /premium/subscription | 구독 상태 | 예 | 없음 | subscription, payments | 아니오 |
 | Premium | POST | /premium/subscription | 구독/해지 요청 | 예 | plan, action | subscription | 정책 검토 |
 | Admin | GET | /admin/dashboard | 통계 조회 | 예 (관리자) | 기간 | counts, reports, usage | 아니오 |
