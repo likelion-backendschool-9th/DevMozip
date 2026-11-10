@@ -3,18 +3,19 @@
 WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 단계별 계획이다. 통합 검색 API(`GET /api/v1/search`)로 백엔드 구조를 먼저 만들고, 그다음 `/explore` 화면이 그 API를 쓰도록 연결한다.
 
 - 각 단계는 사용자가 그 단계를 요청할 때만 시작한다. 한 단계가 끝나도 다음 단계를 자동으로 시작하지 않는다.
-- 이 문서는 계획이며 구현 승인이 아니다. 탐색 도메인 구현을 시작할 때 `AGENTS.md`의 승인 범위를 함께 갱신한다.
+- 이 문서는 계획이며 구현 승인이 아니다. 1~5단계는 사용자 요청(2026-11-10)으로 구현했고 `AGENTS.md`의 승인 범위에 넣었다. 6단계는 별도 요청이 필요하다.
+- API 문서: [search-api.md](search-api.md)
 - API 경로와 메서드는 WBS를 따른다. WBS와 다르게 정한 항목은 1절에 적는다. 이전 API 초안(`docs/api-plan.md`의 `/search`)은 사용하지 않는다.
 - 6.6 팔로우와 6.7 1:1 대화는 WBS대로 다른 기능의 API를 그대로 쓴다. 이 계획은 탐색 화면에서 그 API를 부르는 부분만 다룬다.
 
-관련 계획과 PR (2026-11-09 기준, 모두 develop 미병합):
+관련 계획과 PR (2026-11-10 확인. 팔로우·메신저·북마크는 develop에 병합되어 작업 브랜치에 들어 있다):
 
 | 이름 | 위치 | 이 계획과의 관계 |
 |---|---|---|
-| 팔로우 계획 | `feat/94-follows` 브랜치의 `docs/follow-plan.md` | `follows` 엔티티(2단계), 9.1·9.2 API(3단계), 팔로우 버튼(4단계) |
-| 메신저 | PR #90 (`feat/78-messages`) | 11.5 대화 시작 API, `StartChatButton` |
-| 프로젝트 북마크 | PR #93 (`feat/56-project-bookmarks`, #96에도 포함) | 7.16 API, `ProjectBookmarkButton`·`projectBookmarkStore` |
-| 활동/리뷰/신뢰 온도 | WBS 5.0 작업 | 6단계(고급 검색)의 선행 작업 |
+| 팔로우 계획 | PR #107 (`feat/94-follows`), `docs/follow-plan.md` | `follows` 엔티티(2단계), 9.1·9.2 API(3단계), 팔로우 버튼(4단계). 병합됨 |
+| 메신저 | PR #90 (`feat/78-messages`) | 11.5 대화 시작 API, `StartChatButton`. 병합됨 |
+| 프로젝트 북마크 | PR #93 (`feat/56-project-bookmarks`) | 7.16 API, `ProjectBookmarkButton`·`projectBookmarkStore`. 병합됨 |
+| 활동/리뷰/신뢰 온도 | WBS 5.0 작업 | 6단계(고급 검색)의 선행 작업. 2026-11-10 기준 `users.trust_score`를 갱신하는 코드가 없다 |
 
 ## 1. 범위와 결정 사항
 
@@ -43,17 +44,47 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 | 2026-11-09 | 6.8 북마크는 #93의 `ProjectBookmarkButton`과 프로젝트 북마크 상태(`projectBookmarkStore`)를 탐색 카드에서 그대로 쓴다. 검색 응답에는 북마크 여부를 넣지 않는다. 이 연결은 #93이 develop에 병합되고, 그 develop을 작업 브랜치에 병합한 뒤 시작한다. |
 | 2026-11-09 | 6단계 전까지 고급 검색 영역은 지금 화면 그대로 둔다. |
 | 2026-11-09 | 6.3 프로젝트 탐색은 검색 기능 안에 프로젝트 탐색 전용 조회(`ProjectSearchRepository`)를 새로 만든다. 7.1 목록 조회 코드(`ProjectQueryService`·`ProjectQueryRepository`)는 쓰지 않는다. `/explore`와 `/projects` 화면, `GET /api/v1/search`와 `GET /api/v1/projects`는 지금처럼 따로 둔다. 검색 조건은 현재 탐색 화면(목업)과 같게 유지한다(4절 "프로젝트 검색"). |
+| 2026-11-10 | 이번 구현 범위는 1~5단계다. 6단계(고급 검색)는 1절 결정대로 1~5단계 PR과 WBS 5.0 병합 뒤 별도 브랜치에서 한다. |
+| 2026-11-10 | 1단계 공유 항목은 공유 전에 반영하고(공통 `SecurityConfig`의 공개 GET, 탐색 화면의 `ApiProjectList` 분기 교체) 공유가 필요한 내용을 7절에 남긴다. |
+| 2026-11-10 | 경력 필터는 현재 코드 기준(저장된 문구가 같은 회원, 30자 이내)으로 한다. 팀 ERD의 `users.career`(경력(개월수), VARCHAR(20))와 다른 점은 2절에 기록하고 회원 코드는 고치지 않는다. |
+| 2026-11-10 | 닉네임 정렬은 ICU 한국어 정렬 규칙(`COLLATE "ko-x-icu"`)을 쓴다. 팀 DB의 기본 정렬 규칙(`en_US.utf8`)은 목업과 순서가 다르고, `ko-x-icu`는 목업의 `localeCompare(..., 'ko')`와 순서가 같다(1단계 DB 확인). |
+| 2026-11-10 | 검색 쿼리는 Controller가 `MultiValueMap`으로 받아 DTO가 직접 읽는다. 스프링 바인딩은 값 하나의 쉼표를 목록으로 나눠 직접 입력한 기술 스택 등을 바꿀 수 있기 때문이다. 형식 오류는 Service·DTO의 `ResponseStatusException(400)`이 공통 처리기로 가므로 3절의 `SearchExceptionHandler`는 만들지 않았다. |
 
 ## 2. 데이터
 
-새 테이블과 컬럼은 없어 ERD 변경도 없다. 이 기능에 해당하는 ERD 이미지는 받지 않았으므로 ERD와의 대조는 하지 않았다. 아래는 현재 엔티티 기준이다(확인일 2026-11-09).
+새 테이블과 컬럼은 없어 ERD 변경도 없다. 아래는 현재 엔티티 기준이다(확인일 2026-11-10).
 
 | 테이블 | 엔티티 | 이 계획에서 쓰는 것 | 상태 |
 |---|---|---|---|
 | users | `Member` (인증 담당) | 개발자 검색 대상과 카드 정보 | develop에 있다. 고치지 않는다 |
-| follows | `Follow` (팔로우 계획 2단계) | 팔로잉 탭, 카드의 팔로우 여부 | 엔티티 없음 |
+| follows | `Follow` (팔로우 계획 2단계) | 팔로잉 탭, 카드의 팔로우 여부 | develop에 있다(#107). SQL로 읽기만 한다 |
 | projects, project_members | `Project`, `ProjectMember` (프로젝트 담당) | 프로젝트 검색과 카드 정보, 참여 인원 | develop에 있다. 검색 Repository가 SQL로 읽기만 하고, 엔티티와 프로젝트 코드는 고치지 않는다 |
-| bookmarks | `Bookmark` (#93) | 프로젝트 카드의 북마크. 화면이 #93의 버튼으로만 쓰고, 검색 API는 읽지 않는다 | 미병합. #93 문서에 따르면 팀 PostgreSQL에는 DDL을 실행했다 |
+| bookmarks | `Bookmark` (#93) | 프로젝트 카드의 북마크. 화면이 #93의 버튼으로만 쓰고, 검색 API는 읽지 않는다 | develop에 있다(#93) |
+
+### ERD 대조 (2026-11-10)
+
+팀이 협의한 최신 ERD 이미지(2026-11-10 수신)와 엔티티를 대조했다. 이 기능이 쓰는 테이블의 컬럼 구성은 같고, 다른 점은 아래와 같다. 모두 다른 담당 코드이므로 고치지 않고 공유 항목(6절 1단계)에 넣었다.
+
+| 테이블·컬럼 | ERD | 엔티티·DDL | 검색에 미치는 영향 |
+|---|---|---|---|
+| `users.career` | 경력(개월수), VARCHAR(20) | 가입·프로필 수정의 선택지 문구(예: `3년 차`), VARCHAR(30) | 경력 필터는 저장된 문구 기준으로 했다(1절 결정). 개월 수로 바뀌면 필터와 화면 선택지를 다시 정한다 |
+| `projects` 조회수 | `view_counts` | `view_count` | 없음(검색은 조회수를 쓰지 않는다) |
+| `project_members.job_role` | 없음 | VARCHAR(50) | 없음 |
+
+`follows`(복합 키, 알림 여부, 생성 시각), `bookmarks`, `users`의 나머지 검색 컬럼(`tag`, `nickname`, `job_categories`, `skills`, `interests`, `collaboration_status`, `trust_score`, `status`), `projects`의 검색 컬럼(`recruitment_slots`, `tech_stacks`, `interests`, `is_public`, `status`, `recruitment_end`, `deleted_at`)은 ERD와 같다. ERD에 인덱스 표시가 없으므로 인덱스는 추가하지 않았다.
+
+### 팀 DB 확인 (2026-11-10, 읽기 전용 SELECT)
+
+| 항목 | 결과 |
+|---|---|
+| 버전·정렬 규칙 | PostgreSQL 17.11, DB 정렬 규칙 `en_US.utf8`. ICU 정렬 규칙 `ko-x-icu`·`ko-KR-x-icu` 사용 가능 |
+| 닉네임 정렬 | `en_US.utf8`는 목업(`localeCompare(..., 'ko')`)과 순서가 다르고 `ko-x-icu`는 같다(기호·숫자·한글·영문 순) |
+| 검색 대상 회원 | 회원 10명 중 8명(`ACTIVE`·태그·직군). 제외: 정지 1명, 태그 없음 1명 |
+| JSONB 형식 | `users`의 직군·기술 스택·관심 분야, `projects`의 모집 직군·기술 스택·분야가 모두 배열이다 |
+| 협업 상태·경력 | 협업 상태는 `AVAILABLE`·`RESTING`만 있다. 경력은 선택지 문구로 저장되어 있다 |
+| `recruitment_slots.roleCode` | 기본 직군 코드(`FRONTEND`·`BACKEND`·`DESIGNER`·`AI_ENGINEER`·`FULLSTACK`)와 직접 입력한 문구(1건)가 함께 있다 |
+| 공고 | 17건 중 공개·미삭제 12건(삭제 4건, 비공개 1건) |
+| `follows`·`bookmarks` | 두 테이블 모두 있다 |
 
 ### users 컬럼과 화면
 
@@ -86,16 +117,20 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 
 기존 계층형 패키지(`backend/src/main/java/com/devmozip/backend`)를 따른다. 탭 들여쓰기와 생성자 주입을 쓰고, 요청·응답 DTO는 record로 만든다. 엔티티를 API 응답으로 직접 쓰지 않는다. Service는 프로젝트 기능처럼 인터페이스와 `service/impl` 구현으로 나눈다.
 
-| 위치 | 파일 (예정) | 역할 |
+| 위치 | 파일 | 역할 |
 |---|---|---|
-| controller | SearchController | `GET /api/v1/search`. `type`에 따라 개발자·프로젝트 Service로 나눈다 |
-| controller | SearchExceptionHandler | `SearchController` 전용 예외 처리(아래 "오류 응답") |
-| dto/search | DeveloperSearchQuery, ProjectSearchQuery | 요청 쿼리와 검증 |
+| controller | SearchController | `GET /api/v1/search`. 쿼리를 `MultiValueMap`으로 받아 `type`에 따라 개발자·프로젝트 Service로 나눈다 |
+| dto/search | SearchType, SearchParameters | `type` 해석, 쿼리 읽기(중복·길이·개수·형식 확인) |
+| dto/search | DeveloperSearchQuery, ProjectSearchQuery, ProjectSearchStatus | 요청 쿼리와 검증, 모집 상태 5개 |
 | dto/search | DeveloperSearchItemResponse, ProjectSearchItemResponse, SearchPageResponse | 응답 |
-| service | DeveloperSearchService | 검색 조건 정리, 팔로잉 탭 로그인 확인, 고급 검색 권한 확인(6단계) |
-| service | ProjectSearchService | 검색 조건 정리(모집 직군 값 변환, 오늘 날짜), 응답 변환 |
+| service(+impl) | DeveloperSearchService | 검색 조건 정리, 팔로잉 탭 로그인 확인. 고급 검색 권한 확인은 6단계 |
+| service(+impl) | ProjectSearchService | 검색 조건 정리(모집 직군 값 변환, 오늘 날짜), 응답 변환 |
+| service | SearchKeywords | 검색어 정리(NFKC·소문자·공백 분리), LIKE 이스케이프 |
 | repository | DeveloperSearchRepository | `users` 조건 검색, 수 세기, 페이지, 팔로우 여부 |
 | repository | ProjectSearchRepository | `projects` 조건 검색, 수 세기, 페이지, 참여 인원 |
+| config | SearchConfiguration | 오늘 날짜용 `searchClock`(Asia/Seoul) |
+
+계획 때의 `SearchExceptionHandler`는 만들지 않았다(1절 2026-11-10 결정).
 
 `dto/project/ProjectSearchRequest`(7.1)와 헷갈리지 않도록 탐색 요청은 `ProjectSearchQuery`로 이름 짓는다.
 
@@ -121,7 +156,7 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 ### 오류 응답
 
 - Service는 `ResponseStatusException`을 던지고, 응답 본문은 공통 `ErrorResponse` 형식으로 맞춘다.
-- `type`이 없거나 다른 값인 경우처럼 공통 `GlobalExceptionHandler`가 처리하지 않는 요청 오류는 500이 될 수 있다. 공통 처리기는 고치지 않고 `SearchExceptionHandler`(검색 Controller 전용, `LikedPostsExceptionHandler`와 같은 방식)에서 400으로 바꾼다.
+- `type`이 없거나 다른 값인 경우를 포함해 쿼리 형식 오류는 DTO가 직접 확인해 `ResponseStatusException(400)`을 던진다. 스프링 바인딩을 쓰지 않으므로 타입 변환 예외(500이 될 수 있는 경우)가 생기지 않고, 공통 `GlobalExceptionHandler`가 `ErrorResponse`로 바꾼다.
 - 400 입력 오류, 401 로그인 필요(팔로잉 탭, 6단계의 고급 검색), 403 고급 검색 권한 없음(6단계).
 
 ### DB 반영
@@ -161,7 +196,7 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 - `interests`·`skills`는 각각 30개까지, 값은 30자 이내로 받는다(현재 화면 URL 검증 `parseSearch`와 같다).
 - 목록에 없는 문구는 따로 거절하지 않는다. 그 값을 가진 회원이 없으므로 조건에 맞는 결과가 없다(목업과 같다).
 - 팔로잉 탭: 비로그인으로 `following=true`를 보내면 401로 응답한다. 화면은 비로그인이면 요청하지 않고 지금의 로그인 안내를 보여 준다. 자기 자신은 팔로우할 수 없으므로 팔로잉 탭에 본인은 나오지 않는다.
-- 정렬: 닉네임 오름차순, 같으면 회원 id 오름차순(목업은 한국어 기준 닉네임 순). 영문과 한글이 섞일 때의 순서는 DB 정렬 규칙(collation)에 따라 목업과 다를 수 있어 1단계에서 확인한다.
+- 정렬: 닉네임 오름차순, 같으면 회원 id 오름차순(목업은 한국어 기준 닉네임 순). DB 기본 정렬 규칙은 목업과 순서가 달라 `COLLATE "ko-x-icu"`를 쓴다(1단계 DB 확인, 1절 결정).
 
 항목:
 
@@ -273,14 +308,17 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 
 ### 파일
 
-| 위치 | 파일 (예정) | 역할 |
+| 위치 | 파일 | 역할 |
 |---|---|---|
 | BFF | `app/api/search/route.ts` | `GET /api/v1/search`로 전달. 허용한 쿼리만 넘기고, 로그인 상태면 기존 `backendFetch`가 토큰을 붙인다. 사용자 ID는 보내지 않는다 |
-| 타입 | `types/searchApi.ts` | 요청·응답 타입. Mock용 `types/search.ts`는 그대로 둔다 |
-| 변환·해석 | `lib/search/searchApi.ts` | 화면 필터(`parseSearch` 결과) → API 쿼리, 응답 검증, 오류 문구 |
+| 타입 | `types/searchApi.ts` | 응답·필터 선택지 타입. Mock용 `types/search.ts`는 그대로 둔다 |
+| 변환·해석 | `lib/search/searchApi.ts` | 화면 URL 해석(`parseApiSearch`), 화면 필터 → API 쿼리, BFF 쿼리 확인, 응답 검증, 팔로우 결과 반영 |
+| 상태 | `lib/search/useExploreSearch.ts` | 결과 한 페이지 요청, 늦은 응답 버리기, 재조회 중 이전 결과 유지 |
 | 개발자 카드 | `app/explore/_components/ApiDeveloperResults.tsx` | Mock 카드와 같은 모양 |
 | 프로젝트 카드 | `app/explore/_components/ApiProjectResults.tsx` | Mock 카드와 같은 모양 |
-| 수정 | `app/explore/page.tsx`, `app/explore/_components/SearchFilters.tsx` | 모드별 분기. 필터 선택지를 페이지에서 받도록 바꾼다 |
+| 페이지 이동 | `app/explore/_components/SearchPager.tsx` | 이전·다음, 현재/전체 페이지 |
+| 이동 | `components/profile/StartChatButton.tsx` | `app/(user)/users/[userId]/_components`에서 옮겼다. 프로필 상단과 탐색 카드가 함께 쓴다 |
+| 수정 | `app/explore/page.tsx`, `app/explore/_components/SearchFilters.tsx`, `lib/search/searchService.ts` | 모드별 분기. 필터 선택지를 페이지에서 받는다(`mockFilterChoices`·`apiFilterChoices`). 새 검색어로 검색하면 `page`를 지운다 |
 
 ### 화면 URL → API 쿼리 (6.10)
 
@@ -347,25 +385,26 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 - [x] 페이지 이동 방식, 고급 검색을 6단계로 분리 (2026-11-09)
 - [x] #93 북마크 버튼 사용과 시작 조건, 6단계 전 고급 검색 영역 유지 (2026-11-09)
 - [x] 6.3 프로젝트 탐색 전용 조회 (2026-11-09)
-- [ ] 실제 DB 확인: 검색 대상 회원 수(`ACTIVE`·태그·직군), 닉네임 정렬 규칙, `recruitment_slots`의 `roleCode` 값(기본 코드·직접 입력), `follows`·`bookmarks` 테이블 유무
-- [ ] 공유: 프로젝트 담당자(6.3이 `projects`·`project_members`를 직접 읽고 공개 범위 규칙을 7.1과 함께 맞춰야 하는 점, 검색 API에서만 쓰는 `RECRUITMENT_CLOSED`, 탐색 화면의 `ApiProjectList` 분기 교체, #93 북마크 버튼 사용), 5.5 담당자(`users.trust_score` 갱신 여부), 팀(`SecurityConfig` 공개 GET)
+- [x] 실제 DB 확인: 검색 대상 회원 수(`ACTIVE`·태그·직군), 닉네임 정렬 규칙, `recruitment_slots`의 `roleCode` 값(기본 코드·직접 입력), `follows`·`bookmarks` 테이블 유무 (2026-11-10, 2절 "팀 DB 확인")
+- [x] 팀 ERD 대조 (2026-11-10, 2절 "ERD 대조")
+- [ ] 공유: 프로젝트 담당자(6.3이 `projects`·`project_members`를 직접 읽고 공개 범위 규칙을 7.1과 함께 맞춰야 하는 점, 검색 API에서만 쓰는 `RECRUITMENT_CLOSED`, 탐색 화면의 `ApiProjectList` 분기 교체, #93 북마크 버튼 사용), 5.5 담당자(`users.trust_score` 갱신 여부), 팀(`SecurityConfig` 공개 GET), 회원·인증 담당자(ERD의 `users.career`와 저장 형식 차이), 프로젝트 담당자(ERD의 `view_counts`·`project_members.job_role` 차이). 공유 전에 반영했다(1절 2026-11-10 결정)
 
 완료 조건: DB 확인과 공유가 끝나 있다.
 
 ### 2단계 — 개발자 검색 API (6.1·6.2·6.4·6.10)
 
-- [ ] 요청자 식별 구성요소(피드·팔로우와 공유), DTO, `DeveloperSearchRepository`, `DeveloperSearchService`, `SearchController`, `SearchExceptionHandler`
-- [ ] `SecurityConfig`에 공개 GET 반영 (팀 공유 후)
-- [ ] Testcontainers PostgreSQL 테스트: 검색어 단어 조합·대소문자·`%`·`_`, 필터별·조합 조건, 검색 대상 조건(`WARNED`·`SUSPENDED`·태그 없음·직군 없음 제외), 정렬, 페이지·`totalCount`·`totalPages`·전체보다 큰 페이지, `type` 누락·잘못된 값과 형식 오류의 400, 비로그인 검색
-- [ ] API 문서 `docs/search-api.md` 작성
+- [x] 요청자 식별 구성요소(팔로우 계획에서 만든 `CurrentMemberProvider`를 쓴다), DTO, `DeveloperSearchRepository`, `DeveloperSearchService`, `SearchController`. `SearchExceptionHandler`는 만들지 않았다(1절 2026-11-10 결정)
+- [x] `SecurityConfig`에 공개 GET 반영 (팀 공유는 1단계에 남아 있다)
+- [x] Testcontainers PostgreSQL 테스트(`DeveloperSearchIntegrationTest`): 검색어 단어 조합·대소문자·`%`·`_`, 필터별·조합 조건, 검색 대상 조건(`WARNED`·`SUSPENDED`·태그 없음·직군 없음 제외), 정렬, 페이지·`totalCount`·`totalPages`·전체보다 큰 페이지, `type` 누락·잘못된 값과 형식 오류의 400, 비로그인 검색
+- [x] API 문서 `docs/search-api.md` 작성
 
 완료 조건: `./gradlew test` 통과. JSONB 조회이므로 H2로 대신하지 않는다. Docker가 없어 Testcontainers 테스트가 건너뛰어지면 통과로 보고하지 않는다.
 
 ### 3단계 — 프로젝트 검색 API (6.3·6.8)
 
-- [ ] `ProjectSearchRepository`, `ProjectSearchService`, DTO, `SearchController`의 `type=projects`
-- [ ] Testcontainers PostgreSQL 테스트: 검색어 단어 조합(제목·분야·모집 직군 라벨과 직접 입력 직군·기술 스택), 필터별·조합 조건, 모집 상태 5개(마감일 당일과 다음 날 경계 포함), 비공개·삭제 공고 제외(같은 데이터에서 7.1 목록과 공개 범위가 같은지), 참여 인원 수, 정렬, 페이지·`totalCount`·`totalPages`, 형식 오류 400
-- [ ] API 문서 갱신
+- [x] `ProjectSearchRepository`, `ProjectSearchService`, DTO, `SearchController`의 `type=projects`
+- [x] Testcontainers PostgreSQL 테스트(`ProjectSearchIntegrationTest`): 검색어 단어 조합(제목·분야·모집 직군 라벨과 직접 입력 직군·기술 스택), 필터별·조합 조건, 모집 상태 5개(마감일 당일과 다음 날 경계 포함), 비공개·삭제 공고 제외(같은 데이터에서 7.1 목록과 공개 범위가 같은지), 참여 인원 수, 정렬, 페이지·`totalCount`·`totalPages`, 형식 오류 400
+- [x] API 문서 갱신
 
 완료 조건: 2단계와 같다.
 
@@ -373,19 +412,19 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 
 선행: 팔로우 계획 2단계(`Follow` 엔티티).
 
-- [ ] `following=true` 조건과 항목의 `followed`
-- [ ] 테스트: 비로그인 `following=true` 401, 요청자 기준 `followed`(다른 회원 사이의 팔로우 관계는 반영하지 않음), 언팔로우한 회원 제외, 팔로잉 탭과 다른 필터의 조합
-- [ ] API 문서 갱신
+- [x] `following=true` 조건과 항목의 `followed`
+- [x] 테스트(`DeveloperSearchIntegrationTest`): 비로그인 `following=true` 401, 요청자 기준 `followed`(다른 회원 사이의 팔로우 관계는 반영하지 않음), 언팔로우한 회원 제외, 팔로잉 탭과 다른 필터의 조합
+- [x] API 문서 갱신
 
 ### 5단계 — 프론트엔드 연결 (6.1~6.10)
 
 선행: 2~4단계, 팔로우 계획 3·4단계(9.1·9.2 API, BFF, 팔로우 버튼), #90(대화 시작), #93(북마크). 병합되지 않은 선행 작업의 버튼은 병합 후 연결한다. 북마크 버튼은 #93이 develop에 병합되고 그 develop을 작업 브랜치에 병합한 뒤에 연결을 시작한다(1절 결정).
 
-- [ ] BFF, 타입, 쿼리 변환·응답 해석과 테스트
-- [ ] Mock 끄기의 개발자·프로젝트 결과, 필터 선택지, 결과 수, 페이지 이동
-- [ ] 팔로우·메시지 보내기·북마크 버튼
-- [ ] 로딩·빈 결과·오류·비로그인 처리, Mock 켜기 화면 회귀 테스트
-- [ ] 실제 백엔드·PostgreSQL로 확인: 개발자 검색 → 필터 → 페이지 이동 → 팔로잉 탭 → 팔로우·언팔로우 → 메시지 보내기 → 프로젝트 검색 → 북마크(북마크함 프로젝트 탭 확인) → 상세 이동
+- [x] BFF, 타입, 쿼리 변환·응답 해석과 테스트
+- [x] Mock 끄기의 개발자·프로젝트 결과, 필터 선택지, 결과 수, 페이지 이동
+- [x] 팔로우·메시지 보내기·북마크 버튼
+- [x] 로딩·빈 결과·오류·비로그인 처리, Mock 켜기 화면 회귀 테스트
+- [ ] 실제 백엔드·PostgreSQL로 확인: 개발자 검색 → 필터 → 페이지 이동 → 팔로잉 탭 → 팔로우·언팔로우 → 메시지 보내기 → 프로젝트 검색 → 북마크(북마크함 프로젝트 탭 확인) → 상세 이동. 로컬 일회용 PostgreSQL·Redis로 BFF 요청 흐름은 확인했고, 브라우저 화면 조작은 확인하지 못했다(7절)
 
 완료 조건: 빌드·테스트 결과와 실제 서버 연결 확인 여부를 따로 기록한다. Mock 테스트 통과는 실제 DB 검증이 아니다. 1~5단계를 PR로 올릴 때 6단계 코드는 넣지 않는다.
 
@@ -408,3 +447,8 @@ WBS 6.0 개발자 탐색(6.1~6.10)을 실제 백엔드에 연결하기 위한 �
 | 2026-11-09 | 계획 | 이 문서 작성. WBS 6.1~6.10, 현재 `/explore` Mock 화면, 백엔드 회원·프로젝트 조회 코드, 팔로우 계획·메신저(#90)·프로젝트 북마크(#93) 브랜치와 대조. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | 목록을 페이지 이동 방식으로 결정(응답의 `hasNext`를 `totalPages`로 바꿈, 화면 URL에 `page` 추가). 고급 검색을 6단계로 분리해 5.0 작업 병합 뒤 별도 브랜치·PR로 진행하기로 함. 프로젝트 결과 조회 방식과 북마크 저장 단위(프로젝트·게시글 별개 행) 설명을 보완하고, 6단계 전 고급 검색 영역 표시를 남은 결정에 추가. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | 6.3을 검색 기능 안의 프로젝트 탐색 전용 조회로 결정(7.1 조회 코드 미사용, 목업의 검색어·선택 개수·모집 상태 5개 유지, 검색 API 전용 값 `RECRUITMENT_CLOSED`). 6.8은 #93의 북마크 버튼을 쓰고, #93이 develop에 병합된 뒤 그 develop을 작업 브랜치에 병합하고 시작하기로 결정. 6단계 전 고급 검색 영역은 지금 화면 그대로 두기로 결정. 남은 결정 없음. 코드 변경 없음. |
+| 2026-11-10 | 1단계 | 팀 ERD(2026-11-10 수신)와 엔티티를 대조하고(2절 "ERD 대조"), 팀 DB를 읽기 전용 SELECT로 확인했다(2절 "팀 DB 확인"). 구현 범위(1~5단계), 공유 전 반영, 경력 필터 기준, 닉네임 정렬 규칙, 쿼리 읽기 방식을 결정했다(1절). 공유 항목은 남아 있다(6절 1단계). |
+| 2026-11-10 | 2~4단계 | `GET /api/v1/search`(개발자·프로젝트, 팔로잉 탭·`followed`)와 `SecurityConfig` 공개 GET, `docs/search-api.md`. 테스트: `backend`에서 `./gradlew test --tests 'com.devmozip.backend.search.*'` 12개 통과·건너뜀 0(Docker Testcontainers `postgres:17`). 같은 테스트로 정렬 규칙과 LIKE 이스케이프를 일부러 빼면 5개가 실패하는 것을 확인하고 되돌렸다. |
+| 2026-11-10 | 5단계 | `/explore` Mock 끄기 화면을 검색 API에 연결(BFF `/api/search`, 개발자·프로젝트 카드, 필터 선택지, 결과 수, 페이지 이동, 팔로우·메시지 보내기·북마크 버튼, 로딩·빈 결과·오류·범위 밖 페이지 안내). 탐색 화면의 `ApiProjectList` 분기는 탐색 API 결과로 바꿨고, `StartChatButton`은 `components/profile`로 옮겼다. Mock 켜기 화면은 그대로다. `frontend` 복사본에서 `npm ci` 뒤 `npm run typecheck` 성공, `npm test` 120개 파일·1391개 통과, `npm run build` 성공, 변경 파일 ESLint 오류 0. |
+| 2026-11-10 | 5단계 | 실제 서버 확인: 로컬 일회용 컨테이너(`postgres:17`, `redis:7-alpine`)에 백엔드 jar와 Next 프로덕션 서버를 띄우고, 가입 API로 회원 26명(태그 없는 회원 1명 포함), SQL로 태그와 공고 3건(비공개 1건)을 넣었다. BFF로 개발자 검색·필터·페이지·범위 밖 페이지, 비로그인 팔로잉 탭 401, 로그인 후 팔로우 → 팔로잉 탭 → 언팔로우, 대화 시작, 프로젝트 검색(공개 범위가 7.1 목록과 같음, 모집 상태·인원·직군 라벨 검색), 북마크 저장 → 북마크함 프로젝트 탭 → 해제, 프로필·프로젝트 상세와 `/explore`·`/users/{tag}`·`/projects/{id}` 페이지 응답 36개 항목을 확인했다. 브라우저에서 화면을 직접 조작하는 확인은 하지 못했다. 팀 DB에는 쓰지 않았다. |
+| 2026-11-10 | 2~5단계 | `backend` 전체 `./gradlew test`(스크래치 복사본): 마지막 실행 1150개 중 1138개 통과·12개 건너뜀(팀 DB 연결이 필요한 `*TeamDatabaseIntegrationTest` 11개, `AiRecommendationExecutionTests` 1개), 실패 0. 앞선 두 번의 실행은 실패가 있었다. 첫 실행은 복사본에 `docs/sql`을 넣지 않아 `ProjectPortfolioSnapshotIntegrationTest` 12개가 실패했고, 넣은 뒤 12개 모두 통과했다. 두 번째 실행은 `MessengerWebSocketTest.connectionIsClosedWith4403WhenMemberIsSuspended` 1개가 실패했는데, 그 클래스만 세 번 다시 돌리면 46개가 모두 통과했다(연결 종료 직후 연결 수를 확인하는 타이밍 문제로 보이며 이번 변경과 관계없다). |
