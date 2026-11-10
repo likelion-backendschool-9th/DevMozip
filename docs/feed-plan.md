@@ -3,13 +3,20 @@
 WBS 8.0 SNS 피드/게시글(8.1~8.16)을 실제 백엔드에 연결하기 위한 단계별 계획이다. ERD의 `posts` 테이블을 기준으로 백엔드 구조, API, 프론트엔드 연결 순서를 정리한다.
 
 - 각 단계는 사용자가 그 단계를 요청할 때만 시작한다. 한 단계가 끝나도 다음 단계를 자동으로 시작하지 않는다.
-- 이 문서는 계획이며 구현 승인이 아니다. 피드 도메인 구현을 시작할 때 `AGENTS.md`의 승인 범위를 함께 갱신한다.
+- 이 문서는 계획이며 구현 승인이 아니다. 사용자 요청(2026-11-10)으로 5단계까지 구현했고 `AGENTS.md`의 승인 범위에 피드 도메인을 넣었다. 구현한 API 계약은 [feed-api.md](feed-api.md)다.
 - API 경로와 메서드는 WBS를 따른다. WBS와 다르게 정한 항목은 1절에 적는다. 이전 API 초안(`docs/api-plan.md`의 `/posts`)은 사용하지 않는다.
 
 ## 1. 결정 사항
 
 | 날짜 | 결정 |
 |---|---|
+| 2026-11-10 | 팀이 협의한 최신 ERD 이미지의 `posts`에는 2절의 추가 컬럼 5개(`title`·`tech_stacks`·`interests`·`image_urls`·`view_count`)가 없다. 사용자 결정으로 계획대로 추가한다. ERDCloud 반영은 팀에서 한다. `likes`·`comments`·`bookmarks`·`reports`는 ERD와 같다. |
+| 2026-11-10 | nginx 없이 실행할 때 이미지는 백엔드가 `GET /images/{filename}`으로 `IMAGE_STORAGE` 폴더를 제공하고, Next.js가 `/images/...` 요청을 백엔드로 넘긴다(4절 남은 결정, 사용자 결정). 넘기는 방법은 `next.config.ts`의 rewrites가 아니라 Route Handler(`app/images/[filename]/route.ts`)다. rewrites는 대상 주소가 빌드할 때 `routes-manifest.json`에 고정되어(빌드 결과에서 확인), 실행할 때 주는 `BACKEND_URL`(compose의 `http://backend:8080`)을 따르지 못한다. |
+| 2026-11-10 | 공통 설정(`SecurityConfig`, compose·nginx·배포 스크립트, `.gitignore`)은 이 브랜치에서 함께 바꾸고 PR 리뷰로 팀에 공유한다(사용자 결정). nginx 업로드 크기(`client_max_body_size`)는 백엔드 multipart 최대 요청 크기(11MB, `PortfolioMultipartConfiguration`)와 같게 둔다. |
+| 2026-11-10 | 데모 데이터는 Mock 게시글 8개와 퍼간 글 2개를 모두 옮긴다. 작성자는 demo-user·yuna·seoyeon → `member@devmozip.demo`, demo-premium·minjun·jiho → `premium@devmozip.demo`다. 퍼간 글 `rp-haneul`은 원본과 퍼간 사람이 같아지므로 premium이 퍼간 글로 바꾼다(사용자 결정). PostgreSQL판은 `docs/sql/post-demo-data.sql`에 둔다. |
+| 2026-11-10 | 백엔드 테스트 JVM 힙을 1GB로 올린다(`backend/build.gradle`, 사용자 결정). 피드 엔티티·쿼리가 더해져 캐시된 테스트 컨텍스트가 기본 512MB를 넘었다. |
+| 2026-11-10 | `Report` 초기 상태를 `AWATING`으로 바꿨다. 공유 개발 DB의 `reports`에는 Hibernate가 만든 상태 CHECK 제약(`RECEIVED` 등)이 있어, 이미 만든 DB는 `docs/sql/feed-schema-update.sql`로 제약을 바꾼 뒤 새 서버를 띄운다. |
+| 2026-11-10 | 구현 중 목업·기존 코드를 따라 정한 세부. 피드 목록에는 원본 글만 나온다(목업처럼 퍼간 글은 피드에 없고 상세로만 본다). 목록 응답에 `totalCount`를 더한다(화면의 "N개의 이야기"). 정지(`SUSPENDED`) 회원의 글은 보이지 않는다(`CurrentMemberProvider`의 이용 가능 기준). 퍼가기 취소·북마크 해제는 대상이 없어도 성공으로 응답한다(프로젝트 북마크 해제와 같다). 본인 글 퍼가기는 허용하고 댓글 목록은 페이지를 나누지 않는다(목업과 같다). |
 | 2026-11-09 | 게시글 테이블은 ERD 원래 이름인 `posts`를 쓰고, 엔티티도 `Post`로 한다. `comments.post_id`, `posts.original_post_id`, 공통 테이블 `bookmarks.post_id`·`reports.post_id`도 원래 이름을 쓴다. 2026-11-08의 `feeds`·`feed_id` 이름 변경 결정을 되돌렸다. API 경로(`/api/v1/feeds`)는 WBS대로 둔다. |
 | 2026-11-09 | 좋아요는 공통 테이블 `likes`(`id`·`user_id`·`project_id`·`post_id`·`created_at`·`updated_at`)를 쓴다(2절). 2026-11-09의 `feed_likes` 결정을 바꿨다. |
 | 2026-11-09 | posts에 `title`·`tech_stacks`·`interests`·`image_urls`·`view_count`를 추가한다(2절). |
@@ -152,6 +159,7 @@ erDiagram
 - likes·bookmarks: 프로젝트 신고 PR #96(`feat/51-project-reports`, 미병합. 프로젝트 북마크·좋아요 작업 포함)의 `Like`·`Bookmark` 엔티티를 재사용한다. 두 엔티티는 `BaseEntity`를 상속하고, `project_id`는 `Project` 연관관계, `post_id`는 연관관계 없는 `Long` 값으로 둔다. `(user_id, project_id)`·`(user_id, post_id)` 중복도 막는다. `Like`는 ERD 이미지(likes)와 컬럼이 같다. `Bookmark`도 `BaseEntity`를 상속하므로 `updated_at`이 생기는데, ERD 이미지(bookmarks)에는 `updated_at`이 없다. 게시글용 조회 메서드는 #96의 `LikeRepository`·`BookmarkRepository`에 더하고, 프로젝트 담당자에게 공유한다.
 - reports: 메신저 PR #90(`feat/78-messages`, 미병합)과 #96에 같은 `Report` 엔티티가 있다. #96에는 프로젝트 신고 생성 메서드가 더 있다. 이 엔티티는 `post_id` 컬럼과 초기 상태 `RECEIVED`(상태 값 `RECEIVED`·`REVIEWING`·`RESOLVED`·`REJECTED`)를 쓴다. 컬럼 이름은 ERD와 같으므로 그대로 쓴다. 두 PR이 develop에 병합된 뒤 피드 작업에서 초기 상태를 `AWATING`으로 바꾸고, 사용자·프로젝트 신고 코드와 테스트도 함께 맞춘다. 바뀐 내용은 이후 Report 작업 담당자에게 알린다.
 - 좋아요한 글 목록 PR #82(`feat/75-liked-posts`, 미병합)는 2026-11-09에 `feeds`·`feed_likes`·`feed_id`·`original_feed_id`를 SQL로 직접 조회하도록 바뀌었다. 값(`VISIBLE`·`POST`·`REPOST`)은 이 계획과 같지만, 테이블이 `posts`·`likes`로 바뀌어 이 조회와 테스트가 다시 맞지 않는다. #75 담당자에게 공유한다.
+- 2026-11-10 현재 #90·#96·#107·#82가 develop에 병합되어 있다. `Like`·`Bookmark`에 게시글용 생성 메서드(`forPost`)와 조회를, `ReportRepository`에 게시글·댓글 신고 조회를 더했다. 병합된 좋아요한 글 조회(`LikedPostsQueryRepository`)는 `posts`·`likes`·`original_post_id`를 써서 이 계획과 맞는다. 다만 그 테스트(`LikedPostsIntegrationTest`)는 `posts`를 SQL로 만들고 모르는 값(`UNLISTED` 등)을 넣는데, `Post` 엔티티가 생겨 ddl-auto가 CHECK 제약이 있는 테이블을 먼저 만들므로, 테스트 준비에서 그 테이블을 지우고 테스트의 SQL 정의로 다시 만들게 고쳤다. #75 담당자에게 공유한다.
 
 ## 3. 백엔드 구조
 
@@ -205,10 +213,10 @@ erDiagram
 | 환경 | 설정 | 상태 |
 |---|---|---|
 | 개발 compose (`compose.override.yaml`) | backend에 `./public:/public` 연결, `IMAGE_STORAGE=/public/images` | 2026-11-09 적용. Git 제외 로컬 파일이라 팀원은 각자 아래 설정을 추가한다 |
-| 로컬 HTTPS nginx (`compose.yaml`의 `https` 프로필) | nginx에 `./public/images` 읽기 전용 연결, `nginx/local.conf`에 `location /images/` 추가 | 3단계 |
-| 운영 (`compose.prod.yaml`, `nginx/server.conf`) | 서버 프로젝트 폴더(`~/DevMozip`)의 `public`을 연결한다. 아래 "운영 서버" 참고 | 3단계. 공통 배포 설정이므로 팀 공유 후 반영 |
-| nginx 없이 실행 (compose 기본 실행으로 3000번 직접 접속, local 프로필) | 정해지지 않음 | 4절 남은 결정 |
-| Git | 루트 `.gitignore`에 `/public/images/` 추가 | 3단계 |
+| 로컬 HTTPS nginx (`compose.yaml`의 `https` 프로필) | nginx에 `./public/images` 읽기 전용 연결, `nginx/local.conf`에 `location /images/`와 `client_max_body_size 11m` 추가 | 2026-11-10 `nginx/local.conf` 적용. `compose.yaml`은 Git에서 빠진 로컬 파일(커밋 `c4b62b9`)이라 팀원이 각자 아래 설정을 추가한다 |
+| 운영 (`compose.prod.yaml`, `nginx/server.conf`) | 서버 프로젝트 폴더(`~/DevMozip`)의 `public`을 연결한다. 아래 "운영 서버" 참고 | 2026-11-10 적용. PR 리뷰로 팀 공유. 호스트 nginx 업로드 크기는 서버에서 직접 고친다 |
+| nginx 없이 실행 (compose 기본 실행으로 3000번 직접 접속, local 프로필) | 백엔드 `GET /images/{filename}`(`PublicImageController`)과 Next.js Route Handler `app/images/[filename]/route.ts` | 2026-11-10 적용 |
+| Git | 루트 `.gitignore`에 `/public/images/` 추가 | 2026-11-10 적용 |
 
 팀원이 `compose.override.yaml`의 backend 서비스에 추가할 설정:
 
@@ -221,14 +229,23 @@ erDiagram
       IMAGE_STORAGE: /public/images
 ```
 
+로컬 HTTPS(`https` 프로필)를 쓰는 팀원이 `compose.yaml`의 nginx 서비스 `volumes`에 추가할 설정:
+
+```yaml
+      # 업로드 이미지(/images/). backend 가 프로젝트 폴더의 public/images 에 쓴 파일을 읽기만 한다 (docs/feed-plan.md)
+      - ./public/images:/usr/share/nginx/images:ro
+```
+
 ### 운영 서버
 
 배포는 서버의 프로젝트 폴더 `~/DevMozip`에서 `git pull` 후 `deploy/blue-green.sh`가 `docker compose -f compose.prod.yaml`을 실행한다. 그래서 `compose.prod.yaml`의 `./public`은 서버의 `~/DevMozip/public`을 가리키고, 개발 환경과 같은 구조로 연결할 수 있다.
 
 - `compose.prod.yaml`: 공통 backend 설정(`x-backend`)에 `./public:/public` 연결과 `IMAGE_STORAGE: /public/images`를 넣는다. blue·green이 같은 폴더를 쓰므로 배포 색이 바뀌어도 이미지가 남는다. 팀 nginx에는 `./public/images`를 읽기 전용으로 연결하고, `nginx/server.conf`에 `location /images/`를 `location /`보다 앞에 둔다.
 - 폴더와 권한: 폴더가 없으면 Docker가 root 소유로 만든다. 운영 backend 이미지는 root가 아닌 `app` 사용자로 실행되므로(`backend/Dockerfile`) 서버 계정 소유 폴더에는 쓸 수 없다. `deploy/blue-green.sh`에서 `public/images`를 미리 만들고 `app` 사용자가 쓸 수 있게 권한을 맞춘다. 방법(이미지의 `app` UID로 소유자 변경 등)은 3단계에서 정한다. 개발 컨테이너는 root로 실행되어 이 문제가 없다.
+  - 3단계 반영: `deploy/blue-green.sh`의 `prepare_image_storage`가 배포마다 `public/images`를 만들고, 새 색의 backend 이미지를 root로 한 번 실행(`docker compose run --user root --entrypoint chown`)해 소유자를 이미지 안의 `app` 사용자로 바꾼다. UID를 따로 알 필요가 없다. 서버에서 실제 배포로는 확인하지 않았다.
 - Git: `/public/images/`를 `.gitignore`에 넣는다. 배포의 `git pull --ff-only`는 Git이 추적하지 않는 파일을 지우지 않으므로 업로드 파일이 유지된다.
 - 업로드 크기: 호스트 nginx(`deploy/setup-host.sh`가 만든 설정)와 팀 nginx에 `client_max_body_size`가 없어 기본값 1MB가 적용된다. 이미지 3장(최대 약 1.5MB)을 함께 올리려면 두 곳 모두 값을 늘려야 한다. `setup-host.sh`는 설정 파일이 없을 때만 만들므로, 이미 있는 호스트 nginx 설정은 서버에서 직접 고친다.
+  - 3단계 반영: 팀 nginx(`nginx/server.conf`)와 `setup-host.sh`가 새로 만드는 설정에 `client_max_body_size 11m;`을 넣었다. 이미 있는 호스트 nginx 설정(`/etc/nginx/sites-available/devmozip`)의 `server` 블록에는 서버에서 같은 줄을 추가하고 `sudo nginx -t && sudo systemctl reload nginx`로 반영해야 한다(아직 하지 않음).
 - 백업: 이미지 파일은 DB 백업에 들어가지 않는다.
 
 ### 오류 응답
@@ -260,6 +277,7 @@ local 프로필은 H2 메모리 DB(`jdbc:h2:mem:security`)를 쓰므로, Postgre
 - 작성자: 고정 id 대신 `members_data.sql`의 회원을 이메일로 찾아 넣는다. Mock 작성자가 local 회원보다 많으므로 어느 회원에게 맞출지는 그때 정한다.
 - H2(local): `backend/src/main/resources`의 `*_data.sql`은 서버 시작 때 파일 이름 순으로 실행된다(`application-local.yml`). 작성자 회원이 먼저 있어야 하므로 `members_data.sql`보다 뒤에 오는 이름을 쓴다. 기존 파일처럼 이미 있으면 넣지 않는 `INSERT ... SELECT ... WHERE NOT EXISTS` 형식으로 쓰고, JSON 값은 H2 문법(`JSON '[...]'`)으로 쓴다. 이 폴더의 `*.sql`은 Git에서 제외된다.
 - PostgreSQL: JSON 값을 `'[...]'::jsonb`로 쓴 판을 따로 둔다. `docs/sql/project-demo-data.sql`처럼 `docs/sql`에 둘지는 그때 정한다.
+- 2026-11-10 작성: PostgreSQL판 `docs/sql/post-demo-data.sql`, H2판 `backend/src/main/resources/posts_data.sql`(Git 제외). 작성자 배정은 1절. 두 판 모두 두 번 실행해도 10행(원본 8, 퍼간 글 2)인 것을 임시 DB에서 확인했다. 공유 DB에는 실행하지 않았다.
 
 ## 4. API
 
@@ -342,6 +360,8 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 
 ### 남은 결정 (1단계)
 
+2026-11-10 아래 제안대로 정했다(1절). 남은 결정은 없다.
+
 1. **nginx 없이 실행할 때 이미지 제공:** compose 기본 실행으로 3000번에 바로 접속하거나 local 프로필로 실행하면 `/images/...`를 제공하는 곳이 없다. 다음 방식을 제안한다. 백엔드가 `IMAGE_STORAGE` 폴더를 `/images/**`로 제공하고, Next.js가 `/images/:path*` 요청을 백엔드로 넘긴다. nginx가 있는 환경에서는 nginx가 먼저 처리하므로 이 경로를 쓰지 않는다. 공통 설정인 `next.config.ts`와 `SecurityConfig`를 바꿔야 하므로 팀 공유가 필요하다.
 
 ## 5. 프론트엔드 연결
@@ -398,51 +418,51 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 - [x] 값 목록, 추가 컬럼, 필터 적용 범위, 조회수 방식, 이미지 저장 위치, Report 변경 결정 (2026-11-09)
 - [x] 게시글 테이블·엔티티 이름을 `posts`·`Post`로 되돌리고, 좋아요를 공통 `likes`로 정함 (2026-11-09)
 - [x] `compose.override.yaml`에 프로젝트 폴더의 `public` 연결과 `IMAGE_STORAGE` 지정 (2026-11-09, 로컬 파일)
-- [ ] 4절 "남은 결정" 결정
-- [ ] 2절의 변경을 ERDCloud에 반영 (posts 추가 컬럼)
-- [ ] 실제 DB의 `posts`·`likes`·`comments`·`bookmarks`·`reports` 테이블과 데이터 유무 확인
-- [ ] 공유: #75 담당자(#82의 테이블 이름), 프로젝트 담당자(#96의 `Like`·`Bookmark`에 게시글용 조회 추가, `Bookmark`의 `updated_at`), 이후 Report 작업 담당자(초기 상태)
+- [x] 4절 "남은 결정" 결정 (2026-11-10)
+- [ ] 2절의 변경을 ERDCloud에 반영 (posts 추가 컬럼. 2026-11-10 팀 협의 ERD 이미지에도 아직 없다. 팀에서 반영)
+- [x] 실제 DB의 `posts`·`likes`·`comments`·`bookmarks`·`reports` 테이블과 데이터 유무 확인 (2026-11-10 공유 개발 DB 읽기 확인)
+- [ ] 공유: #75 담당자(`LikedPostsIntegrationTest` 준비 수정), 프로젝트 담당자(`Like`·`Bookmark`에 게시글용 생성·조회 추가, `Bookmark`의 `updated_at`이 ERD에 없음), 이후 Report 작업 담당자(초기 상태 `AWATING`과 `feed-schema-update.sql`)
 
 완료 조건: 남은 결정이 정해지고 ERDCloud 반영과 DB 확인이 끝나 있다.
 
 ### 2단계 — 엔티티·Repository
 
-- [ ] enum, `Post`·`Comment` 엔티티와 Repository
-- [ ] JSON 컬럼이 PostgreSQL `jsonb`, H2 `json`으로 생기는지 확인
-- [ ] posts 데모 데이터 INSERT문(H2용·PostgreSQL용)을 작성해 보여 주기 (3절 "데모 데이터")
-- [ ] #96 병합 후 `LikeRepository`·`BookmarkRepository`에 게시글용 조회 추가
-- [ ] #90·#96 병합 후 `Report`의 초기 상태 변경, 사용자·프로젝트 신고 코드와 테스트 수정
-- [ ] Testcontainers PostgreSQL로 매핑·조회 테스트
-- [ ] 개발 서버 재시작 전 DB 반영 시점 공유
+- [x] enum, `Post`·`Comment` 엔티티와 Repository
+- [x] JSON 컬럼이 PostgreSQL `jsonb`, H2 `json`으로 생기는지 확인
+- [x] posts 데모 데이터 INSERT문(H2용·PostgreSQL용)을 작성해 보여 주기 (3절 "데모 데이터". `docs/sql/post-demo-data.sql`, Git 제외 `posts_data.sql`)
+- [x] #96 병합 후 `LikeRepository`·`BookmarkRepository`에 게시글용 조회 추가
+- [x] #90·#96 병합 후 `Report`의 초기 상태 변경, 사용자·프로젝트 신고 코드와 테스트 수정 (기존 DB용 `docs/sql/feed-schema-update.sql`)
+- [x] Testcontainers PostgreSQL로 매핑·조회 테스트
+- [ ] 개발 서버 재시작 전 DB 반영 시점 공유 (`feed-schema-update.sql`을 먼저 실행해야 한다)
 
 완료 조건: `./gradlew test` 통과. Docker가 없으면 Testcontainers 테스트는 건너뛰므로 통과로 보고하지 않는다.
 
 ### 3단계 — 게시글 API (8.1~8.6)
 
-- [ ] 요청자 식별 구성요소, DTO, `FeedService`·`FeedQueryService`, `FeedController`
-- [ ] `FeedImageStorage`, multipart 작성·수정, 조회수 `view=true`
-- [ ] 공개 GET 경로를 `SecurityConfig`에 반영 (팀 공유 후)
-- [ ] 운영·로컬 HTTPS의 `public/images` 연결, nginx `/images/` 제공과 업로드 크기, 운영 폴더 권한, `.gitignore`의 `/public/images/` (팀 공유 후)
-- [ ] 팔로잉 목록을 `follows`에 연결 (#107 병합 후)
-- [ ] 작성자 권한, 입력 검증, 이미지 형식·크기·개수, 없거나 삭제·숨긴(`HIDDEN`·`RESTRICTED`) 게시글, 비로그인 접근, 조회수 테스트
-- [ ] 목록·검색·정렬을 PostgreSQL과 H2 양쪽에서 테스트
-- [ ] API 문서 `docs/feed-api.md` 작성
+- [x] 요청자 식별 구성요소, DTO, `FeedService`·`FeedQueryService`, `FeedController` (요청자 식별은 팔로우의 `CurrentMemberProvider`를 함께 쓴다)
+- [x] `FeedImageStorage`, multipart 작성·수정, 조회수 `view=true`
+- [x] 공개 GET 경로를 `SecurityConfig`에 반영 (PR 리뷰로 팀 공유)
+- [x] 운영·로컬 HTTPS의 `public/images` 연결, nginx `/images/` 제공과 업로드 크기, 운영 폴더 권한, `.gitignore`의 `/public/images/` (PR 리뷰로 팀 공유. 이미 있는 호스트 nginx의 업로드 크기는 서버에서 직접 고쳐야 한다)
+- [x] 팔로잉 목록을 `follows`에 연결 (#107 병합 확인)
+- [x] 작성자 권한, 입력 검증, 이미지 형식·크기·개수, 없거나 삭제·숨긴(`HIDDEN`·`RESTRICTED`) 게시글, 비로그인 접근, 조회수 테스트
+- [x] 목록·검색·정렬을 PostgreSQL과 H2 양쪽에서 테스트
+- [x] API 문서 `docs/feed-api.md` 작성
 
 ### 4단계 — 반응·댓글·퍼가기·신고 API (8.7~8.13, 8.15~8.16)
 
-- [ ] 좋아요·북마크, 댓글, 퍼가기, 신고 Service와 Controller
-- [ ] 중복 요청, 본인 대상 신고, 원본이 삭제된 퍼간 글, 삭제된 게시글의 댓글 테스트
-- [ ] #75 담당자와 좋아요 데이터 사용 방식 확인
-- [ ] API 문서 갱신
+- [x] 좋아요·북마크, 댓글, 퍼가기, 신고 Service와 Controller
+- [x] 중복 요청, 본인 대상 신고, 원본이 삭제된 퍼간 글, 삭제된 게시글의 댓글 테스트
+- [ ] #75 담당자와 좋아요 데이터 사용 방식 확인 (코드로는 맞는 것을 확인했다. 2절. 담당자 확인은 남음)
+- [x] API 문서 갱신
 
 ### 5단계 — 프론트엔드 연결
 
-- [ ] BFF Route Handler, 응답 해석, 타입
-- [ ] `/feeds` 목록·작성·상세·수정 화면과 댓글·반응·이미지 연결
-- [ ] 조회수 localStorage 기록, 다음 페이지 표시 버튼
-- [ ] 로딩·빈 목록·오류·비로그인 처리
-- [ ] 5절의 다른 화면 처리 순서 공유
-- [ ] 실제 백엔드·PostgreSQL로 작성 → 목록 → 상세 → 수정 → 삭제 확인
+- [x] BFF Route Handler, 응답 해석, 타입
+- [x] `/feeds` 목록·작성·상세·수정 화면과 댓글·반응·이미지 연결 (Mock 화면이 쓰는 `components/posts`는 그대로 두고 `app/feeds/_components`에 API용 카드·반응·신고 창을 두었다. 작성자 숨김 버튼은 WBS 3.8 API가 없어 빼었다)
+- [x] 조회수 localStorage 기록, 다음 페이지 표시 버튼
+- [x] 로딩·빈 목록·오류·비로그인 처리
+- [ ] 5절의 다른 화면 처리 순서 공유 (메인 미리보기·프로필 게시글 탭·북마크·좋아요한 글·관리자 화면은 Mock 그대로)
+- [x] 실제 백엔드·PostgreSQL로 작성 → 목록 → 상세 → 수정 → 삭제 확인 (임시 PostgreSQL·Redis와 `next start`로 BFF를 거쳐 확인. 로그인한 상태의 브라우저 조작은 하지 않았다)
 
 완료 조건: 빌드·테스트 결과와 실제 서버 연결 확인 여부를 따로 기록한다. Mock 테스트 통과는 실제 DB 검증이 아니다.
 
@@ -458,3 +478,9 @@ WBS 기준이며 1절에서 바꾼 항목을 반영했다. "작성자"는 로그
 | 2026-11-09 | 1단계 | 게시글 테이블 이름을 `posts`로 되돌림(`feeds`·`feed_id` 결정 철회). 엔티티는 `Post`, API 경로는 `/api/v1/feeds` 유지. 좋아요를 `feed_likes`에서 공통 `likes`로 바꿈. #96의 `Like`·`Bookmark`·`Report`를 재사용하도록 공통 엔티티 정리, #82 공유 내용 갱신. 개발 DB의 테이블은 `posts`·`likes`로 정리되어 있다. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | `visibility`에 관리자 숨김 `RESTRICTED` 추가(작성자 숨김은 `HIDDEN`), 작성자 숨김 변경 경로 정리. H2 local 프로필의 JSON 타입과 이식 가능한 쿼리 기준 추가. posts 데모 INSERT문을 2단계에서 보여 주기로 함. 팔로잉 목록은 #107 병합 후 `follows`에 연결. 코드 변경 없음. |
 | 2026-11-09 | 1단계 | WBS 전체 대조로 선행·후속 작업 정리. 작성자 숨김을 8.6 `PUT`이 아닌 WBS 3.8 `PATCH /api/v1/feeds/{id}/visibility`(프로필 담당)로 바로잡음. 관리자 숨김은 WBS 14.7. 코드 변경 없음. |
+| 2026-11-10 | 1단계 | 팀이 협의한 최신 ERD 이미지와 대조: `posts`에 2절 추가 컬럼 5개가 없고(사용자 결정으로 계획대로 추가), `likes`·`comments`·`bookmarks`·`reports`는 같다. 공유 개발 DB 읽기 확인(쓰기를 막은 세션): `posts` 0행(2절 컬럼·기본값 있음, 상태 CHECK 없음, 인덱스 이름 `feeds_*`), `comments` 없음, `likes`·`bookmarks` 0행(`project_id`·`post_id` 중 하나만 채우는 CHECK), `reports` 0행(상태 CHECK가 `RECEIVED` 등). 이미지 제공, 공통 설정 반영 범위, 데모 작성자를 정했다(1절). |
+| 2026-11-10 | 2단계 | enum 4개, `Post`·`Comment`, `PostRepository`·`PostQueryRepository`·`CommentRepository`, `Like`·`Bookmark`의 `forPost`, `Report`의 `AWATING`·`ofPost`·`ofComment`, 공통 Repository의 게시글용 조회. 사용자·프로젝트 신고 테스트를 `AWATING`으로 맞췄다. `docs/sql/feed-schema-update.sql`(기존 DB용)과 데모 INSERT문 두 판. 임시 PostgreSQL에 공유 개발 DB와 같은 구조를 만들고 `feed-schema-update.sql`을 두 번 실행해 상태 제약 교체, `RECEIVED` 행 변환, 인덱스 이름 변경, 이후 `RECEIVED` 거절을 확인했다. 데모 INSERT문은 PostgreSQL·H2(`members_data.sql` 다음) 모두 두 번 실행해 10행이다. JSON 컬럼은 PostgreSQL `jsonb`, H2 `json`으로 생긴다. 공유 개발 DB에는 아무것도 실행하지 않았고 개발 서버도 재시작하지 않았다. |
+| 2026-11-10 | 3단계 | `FeedRules`·`FeedPostAssembler`, `FeedService`·`FeedQueryService`와 구현, `FeedController`·`FeedExceptionHandler`, DTO, `FeedImageStorage`·`PublicImageController`, `FeedConfiguration`(`feedClock`), `SecurityConfig` 공개 GET. 요청자 식별은 팔로우의 `CurrentMemberProvider`를 함께 쓴다. 배포 설정: `compose.prod.yaml`(backend `./public` 연결·`IMAGE_STORAGE`, nginx 이미지 폴더), `nginx/server.conf`·`nginx/local.conf`(`/images/`, `client_max_body_size 11m`), `deploy/blue-green.sh`(폴더 생성·소유자), `deploy/setup-host.sh`(업로드 크기), `.gitignore`. 컨테이너에서 두 nginx 설정의 `nginx -t` 통과, 팀 nginx 설정으로 `/images/` 파일 200(`image/png`, `nosniff`)·없는 파일 404 확인. `docs/feed-api.md` 작성. |
+| 2026-11-10 | 4단계 | `FeedReactionService`·`CommentService`·`FeedReportService`와 구현, `CommentController`, 퍼가기(`FeedService`). 피드 테스트는 PostgreSQL·H2에서 같은 묶음(매핑·목록 SQL 12, 게시글 API 23, 반응·댓글·퍼가기·신고 17)을 돌리고, PostgreSQL에서만 컬럼 형식 2개와 동시 요청 2개를 더 돌린다. 107개 통과(건너뜀 0). 동시 신고·퍼가기 8건 중 1건만 저장, 동시 좋아요 8명 모두 반영. `Post` 엔티티 때문에 `LikedPostsIntegrationTest`(#75)의 준비가 실패해 테스트의 `posts`를 다시 만들게 고쳤다(14개 통과, 2절). |
+| 2026-11-10 | 5단계 | BFF 12개 경로(`app/api/feeds/**`, `app/api/comments/**`), `lib/social/feedApi.ts`·`feedProxy.ts`, `types/feedApi.ts`, `/feeds` 목록(더 보기)·상세(조회수 기록)·작성·수정 화면과 댓글·반응·퍼가기·신고 창. nginx 없이 실행할 때의 이미지는 Route Handler `app/images/[filename]`(1절). Mock 피드 화면을 검사하던 `tests/screens/FeedPage.test.tsx`의 피드 부분을 API 화면 테스트로 바꿨다(프로필·메인 Mock 검사는 유지). 저장소 밖 복사본에서 vitest 121개 파일 1,402개 통과, `npm run typecheck` 성공, 변경 파일 eslint 오류 0(경고 3개는 Mock 화면과 같은 `<img>`), `npm run build` 성공. 임시 PostgreSQL·Redis에 연결한 백엔드와 `next start`로 BFF를 거쳐 작성(이미지 2장) → 이미지 제공 → 목록·검색·페이지·정렬 → 상세 조회수(본인 제외) → 수정(이미지 교체·이전 파일 삭제) → 좋아요·북마크·댓글·퍼가기·신고(중복 409) → 팔로잉 → 다른 사이트 403 → 삭제(이후 404, 파일 삭제, 퍼간 글의 원본 삭제 표시)를 확인했다. 헤드리스 Chromium(1440px)으로 비로그인 목록·상세·퍼간 글 화면을 확인했다. 로그인한 상태의 브라우저 조작은 하지 않았다. 확인 중 추천순이 일부 seed에서 작성 순서와 같아지는 문제를 찾아 섞는 식을 고쳤다. |
+| 2026-11-10 | 검증 | 백엔드 전체 `./gradlew test`가 테스트 JVM 기본 힙(512MB)을 넘어 뒤쪽 WebSocket 테스트가 `OutOfMemoryError`로 실패했다(변경 전 HEAD는 OOM 없음). 피드 테스트를 `@Nested`로 묶고 `@DirtiesContext`로 컨텍스트를 닫아도 남아, 사용자 결정으로 `backend/build.gradle` test 블록에 `maxHeapSize = '1g'`을 넣었다. 저장소 밖 복사본에서 1,245개 중 1,233개 통과, 12개 건너뜀(팀 DB 설정이 필요한 프로젝트 테스트 11개와 기존 AI 테스트 1개), 실패 0. |
