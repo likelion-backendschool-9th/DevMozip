@@ -41,8 +41,8 @@ function EditorSession({ email, existing, reload }: { email: string; existing?: 
     });
     const existingForSave = existing ? { ...existing, portfolio: { ...existing.portfolio, updatedAt: initial.baseUpdatedAt } } : undefined;
     return <PortfolioEditorForm userId={email} item={existing ? { ...initial.input, id: String(existing.portfolio.id), ownerId: email } : undefined} api={{
-        initial: initial.input, draftKey: key, visibility: existing?.portfolio.visibility || initial.visibility,
-        canChangeVisibility: !existing, backHref: existing ? `/portfolios/${existing.portfolio.id}` : '/profile/me?tab=portfolio',
+        initial: initial.input, draftKey: key, visibility: initial.visibility,
+        canChangeVisibility: true, backHref: existing ? `/portfolios/${existing.portfolio.id}` : '/profile/me?tab=portfolio',
         restoredDraft: initial.restoredDraft,
         staleDraft: !!existing && initial.baseUpdatedAt !== existing.portfolio.updatedAt,
         reload: existing ? () => { clearPortfolioDraft(key); reload(); } : undefined,

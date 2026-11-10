@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PortfolioDeleteButton } from './PortfolioDeleteButton';
-import { PortfolioVisibilityControl } from './PortfolioVisibilityControl';
 import { PortfolioContent } from './PortfolioContent';
 import { portfolioInputFromDetail } from '@/lib/portfolios/portfolioApiDraft';
 import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, CalendarDays, Code2, Printer } from 'lucide-react';
@@ -29,14 +28,13 @@ export function PortfolioDetailResult({ result, onRetry, onChanged, notice, back
             {result.value.canEdit && <><Link className="button secondary" href={`/portfolios/${item.id}/edit`}>수정</Link><PortfolioDeleteButton id={item.id} title={item.title || '포트폴리오'} /></>}
             <Button variant="secondary" onClick={() => window.print()}><Printer size={15} />인쇄 / PDF</Button>
         </div></div>
-        {result.value.canEdit && onChanged && <PortfolioVisibilityControl key={`${item.id}:${item.updatedAt}`} detail={result.value} onChanged={onChanged} onReload={onRetry} />}
         {notice && <p role="status">{notice}</p>}
         <article className={styles.article}>
             <header className={styles.hero}><div className={styles.heroText}>
                 <div className={styles.kicker}><span className={styles.dot} /><span>DEVELOPER PORTFOLIO</span><span className={styles.field}>{item.topic || '분야 미등록'}</span></div>
                 <h1>{item.title || '제목 미입력'}</h1><p className={styles.lead}>{item.summary || '한 줄 소개 미입력'}</p>
                 {profilePath ? <Link className={styles.author} href={profilePath}>{authorLabel}<ArrowUpRight size={18} /></Link> : <div className={styles.author}>{authorLabel}</div>}
-            </div><div className={styles.heroVisual}><div className={styles.visualLabel}><span>SELECTED WORK</span><span>{item.visibility === 'PRIVATE' ? '비공개' : '공개'}</span></div>
+            </div><div className={styles.heroVisual}><div className={styles.visualLabel}><span>SELECTED WORK</span></div>
                 <div className={styles.window}><div className={styles.windowBar}><i /><i /><i /><span>PROJECT PREVIEW</span></div>
                     <Image unoptimized width={960} height={600} className={styles.cover} src={item.thumbnailUrl || '/portfolio-cover.svg'} alt={`${item.title || '포트폴리오'} 대표 이미지`} /></div>
                 <div className={styles.visualFoot}><span>설계에서 구현까지, 프로젝트의 기록</span><ArrowUpRight size={20} /></div>

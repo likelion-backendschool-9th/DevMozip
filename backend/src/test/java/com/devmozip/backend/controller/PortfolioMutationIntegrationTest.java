@@ -90,10 +90,18 @@ class PortfolioMutationIntegrationTest {
         mvc.perform(post(PATH).header("Authorization",token(4)).contentType("application/json").content(mapper.writeValueAsString(input()))).andExpect(status().isForbidden());
         mvc.perform(post(PATH).header("Authorization",token(99)).contentType("application/json").content(mapper.writeValueAsString(input()))).andExpect(status().isNotFound());
     }
-    @Test void visibilityCannotBeChangedByPut()throws Exception{
-        var before=create(input(),1);var p=input();p.put("visibility","PUBLIC");p.put("expectedUpdatedAt",before.path("portfolio").path("updatedAt").asString());
-        mvc.perform(put(PATH+"/"+id(before)).header("Authorization",token(1)).contentType("application/json").content(mapper.writeValueAsString(p))).andExpect(status().isConflict());
-        assertEquals("PRIVATE",jdbc.queryForObject("SELECT visibility FROM portfolios WHERE id=?",String.class,id(before)));
+    @Test void visibilityChangesWithContentByPut()throws Exception{
+        var before=create(input(),1);var p=input();p.put("visibility","PUBLIC");p.put("title","변경된 제목");p.put("expectedUpdatedAt",before.path("portfolio").path("updatedAt").asString());
+        mvc.perform(put(PATH+"/"+id(before)).header("Authorization",token(1)).contentType("application/json").content(mapper.writeValueAsString(p))).andExpect(status().isOk()).andExpect(jsonPath("$.portfolio.visibility").value("PUBLIC")).andExpect(jsonPath("$.portfolio.title").value("변경된 제목"));
+        assertEquals("PUBLIC",jdbc.queryForObject("SELECT visibility FROM portfolios WHERE id=?",String.class,id(before)));
+    }
+    @Test void putVisibilityChangeWithoutSubmittedCopyIsAtomic()throws Exception{
+        var before=create(input(),1);long id=id(before);
+        jdbc.update("INSERT INTO project_application_portfolios(id,portfolio_id) VALUES(1,?)",id);
+        var p=input();p.put("visibility","PUBLIC");p.put("title","저장되면 안되는 제목");p.put("expectedUpdatedAt",before.path("portfolio").path("updatedAt").asString());
+        mvc.perform(put(PATH+"/"+id).header("Authorization",token(1)).contentType("application/json").content(mapper.writeValueAsString(p))).andExpect(status().isConflict());
+        assertEquals("PRIVATE",jdbc.queryForObject("SELECT visibility FROM portfolios WHERE id=?",String.class,id));
+        assertEquals(before.path("portfolio").path("title").asString(),jdbc.queryForObject("SELECT title FROM portfolios WHERE id=?",String.class,id));
     }
     @Test void deleteUnreferencedAndHideItFromQueries()throws Exception{
         long id=id(create(input(),1));mvc.perform(delete(PATH+"/"+id).header("Authorization",token(1))).andExpect(status().isNoContent());

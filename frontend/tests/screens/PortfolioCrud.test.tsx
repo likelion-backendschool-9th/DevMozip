@@ -60,3 +60,18 @@ describe('포트폴리오 작성·수정·삭제 화면', () => {
         expect(html).toContain('초안 작성 후 서버 내용이 변경'); expect(html).toContain('초안 버리고 최신 내용 불러오기'); expect(html).toContain('value="프로젝트"');
     });
 });
+
+it('본인 목록에서만 눈 아이콘으로 공개 범위를 안내하고 타인 목록에는 비공개 항목을 숨긴다',()=>{
+ const value=portfolioPageFixture();value.items[0].visibility='PRIVATE';
+ const props={result:{status:'ready' as const,value},onRetry:()=>{},onPage:()=>{}};
+ const mine=renderToStaticMarkup(<PortfolioListResult {...props} own/>);
+ expect(mine).toContain('role="img" aria-label="비공개"');expect(mine).toContain('lucide-eye-off');expect(mine).not.toMatch(/<a[^>]*class="[^"]*visibilityStatus/);
+ const other=renderToStaticMarkup(<PortfolioListResult {...props}/>);
+ expect(other).not.toContain('/portfolios/11');expect(other).not.toContain('공개 범위 수정');
+ value.items[0].visibility='PUBLIC';expect(renderToStaticMarkup(<PortfolioListResult {...props} own/>)).toContain('lucide-eye');
+});
+it('상세에는 공개 범위 선택기를 표시하지 않는다',()=>{
+ const value=portfolioDetailFixture();value.canEdit=true;
+ const html=renderToStaticMarkup(<PortfolioDetailResult result={{status:'ready',value}} onRetry={()=>{}} onChanged={()=>{}}/>);
+ expect(html).not.toContain('공개 범위 저장');expect(html).not.toContain('<select');
+});
