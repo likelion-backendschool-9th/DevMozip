@@ -94,11 +94,6 @@ management:
     health:
       show-details: never
 
-profile:
-  images:
-    directory: ${PROFILE_IMAGE_DIRECTORY:./uploads/profile-images}
-    public-base-url: ${PROFILE_IMAGE_PUBLIC_BASE_URL:http://localhost:8080}
-
 # 메신저 WebSocket. 쿠키로 인증하므로 이 Origin만 연결할 수 있고, 값이 없으면 모든 연결을 거부한다
 messenger:
   realtime:

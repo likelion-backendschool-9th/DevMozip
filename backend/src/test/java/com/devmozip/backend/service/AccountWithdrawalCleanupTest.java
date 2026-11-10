@@ -56,6 +56,17 @@ class AccountWithdrawalCleanupTest {
 		verify(images, never()).delete("shared.png");
 	}
 
+	@Test void previousFormatFileNamesAreDroppedInsteadOfRetriedForever() throws Exception {
+		var job = new AccountWithdrawalTasks.Job(1, null, List.of("00000000-0000-0000-0000-000000000000.png"));
+		when(tasks.read(key)).thenReturn(job);
+		when(images.url("00000000-0000-0000-0000-000000000000.png"))
+			.thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
+		cleanup.process(key);
+		verify(tasks).removePrepared(job);
+		verify(tasks, never()).save(any());
+		verify(images, never()).delete(any());
+	}
+
 	@Test void onlyProcessesCommittedWithdrawalsAndRemovesCompletedJob() {
 		var job = new AccountWithdrawalTasks.Job(1, null, List.of());
 		when(tasks.read(key)).thenReturn(job);

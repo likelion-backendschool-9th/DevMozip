@@ -32,9 +32,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     boolean existsByProfileImageOrBannerImage(String profileImage, String bannerImage);
 
-    @Query("select (count(m) > 0) from Member m where m.status = :status and (m.profileImage = :url or m.bannerImage = :url)")
-    boolean existsPublicImage(@Param("url") String url, @Param("status") MemberStatus status);
-
     // 로그인 시 이메일로 회원 조회
     Optional<Member> findByEmail(String email);
 

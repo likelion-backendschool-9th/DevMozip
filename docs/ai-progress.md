@@ -2297,3 +2297,20 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 사용자 정정에 따라 ApiPortfolioTab의 눈 아이콘 링크를 비대화형 span으로 바꿨다. 본인에게만 눈 아이콘을 표시하고 공개/비공개는 접근성 이름·툴팁으로 안내한다. 텍스트 버튼과 수정 화면 이동은 제거했다. 공개 범위 변경은 작성기에서만 수행한다. PortfolioTab.module.css·PortfolioCrud 테스트·공개 범위 문서도 갱신했다.
 
 검증: npm run build 성공(TypeScript 포함). PortfolioCrud9개 테스트 통과, 아이콘이 링크가 아닌지 확인. git diff --check 통과. 브라우저 수동 확인 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
+
+## 2026-11-11 업로드 이미지·파일 저장 경로 통합
+
+사용자 요청으로 프로필·배너 이미지를 게시글 이미지와 같은 public/images(IMAGE_STORAGE)에 저장하고 nginx가 /images/로 제공하게 했다. 포트폴리오 파일은 public/files(FILE_STORAGE)에 저장하고, 백엔드가 기존 정책대로 권한을 확인한 뒤 nginx가 내부 전용 경로(/internal-files/)에서 X-Accel-Redirect로 보낸다(FILE_ACCEL_REDIRECT=true, 운영). nginx 없이 실행하면 지금처럼 백엔드가 파일 내용을 응답한다. 주소 /api/files/{id}는 그대로다. 파일 이름은 profile_·banner_·portfolio_{회원 id}_{yyyyMMddHHmmss}.{확장자}이고, 같은 회원이 같은 초에 올려 겹치면 다음 초 이름을 쓴다(사용자 결정). 정지 회원의 프로필 이미지도 주소를 알면 보이는 공개 범위(게시글 이미지와 같음)는 사용자가 확인했다. GET /api/v1/profile-images/{filename}, MemberRepository.existsPublicImage, PROFILE_IMAGE_DIRECTORY·PROFILE_IMAGE_PUBLIC_BASE_URL·PORTFOLIO_FILE_STORAGE 설정을 없앴다. 기존 파일·DB 값은 일회성 scripts/migrate-upload-storage.py로 옮긴다. 환경별 설정과 이관 절차: docs/portfolio-files-api.md "저장 위치 변경과 기존 파일 이관", 프로필 쪽 변경: docs/profile-local-images.md "저장 위치 변경".
+
+변경 파일: 백엔드 UploadStorageConfiguration(신규, uploadClock), LocalProfileImageStorage, ProfileImageService, ProfileImageFileController(삭제), ProfileExceptionHandler, MemberRepository, AccountWithdrawalCleanup(이전 형식 파일 이름은 재시도하지 않음), PublicImageController(IMAGE_STORAGE 직접 사용), LocalPortfolioFileStorage, PortfolioFileService·PortfolioFileServiceImpl(locate), PortfolioFileController, SecurityConfig, application.yaml, 관련 테스트와 PortfolioFileControllerTest(신규). 프론트 lib/portfolios/portfolioFiles.ts(PORTFOLIO_FILE_ID), app/api/files/[id]/route.ts(X-Accel-Redirect 검사·전달)와 테스트, 테스트 데이터 2개. 배포 nginx/server.conf·nginx/local.conf, compose.prod.yaml, deploy/blue-green.sh, .gitignore. scripts/migrate-upload-storage.py(신규). 문서 AGENTS.md, docs/portfolio-files-api.md, docs/profile-local-images.md.
+
+검증:
+- 백엔드 전체 ./gradlew test(복사본, Docker Testcontainers): 1,460개 중 23개 실패. 그중 ProjectPortfolioSnapshotIntegrationTest 12개는 복사본에 docs/sql이 빠져 실패했고, docs를 넣고 다시 실행해 12개 통과했다. 나머지 11개는 같은 클래스를 변경 전 HEAD 복사본에서 실행해도 같은 11개가 실패했다(Redis 미실행 5개, ProfilePostsIntegrationTest의 posts INSERT 열 형식 불일치 5개, AccountWithdrawalIntegrationTest의 탈퇴 후 false로 남는 열 1개). 임시 Redis를 띄우면 ProfileImageIntegrationTest 14개·ProfileUpdateIntegrationTest 27개가 모두 통과했다.
+- 변경 관련 테스트: LocalProfileImageStorageTest 18개, LocalPortfolioFileStorageTest 9개, PortfolioFileIntegrationTest 5개, PortfolioFileControllerTest 2개, AccountWithdrawalCleanupTest 5개 통과.
+- 프론트(복사본): npm ci, npm run build, npm run typecheck 성공. 전체 172개 파일/1,820개 테스트 통과.
+- nginx 1.27.5 컨테이너: nginx/server.conf에 가짜 BFF 응답을 붙여 X-Accel-Redirect 전송(Content-Type·Content-Disposition·Cache-Control 유지, nosniff·sandbox 추가), /internal-files/ 직접 요청 404, 없는 파일 404, /images/ 200을 확인했다. nginx/local.conf는 임시 인증서로 nginx -t 통과.
+- 통합: 임시 PostgreSQL·Redis, 백엔드 jar(FILE_ACCEL_REDIRECT=true), Next standalone, nginx(server.conf에서 listen 주소만 바꿈)로 가입·로그인 뒤 프로필 이미지 업로드 → /images/profile_1_….png 200·같은 바이트, PDF 업로드 → portfolio_1_….pdf·.json 저장, 소유자 조회 200(백엔드 본문 0바이트+X-Accel-Redirect, nginx가 파일 전송), 비로그인·/internal-files/ 직접 404, 이전 조회 경로 401을 확인했다. 공유 개발 DB는 쓰지 않았다.
+- 이관 스크립트: 임시 PostgreSQL에서 확인 실행(변경 없음)·--apply(DB 값 변경, 파일 복사, 파일 없는 주소 유지)·재실행(건너뜀)·DB 실패 시 되돌림(복사한 이미지 삭제, DB 변경 없음)을 확인했다.
+- scripts/test_blue_green.py 12개 통과, bash -n deploy/blue-green.sh, git diff --check 통과.
+
+미완료: 운영 배포와 운영 이관, 공유 개발 DB 이관은 실행하지 않았다(실행 전 담당자 확인). 브라우저 화면 수동 확인은 하지 않았다. 로컬 HTTPS nginx를 쓰는 팀원은 Git 제외 compose.yaml에 public/files 연결과 FILE_ACCEL_REDIRECT를 각자 추가한다(docs/portfolio-files-api.md "환경별 설정"). 위의 기존 실패 11개는 이번 범위 밖이다. 커밋·푸시 없음.

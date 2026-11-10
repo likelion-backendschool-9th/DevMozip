@@ -29,7 +29,7 @@ class PortfolioFileIntegrationTest {
     @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtProvider jwt; @Autowired ObjectMapper mapper;
     @MockitoBean RefreshTokenStore refresh;
     @DynamicPropertySource static void properties(DynamicPropertyRegistry r) {
-        r.add("spring.jpa.hibernate.ddl-auto",()->"create");r.add("spring.sql.init.mode",()->"never");r.add("portfolio.files.directory",()->files.toString());
+        r.add("spring.jpa.hibernate.ddl-auto",()->"create");r.add("spring.sql.init.mode",()->"never");r.add("FILE_STORAGE",()->files.toString());
     }
     @BeforeEach void fixture() {
         assertNotEquals(5442,postgres.getMappedPort(5432));
@@ -44,7 +44,10 @@ class PortfolioFileIntegrationTest {
         mvc.perform(multipart("/api/v1/files").file(png())).andExpect(status().isUnauthorized());
         mvc.perform(multipart("/api/v1/files").file(png()).header("Authorization",auth(4))).andExpect(status().isForbidden());
         var file=upload();String url="/api/v1/files/"+file.get("id").asString();
-        mvc.perform(get(url).header("Authorization",auth(1))).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));
+        assertTrue(file.get("id").asString().matches("portfolio_1_[0-9]{14}"));
+        assertTrue(java.nio.file.Files.isRegularFile(files.resolve(file.get("id").asString()+".png")));
+        mvc.perform(get(url).header("Authorization",auth(1))).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"))
+                .andExpect(header().doesNotExist("X-Accel-Redirect")).andExpect(content().bytes(ProfileImageTestFiles.png()));
         mvc.perform(get(url)).andExpect(status().isNotFound());mvc.perform(get(url).header("Authorization",auth(2))).andExpect(status().isNotFound());
         assertTrue(file.get("url").asString().startsWith("/api/files/"));assertFalse(file.has("ownerId"));
     }

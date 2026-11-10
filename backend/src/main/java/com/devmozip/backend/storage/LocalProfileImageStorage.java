@@ -2,45 +2,54 @@ package com.devmozip.backend.storage;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
+import java.io.OutputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.UUID;
+import java.util.Set;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.MemoryCacheImageInputStream;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 프로필·배너 이미지 저장·삭제 (docs/profile-local-images.md "저장 위치 변경").
+ * 게시글 이미지와 같은 IMAGE_STORAGE(public/images) 폴더를 쓰고 파일 이름 접두어로 구분한다.
+ * 파일 이름: {profile|banner}_{회원 id}_{업로드 시각 yyyyMMddHHmmss}.{파일 내용으로 확인한 확장자}
+ * DB에는 /images/{파일 이름}을 저장하고, 파일은 nginx(없으면 백엔드 PublicImageController)가 권한 확인 없이 제공한다.
+ */
 @Component
 public class LocalProfileImageStorage {
     public static final int MAX_BYTES = 256 * 1024;
+    public static final String URL_PREFIX = "/images/";
     private static final long MAX_PIXELS = 16_000_000;
-    private static final Pattern FILE_NAME = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(png|jpg|webp)");
+    private static final Set<String> KINDS = Set.of("profile", "banner");
+    private static final Pattern FILE_NAME = Pattern.compile("(?:profile|banner)_[1-9][0-9]{0,18}_[0-9]{14}\\.(?:png|jpg|webp)");
+    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    // 같은 회원이 같은 초에 다시 올리면 이름이 겹친다. 다음 초 이름으로 몇 번까지 다시 시도한다.
+    private static final int MAX_ATTEMPTS = 10;
     private final Path root;
-    private final String publicPrefix;
+    private final Clock clock;
 
-    public LocalProfileImageStorage(
-            @Value("${profile.images.directory:./uploads/profile-images}") String directory,
-            @Value("${profile.images.public-base-url:http://localhost:8080}") String baseUrl) {
+    public LocalProfileImageStorage(@Value("${IMAGE_STORAGE:../public/images}") String directory,
+            @Qualifier("uploadClock") Clock clock) {
         root = Path.of(directory).toAbsolutePath().normalize();
-        URI base = URI.create(baseUrl);
-        if (!("http".equals(base.getScheme()) || "https".equals(base.getScheme()))
-                || base.getHost() == null || base.getUserInfo() != null || base.getQuery() != null || base.getFragment() != null
-                || !(base.getPath().isEmpty() || "/".equals(base.getPath()))) {
-            throw new IllegalArgumentException("이미지 공개 주소는 http(s) 원점이어야 합니다.");
-        }
-        publicPrefix = baseUrl.replaceAll("/+$", "") + "/api/v1/profile-images/";
-        if (publicPrefix.length() + 41 > 255) throw new IllegalArgumentException("이미지 공개 주소가 너무 깁니다.");
+        this.clock = clock;
     }
 
-    public StoredImage save(MultipartFile file) {
+    /** @param kind profile 또는 banner */
+    public StoredImage save(String kind, long memberId, MultipartFile file) {
+        if (!KINDS.contains(kind) || memberId <= 0) throw new IllegalArgumentException("이미지 종류와 회원 id를 확인해 주세요.");
         if (file == null || file.isEmpty()) throw badRequest("이미지 파일을 선택해 주세요.");
         if (file.getSize() > MAX_BYTES) throw tooLarge();
         byte[] bytes;
@@ -49,22 +58,35 @@ public class LocalProfileImageStorage {
         } catch (IOException exception) { throw unavailable(); }
         if (bytes.length > MAX_BYTES) throw tooLarge();
         String extension = validateImage(bytes, file.getContentType());
-        String name = UUID.randomUUID() + "." + extension;
-        Path target = path(name);
-        boolean created = false;
         try {
             Files.createDirectories(root);
             if (Files.isSymbolicLink(root)) throw unavailable();
+        } catch (IOException exception) { throw unavailable(); }
+        LocalDateTime time = LocalDateTime.now(clock);
+        for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             // 원본 파일명은 저장 경로와 확장자 판단에 사용하지 않는다.
-            try (var output = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-                created = true;
+            String name = kind + "_" + memberId + "_" + time.plusSeconds(attempt).format(STAMP) + "." + extension;
+            Path target = root.resolve(name);
+            OutputStream output = createNew(target);
+            if (output == null) continue;
+            try (output) {
                 output.write(bytes);
+            } catch (IOException exception) {
+                try { Files.deleteIfExists(target); } catch (IOException ignored) { /* 실패 파일 정리는 후속 점검 대상 */ }
+                throw unavailable();
             }
-        } catch (IOException exception) {
-            try { if (created) Files.deleteIfExists(target); } catch (IOException ignored) { /* 실패 파일 정리는 후속 점검 대상 */ }
-            throw unavailable();
+            return new StoredImage(name, URL_PREFIX + name);
         }
-        return new StoredImage(name, url(name));
+        throw unavailable();
+    }
+
+    /** 새 파일을 연다. 같은 이름이 이미 있으면 덮어쓰지 않고 null을 돌려준다. */
+    private static OutputStream createNew(Path target) {
+        try {
+            return Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        } catch (FileAlreadyExistsException exists) {
+            return null;
+        } catch (IOException exception) { throw unavailable(); }
     }
 
     private String validateImage(byte[] bytes, String declaredType) {
@@ -95,21 +117,12 @@ public class LocalProfileImageStorage {
         }
     }
 
-    public byte[] read(String filename) {
-        Path source = path(filename);
-        if (!Files.isRegularFile(source, LinkOption.NOFOLLOW_LINKS)) throw notFound();
-        try (var input = Files.newInputStream(source, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
-            byte[] bytes = input.readNBytes(MAX_BYTES + 1);
-            if (bytes.length > MAX_BYTES) throw notFound();
-            return bytes;
-        } catch (IOException exception) { throw notFound(); }
-    }
+    public String url(String filename) { path(filename); return URL_PREFIX + filename; }
 
-    public String url(String filename) { path(filename); return publicPrefix + filename; }
-
+    /** 이 저장소가 만든 이미지 주소이면 파일 이름을, 외부 URL·다른 기능의 파일·이전 형식 주소이면 null을 돌려준다. */
     public String ownedFilename(String url) {
-        if (url == null || !url.startsWith(publicPrefix)) return null;
-        String filename = url.substring(publicPrefix.length());
+        if (url == null || !url.startsWith(URL_PREFIX)) return null;
+        String filename = url.substring(URL_PREFIX.length());
         return FILE_NAME.matcher(filename).matches() ? filename : null;
     }
 
@@ -118,10 +131,6 @@ public class LocalProfileImageStorage {
     private Path path(String filename) {
         if (filename == null || !FILE_NAME.matcher(filename).matches()) throw notFound();
         return root.resolve(filename);
-    }
-
-    public static String contentType(String filename) {
-        return filename.endsWith(".png") ? "image/png" : filename.endsWith(".jpg") ? "image/jpeg" : "image/webp";
     }
 
     private static ResponseStatusException badRequest(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
