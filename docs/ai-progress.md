@@ -1335,12 +1335,59 @@ erDiagram
 - 병합 후 frontend 전체 688개 중 687개 통과, 기존 프로젝트 모집의 날짜 의존 테스트 1개 실패. npm run build 및 git diff --check 통과. backend 최초 실행은 PostgreSQL 테스트 컨테이너 시작 시간 초과로 422개 중 1개 실패했다. 개발 백엔드를 잠시 중지해 자원을 확보한 뒤 전체 재실행했고 최종 422개 통과(실패·오류·스킵 0)를 확인했다.
 - API 정상 실데이터·브라우저 수동 확인은 여전히 미실행이며 portfolios 테이블 및 잠정 데이터/권한 계약 확인은 필요하다. 기존 개발 서버는 검증 후 복구한다.
 
+## #88 포트폴리오 등록·수정·삭제 및 작성 화면 연동
+
+- 이슈 #88/WBS 요청으로 feat/88-portfolio-crud를 최신 원격 조회 브랜치 c4b0bd8(develop 0a35674 포함)에서 생성했다. 미병합 #87 조회를 재사용하며 기존 #84의 Service 분리·lint 변경 stash와 다른 stash는 그대로 보존했다.
+- PortfolioMutationController → PortfolioMutationService/impl.PortfolioMutationServiceImpl → PortfolioMutationRepository를 추가했다. POST /api/v1/portfolios(201), PUT /api/v1/portfolios/{id}(200), DELETE /api/v1/portfolios/{id}(204), 대응 BFF를 구현했다. Query도 interface/impl로 분리했다.
+- 로그인 이메일로 회원·소유권을 확인한다. 수정 시 행 잠금·expectedUpdatedAt으로 오래된 초안/동시 수정의 덮어쓰기를 409로 방지하고 작성자·생성 시각·공개 범위를 임의 변경하지 않는다. 등록 공개 범위 기본은 PRIVATE이며 별도 PATCH는 미구현이다.
+- 기존 자유형 작성기를 보존하기 위해 description TEXT에 devmozip.portfolio.v1 문서 JSON을 저장하는 기본안을 구현했다. 기간·팀 구성·분야·섹션 순서·HTML/Markdown·이미지/링크 메타데이터를 보존하고 조회 DTO에는 설명과 편집 문서를 구분한다. 해당 저장 계약 질문에 명시적인 확정 답변을 받은 것으로 간주하지 않으며 담당자 확인이 필요하다. HTML은 서버·렌더 시 정제하고 목록에는 상세 문서를 포함하지 않는다.
+- 사용자는 제출 포트폴리오 삭제 정책을 프로젝트 담당자와 합의 후 결정하도록 답했다. 최종 정책을 정하지 않고 참조 중인 건은 409로 보류한다. 고아 참조를 막는 검증된 FK가 없을 때는 삭제를 503으로 보류하며 임의 CASCADE/SET NULL은 하지 않는다. 공유 DB에는 portfolios·portfolio_id 참조 FK가 없는 상태임을 읽기 전용 확인했다. 공유 DB/ERD는 변경하지 않았고 검토용 docs/sql/portfolio-schema-review.sql만 작성했다. JPA validate 부팅을 막는 새 Entity·자동 DDL은 추가하지 않았다.
+- 기존 PortfolioEditorForm을 API 드라이버와 공유해 등록·숫자 ID 수정·본인 목록/상세 삭제를 연결했다. 등록/수정 후 실제 숫자 ID로 이동하며 실패·409 시 입력과 실제 이메일별 초안을 유지한다. 복원 초안의 원래 버전을 보존하고 명시적 동작으로만 최신 서버 내용으로 대체한다. 더블 클릭은 ref/disabled로 막고 쓰기를 자동 재시도하지 않는다. 파일 업로드·별도 공개 범위 변경·AI 피드백은 이번 범위에 없다.
+- 검증: 신규 PostgreSQL CRUD 통합 테스트 22개 및 조회 회귀 18개(총 40개) 통과. backend 전체 562개 중 558개 통과·공유 DB 선택 검증 4개 건너뜀·실패/오류 0. 신규 프론트 기능 테스트 37개 통과. 전체 frontend 775개 중 774개 통과·기존 프로젝트 모집 날짜 의존 테스트 1개 실패. 관련 포트폴리오 app/lib/API/types/신규 화면 테스트 lint --max-warnings=0, npm run build, git diff --check 통과. 마지막 화면 제목 보존 수정 후 기능 테스트 37개·lint·빌드를 재확인했다.
+- 직접 공유 DB 저장·브라우저 수동 E2E는 미실행이며 정상 저장은 테이블/계약 준비 후 확인해야 한다. 독립 PostgreSQL 테스트 컨테이너에만 테이블·샘플을 생성했다. 상세 계약은 docs/portfolio-crud-api.md, 선행 조회 문서는 후속 변경을 링크했다. 이번 변경은 미커밋·미푸시다. 검증 중 중지한 개발 서버는 복구한다.
+
+## 신고 테이블 형식을 참고한 좋아요·포트폴리오 수동 DDL 초안
+
+- 사용자 요청에 따라 공유 DB의 reports 실제 컬럼과 원격 feat/51-project-reports의 Report/BaseEntity 형식(IDENTITY·TIMESTAMP WITHOUT TIME ZONE·외래키)을 참고했다. 앱 기능 코드는 수정하지 않았다.
+- docs/sql/feeds-schema-review.sql, feed-likes-schema-review.sql을 추가하고 기존 portfolio-schema-review.sql을 같은 트랜잭션·명시적 public 스키마 형식으로 정리했다. 최신 피드 설계의 feeds/feed_likes/VISIBLE/HIDDEN을 사용하며 프로젝트용 공통 likes 및 지원서 연결 테이블은 변경하지 않는다. 좋아요는 설계의 복합 PK(user_id,feed_id)를 유지한다.
+- docs/sql/profile-social-schema-review.md에 컬럼 한글명·적용 순서·NULL 필수 제안·파일 메타데이터·기존 좋아요 조회의 명칭 변경 필요·스냅샷/삭제 정책 협의 항목을 정리했다. 공유 DB에는 실행하지 않고 사용자가 직접 검토·수정·적용할 파일만 작성했다.
+- 네트워크가 없는 별도 PostgreSQL 17 컨테이너에서 users 스텁과 3개 테이블 생성, 좋아요 중복 거절, 잘못된 사용자/피드 FK 거절, PRIVATE/JSONB 기본값, 기존 테이블 재실행 중단을 검증했다. 최초 임시 컨테이너 초기화 중 서버 재시작 타이밍으로 접속이 실패해 초기화 완료 대기를 보완했고 재실행은 모두 통과했다. 테스트 컨테이너는 제거했다.
+- git diff --check 통과. SQL/문서만 변경한 이번 단계에서는 앱 빌드·Java/프론트 회귀 테스트를 재실행하지 않았다. 기존 미커밋 CRUD와 stash는 보존했으며 이번 초안도 미커밋·미푸시다.
+
+
+### 2026-11-09 공유 개발 DB 테이블 생성
+- 사용자 위임 및 제공 ERD/feat/91-feeds 설계에 따라 feeds(15열), feed_likes(3열), portfolios(13열) 생성. 기존 테이블·데이터 변경 없음. 생성 직후 모두 0행.
+- PostgreSQL 17 pg_dump로 public 스키마 백업 후 단일 트랜잭션 적용. 로컬 16 pg_dump 버전 불일치는 17 클라이언트로 해결.
+- 격리 PostgreSQL 17에서 PK/FK/기본값/NULL 퍼가기 의견/재실행 중단 검증. 공유 DB에는 테스트 행 삽입 안 함.
+- 좋아요 매핑 수정은 기존 CRUD와 섞지 않고 /private/tmp/DevMozip-liked-feed-schema의 feat/75-liked-posts 작업 폴더에 보관. API 경로·응답 계약 유지. 커밋·푸시 미실행.
+- project_application_portfolios 스냅샷·portfolio_id FK·원본 삭제 정책은 프로젝트 담당자 합의 대기, 변경 안 함.
+
+
+### 2026-11-09 #88 커밋 전 재검증
+- PostgreSQL 조회·변경 통합 테스트 40개 통과, 프론트 등록·수정·삭제 관련 테스트 37개 통과. 전체 테스트 과거 결과는 위 기록과 구분한다.
+- 이슈 #88은 기존 이슈를 갱신하고 PR은 미병합 선행 #87의 feat/84-portfolio-query를 대상으로 생성한다. #87 병합 후 develop 대상으로 전환해야 한다.
+- 좋아요 매핑 변경은 feat/75-liked-posts의 56fed81로 푸시 완료(PR #82). 이번 브랜치에는 공유 테이블 DDL 적용 기록만 함께 보관한다.
+- 이번 npm run build 및 git diff --check 통과. 공유 DB에 실제 포트폴리오 저장·브라우저 수동 E2E는 여전히 미실행.
+
+### 2026-11-09 포트폴리오 로그인·등록·수정 브라우저 검증
+
+- 사용자 제공 개발 계정 로그인 후 본인 샘플 2건 확인. 작성 UI로 PRIVATE ID 3 등록, 수정 폼 값 복원, 제목·소개 수정, 새로고침 유지 및 PostgreSQL 재조회 성공. 소유자 ID 5·문서 형식·수정 시각 확인. 검증용 데이터는 PRIVATE로 남겨둔다.
+- Docker 내부 URL과 외부 Origin 차이로 등록 403 발생. portfolioWriteProxy에서 Host 기반 비교로 보완하고 임의 X-Forwarded-Host는 신뢰하지 않는다. 프로토콜·포트·외부 출처 차단 유지.
+- 관련 테스트 38개, 수정 파일 ESLint, npm run build, git diff --check 통과. 백엔드 코드 변경 없어 백엔드 테스트 재실행 안 함.
+- 삭제·파일 업로드·지원서 스냅샷 검증 제외. 이번 보완 미커밋·미푸시.
+
 ### 2026-11-09 PR #82 최신 develop 충돌 해결
 - origin/develop 5b3719b 병합. SecurityConfig에서 좋아요 인증 경로와 포트폴리오·외부 링크 경로가 같은 위치에 추가되어 충돌했고, 모든 규칙을 유지했다. 진행 문서도 양쪽 기록을 보존했다.
 - 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
 
+### 2026-11-09 포트폴리오 PR 대상 develop 전환 준비
+
+- 선행 조회 #87 병합 확인. 닫힌 미병합 #99를 develop 대상으로 복구하기 위해 origin/develop a04608f 병합, 진행 문서 양쪽 기록 보존.
+- 최신 지원서 Entity가 test DB 테이블을 먼저 생성해 삭제 정책 fixture 3개가 실패했다. 격리 컨테이너에서만 참조 제약 fixture를 재생성해 40개 포트폴리오 통합 테스트 최종 통과. 공유 DB 변경 없음.
+- 일반 ./gradlew test는 develop의 AI 테스트 2곳에서 ProjectJobRole → String 생성자 불일치로 컴파일 실패. 다른 담당 파일은 수정하지 않았다. 포트폴리오 40개 검증은 저장소 외부 임시 Gradle init으로 해당 AI 테스트 소스 2개만 제외하여 수행했으며 전체 성공을 의미하지 않는다.
+- 프론트 전체 827개 및 npm run build, git diff --check 통과. 별도 화면 검증에서는 premium 로그인·등록 ID 3·수정·새로고침·DB 재조회까지 확인했다.
 
 ### 2026-11-09 좋아요 조회를 최종 posts 구조에 맞춤
 - 공유 DB와 origin/feat/91-posts의 최신 계획을 대조해 게시글 posts, 원본 original_post_id, 공통 likes.post_id 계약 확인. posts는 0행이므로 VISIBLE/HIDDEN 값은 최신 계획을 근거로 유지한다.
