@@ -62,3 +62,18 @@
 }}
 
 @layer devmozip-responsive{@media(max-width:50rem){:where(.scope):global(.message-history){height:clamp(28rem,65dvh,44rem)}}}
+
+@layer devmozip-messaging{:where(.scope):global(.typing-indicator){height:30px;line-height:30px;margin:0;padding:0 25px;background:#fefcff;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+@layer devmozip-messaging{@media(max-width:800px){:where(.scope):global(.typing-indicator){padding:0 18px}}}
+/* 1:1 입력 중 말풍선: 상대 말풍선과 같은 모양이고, 메시지 글자와 같은 문단 안에 점을 두어 한 줄 메시지와 높이가 같다. 실제 메시지로 바뀔 때 덜 움직인다. */
+@layer devmozip-messaging{:where(.scope):global(.typing-dots){white-space:nowrap;text-align:center}}
+@layer devmozip-messaging{:where(.scope):global(.typing-dot){display:inline-block;vertical-align:middle;width:7px;height:7px;margin-right:5px;border-radius:50%;background:var(--purple);opacity:.3;animation:typing-wave 1.2s ease-in-out infinite}}
+@layer devmozip-messaging{:where(.scope):global(.typing-dot:last-child){margin-right:0}}
+@layer devmozip-messaging{:where(.scope):global(.typing-dot:nth-child(2)){animation-delay:.15s}}
+@layer devmozip-messaging{:where(.scope):global(.typing-dot:nth-child(3)){animation-delay:.3s}}
+@layer devmozip-messaging{@keyframes typing-wave{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-4px);opacity:1}}}
+@layer devmozip-messaging{@media(prefers-reduced-motion:reduce){:where(.scope):global(.typing-dot){animation:none;opacity:.6}}}
+/* 화면에는 보이지 않고 화면 읽기 프로그램만 읽는 입력 중 안내 */
+@layer devmozip-messaging{:where(.scope):global(.typing-status){position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap}}
+@layer devmozip-messaging{:where(.scope):global(.older-messages){display:flex;justify-content:center;flex-shrink:0}}
+@layer devmozip-messaging{:where(.scope):global(.older-messages .button){font-size:14px;padding:7px 12px}}

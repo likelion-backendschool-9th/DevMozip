@@ -1,4 +1,5 @@
 import type { PortfolioDetail, PortfolioPage, PortfolioSummary } from '@/types/portfolioApi';
+import { parsePortfolioDocument } from './portfolioDocument';
 import { profileImageUrl, validProfileSlug } from '@/lib/profiles/profileDetail';
 export const validPortfolioId = (id: string) => /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id));
 const object = (v: unknown): Record<string, unknown> => { if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error('응답 형식 오류'); return v as Record<string, unknown>; };
@@ -35,7 +36,9 @@ export function parsePortfolioDetail(value: unknown): PortfolioDetail {
     if (!identifier(author.id) || author.id !== portfolio.userId || !(author.tag === null || typeof author.tag === 'string' && validProfileSlug(author.tag))
         || !Array.isArray(v.attachments) || v.attachments.length > 100) throw new Error('포트폴리오 상세 응답 오류');
     const attachments = v.attachments.map(item => { const a = object(item); return { name: text(a.name, 255), url: profileImageUrl(text(a.url, 2048)) || '' }; }).filter(x => x.url);
-    return { portfolio, author: { id: author.id, nickname: text(author.nickname, 50), tag: author.tag as string | null,
+    if (v.canEdit !== undefined && typeof v.canEdit !== 'boolean') throw new Error('편집 권한 응답 오류');
+    const document = v.document == null ? null : parsePortfolioDocument(v.document);
+    return { portfolio, canEdit: v.canEdit === true, document, author: { id: author.id, nickname: text(author.nickname, 50), tag: author.tag as string | null,
         profileImage: profileImageUrl(text(author.profileImage, 255)) || null }, description: text(v.description), attachments };
 }
 export function portfolioPagination(params: URLSearchParams): { page: number; size: number } | null {

@@ -59,6 +59,27 @@ MAIL_FROM: ${MAIL_FROM:-}
 
 계약과 동작은 [비밀번호 재설정·변경 API](password-reset-api.md)를 참조한다.
 
+선택 프리미엄 결제(포트원):
+
+포트원 콘솔의 "식별코드 · API Keys"(V2)에서 상점 ID와 API Secret을, "채널 관리"에서 토스페이먼츠·카카오페이 채널 키를 가져와 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY에 넣는다. PAYMENT_ENCRYPTION_KEY는 빌링키 암호화 키로 직접 만든다(`openssl rand -base64 32`). 로컬과 서버는 다른 값을 쓰고, 정한 뒤에는 바꾸지 않는다. 바꾸면 저장된 빌링키를 읽을 수 없어 매월 결제가 미뤄진다.
+
+| 실행 방식 | 값을 읽는 위치 | 값이 없을 때 |
+|---|---|---|
+| `docker compose` | 루트 `.env` | 설정이 없는 결제 수단의 결제만 503. 상품 안내·구독 상태는 동작 |
+| `./gradlew bootRun` (local 프로필) | 루트 `.env.local` | 같다. 모바일 결과 주소 기본값은 `http://localhost:3000` |
+
+`compose.yaml`은 Git 제외 파일이므로 compose로 실행하는 사람은 각자 backend의 environment에 아래 다섯 줄을 추가한 뒤 backend를 다시 만든다. 새 테이블(`subscription_plans`·`subscriptions`·`payments`)이 연결된 DB에 생기므로 공용 DB라면 반영 시점을 팀과 맞춘다.
+
+```yaml
+PORTONE_STORE_ID: ${PORTONE_STORE_ID:-}
+PORTONE_API_SECRET: ${PORTONE_API_SECRET:-}
+TOSS_CHANNEL_KEY: ${TOSS_CHANNEL_KEY:-}
+KAKAOPAY_CHANNEL_KEY: ${KAKAOPAY_CHANNEL_KEY:-}
+PAYMENT_ENCRYPTION_KEY: ${PAYMENT_ENCRYPTION_KEY:-}
+```
+
+프론트엔드는 이 값을 쓰지 않는다. 상점 ID와 채널 키는 백엔드가 결제 준비 응답으로 내려 준다. 계약은 [프리미엄 구독·결제 API](premium-payment-api.md)를 참조한다.
+
 선택 로컬 HTTPS:
 
 - Windows: `choco install mkcert`, macOS: `brew install mkcert`, Ubuntu: `sudo apt install mkcert`.
@@ -122,7 +143,7 @@ chmod 600 ~/DevMozip/.env
 
 경로는 워크플로의 `cd ~/DevMozip`과 정확히 같아야 한다. 비공개 저장소라면 호스트의 git 읽기 인증도 별도로 준비한다.
 
-.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다. 카카오 로그인을 쓰려면 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME도 채우고 운영 Redirect URI를 카카오 콘솔에 등록한다. 값이 없으면 카카오 기능만 꺼진다. 비밀번호 재설정 메일을 쓰려면 MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM과 DOMAINNAME을 채운다. DOMAINNAME은 메일 링크의 주소가 되므로 운영 주소여야 한다. 값이 없으면 재설정 요청만 503이다.
+.env의 IMAGE_PREFIX는 **ghcr.io/likelion-backendschool-9th/devmozip**(소문자), IMAGE_TAG는 latest로 설정한다. 자동 배포는 검증된 커밋 sha 태그로 덮어쓴다. COMPOSE_PROJECT_NAME은 팀별 고유 값, TEAM_PORT는 할당된 3002이다. DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, AUTH_USER_USERNAME, AUTH_USER_PASSWORD, AUTH_ADMIN_USERNAME, AUTH_ADMIN_PASSWORD를 채운다. DB 이름/사용자 기본 예시는 devmozip이다. 비밀번호·JWT_SECRET은 팀마다 새로 만든다. JWT_SECRET이 같으면 다른 팀 토큰의 서명을 신뢰할 수 있어 위험하다. 운영에서는 AUTH_MODE=server가 고정된다. 카카오 로그인을 쓰려면 KAKAO_REST_API, KAKAO_CLIENT_SECRET, KAKAO_REDIRECT_URI, DOMAINNAME도 채우고 운영 Redirect URI를 카카오 콘솔에 등록한다. 값이 없으면 카카오 기능만 꺼진다. 비밀번호 재설정 메일을 쓰려면 MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM과 DOMAINNAME을 채운다. DOMAINNAME은 메일 링크의 주소가 되므로 운영 주소여야 한다. 값이 없으면 재설정 요청만 503이다. 프리미엄 결제를 쓰려면 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY, PAYMENT_ENCRYPTION_KEY를 채운다. PAYMENT_ENCRYPTION_KEY는 서버에서 따로 만든다. 값이 없으면 결제만 503이다.
 
 ```bash
 docker compose -f compose.prod.yaml --profile blue --profile green config --quiet

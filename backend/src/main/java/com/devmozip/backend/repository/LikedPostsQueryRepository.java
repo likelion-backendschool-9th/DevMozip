@@ -22,15 +22,15 @@ public class LikedPostsQueryRepository {
     // 피드 설계 기준 값: VISIBLE, POST, REPOST. 다른 값·공개 여부 불명인 원본은 노출하지 않는다.
     private static final String SOURCE = """
             FROM likes l
-            JOIN feeds p ON p.id=l.post_id
+            JOIN posts p ON p.id=l.post_id
             JOIN users a ON a.id=p.author_id
-            LEFT JOIN feeds o ON o.id=p.original_feed_id
+            LEFT JOIN posts o ON o.id=p.original_post_id
             LEFT JOIN users oa ON oa.id=o.author_id
             WHERE l.user_id=:userId AND l.project_id IS NULL AND p.deleted_at IS NULL AND p.visibility='VISIBLE'
               AND a.status='ACTIVE'
-              AND ((p.type='POST' AND p.original_feed_id IS NULL)
+              AND ((p.type='POST' AND p.original_post_id IS NULL)
                 OR (p.type='REPOST' AND o.id IS NOT NULL AND o.type='POST'
-                    AND o.original_feed_id IS NULL AND o.visibility='VISIBLE'
+                    AND o.original_post_id IS NULL AND o.visibility='VISIBLE'
                     AND o.deleted_at IS NULL AND oa.status='ACTIVE'))
             """;
     public Result findByUserId(long userId, int page, int size) {

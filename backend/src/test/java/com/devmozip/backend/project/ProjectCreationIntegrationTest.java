@@ -46,7 +46,7 @@ class ProjectCreationIntegrationTest {
 	private static final String BASE = "/api/v1/projects";
 
 	@BeforeEach void reset() {
-		jdbc.update("DELETE FROM project_members");
+		jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members");
 		jdbc.update("DELETE FROM projects");
 		when(currentUser.getCurrentUserId()).thenReturn(101L);
 		when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));
