@@ -1,6 +1,7 @@
 package com.devmozip.backend.service.impl;
 
 import java.time.*;
+import java.math.BigDecimal;
 import java.util.*;
 import com.devmozip.backend.dto.project.*;
 import com.devmozip.backend.entity.*;
@@ -20,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional(readOnly=true)
 public class ProjectApplicationServiceImpl implements ProjectApplicationService {
+	private static final BigDecimal CANCELLATION_PENALTY = new BigDecimal("0.5");
 	private final ProjectRepository projects;
 	private final ProjectMemberRepository members;
 	private final ProjectApplicationRepository applications;
@@ -108,7 +110,9 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 					if(member.getRole()!=ProjectMember.Role.PARTICIPANT)throw conflict("주최자는 지원 취소로 탈퇴할 수 없습니다.");
 					member.leave(now);members.flush();recalculateEnd(project,user,now);
 				}
-				application.cancel(now);type=ProjectApplicationChanged.Type.CANCELLED;
+				application.cancel(now);
+				if(penalty&&applications.deductCancellationPenalty(user,CANCELLATION_PENALTY)!=1)throw conflict("신뢰 점수를 반영할 회원을 찾을 수 없습니다.");
+				type=ProjectApplicationChanged.Type.CANCELLED;
 			}
 			default -> throw bad("지원 상태를 확인해 주세요.");
 		}

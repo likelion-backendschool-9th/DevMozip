@@ -73,7 +73,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 			if(actor.isPresent())membership=new ProjectDetailResponse.Membership(actor.get().getRole().name(),actor.get().getEndRequestedAt()!=null,
 				members.countByProjectIdAndStatusAndEndRequestedAtIsNotNull(project.getId(),ProjectMember.Status.ACTIVE),count/2+1);
 		}
-		return new ProjectDetailResponse(ProjectResponse.from(project),count,closed,membership,queries.host(project.getHostMemberId()));
+		return new ProjectDetailResponse(ProjectResponse.from(project),count,closed,membership,queries.host(project.getHostMemberId()),queries.team(project.getId(),membership!=null));
 	}
 	private ResponseStatusException notFound() { return new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."); }
 }

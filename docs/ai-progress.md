@@ -2203,3 +2203,61 @@ stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-
 좋아요 페이지의 기존 포스트 조회·페이지 이동을 유지하고 프로젝트 탭을 추가했다. LikedProjectsResult에서 기존 useProjectLikes·ProjectSummaryCard·ApiError를 재사용해 목록·취소·로딩·오류·빈 상태를 연결했다. 탭은 URL에 보존하고 전환 시 포스트 페이지 조건을 초기화한다. 비로그인은 기존 로그인 안내를 유지한다. 백엔드·DB 변경 없음. 실제 프로젝트 좋아요 상태를 사용하며 임의 Mock 목록은 만들지 않는다.
 
 검증: 별도 컨테이너 npm run build 성공(TypeScript 포함), npm test -- --maxWorkers=1 전체147개 파일·1,652개 통과. 신규5개는 포스트/프로젝트 탭·직접 URL·비로그인·로딩/오류·카드/처리중 버튼을 확인한다. 기존 projectLikeStore 테스트에서 저장/해제 후 공통 상태·계정 전환·중복 요청을 검증한다. 비로그인 실제 경로 요청은307 로그인 이동 확인. 로그인 브라우저 수동 조작은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 생성 next-env.d.ts 원복·git diff --check 통과. 커밋·푸시 없음.
+
+## 2026-11-10 승인 후 취소 실제 신뢰 온도 감점
+
+사용자가 감점만 진행하고 강퇴 결과 알림 저장은 제외하도록 변경했다. 이번에 추가했던 NotificationType/EventHandler/Messages·강퇴 알림 테스트 변경과 notification-member-removal-type.sql을 되돌렸다. 공유 DB에는 읽기 조회만 했으며 알림 CHECK 변경이나 감점 데이터 쓰기를 수행하지 않았다.
+
+확정 정책은 패널티 대상 APPROVED 취소 1건당 0.5°C, 최저0°C다. ProjectApplicationRepository의 원자 UPDATE를 ProjectApplicationServiceImpl 취소 트랜잭션에 연결했고 기존 상태 전이·프로젝트 잠금·서울7일 경계 및 안내 확인을 유지한다. 취소 모달 안내·프로젝트 지원 문서/청사진을 갱신했다. 기존 감사 문서/진행 기록의 미커밋 변경은 보존했다.
+
+첫 격리 DB 검증에서 users에 존재하지 않는 updated_at을 참조하는 SQL 오류로 감점 테스트5개가 실패했다. 실제 Member 매핑에 맞춰 해당 참조를 제거하고 재검증한다. Member 엔티티나 DB 컬럼을 새로 추가하지 않는다. 추가 검증은 7일 경계·미승인 취소 면제·중복 취소·NULL 초기값·0 하한·다른 프로젝트 동시 취소 누적·감점 실패 시 상태 롤백을 다룬다.
+
+최종 검증: backend ./gradlew test에 ProjectApplicationIntegrationTest·ProjectAuthenticatedUserIntegrationTest·ProjectMemberRemovalIntegrationTest·NotificationProjectEventIntegrationTest 필터 적용, 격리 PostgreSQL에서 33개 통과(실패 0·오류 0·건너뜀 0). 최초 SQL 오류는 수정 후 재통과했다. frontend 별도 컨테이너 npm run build 성공(TypeScript 포함), 전체147개 파일·1,652개 테스트 통과. 공유 DB 감점 쓰기·DDL 적용 및 실제 로그인 브라우저 취소 시나리오는 미실행. 새 강퇴 결과 알림은 추가하지 않았다. 커밋·푸시·이슈 완료 체크는 하지 않았다.
+
+## 2026-11-11 Mock 제거 취소·기본 OFF·전환 버튼 숨김
+
+사용자가 Mock 제거 요청을 취소했다. 제거 작업 직전 frontend에 미커밋 변경이 없었던 기록과 변경 목록을 대조하고, /tmp/devmozip-mock-removal-rollback에 원본 ZIP·binary patch를 보관한 뒤 제거 단계의 frontend 변경139개를 복원했다. 새로 만든 config 모듈과 관리자 안내 컴포넌트도 제거했다. 이전 계획서·감사 문서 및 진행 기록은 보존했다.
+
+요청한 최종 변경은 AppLayout의 전환 버튼 렌더링 제거, 표시 설정의 기본값·서버 스냅샷 OFF다. v2 표시 설정을 사용해 과거 v1 ON 설정은 적용하지 않되 원래 시연 데이터·저장 콘텐츠·인증은 삭제하지 않는다. README·Mock 문서도 갱신했다.
+
+기존 시연 테스트가 암묵적으로 ON에 의존해 첫 실행과 첫 보완 후 실패했다. 공통 테스트 fixture에서 ON을 명시하고 모듈 초기화 때도 일관되게 적용했다. 제품 기본값·과거 ON 설정 무시·실제 서버 스냅샷 OFF는 별도 실제 구현 검사로 검증했다. 최종 npm run build 성공(TypeScript 포함), npm test -- --maxWorkers=1 전체147개 파일·1,654개 통과. 홈 HTTP200·git diff --check 통과. 브라우저 수동 화면 검증은 미실행이며 백엔드 변경이 없어 backend 테스트 재실행은 생략했다. 생성 next-env.d.ts 원복. 커밋·푸시 없음.
+
+## 2026-11-11 샘플 데이터 표시 안내 숨김
+
+사용자 요청으로 AppLayout 상단 표시 상태 바·푸터의 샘플 안내와 홈의 MockDataNote를 제거했다. 표시 로직과 Mock OFF 기본값은 유지한다. 이번 변경은 화면 문구/레이아웃에 한정한다.
+
+검증: npm run build 성공(TypeScript 포함), 표시 설정·헤더·공통 레이아웃 관련3개 파일/17개 테스트 통과. 홈 HTTP200·git diff --check 통과. 브라우저 수동 검증은 미실행. 백엔드 변경 없음. 커밋·푸시 없음.
+
+PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했다. npm run build 성공·전체 프론트 1662개 테스트 통과. 백엔드 변경 없음. 계획서·이슈 감사 문서는 PR에서 제외하고 보존했다.
+
+## 2026-11-11 프로젝트 상세 팀원 조회
+
+사용자 확정 정책: 공개 프로젝트는 누구나, 비공개는 현재 ACTIVE 팀원만 현재 팀원 명단을 조회한다. 기존 상세 접근 검사를 재사용하고 상세·관리 응답에 공개 프로필용 team 배열을 추가했다. 탈퇴·강퇴 이력·지원서·연락처는 노출하지 않고 기존 관리용 members API 권한은 유지한다. DB 스키마 변경 없음.
+
+주요 변경: ProjectDetailResponse·ProjectQueryRepository·ProjectQueryServiceImpl, frontend projectApi 타입·계약 파서, ApiProjectDetail 및 새 ProjectTeamCard/CSS Module. 주최자 옆 왕관, 아래 참여 팀원과 직군, 프로필 링크, 빈 명단·구버전 서버 안내를 표시한다. docs/project-query.md에 계약을 기록했다.
+
+검증: 격리된 Docker 환경 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체150개 파일/1665개 테스트 통과. ./gradlew test의 ProjectQueryIntegrationTest·ProjectApplicationIntegrationTest·ProjectMemberRemovalIntegrationTest 총36개 성공(실패·오류·건너뜀0, 격리 PostgreSQL Testcontainers). 공개/비공개 접근·현재 팀원만 제공·중복/잘못된 응답 거부·왕관 및 프로필 링크를 검증했다. git diff --check 통과. 브라우저 수동 화면 검증은 미실행. 기존 미추적 계획서·이슈 감사 문서는 보존. 커밋·푸시 없음.
+
+로컬 백엔드 재시작 후 공개 목록·상세 HTTP200 및 실제 team 배열 응답 확인. 이 확인 과정의 상세 조회는 기존 정책대로 조회수1회를 증가시킨다.
+
+## 2026-11-11 강퇴 투표 카드 시간순 배치
+
+사용자 요청으로 채팅 마지막에 별도 부착하던 강퇴 투표를 생성 시각 기준 메시지 사이에 배치했다. 이후 대화는 투표 아래에 쌓이고, 찬반·결과 갱신 시 원래 위치를 유지한다. 실제 API 채팅·Mock 채팅 모두 적용했다. 서버 LocalDateTime은 한국 시각으로 해석해 offset 포함 메시지와 비교한다. 새 투표가 마지막에 추가되면 하단 열람 중에만 따라가며 기존 이전 기록 스크롤 보존 로직은 유지한다.
+
+변경 파일: ChatWindow.tsx·새 ChatWindow.test.tsx, 새 lib/messaging/chatTimeline.ts, ApiKickVotePanel.tsx·ServerProjectChat.tsx·KickVotePanel.tsx·프로젝트 채팅 page.tsx, docs/messenger-plan.md.
+
+검증: 독립 Docker 컨테이너에서 npm run build 성공(TypeScript 포함). npm test -- --maxWorkers=1 전체151개 파일/1667개 성공. 새 테스트로 투표 전후 대화 배치, 여러 투표 시간순 정렬, 한국 시각·UTC 혼합 비교와 투표만 있는 화면의 빈 대화 안내 제거를 확인했다. git diff --check 통과. 브라우저 수동 스크롤·실제 투표 생성 검증은 미실행. 백엔드·DB 변경 없어 백엔드 테스트는 재실행하지 않았다. 커밋·푸시 없음.
+
+## 2026-11-11 현재 참여자에게 강퇴 팀원 표시
+
+사용자 요청으로 상세·관리 응답 team에 status를 추가했다. ACTIVE 조회자에게만 KICKED 팀원도 포함하고, 비로그인·비팀원·강퇴된 본인의 조회는 기존 ACTIVE 명단만 제공한다. LEFT 이력은 포함하지 않으며 현재 인원 수·정원 계산은 변경하지 않았다. 오른쪽 팀원 카드 이름 옆에 강퇴됨 배지를 표시하고 활동 카드도 강퇴됨을 프로젝트 종료보다 우선 표시한다. 기존 지원서·관리 팀원 화면의 KICKED 표기는 유지했다. DB 변경 없음.
+
+수정: ProjectDetailResponse·ProjectQueryRepository·ProjectQueryServiceImpl·조회 통합 테스트, ProjectTeamCard/CSS/테스트·projectApi 타입·계약/테스트·ApiActivityTab, docs/project-query.md.
+
+검증: npm run build 성공(TypeScript 포함), 전체 프론트151개 파일/1669개 테스트 통과. 격리 PostgreSQL Testcontainers에서 조회·지원·강퇴 관련36개 통합 테스트 통과(실패·오류·건너뜀0). 현재 팀원만 강퇴 이력을 보고 외부·강퇴된 조회자는 보지 못하는 조건, 현재 인원에서 강퇴 제외, 상태 전달·잘못된 상태 거부 및 강퇴 배지를 검증했다. git diff --check 통과. 로컬 백엔드 재시작. 브라우저 로그인 상태 수동 검증은 미실행. 커밋·푸시 없음.
+
+## 2026-11-11 관리 화면 강퇴 배지 빨간색 표시
+
+사용자 요청으로 ApiProjectApplications의 참여 팀원 탭에서 KICKED인 경우에만 관리 페이지 CSS Module의 kickedBadge를 적용했다. 빨간 글씨·연한 빨간 배경·테두리로 구분한다. 데이터·권한 변경 없음.
+
+검증: npm run build 성공(TypeScript 포함). submittedPortfolio·ApiProjectOwnerView 기존 테스트2개 파일/7개 성공. git diff --check 통과. 브라우저 수동 색상 확인은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 커밋·푸시 없음.

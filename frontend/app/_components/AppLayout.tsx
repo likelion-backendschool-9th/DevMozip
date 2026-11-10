@@ -17,7 +17,6 @@ import { useHome } from '@/lib/state/homeStore';
 import { OwnProfileProvider } from '@/app/(user)/_components/OwnProfileProvider';
 import { HeaderProfileLink } from './HeaderProfileLink';
 import { Toast } from './Toast';
-import { MockVisibilityToggle } from './MockVisibility';
 import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { useNotifications } from '@/lib/state/notificationStore';
 import { NotificationModal } from '@/components/notifications/NotificationModal';
@@ -122,16 +121,6 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                 </div>
             </header>
 
-            <div className={[styles.scope, "utility-bar"].join(" ")}>
-                <div className={[styles.scope, "utility-inner"].join(" ")}>
-                    <span>
-                        <span className={[styles.scope, "status-dot"].join(" ")} />
-                        {mockEnabled ? <>Mock ON <b>· 데모 콘텐츠 표시 중</b></> : <>Mock OFF <b>· 샘플 데이터 없이 보기</b></>}
-                    </span>
-                    <MockVisibilityToggle />
-                </div>
-            </div>
-
             {warning !== null && (
                 <div className={[styles.scope, "member-warning"].join(" ")} role="status">
                     운영 안내 · {warning || '운영 정책에 따라 경고를 받은 계정입니다.'}
@@ -156,7 +145,7 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                     <img className={[styles.scope, "brand-logo"].join(" ")} src={logo} alt="DevMozip" width="96" height="64" />
                 </Link>
                 <p>개발자의 다음 가능성을 연결합니다.</p>
-                <span>© 2026 DevMozip · {mockEnabled ? 'Mock 기반 프로토타입' : '샘플 데이터 없이 보기'}</span>
+                <span>© 2026 DevMozip</span>
                 <Link href="/subscription">
                     프리미엄 안내
                     <ArrowUpRight size={14} />

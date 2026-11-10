@@ -29,7 +29,7 @@ function ActivityList({ target, page, onPage }: { target: string; page: number; 
         {data.items.length === 0 && <div className={`${styles.scope} empty-state`}>표시할 DevMozip 프로젝트 참여 기록이 없습니다.</div>}
         <div className={`${styles.scope} activity-list`}>{data.items.map(item => <ActivityProjectCard key={item.projectId}
             title={item.title} imageUrl={item.imageUrl} href={projectDetailHref(item.projectId,target==='me'?'/profile/me?tab=activity':`/users/${encodeURIComponent(target)}?tab=activity`)}
-            status={statusLabels[item.status]} start={item.developmentStart} end={item.developmentEnd} completedAt={item.completedAt}
+            status={item.membershipStatus==='KICKED'?'강퇴됨':statusLabels[item.status]} start={item.developmentStart} end={item.developmentEnd} completedAt={item.completedAt}
             role={(item.role==='HOST'?'주최자':item.jobRole?projectRoleLabel(item.jobRole):'참여자')+(item.membershipStatus==='KICKED'?' · 강퇴됨':item.membershipStatus==='LEFT'?' · 참여 종료':'')}
             mark={item.title.trim().charAt(0)} color={['peach','lavender','mint','blue'][item.projectId%4]} />)}</div>
         {data.totalPages > 1 && <nav className={styles.pagination} aria-label="프로젝트 활동 페이지">

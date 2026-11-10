@@ -17,6 +17,7 @@ import {projectRoleLabel} from '@/lib/projects/projectChoices';
 import {statusLabels,validProjectId} from '@/lib/projects/projectApiContract';
 import type {ProjectDetailResult,ProjectIdentity} from '@/types/projectApi';
 import {ApiError} from './ApiCommon';
+import {ProjectTeamCard} from './ProjectTeamCard';
 import {ProjectLikeButton} from '@/components/projects/ProjectLikeButton';
 import {ProjectShareButton} from '@/components/projects/ProjectShareButton';
 import {ProjectReportButton} from '@/components/projects/ProjectReportButton';
@@ -80,7 +81,7 @@ export function ApiProjectDetail({manage=false}:{manage?:boolean}){
    </div>
    <aside className={cls('project-detail-sidebar')}>
     <Card className={cls('profile-section apply-summary')}><span className="eyebrow">YOUR NEXT CHALLENGE</span><h2>함께 만들어볼까요?</h2><p><Users size={14}/>현재 {resource.data.memberCount} / {p.totalCapacity}명</p><p><CalendarDays size={14}/>모집 마감 {p.recruitmentEnd}</p><p className="auth-hint">아래 프로젝트 지원 영역에서 지원 상태를 확인할 수 있습니다.</p>{membership&&<p>내 역할: {membership.myRole==='HOST'?'주최자':'참여자'}</p>}</Card>
-    <Card className={cls('profile-section project-host')}><h3>프로젝트 주최자</h3><div className={styles.host}><span className={styles.avatar} aria-hidden="true">{(host?.nickname??'회원').charAt(0)}</span><strong>{host?.nickname??`회원 ${p.hostMemberId}`}</strong></div>{host?.tag&&<Link className="button secondary" href={'/users/'+encodeURIComponent(host.tag)}>프로필 보기</Link>}</Card>
+    <ProjectTeamCard host={host} hostMemberId={p.hostMemberId} team={resource.data.team}/>
    </aside>
   </div>
   {remove&&<Modal title="모집 공고를 삭제할까요?" onClose={()=>{if(!pending)setRemove(false);}}><p>논리 삭제하며 지원·팀원 이력은 유지됩니다.</p><Button disabled={pending} onClick={()=>run(undefined,'DELETE')}>{pending?'처리 중…':'삭제 확인'}</Button></Modal>}
