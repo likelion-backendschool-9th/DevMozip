@@ -1,39 +1,122 @@
 'use client';
 import styles from './PostForm.module.css';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigation as useNavigate } from '@/lib/navigation';
-import { Plus, Image, X } from 'lucide-react';
-import { useAuth } from '@/lib/state/authStore';
-import { useProfiles } from '@/lib/state/profileStore';
+import { Image as ImageIcon, Plus, X } from 'lucide-react';
 import { ProfileTagEditor } from '@/components/profile/ProfileTagEditor';
-import { categories, stackOptions, interestOptions } from '@/mocks/home';
-import { emptyPost, imagePolicy } from '@/mocks/social';
-import { validatePost } from '@/lib/social/socialService';
-import { createMockId } from '@/lib/utils/createMockId';
+import { interestOptions, stackOptions } from '@/mocks/home';
+import {
+    FEED_CATEGORIES, FEED_CONTENT_MAX, FEED_IMAGE_MAX_COUNT, FEED_IMAGE_MESSAGE, FEED_IMAGE_TYPES, FEED_TITLE_MAX,
+    saveFeedPost, validateFeedDraft, validFeedImage,
+} from '@/lib/social/feedApi';
 import { Input, Textarea } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
-import type { PostImage, PostInput } from '@/types/social';
-import type { ProfilePost } from '@/types/profile';
-function readImage(file: File): Promise<PostImage> { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === 'string' ? resolve({ id: createMockId(), name: file.name, url: reader.result, type: file.type, size: file.size }) : reject(new Error('이미지를 읽지 못했습니다.')); reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.onabort = () => reject(new Error('이미지 읽기가 취소되었습니다.')); reader.readAsDataURL(file); }); }
-export function PostForm({ post }: {
-    post?: ProfilePost;
-}) { const { user } = useAuth(); const { act } = useProfiles(); const navigate = useNavigate(); const inputId = useId(); const imageInput = useRef<HTMLInputElement>(null); const [form, setForm] = useState<PostInput>(() => post ? { title: post.title, body: post.body, category: post.category, tags: [...post.tags], interests: [...(post.interests || [])], images: [...(post.images || [])], github: post.github || '', external: post.external || '' } : structuredClone(emptyPost)); const [busy, setBusy] = useState(false); const [errors, setErrors] = useState<string[]>([]); const edit = <K extends keyof PostInput>(key: K, value: PostInput[K]) => { setForm(prev => ({ ...prev, [key]: value })); setErrors([]); }; return <form className={[styles.scope, "profile-form sns-editor"].join(" ")} noValidate onSubmit={e => { e.preventDefault(); if (busy)
-    return; const errors = validatePost(form); setErrors(errors); if (errors.length)
-    return; const id = post?.id || createMockId(); if (act({ type: post ? 'social-update' : 'social-create', id, input: form }))
-    navigate(`/feeds/${id}`); }}><label>카테고리<select className={[styles.scope, "form-input"].join(" ")} value={form.category} onChange={e => edit('category', e.target.value as PostInput['category'])} disabled={busy}>{categories.slice(1).map(c => <option key={c}>{c}</option>)}</select></label><label>제목<Input value={form.title} maxLength={150} onChange={e => edit('title', e.target.value)} placeholder="어떤 이야기를 나누고 싶으세요?" disabled={busy}/></label><label>본문<Textarea value={form.body} rows={12} maxLength={10000} onChange={e => edit('body', e.target.value)} placeholder="경험과 고민을 편하게 들려주세요. HTML은 실행하지 않습니다." disabled={busy}/></label><fieldset disabled={busy} className={styles.tagFields}><ProfileTagEditor label="기술 스택 태그" options={stackOptions} value={form.tags} onChange={value=>edit('tags',value)}/><ProfileTagEditor label="관심 분야" options={interestOptions} value={form.interests||[]} onChange={value=>edit('interests',value)}/></fieldset><div className={[styles.scope, "sns-upload"].join(" ")}><div className={styles.uploadHeading}><span>이미지 <span className={styles.imageCount}>{form.images.length}/{imagePolicy.maxCount}</span></span><button type="button" className={styles.addImage} aria-label="이미지 추가" title="이미지 추가" disabled={busy || form.images.length>=imagePolicy.maxCount} onClick={()=>imageInput.current?.click()}><Plus size={20}/></button></div><input ref={imageInput} hidden id={inputId} type="file" accept={imagePolicy.types.join(',')} multiple disabled={busy} onChange={async (e) => { const input = e.currentTarget; const files = Array.from(input.files || []); if (!files.length)
-    return; if (form.images.length + files.length > imagePolicy.maxCount || files.some(f => !imagePolicy.types.includes(f.type) || f.size <= 0 || f.size > imagePolicy.maxBytes)) {
-    setErrors(['이미지는 PNG/JPEG/WebP/GIF, 각 512KB 이하, 최대 3장까지 첨부해 주세요.']);
-    input.value = '';
-    return;
-} setBusy(true); try {
-    const images = await Promise.all(files.map(readImage));
-    setForm(prev => ({ ...prev, images: [...prev.images, ...images] }));
-    setErrors([]);
+import type { FeedCategoryCode, FeedPost, FeedPostDraft } from '@/types/feedApi';
+
+type Fields = Omit<FeedPostDraft, 'files'>;
+type NewImage = { file: File; url: string };
+const scope = (name: string) => [styles.scope, name].join(' ');
+
+/**
+ * 게시글 작성·수정 폼. 저장은 multipart/form-data로 보내고(글 내용은 JSON 파트, 이미지는 파일 파트),
+ * 저장에 실패하면 입력과 첨부한 이미지를 그대로 둔다. 저장 중에는 다시 보낼 수 없다.
+ */
+export function PostForm({ post }: { post?: FeedPost }) {
+    const navigate = useNavigate();
+    const inputId = useId();
+    const imageInput = useRef<HTMLInputElement>(null);
+    const [fields, setFields] = useState<Fields>(() => ({
+        category: post?.category ?? 'INFO', title: post?.title ?? '', content: post?.content ?? '',
+        techStacks: [...(post?.techStacks ?? [])], interests: [...(post?.interests ?? [])], keepImageUrls: [...(post?.imageUrls ?? [])],
+    }));
+    const [images, setImages] = useState<NewImage[]>([]);
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<string[]>([]);
+    // 미리보기 주소는 화면을 떠날 때 모두 해제한다. 렌더와 상관없는 기록이라 바뀌지 않는 Set 하나에 모은다.
+    const [previewUrls] = useState(() => new Set<string>());
+    useEffect(() => () => previewUrls.forEach(url => URL.revokeObjectURL(url)), [previewUrls]);
+
+    const edit = <K extends keyof Fields>(name: K, value: Fields[K]) => {
+        setFields(current => ({ ...current, [name]: value }));
+        setErrors([]);
+    };
+    const imageCount = fields.keepImageUrls.length + images.length;
+
+    function addImages(files: File[]) {
+        if (!files.length) return;
+        if (imageCount + files.length > FEED_IMAGE_MAX_COUNT || !files.every(validFeedImage)) {
+            setErrors([FEED_IMAGE_MESSAGE]);
+            return;
+        }
+        const added = files.map(file => ({ file, url: URL.createObjectURL(file) }));
+        added.forEach(item => previewUrls.add(item.url));
+        setImages(current => [...current, ...added]);
+        setErrors([]);
+    }
+
+    function removeImage(target: NewImage) {
+        URL.revokeObjectURL(target.url);
+        previewUrls.delete(target.url);
+        setImages(current => current.filter(item => item !== target));
+    }
+
+    async function submit() {
+        if (busy) return;
+        const draft: FeedPostDraft = { ...fields, files: images.map(item => item.file) };
+        const found = validateFeedDraft(draft);
+        setErrors(found);
+        if (found.length) return;
+        setBusy(true);
+        try {
+            const saved = await saveFeedPost(draft, post?.id);
+            navigate(`/feeds/${saved.id}`);
+        } catch (error) {
+            setErrors([error instanceof Error ? error.message : '게시글을 저장하지 못했어요. 입력 내용은 그대로 있어요.']);
+            setBusy(false);
+        }
+    }
+
+    return <form className={scope('profile-form sns-editor')} noValidate onSubmit={event => { event.preventDefault(); void submit(); }}>
+        <label>카테고리<select className={scope('form-input')} value={fields.category} disabled={busy}
+            onChange={event => edit('category', event.target.value as FeedCategoryCode)}>
+            {FEED_CATEGORIES.map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+        </select></label>
+        <label>제목<Input value={fields.title} maxLength={FEED_TITLE_MAX} disabled={busy} onChange={event => edit('title', event.target.value)}
+            placeholder="어떤 이야기를 나누고 싶으세요?" /></label>
+        <label>본문<Textarea value={fields.content} rows={12} maxLength={FEED_CONTENT_MAX} disabled={busy}
+            onChange={event => edit('content', event.target.value)} placeholder="경험과 고민을 편하게 들려주세요. HTML은 실행하지 않습니다." /></label>
+        <fieldset disabled={busy} className={styles.tagFields}>
+            <ProfileTagEditor label="기술 스택 태그" options={stackOptions} value={fields.techStacks} onChange={value => edit('techStacks', value)} />
+            <ProfileTagEditor label="관심 분야" options={interestOptions} value={fields.interests} onChange={value => edit('interests', value)} />
+        </fieldset>
+        <div className={scope('sns-upload')}>
+            <div className={styles.uploadHeading}>
+                <span>이미지 <span className={styles.imageCount}>{imageCount}/{FEED_IMAGE_MAX_COUNT}</span></span>
+                <button type="button" className={styles.addImage} aria-label="이미지 추가" title="이미지 추가"
+                    disabled={busy || imageCount >= FEED_IMAGE_MAX_COUNT} onClick={() => imageInput.current?.click()}><Plus size={20} /></button>
+            </div>
+            <input ref={imageInput} hidden id={inputId} type="file" accept={FEED_IMAGE_TYPES.join(',')} multiple disabled={busy}
+                onChange={event => { addImages(Array.from(event.currentTarget.files ?? [])); event.currentTarget.value = ''; }} />
+            <p className={scope('auth-hint')}>최대 3장 · 각 512KB 이하 · PNG/JPEG/WebP/GIF · 이미지는 저장할 때 서버에 올라갑니다.</p>
+            <div className={scope('sns-image-previews')}>
+                {!imageCount && <button type="button" className={styles.emptyImage} aria-label="첫 이미지 추가" disabled={busy}
+                    onClick={() => imageInput.current?.click()}><ImageIcon size={30} /><span>이미지로 이야기를 더해 보세요</span></button>}
+                {fields.keepImageUrls.map((url, index) => <div className={styles.preview} key={url}>
+                    <img src={url} alt={`첨부한 이미지 ${index + 1}`} />
+                    <button type="button" className={styles.removeImage} aria-label={`첨부한 이미지 ${index + 1} 제거`} disabled={busy}
+                        onClick={() => edit('keepImageUrls', fields.keepImageUrls.filter(item => item !== url))}><X size={15} /></button>
+                </div>)}
+                {images.map(item => <div className={styles.preview} key={item.url}>
+                    <img src={item.url} alt={item.file.name} />
+                    <button type="button" className={styles.removeImage} aria-label={`${item.file.name} 이미지 제거`} disabled={busy}
+                        onClick={() => removeImage(item)}><X size={15} /></button>
+                </div>)}
+            </div>
+        </div>
+        {errors.length > 0 && <ul className={scope('form-error')} role="alert">{errors.map(error => <li key={error}>{error}</li>)}</ul>}
+        <div className={scope('modal-actions')}>
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => navigate(post ? `/feeds/${post.id}` : '/feeds')}>취소</Button>
+            <Button type="submit" disabled={busy}>{busy ? '저장하는 중…' : post ? '수정 저장' : '게시글 등록'}</Button>
+        </div>
+    </form>;
 }
-catch (err) {
-    setErrors([err instanceof Error ? err.message : '첨부하지 못했습니다.']);
-}
-finally {
-    setBusy(false);
-    input.value = '';
-} }}/><p className={[styles.scope, "auth-hint"].join(" ")}>최대 3장 · 각 512KB 이하 · 이미지는 브라우저에만 저장합니다.</p><div className={[styles.scope, "sns-image-previews"].join(" ")}>{!form.images.length && <button type="button" className={styles.emptyImage} aria-label="첫 이미지 추가" disabled={busy} onClick={()=>imageInput.current?.click()}><Image size={30}/><span>이미지로 이야기를 더해 보세요</span></button>}{form.images.map(i => <div className={styles.preview} key={i.id}><img src={i.url} alt={i.name}/><button type="button" className={styles.removeImage} aria-label={`${i.name} 이미지 제거`} disabled={busy} onClick={() => edit('images', form.images.filter(v => v.id !== i.id))}><X size={15}/></button></div>)}</div></div>{errors.length > 0 && <ul className={[styles.scope, "form-error"].join(" ")} role="alert">{errors.map(err => <li key={err}>{err}</li>)}</ul>}<div className={[styles.scope, "modal-actions"].join(" ")}><Button type="button" variant="secondary" disabled={busy} onClick={() => navigate(post ? `/feeds/${post.id}` : user ? `/users/${user.id}?tab=posts` : '/login')}>취소</Button><Button type="submit" disabled={busy}>{busy ? '이미지 읽는 중…' : post ? '수정 저장' : '게시글 등록'}</Button></div></form>; }

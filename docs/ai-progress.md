@@ -2070,3 +2070,9 @@ erDiagram
 최신 develop 37d40f6 병합 중 진행 문서만 충돌하여 양쪽 기록을 보존했다. 프로필 쓰기 요청 출처 검사 수정과 develop의 프로필·검색 연결 코드는 유지한다. 기존 미커밋 작업과 실행 서버, DB, 배포 설정은 변경하지 않는다.
 
 검증: 별도 컨테이너 `npm run build` 성공. `npm test -- --maxWorkers=1` 133개 파일·1,455개 테스트 통과(출처 검사·이미지 업로드 회귀 포함). `git diff --check` 통과. 백엔드 충돌/수정은 없어 백엔드 테스트 재실행은 생략했으며 실제 이미지 저장 및 배포 브라우저 검증은 미실행.
+
+## 2026-11-10 PR #129 충돌 해결
+
+최신 develop 07412db 병합에서 AGENTS.md와 SecurityConfig.java가 충돌했다. SNS 피드·업로드 이미지의 공개 GET 경로와 통합 검색 공개 GET 경로를 모두 보존했다. 인증이 필요한 쓰기 및 팔로잉 경로 정책은 유지했다. 작업 규칙 문서는 SNS와 개발자 탐색 범위를 함께 보존했다. 별도 worktree를 사용해 기존 미커밋 작업·실행 서버·공유 DB는 변경하지 않았다.
+
+검증: 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 137개 파일·1,505개 테스트 통과. 격리된 PostgreSQL 환경에서 `./gradlew test --tests '*FeedPostgresIntegrationTest*' --tests '*SearchIntegrationTest*'` 67개 통과(실패·오류·건너뜀 0). `git diff --check` 통과. 전체 백엔드 및 브라우저 수동 검증은 미실행. 빌드 생성 next-env.d.ts 변경은 원복했다.

@@ -38,6 +38,8 @@ if [ ! -e "$SITE" ]; then
 server {
     listen 80;
     server_name devmozip.newlecture.com;
+    # 업로드 요청 크기. 팀 nginx(nginx/server.conf)와 같은 값이다. 기본값 1MB로는 게시글 이미지 3장을 올릴 수 없다
+    client_max_body_size 11m;
     # 메신저 WebSocket. certbot 이 이 블록을 443 으로 옮길 때 함께 옮겨진다. 타임아웃은 서버 ping(30초)보다 길게 둔다
     location = /ws/messages {
         proxy_pass http://127.0.0.1:3002;

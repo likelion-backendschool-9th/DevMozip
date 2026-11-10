@@ -86,6 +86,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}", "/api/v1/files/{id}").permitAll()
                 // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
+                // SNS 피드 목록·상세·댓글 목록은 공개한다(docs/feed-plan.md 3절). 팔로잉 피드와 쓰기 요청은 아래 기본 규칙대로 로그인이 필요하다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/feeds", "/api/v1/feeds/recommands",
+                        "/api/v1/feeds/{id:[0-9]+}", "/api/v1/feeds/{id:[0-9]+}/comments").permitAll()
+                // nginx 없이 실행할 때 백엔드가 제공하는 업로드 이미지(IMAGE_STORAGE). nginx와 같이 권한 확인 없이 제공한다.
+                .requestMatchers(HttpMethod.GET, "/images/{filename}").permitAll()
                 // 통합 검색(개발자·프로젝트 탐색)은 비로그인도 쓴다. 팔로잉 탭의 로그인 확인은 Service에서 한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
                 // 프리미엄 상품 안내(/subscription)는 비로그인도 볼 수 있다. 결제·구독 관리는 기본 정책(인증 필요)을 따른다.

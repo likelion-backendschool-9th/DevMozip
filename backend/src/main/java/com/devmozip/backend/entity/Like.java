@@ -15,4 +15,7 @@ public class Like extends BaseEntity {
 	@ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="project_id") private Project project;
 	@Column(name="post_id") private Long postId;
 	public Like(long userId,Project project,LocalDateTime now){super(now);this.userId=userId;this.project=project;}
+	// 게시글 좋아요는 post_id만 채우고 project_id는 비운다 (docs/feed-plan.md 2절).
+	public static Like forPost(long userId,long postId,LocalDateTime now){return new Like(userId,postId,now);}
+	private Like(long userId,long postId,LocalDateTime now){super(now);this.userId=userId;this.postId=postId;}
 }

@@ -61,6 +61,11 @@ x-backend: &backend
     GEMINI_CONNECT_TIMEOUT: ${GEMINI_CONNECT_TIMEOUT:-3s}
     GEMINI_TIMEOUT: ${GEMINI_TIMEOUT:-25s}
     GEMINI_MAX_OUTPUT_TOKENS: ${GEMINI_MAX_OUTPUT_TOKENS:-4096}
+    # 업로드 이미지 저장 폴더. 아래에서 연결한 서버 프로젝트 폴더의 public/images이며, 기능별 파일 이름 접두어로 구분한다 (docs/feed-plan.md)
+    IMAGE_STORAGE: /public/images
+  # blue·green이 같은 폴더를 쓰므로 배포 색이 바뀌어도 이미지가 남는다. 폴더 권한은 deploy/blue-green.sh가 맞춘다
+  volumes:
+    - ./public:/public
 
   depends_on:
     redis:
@@ -80,6 +85,8 @@ services:
     volumes:
       - ./nginx/server.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/upstream:/etc/nginx/upstream:ro
+      # 업로드 이미지(/images/). backend가 쓰고 nginx는 읽기만 한다
+      - ./public/images:/usr/share/nginx/images:ro
     restart: unless-stopped
 
   # ---- blue ----
