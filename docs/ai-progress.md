@@ -1,5 +1,22 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 월간 추천 잔여 횟수 표시 (`feat/ai-prompt`)
+
+- 사용자 요청으로 matching 추천 조건 패널의 `사용 횟수 / 한도` 표시를 서버 `remainingCount` 기준의 `남은 횟수 / 한도`로 변경하고 제목을 ‘월간 추천 잔여’로 명확히 했다. 프리미엄1회 사용은99/100회, 무료1회 사용은4/5회다. 로딩·실패 시 기존 ‘—’ 표시를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/ChatConditions.tsx`, `docs/ai-matching.md`, 이 문서. 사용량 계산·차감·처리 중 예약·API·백엔드·다른 도메인은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/usage.test.ts tests/screens/FollowingMatching.test.tsx` 실행,2개 파일27개 테스트 통과. `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/_components/ChatConditions.tsx` 오류0·종료0. 표시1줄 변경으로 새 테스트는 추가하지 않았다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증: 실제 브라우저 및 서버 연결 검증은 수행하지 않았다. 커밋·푸시·병합·배포는 수행하지 않는다.
+
+## 2026-11-10 메인 첫 프롬프트 분석 연결 (`feat/ai-prompt`)
+
+- 요청 범위: 메인에서 첫 프롬프트를 제출하고 matching으로 이동했을 때 AI가 입력에 응답하고 조건을 처리하도록 수정한다. 기존 저장·이동만 하던 경로에 기존 메시지 분석을 연결하며 다음 AI 개발 단계는 시작하지 않는다.
+- 원인: `startHomeChat`·`resumeLoginPrompt`는 USER 메시지만 저장하고, 분석은 matching의 전송 버튼에서만 호출했다.
+- 변경 파일: `frontend/app/ai/matching/page.tsx`, 신규 `frontend/lib/matching/useInitialChatAnalysis.ts`·`useInitialChatAnalysis.test.tsx`, `docs/ai-matching.md`, 이 문서.
+- 완료: 로그인 및 대화 이력 로딩 후 새 로컬 대화의 첫 메시지를 한 번 분석한다. 기존 답변·조건 반영·로딩·오류·수동 재시도를 재사용하며 분석 중 재시도 버튼을 비활성화한다. 서버 대화·미완료 분석은 자동 실행하지 않는다. 추천 생성·사용량 차감·다른 업무 도메인·백엔드·DDL·인증 설정은 변경하지 않았다.
+- 검증: `frontend`에서 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx lib/state/homeStore.test.tsx tests/screens/FollowingMatching.test.tsx` 실행, 3개 파일47개 테스트 통과. 새 테스트는 메인/로그인 입력의 분석 API 호출·원문/clientKey 보존·답변/조건 반영·effect 중복 실행 방지·실패 후 자동 반복 방지·기존 대화 제외를 검증한다. API 응답은 테스트 대역이다.
+- 빌드·정적 검사: `frontend`에서 `npm run build` 성공(TypeScript 검사·정적 페이지77개 생성). `npx eslint app/ai/matching/page.tsx lib/matching/useInitialChatAnalysis.ts lib/matching/useInitialChatAnalysis.test.tsx` 최초 실행은 새 테스트의 렌더 중 외부 변수 대입·일반 함수 내부 hook 호출2건으로 실패했다. 테스트 Probe 컴포넌트로 수정한 뒤 같은 ESLint 명령을 재실행해 오류0·종료0을 확인했다. 수정 후 `npm test -- lib/matching/useInitialChatAnalysis.test.tsx`도4개 통과했다. 백엔드 변경이 없어 `./gradlew test`는 실행하지 않았다.
+- 미검증·후속: 실제 브라우저·실제 Gemini/DB 연결은 확인하지 않았다. 실제 서버의 분석 기능 설정 및 연결 오류는 기존 API 오류 안내로 처리한다. 커밋·푸시·병합·배포는 수행하지 않았다.
+
 ## 2026-11-10 STEP 7 종료 점검 — 현재 구현 기준
 
 이번 요청은 **문서만 갱신**한다. 현재 코드·이전 실행 로그·JUnit XML을 대조했으며 아래 테스트 수치는 이번 문서 작업에서 새로 실행한 결과가 아니다. 현재 브랜치는 `feat/ai-usage`, 본체 커밋은 `8945056`이다. 이후 CHAR JDBC 매핑 수정·스키마 검증 테스트·관련 문서는 작업 트리에 남아 있으며 커밋되지 않았다. 이전 날짜별 미구현·미적용·테스트 수치는 당시 이력이고 이 절을 최신 기준으로 삼는다.
@@ -1913,3 +1930,94 @@ erDiagram
 - 문서: docs/profile-reviews-api.md 추가, profile-posts-api/project-reviews와 진행 기록 갱신. 미완료: #91 포스팅 계약 최종협의, #110 대상/작성자 계정 비공개 공통 정책, 실제 브라우저 카드/상세 이동, 전체 리뷰를 읽는 기존 집계의 DB 페이징 최적화. 배포 포폴503은 별개로 보류. 커밋·푸시·PR은 아직 하지 않았다.
 
 - 리뷰 통합 후 전체 backend 회귀 재실행에서도 기존 KakaoClientTest.java:153 및 PortOneClientTest.java:105 CapturedOutput 검증 실패를 확인했다. 새 포스팅/리뷰 9개 통합 성공과 전체 회귀 성공은 구분한다. 로그: /private/tmp/devmozip-123-reviews-backend-full.log. 최종 전체 실행은 6분22초 후 종료1: 1,147개 중 1,133 통과·2 실패·12 스킵·오류0. 실패 XML은 KakaoClientTest/PortOneClientTest 두 파일이며 새 포스팅5·리뷰4는 모두 통과했다.
+
+## 2026-11-10 프로필 활동 탭 프로젝트 실제 연결
+
+사용자 요청 범위는 프로필 활동 탭의 프로젝트 이력 연결이다. develop 24b524e 작업 폴더에서 구현했으며 AI·다른 도메인 기능은 추가하지 않았다. 공유 DB의 테이블·데이터는 변경하지 않았다.
+
+### 변경 파일과 동작
+
+- backend controller/ProjectActivityController, service/ProjectActivityService, repository/ProjectActivityRepository, dto/project/ProjectActivityResponse·ProjectActivityPageResponse: 본인/프로필 태그별 주최·참여 이력과 페이지 조회. 기존 projects/project_members 사용, 지원 대기 제외·LEFT 이력 보존·삭제 제외. 비공개는 조회자의 현재 ACTIVE 팀원 권한을 목록/개수에 함께 적용한다.
+- backend config/SecurityConfig: GET /users/me/projects 인증 및 /users/{slug}/projects 공개 경로만 추가. 인증 신원은 기존 ProjectCurrentUserProvider로 조회한다.
+- frontend ApiProfileTabs·ApiActivityTab·ActivityTab.module.css, types/projectActivity.ts, app/api/projects/activity/[slug]/route.ts: 기존 카드·공통 버튼·useProjectResource 재사용, 제목 상세 링크·역할/직군·기간/상태·참여 종료·본인 관리 버튼·페이지 이동·로딩/오류/빈 상태. 원래 Mock 활동 컴포넌트는 유지했다. 실제 프로필의 기존 API 라우팅은 Mock 토글과 무관하게 유지한다.
+- backend ProjectQueryIntegrationTest, frontend projectActivityRoutes.test.ts·ApiActivityTab.test.tsx·ApiProfilePage.test.tsx: 공개/비공개·탈퇴자·신원/페이지·BFF 입력 제한 및 화면 회귀 검증.
+- docs/project-backend-blueprint.md, api-plan.md, frontend-pages.md, project-profile-activity.md 및 artifacts/project-profile-activity/browser-report.json: 빠져 있던 프로필 이력 계약과 실제 검증 결과 기록.
+
+### 이번 실행 결과
+
+- 프론트 npm test -- --maxWorkers=1: 120개 파일·1,381개 통과. NODE_ENV=production npm run build 및 TypeScript 통과. 개발 컨테이너의 development 환경으로 한 초기 빌드 실패와 활동 탭 분기 타입 오류는 올바른 환경/수정 후 재검증했다. 구형 미연결 문구를 기대한 기존 테스트도 새 동작에 맞췄다.
+- 백엔드 ./gradlew test --no-daemon --max-workers=1: 1,142개 중 1,128개 통과·12개 스킵·2개 실패. 실패는 수정하지 않은 카카오 오류 로그 검증(KakaoClientTest:153), 결제 오류 로그 검증(PortOneClientTest:105)이다.
+- 프로젝트 패키지 140개 중 129개 통과·11개 스킵·실패 0. 조회 통합 테스트 12개(새 활동 4개 포함)는 격리 PostgreSQL에서 모두 통과. 컨테이너 내부 실행의 Docker 부재 스킵을 성공으로 간주하지 않았고, 호스트 캐시 권한 충돌은 /tmp의 별도 빌드/캐시로 회피했다.
+- 실제 공유 DB 공개 프로필 프로젝트 4건 조회. 1440px Chromium에서 Mock OFF·프로젝트 카드/제목 링크·가로 넘침 없음·pageerror 0, 비로그인 본인 401·없는 프로필 404 확인. 본인 로그인/비공개/LEFT 화면의 실제 브라우저 시나리오는 미실행이며 해당 권한은 격리 통합 테스트로 검증했다.
+- Docker 서버 재실행 및 포트 복구 후 frontend 3000/backend 8080 유지, 헬스 UP. 로컬 정기 결제는 비활성, DDL validate/SQL init never 유지. git diff --check 통과.
+
+### 남은 문제
+
+카카오·결제 로그 테스트 실패 2건은 이번 범위에서 수정하지 않았다. Member에 전체 프로필 공개 범위 필드가 없어 기존 활성 회원 조회 정책을 그대로 따랐다. 실계정 본인 화면·비공개 화면 브라우저 검증은 남았다. 다음 이슈 개발·커밋·푸시·PR 생성은 하지 않았다.
+
+
+## 2026-11-10 내 프로젝트 복귀 경로·모집 카드 통일·활동 디자인 복원
+
+- 사용자 요청: 내 프로젝트에서 상세로 이동 후 모집 목록으로 잘못 돌아가는 동선을 수정하고, 내 프로젝트 화면을 모집 목록과 유사하게, 활동 탭을 기존 Mock 디자인으로 맞춘다. 앞선 미커밋 활동 API 구현은 보존했다.
+- 원인: ApiProjectDetail·Mock 상세의 상단 링크가 /projects에 고정되어 있고 내 프로젝트 진입 출처를 전달하지 않았다.
+- 변경: projectNavigation.ts·ProjectBackLink로 내부 복귀 경로를 제한/보존한다. 내 프로젝트 카드 제목·상세·관리와 프로필 활동에서 returnTo를 전달하며 탭·검색·페이지를 유지한다. 직접 접속 시 안전한 기본 목록을 사용한다.
+- 화면: MyProjectsPage·ApiProjectList가 기존 RecruitmentCard/ProjectSummaryCard를 사용해 커버·태그·직군·일정 및 3열 배치를 공유한다. 주최/역할/모집 기간/참여 인원·관리/참여 정보·Mock 채팅/강퇴 안내를 유지했다. API 주최자 관리 링크는 기존 실제 관리 경로로 직접 연결한다.
+- 활동: ActivityProjectCard를 추출해 Mock/API 카드의 마크·상태·제목·기간/직군 배치를 공유한다. API에서 임의로 넣었던 ‘주최/참여’ 마크를 없애고 첫 글자+기존 색상 팔레트를 사용한다. 기존 상세 이동 및 본인 관리 버튼 유지.
+- 주요 파일: lib/projects/projectNavigation.ts, components/projects/ProjectBackLink.tsx·ProjectSummaryCard.tsx/module.css·RecruitmentCard.tsx, app/my-projects/page.tsx/module.css·[projectId]/manage/page.tsx, app/projects/[projectId]/page.tsx·_components/api/ApiProjectList.tsx·ApiProjectDetail.tsx, 프로필 _components/ActivityProjectCard.tsx·ActivityTab.tsx·ApiActivityTab.tsx·ActivityTab.module.css. 문서는 docs/project-navigation-layout.md·frontend-pages.md 및 브라우저 보고서를 갱신했다.
+- 최종 frontend npm test -- --maxWorkers=1: 122개 파일·1,393개 통과. NODE_ENV=production npm run build/TypeScript 성공. 새 테스트에서 목록/선택지 응답 대역을 구분하지 않아 발생한 초기 2개 실패는 대역을 수정한 후 재검증했다. git diff --check 통과, 빌드 생성 next-env.d.ts만 기존 dev 타입 경로로 복구.
+- 1440px Chromium: 내 프로젝트 3열·모집 카드 커버, 상세→내 프로젝트의 HOSTED 탭/React 검색 조건 복귀, 가로 넘침 없음·pageerror 0. 이 시나리오는 공개 API 데이터를 이용한 테스트용 쿠키·목록/세션/상세 응답 대역이며 실제 인증·DB 저장 성공을 뜻하지 않는다. 활동은 실제 공개 API 4건·첫 글자 마크·프로필 활동 복귀 정보를 확인했다. 초기 브라우저 시도의 비로그인 리다이렉트와 카드 선택자 오류는 검증 절차를 수정해 재실행했다.
+- 이번 단계는 frontend·문서만 변경했다. 기존 backend 미커밋 파일은 수정하지 않았고 Gradle 재실행·DB 변경·모바일 작업은 하지 않았다. 실계정 관리 동작의 종단 검증은 이번 실행 범위가 아니다. 커밋·푸시·PR 생성 없이 종료한다.
+
+
+## 2026-11-10 주최자 자동 관리·내 프로젝트 카드 단일 진입
+
+- 사용자 요청: ‘주최자 관리’ 진입 버튼 제거, 주최자는 즉시 관리 화면·그 외는 조회 화면. 내 프로젝트의 별도 관리/조회 진입을 제거하고 카드 전체를 클릭하게 한다.
+- ApiProjectDetail은 공통 상세 API 응답의 HOST 관계와 기존 실제 회원 identity ID를 함께 검증해 관리 UI를 자동 표시한다. manage URL/클라이언트 목록의 myRole만으로 권한을 부여하지 않는다. 비주최자에게 관리/수정/삭제/연장 컨트롤을 표시하지 않으며 기존 일반 지원·북마크 등은 보존했다.
+- Mock 상세도 주최자에게 기존 관리 컴포넌트를 바로 표시한다. 중복 상세/공개 상세 링크를 정리하고 관리 탭 전환·삭제 후에도 returnTo를 유지한다.
+- RecruitmentCard/ProjectSummaryCard는 내 프로젝트에서 단일 제목 링크의 클릭 영역을 전체 카드로 확장한다. 상세 보기·관리하기·참여 정보 링크를 제거한다. 카드 안 북마크와 기존 Mock 채팅은 독립 조작 영역을 유지한다. 모든 카드는 공통 /projects/{id}?returnTo=...로 들어가므로 목록의 역할이 오래됐어도 진입 화면의 서버 신원을 기준으로 분기한다.
+- 변경 파일: frontend/app/projects/[projectId]/page.tsx·manage/page.tsx·_components/api/ApiProjectDetail.tsx, app/my-projects/page.tsx/module.css, components/projects/RecruitmentCard.tsx/module.css·ProjectSummaryCard.tsx/module.css, tests/screens/ApiProjectOwnerView.test.tsx·MyProjectsLayout.test.tsx·ProjectsPage.test.tsx·ProjectManagePage.test.tsx. 문서는 project-navigation-layout.md 및 artifacts/project-owner-entry/browser-report.json을 갱신했다.
+- 최종 프론트 npm test -- --maxWorkers=1: 123개 파일·1,397개 통과. NODE_ENV=production npm run build·TypeScript 성공. 초기 기존 테스트의 별도 관리 링크 기대 및 관리 제목 문구까지 금지한 신규 기대는 새 동작과 버튼 범위에 맞게 조정한 후 전체 재검증했다.
+- 1440px Chromium: 카드 커버 클릭·주최자 즉시 관리·비주최자 조회·동일 진입 URL·별도 진입 버튼 제거·복귀 탭 유지, pageerror 0. 실제 공개 레코드를 사용했으나 세션·신원·상세는 응답 대역이므로 실제 로그인/관리 명령/DB 기록 검증을 뜻하지 않는다.
+- git diff --check 통과. next-env.d.ts의 빌드 생성 차이만 기존 dev 타입 경로로 복구했다. 이번 단계에서 backend·DB 변경은 없고 Gradle은 재실행하지 않았다. 커밋·푸시·PR 생성은 하지 않았다.
+
+
+## 2026-11-10 프로젝트 헤더 수정 버튼·조회수 재배치
+
+- 사용자 요청으로 ApiProjectDetail.tsx·projects/[projectId]/page.module.css만 제품 코드 변경. 수정 버튼은 헤더 오른쪽 위에 연필 아이콘과 배치하고 반응/공유 아이콘은 그 아래 정렬했다. 조회수는 설명 아래 왼쪽에 눈 아이콘과 보조 텍스트로 분리했다. 권한·API 동작은 유지한다.
+- frontend npm test -- --maxWorkers=1: 123개 파일·1,397개 통과. NODE_ENV=production npm run build 및 TypeScript 성공. 1440px Chromium에서 좌표/스크린샷으로 버튼 오른쪽/아이콘 위 및 조회수 왼쪽 하단 배치 확인, pageerror 0. 테스트용 세션/신원/상세 응답 대역을 사용했으며 실제 로그인·DB 저장 검증은 아니다.
+- docs/project-navigation-layout.md 및 artifacts/project-header-position/browser-report.json에 결과 기록. git diff --check 통과, next-env.d.ts의 자동 생성 차이만 dev 타입 경로로 복구. 백엔드 변경 없음으로 Gradle 미실행. 커밋·푸시·PR 생성 없음.
+
+
+## 2026-11-10 공고 수정 버튼 크기 통일
+
+사용자 요청으로 projects/[projectId]/page.module.css의 헤더 도구 묶음을 stretch 정렬하고 공고 수정 버튼 높이 52px·반경 14px·글자 15px·아이콘 18px로 조정했다. 아래 아이콘 3개 그룹과 같은 너비/높이를 사용한다. NODE_ENV=production npm run build/TypeScript 및 ApiProjectOwnerView 3개 테스트 통과. 1440px Chromium 응답 대역에서 버튼과 아이콘 그룹의 너비·높이 차이 1px 이하를 확인하고 기존 역할 분기·목록 복귀/pageerror 0을 재확인했다. 새 테스트·백엔드 변경·Gradle 실행·커밋·푸시 없음. next-env.d.ts 생성 차이만 기존 dev 경로로 복구했다.
+
+
+## 2026-11-10 활동 탭 ‘내 프로젝트 관리’ 상단 이동
+
+사용자 요청으로 Mock ActivityTab.tsx·실제 ApiActivityTab.tsx의 관리 링크를 목록 하단에서 ‘함께 만들어온 프로젝트’ 제목 오른쪽으로 이동했다. 본인만 표시하는 조건·이동 경로를 보존했다. ActivityTab.module.css의 footer 스타일을 제거하고 제목/버튼 Flex 정렬을 추가했다. 청사진·project-profile-activity.md에 최신 위치 반영. NODE_ENV=production npm run build/TypeScript 성공, ApiActivityTab·ApiProfilePage·ProfilePage 3개 파일·32개 테스트 통과, git diff --check 통과. next-env.d.ts 생성 차이만 기존 dev 경로 복구. 별도 브라우저·모바일 검증/백엔드 변경/Gradle 실행/커밋·푸시 없음.
+
+
+## 2026-11-10 프로젝트 활동/관리 화면 PR 준비
+
+사용자가 커밋·푸시·PR 생성을 요청해 develop 24b524e에서 feat/project-profile-activity 브랜치를 분리했다. 앞선 활동 이력 API·화면·단일 카드 진입·주최자 자동 관리·복귀 경로·헤더/활동 관리 버튼 위치 변경을 함께 반영한다. 원격 develop과 기준 커밋이 동일한 것을 확인했다. PR 준비의 최종 프론트 전체 테스트는 123개 파일·1,397개 통과. 마지막 버튼 위치 변경 단계에서 npm run build/TypeScript와 관련 32개 테스트도 통과했다. 백엔드 전체 테스트의 카카오/결제 로그 실패 2건과 프로젝트 129개 통과·11개 스킵, 실제 DB·브라우저 검증 한계를 PR에 명시한다. 환경설정·YAML·DB 변경을 추가하지 않았으며 다른 worktree의 변경은 포함하지 않는다. 헤더 배치 보고서는 마지막 실측 144×52px로 갱신했다.
+### 2026-11-10 로그인 후 데모 프로필 이동 오류 수정
+
+- 사용자 보고: 카카오 로그인 후 `/users/demo-user`에서 공개 프로필 404, `/profile/me`는 정상. 로그인 복귀 next는 기존 내부 주소를 그대로 사용하고 온보딩 완료/이미 완료 링크도 화면용 user.id를 공개 slug로 사용하던 코드 확인. 실제 사용자 브라우저의 flow 쿠키/로그인은 재현하지 않아 최초 next 생성 지점은 미확정이다.
+- `fix/login-profile-redirect`에서 `frontend/lib/auth/paths.ts`에 로그인 완료 전용 loginNext 추가. 기존 demo-user/demo-premium/demo-admin 공개 경로만 `/profile/me`로 교정하고 탭 query/hash 보존. 일반 공개 프로필·메시지·외부 URL 차단 정책 유지. 일반 로그인 actions와 카카오 callback에 적용하고 온보딩 두 내 프로필 링크 수정. 해당 actions/callback 회귀 테스트 추가.
+- `npm test -- --maxWorkers=2`: 118개 파일·1,374개 성공. 인증 관련 선별 테스트 79개 성공. `npm run build`: 성공. 인증 변경 파일 ESLint 성공. 백엔드·DB·카카오 외부 API는 변경/호출하지 않았고 실제 OAuth 브라우저 재검증·배포·커밋·푸시는 미수행. 빌드 생성 next-env.d.ts는 원복, 기존 frontend/.vite 보존.
+- 남은 사항: 새 로그인으로 실제 next 복귀 검증. 배포 포폴 503은 별개이며 배포 로그 접근 필요. 활동 담당자 작업과 기타 프로필 탭 연동은 이번 단계에서 수정하지 않음.
+
+- 후속 로컬 실행 확인: 카카오 시작 실패 보고를 확인하니 기존 dev 백엔드 프로세스가 최신 WebSocketConfigurer 의존성을 반영하지 못해 기동 실패 상태였다. 사용자 로그인 오류 해결 범위에서 devmozip-backend-1만 재시작해 최신 Gradle 의존성으로 기동. PostgreSQL 연결 및 /actuator/health HTTP 200 확인. 서버 재시작은 공유 DB 스키마/데이터 변경을 수행하지 않았다. 실제 OAuth 동의/콜백은 별도 브라우저 재확인 필요.
+
+## 2026-11-10 PR #124 develop 충돌 해결
+
+사용자 요청으로 별도 pr124-conflicts worktree에서 origin/develop 6cb3d47을 병합했다. 충돌은 이 진행 문서의 말미 한 구간뿐이며 활동/관리 화면 기록과 로그인 프로필 복귀 수정 기록을 모두 보존했다. develop의 AI 초기 분석 및 로그인 수정 코드는 원본을 유지했다. 실행 중인 worktree의 모집 중 필터/개발자 전용 탐색 미커밋 변경과 #128/#131 브랜치는 수정하지 않았다. 이번 작업에서 백엔드 코드·DB·배포 설정은 변경하지 않는다.
+
+- 충돌 해결 최종 검증: 별도 작업 폴더 소스로 npm run build/TypeScript 성공, npm test -- --maxWorkers=1 전체124개 파일1,408개 통과. 실행 서버의 node_modules 의존성 볼륨만 재사용하고 빌드 .next는 독립 볼륨으로 분리했다. 생성된 next-env.d.ts는 기존 dev 경로로 복원했다. git diff --check 및 미해결 충돌 파일0 확인. 백엔드 코드 변경이 없어 백엔드 테스트와 실제 DB/외부 API 검증은 재실행하지 않았다. 기존 #124에 일반 푸시하며 강제 푸시·develop/main 직접 변경·다른 PR 갱신은 하지 않는다.
+
+## 2026-11-10 PR #125 develop 충돌 해결
+
+사용자 요청으로 별도 pr125-conflicts worktree에서 최신 develop 5592e21을 병합했다. 진행 문서와 ApiProfileTabs·ApiProfilePage 테스트가 충돌했다. #125 포스팅/받은 리뷰와 #124 활동 API 연결을 모두 보존해 소개·포트폴리오·포스팅·활동·리뷰 5개 탭을 함께 연결했다. 기존 본인/공개 slug·own·trustScore 전달을 유지하며 연결 전 안내가 잘못 나오지 않게 했다. 진행 문서는 양쪽 기록을 보존했다. 다른 PR과 실행 서버/미커밋 검색 수정·공유 DB·배포 설정은 변경하지 않는다.
+
+검증 결과: 별도 컨테이너에서 `npm run build` 성공, `npm test -- --maxWorkers=1` 130개 파일·1,426개 테스트 통과. 백엔드는 격리된 Testcontainers 환경에서 `./gradlew test --tests '*ProfilePostsIntegrationTest' --tests '*ProfileReviewsIntegrationTest' --tests '*ProjectQueryIntegrationTest'` 성공 (21개, 실패·오류·건너뜀 0/0/0). 전체 백엔드 테스트와 브라우저 수동 검증은 이번 작업에서 실행하지 않았다. 공유 DB와 실행 중 서버는 변경하지 않았다.

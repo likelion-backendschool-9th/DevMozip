@@ -48,7 +48,8 @@ describe('API 프로필 화면', () => {
         } else if (tab === 'portfolio') expect(html).toContain('포트폴리오를 불러오는 중');
         else if (tab === 'posts') expect(html).toContain('포스팅을 불러오는 중');
         else if (tab === 'reviews') expect(html).toContain('받은 리뷰를 불러오는 중');
-        else expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
+        else if (tab === 'activity') { expect(html).toContain('프로젝트 이력을 불러오고 있습니다.'); expect(html).not.toContain('활동 조회 연결 전'); }
+        expect(html).not.toContain('이 탭의 정보는 아직 조회 API에 연결되지 않았습니다.');
         expect(html).toContain('38.5');
     });
     it('미입력 정보는 빈 값을 명확히 표시한다', () => {
