@@ -935,3 +935,19 @@ erDiagram
 - 최신 지원서 Entity가 test DB 테이블을 먼저 생성해 삭제 정책 fixture 3개가 실패했다. 격리 컨테이너에서만 참조 제약 fixture를 재생성해 40개 포트폴리오 통합 테스트 최종 통과. 공유 DB 변경 없음.
 - 일반 ./gradlew test는 develop의 AI 테스트 2곳에서 ProjectJobRole → String 생성자 불일치로 컴파일 실패. 다른 담당 파일은 수정하지 않았다. 포트폴리오 40개 검증은 저장소 외부 임시 Gradle init으로 해당 AI 테스트 소스 2개만 제외하여 수행했으며 전체 성공을 의미하지 않는다.
 - 프론트 전체 827개 및 npm run build, git diff --check 통과. 별도 화면 검증에서는 premium 로그인·등록 ID 3·수정·새로고침·DB 재조회까지 확인했다.
+
+## 2026-11-10 #113 포트폴리오 이미지·첨부파일 업로드
+
+- 사용자의 이어가기 요청 및 이슈 #113에 따라 미병합 CRUD feat/88-portfolio-crud(7ae37e0)에서 feat/113-portfolio-file-upload 분기. 다음 기능·커밋·푸시·PR 생성은 진행하지 않는다.
+- POST /api/v1/files multipart 한 개, GET /api/v1/files/{id}, 동일 출처 Next BFF /api/files 추가. Controller → Service 인터페이스/Impl → 비공개 로컬 파일 저장소와 공개 연결 조회 Repository.
+- DB 테이블/컬럼 추가 없음. 서버 UUID와 소유자·이름·MIME·크기를 비공개 파일 메타데이터로 보존하고, 기존 portfolios.thumbnail_url·문서 images·attachments에 URL 연결. 저장 시 본인 업로드인지 검증한다.
+- PNG/JPEG/WebP 256KB 및 실제 디코딩·1,600만 화소 검증, PDF 10MB 및 MIME/확장자/서명 확인. 저장 파일명·경로는 서버가 생성, traversal·심볼릭 링크 읽기·실제 초과 바이트 거절. PDF는 다운로드만 제공.
+- 업로드 직후·PRIVATE 파일은 본인만. 원 업로더의 ACTIVE/PUBLIC 대표 이미지만 비로그인 공개, 나머지 공개 본문/첨부는 기존 프리미엄 상세 열람 정책 적용. 다른 사용자 파일 연결 거절. 쓰기 출처 검증·no-store·nosniff 유지.
+- 기존 커버·갤러리 버튼을 API 업로드와 연결하고 Mock 작성기는 기존 처리 유지. PDF 첨부·연결 해제·초안/재조회 복원 추가. 업로드 중 저장 차단, 실패 시 입력 유지. 파일 자동 삭제와 지원서 보존 정책은 확장하지 않음.
+- 원래 ./gradlew test는 기존 AI 테스트 소스 2곳의 ProjectJobRole/String 불일치로 컴파일 실패. 저장소 외부 임시 init으로 그 2곳만 제외했다. 최초 Docker 미실행 결과 131개 skip은 실제 DB 성공으로 간주하지 않았으며 Docker 시작 후 재실행했다.
+- 실제 PostgreSQL을 포함한 나머지 전체: 650개 중 639 통과·11개 공유 DB opt-in skip, 실패/오류 0. 최종 파일 저장소·파일 API·CRUD·조회 관련 50개는 skip 없이 통과. 전체 원본 실행 성공을 의미하지 않는다.
+- 프론트 전체 845개 통과, npm run build, 수정 파일 ESLint 및 git diff --check 통과.
+- 로컬 Docker의 ddl validate/sql init never 확인 후 기존 컨테이너 시작. 실제 계정으로 PRIVATE 검증 ID 3에 대표/갤러리 PNG 및 2MB PDF 업로드·저장·새로고침·다운로드 성공, 비로그인 파일 GET 404 및 DB URL/첨부 메타데이터 재조회 확인. 기존 스키마·다른 업무 데이터 변경 없음.
+- 파일은 기본 ./uploads/portfolio-files 또는 PORTFOLIO_FILE_STORAGE 비공개 경로에 보존. 공개 IMAGE_STORAGE와 분리, 영속 볼륨/블루그린 저장소 공유는 배포 단계에서 별도 설정 필요. 미연결 파일 자동 정리·파일 삭제·악성 PDF 검사·AI 분석은 미구현 범위.
+- 주요 파일: PortfolioFileController, PortfolioFileService/Impl, PortfolioFileResponse, LocalPortfolioFileStorage, PortfolioFileAccessRepository, PortfolioMultipartConfiguration, 기존 SecurityConfig/포트폴리오 예외 처리·Mutation 소유권 검증, 프론트 api/files·portfolioFiles·기존 작성기·PortfolioFileAttachments·초안/첨부 매핑·테스트. 상세 docs/portfolio-files-api.md.
+- 이번 변경은 미커밋·미푸시. 이전 frontend/.vite 임시 캐시는 보존하고 작업에 포함하지 않는다.
