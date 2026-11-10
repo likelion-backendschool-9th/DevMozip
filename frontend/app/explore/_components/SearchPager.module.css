@@ -1,0 +1,2 @@
+.pager{display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;margin-top:28px;font-size:14px;color:#9c89ae}
+.pager b{color:var(--purple);font-weight:650}

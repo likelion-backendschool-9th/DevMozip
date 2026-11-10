@@ -276,3 +276,12 @@ describe('실시간 신호', () => {
         expect(subscriberCount()).toBe(0);
     });
 });
+
+
+it('강퇴 신호 수신 시 채팅을 재조회하고 접근 거절을 적용한다',async()=>{
+ stop=startProjectChatSync();await openChat();
+ vi.mocked(fetchProjectChat).mockRejectedValueOnce(failure(404));
+ emitSignal({type:'project.members.changed',roomType:'project',roomId:5,voteId:8,status:'PASSED'});
+ await vi.advanceTimersByTimeAsync(0);
+ expect(current().open?.status).toBe('missing');
+});

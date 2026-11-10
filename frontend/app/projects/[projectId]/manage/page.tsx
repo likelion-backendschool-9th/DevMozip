@@ -18,6 +18,8 @@ import { projectStatus } from '@/lib/projects/projectService';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
 import { CreateProjectForm } from '@/app/projects/_components/CreateProjectForm';
 import { ProjectNotices } from '@/components/projects/ProjectNotices';
+import { ProjectBackLink } from '@/components/projects/ProjectBackLink';
+import { projectDetailHref, projectReturnTarget } from '@/lib/projects/projectNavigation';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
@@ -29,6 +31,7 @@ function ManageContent({ projectId }: { projectId: string }) {
     const navigate = useNavigate();
     const p = projects.find(p => p.id === projectId);
     const [params, setParams] = useSearchParams();
+    const returnTo = projectReturnTarget(params.get('returnTo'), '/my-projects');
     const tab = ['applicants', 'team', 'settings'].includes(params.get('tab') || '')
         ? params.get('tab')!
         : 'applicants';
@@ -102,15 +105,12 @@ function ManageContent({ projectId }: { projectId: string }) {
     const own = projects.filter(v => v.hostId === user.id);
     return (
         <div className={[styles.scope, 'container project-manage-page'].join(' ')}>
-            <Link className={[styles.scope, 'text-link'].join(' ')} href="/my-projects">
-                ← 내 프로젝트
-            </Link>
+            <ProjectBackLink className={[styles.scope, 'text-link'].join(' ')} fallback="/my-projects" />
             <div className={[styles.scope, 'manage-breadcrumb'].join(' ')}>
-                <Link href={`/projects/${p.id}`}>← 프로젝트 상세</Link>
                 <select
                     aria-label="내 프로젝트 선택"
                     value={p.id}
-                    onChange={e => navigate(`/projects/${e.target.value}/manage`)}
+                    onChange={e => navigate(projectDetailHref(e.target.value, returnTo))}
                 >
                     {own.map(p => (
                         <option key={p.id} value={p.id}>
@@ -153,9 +153,6 @@ function ManageContent({ projectId }: { projectId: string }) {
                 <p>
                     모집 {p.recruitmentStart} — {p.deadline} · 개발 {p.developmentStart} — {p.developmentEnd}
                 </p>
-                <Link className={[styles.scope, 'text-link'].join(' ')} href={`/projects/${p.id}`}>
-                    공개 상세 확인 →
-                </Link>
             </section>
             <div className={[styles.scope, 'manage-metrics'].join(' ')}>
                 <Card>
@@ -194,7 +191,7 @@ function ManageContent({ projectId }: { projectId: string }) {
                         key={t.id}
                         aria-pressed={tab === t.id}
                         className={[styles.scope, tab === t.id ? 'active' : ''].join(' ')}
-                        onClick={() => setParams({ tab: t.id })}
+                        onClick={() => { const next=new URLSearchParams(params); next.set('tab',t.id); setParams(next); }}
                     >
                         <t.icon size={14} />
                         {t.label}
@@ -444,7 +441,7 @@ function ManageContent({ projectId }: { projectId: string }) {
                         <Button
                             onClick={() => {
                                 const result = act({ type: 'delete', projectId: p.id });
-                                if (result.ok) navigate('/projects');
+                                if (result.ok) navigate(returnTo);
                                 else setError(result.error || '삭제하지 못했습니다.');
                             }}
                         >

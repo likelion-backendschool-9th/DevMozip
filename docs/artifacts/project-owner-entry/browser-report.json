@@ -1,0 +1,11 @@
+{
+  "viewport": 1440,
+  "data": "실제 공개 API 레코드 + 테스트용 세션/신원/상세 응답 대역",
+  "wholeCardCoverClick": true,
+  "separateViewManageLinks": false,
+  "ownerAutomaticManagement": true,
+  "nonOwnerViewOnly": true,
+  "sameEntryUrl": true,
+  "returnToPreserved": true,
+  "pageErrors": []
+}

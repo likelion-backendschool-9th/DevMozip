@@ -9,5 +9,6 @@ public interface ProjectApplicationService {
 	List<ProjectApplicationResponse> list(long projectId,Status status);
 	ProjectApplicationOptions options(long projectId);
 	ProjectApplicationResponse update(long projectId,long applicationId,UpdateProjectApplicationRequest request);
-	List<ProjectMemberResponse> members(long projectId,String jobRole);
+	default List<ProjectMemberResponse> members(long projectId,String jobRole){return members(projectId,jobRole,false);}
+	List<ProjectMemberResponse> members(long projectId,String jobRole,boolean includeInactive);
 }

@@ -33,7 +33,7 @@
 | `/following` | 팔로워/팔로잉 검색·협업 필터·알림 설정 | 공개 목록, 변경은 로그인 |
 | `/messages` | 1:1 목록·대화·읽음·사용자 신고. 실제 경로는 `/messages/chats`, `/messages/chats/:id`다. Mock 토글 OFF는 서버 API와 실시간 신호·입력 중 표시를 쓴다 | 로그인 |
 | `/chats/:projectId` | 멤버·대화·강퇴 투표·종료 시 보관/삭제. 실제 경로는 `/messages/projects/:projectId`다. Mock 토글 OFF는 서버 프로젝트 채팅(멤버·읽음 n/m·초대·퇴장 문구·입력 중 표시)을 쓰고 강퇴 투표와 기한 시뮬레이터를 숨긴다 | 채팅 제외 대상이 아닌 주최자/팀원. 토글 OFF는 승인된 팀원(모집 시작일부터) |
-| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음 | 로그인, 현재 계정 알림만 |
+| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음. 헤더 종 버튼은 같은 목록을 공통 알림 모달로 연다(주소 유지, "전체 보기"로 이 페이지). Mock 토글 OFF는 서버 알림([알림 API](notification-api.md): 프로젝트 지원·상태·기간·종료, 협업 리뷰 요청·재알림, 리뷰 작성 대기·완료·만료 표시)을 쓴다 | 로그인, 현재 계정 알림만 |
 | `/subscription` | 프리미엄 상품 안내(월 ₩9,900)·요금제 비교 | 공개 |
 | `/subscription/checkout` | 결제 수단 선택(토스페이먼츠 카드·카카오페이)·결제 전 고지와 동의·포트원 결제창 | 로그인, 결제는 무료(USER) 회원만 |
 | `/subscription/manage` | 구독 상태·다음 결제일·결제 수단·해지(기간 끝까지 유지) | 로그인 |
@@ -99,3 +99,7 @@ URL과 기능/권한은 유지하고 실행 라우터를 App Router 파일 구�
 - `/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]`: 제출 당시 내용의 읽기 전용 상세. 기존 포트폴리오 상세 디자인을 재사용한다. 본인 지원자 또는 프리미엄/관리자 주최자만 조회한다.
 - BFF `/api/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]` → GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`.
 - 실제 지원 내역의 제목 링크는 원본 /portfolios/{id}가 아닌 제출본으로 연결한다. 원본 수정·삭제 후에도 유지한다. Mock 시연 데이터 구조를 실제 DB로 임의 이관하지 않는다.
+
+프로필 활동 탭: 실제 API 프로필에서 `/api/projects/activity/{slug}`로 주최·참여 이력을 조회한다. 본인은 `me`, 타인은 프로필 태그를 사용한다. 기존 활동 카드 디자인·프로젝트 제목 링크·본인 관리 버튼을 유지하며 비공개는 현재 팀원에게만 표시한다. 상세: [프로필 프로젝트 활동](project-profile-activity.md).
+
+내 프로젝트/상세 복귀: 목록과 프로필 활동에서 상세에 `returnTo`를 전달한다. 내 프로젝트의 탭·검색 조건과 프로필 활동 탭을 유지해 돌아간다. 내 프로젝트 카드와 모집 카드를 재사용하며 활동 Mock/API도 같은 카드 컴포넌트를 사용한다. [변경·검증](project-navigation-layout.md).

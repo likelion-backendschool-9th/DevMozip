@@ -151,7 +151,7 @@
 | user_id | BIGINT | 참여자 users.id 참조 |
 | role | VARCHAR(20) | HOST·PARTICIPANT, 프로젝트 내 권한 |
 | job_role | VARCHAR(50) / NULL | 담당 모집 직군 코드. 추가 필드, 주최자는 미지정 가능 |
-| status | VARCHAR(20) | ACTIVE·LEFT, 참여·탈퇴 상태 |
+| status | VARCHAR(20) | ACTIVE·LEFT·KICKED, 참여·탈퇴·강퇴 상태 |
 | joined_at | DATETIME | 참여 시각 |
 | left_at | DATETIME / NULL | 참여 종료 시각 |
 | end_requested_at | DATETIME / NULL | 종료 버튼을 누른 시각. NULL은 종료 미동의 |
@@ -184,7 +184,7 @@
 
 원본 agree·voted_at의 NOT NULL을 NULL 허용으로 바꾸는 안이다. 시작 시 대상자를 제외한 투표권자 행을 만들고 그 개수를 eligible_voter_count와 함께 저장한다. 투표+투표자는 유일하며, 미투표 행에 한 번만 기록한다. 고정 인원의 절반을 초과하는 찬성이면 가결한다. 두 인원 표현은 시작 트랜잭션에서 일치시킨다.
 
-가결은 현재 정책상 채팅 접근 제한이며 project_members 참여 이력은 유지한다. 실제 퇴장과 재접근 제한은 기존 chat_members 및 채팅 기능과 결합한다. 종료 투표 목록은 votes.status로 조회한다.
+가결 시 project_members.status=KICKED와 left_at을 기록하고 현재 프로젝트 참여 및 채팅 접근에서 제외한다. 행과 지원·활동 이력은 보존한다. 주최자는 대상에서 제외하며 투표권은 동일한 1표다. API·72시간 임시 정책·알림 연동 경계는 [강퇴 투표 계약](project-member-removal.md)을 따른다. 종료 투표 목록은 votes.status로 조회한다.
 
 ### reviews — 팀원 리뷰·임시 링크
 
@@ -261,7 +261,7 @@ erDiagram
 | resolution | TEXT / NULL | 처리 결과 |
 | handled_at | DATETIME / NULL | 처리 시각 |
 
-프로젝트 신고는 project_id, 팀원에 대한 회원 신고는 reported_user_id를 대상으로 사용한다. 프로젝트 자체 신고는 #51 일부로 구현했으며 `POST /api/v1/projects/{id}/reports`로 공통 reports에 저장한다. 상세 계약과 검증은 [프로젝트 신고](project-reports.md)를 참조한다. 대상 컬럼 중 하나를 선택하는 공통 계약을 제안한다. 여러 대상을 동시에 저장하거나 팀원 신고의 프로젝트 맥락까지 보관하려면 공통 신고 담당자와 별도 확정한다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
+프로젝트 신고는 project_id만, 프로젝트 팀원 신고는 project_id(프로젝트 맥락)와 reported_user_id(대상 회원)를 함께 사용한다. 프로젝트 자체 신고는 #51 일부로 구현했으며 `POST /api/v1/projects/{id}/reports`로 공통 reports에 저장한다. 상세 계약과 검증은 [프로젝트 신고](project-reports.md)를 참조한다. 일반 사용자 신고는 reported_user_id만 채우며 프로젝트 맥락은 NULL이다. #51 사용자 요청으로 팀원 신고는 프로젝트+대상 회원의 복합 맥락을 사용하고 중복 범위도 분리한다. 관리자 처리 API는 프로젝트 관련 신고만 다루며 상세 계약은 project-reports.md를 따른다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
 
 ### bookmarks — 공통 북마크(#56 구현)
 
@@ -490,3 +490,19 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 #49는 사용자 요청으로 보류했다. #50은 종료 당시 리뷰 요청 생성·30일 기한·전체 제출·재발급·3일 재알림을 구현했다. 실제 review_keywords와 review_keyword_selections를 사용하며 리뷰마다 등록된 활성 긍정 키워드 0~5개를 선택한다. 기본 선택지는 14개다. reviews에 키워드 중복 컬럼을 두지 않는다. 선택 목록과 제출 검증은 ReviewKeywordRepository로 직접 처리한다.
 
 기존 DB는 [선택값 이관 SQL](sql/review-keyword-selections.sql)을 적용한 뒤 [검증 후 중복 컬럼 제거 SQL](sql/reviews-normalize-keywords.sql)을 적용한다. 새 DB는 [원본 스키마](sql/project-schema.sql), [키워드](sql/review-keywords.sql), 연결 테이블 순서로 생성한다. 기존 리뷰 9건과 선택 연결 12건을 보존했다. 실제 알림 발송·프로필 신뢰 계산은 미연결이다. API 경로·변경 파일·검증 결과는 [프로젝트 리뷰](project-reviews.md)를 참조한다.
+
+## 프로필 활동 탭의 프로젝트 이력 (2026-11-10)
+
+초기 기획의 활동 탭을 실제 프로젝트 데이터로 연결한다. `projects`와 `project_members`를 조회하며 별도 이력 테이블·컬럼은 추가하지 않는다.
+
+- `GET /api/v1/users/me/projects`: 인증된 본인의 주최·참여 이력. 사용자 ID를 요청으로 받지 않는다.
+- `GET /api/v1/users/{slug}/projects`: 해당 활성 회원의 주최·참여 이력. `slug`는 프로필 @태그다.
+- `page`는 0부터, `size`는 1~50(기본 10). 개발 시작일 내림차순, 프로젝트 ID 내림차순으로 정렬한다.
+- 응답은 프로젝트 ID·제목·대표 이미지 URL(imageUrl)·진행 상태·예정 개발 기간·실제 종료 시각·대상자의 HOST/PARTICIPANT·담당 직군·ACTIVE/LEFT와 페이지 정보다.
+- 승인 전 지원서는 포함하지 않는다. LEFT는 기존 참여 이력으로 남기고 화면에 ‘참여 종료’를 별도로 표시한다. 논리 삭제된 프로젝트는 제외한다.
+- 공개 프로젝트는 누구나 볼 수 있다. 비공개는 조회자가 해당 프로젝트의 현재 ACTIVE 팀원일 때만 목록과 개수에 포함한다. 본인이라도 이미 탈퇴한 비공개 프로젝트는 노출하지 않는다.
+- 현재 Member 엔티티에는 프로필 전체 공개 범위 필드가 없어 해당 권한을 새로 만들지 않는다. 대상 회원 활성 상태는 기존 공개 프로필 조회 계약을 따른다.
+- 기존 PrototypeProfilePage/ActivityTab는 보존하고 실제 프로필의 ApiProfileTabs에 연결한다. 현재 실제 프로필은 기존 라우팅대로 Mock 토글과 무관하게 API를 사용한다. 프로젝트 제목으로 상세 이동, 본인만 활동 제목 오른쪽 상단에 ‘내 프로젝트 관리’를 제공한다.
+- 조회로 프로젝트 조회수를 올리지 않는다. 통신 오류·로딩·빈 목록을 구분하고 실제 이력을 localStorage에 저장하지 않는다.
+
+구현 파일과 검증 결과: [프로필 프로젝트 활동](project-profile-activity.md).

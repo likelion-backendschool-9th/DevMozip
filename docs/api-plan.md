@@ -47,6 +47,8 @@
 | Message | POST | /conversations/{id}/messages | 1:1 메시지 작성 | 예 (참여자) | body | message | 아니오 |
 | Notification | GET | /notifications | 알림 조회 | 예 | cursor, unread | notifications | 아니오 |
 | Notification | PATCH | /notifications/{id} | 읽음 처리 | 예 | read | notification | 아니오 |
+
+> 알림은 구현되었다. 확정 계약은 [알림 API](notification-api.md)다(`GET /api/v1/notifications`의 `status`·`page`·`size`, `PATCH /api/v1/notifications/{id}/read`, `PATCH /api/v1/notifications/read-all`). 위 두 행과 아래 `read-all` 행은 이전 초안이다.
 | Premium | GET | /premium/subscription | 구독 상태 | 예 | 없음 | subscription, payments | 아니오 |
 | Premium | POST | /premium/subscription | 구독/해지 요청 | 예 | plan, action | subscription | 정책 검토 |
 | Admin | GET | /admin/dashboard | 통계 조회 | 예 (관리자) | 기간 | counts, reports, usage | 아니오 |
@@ -158,3 +160,9 @@
 - GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`: 지원 당시 보관본 조회. 본인 지원자 또는 프리미엄/관리자 주최자에게만 제공한다. 수정·삭제 API 없음.
 - POST `/api/v1/projects/{projectId}/applications`는 공개 원본 1~3개 검증 후 지원서·연결·제출본을 함께 저장한다. 응답의 submittedPortfolios는 제출본 ID·원본 ID·당시 제목을 제공한다.
 - 원본 수정·삭제는 허용하며 제출본을 변경하지 않는다. 원본 삭제 시 연결 ID만 SET NULL로 처리한다. 상세는 docs/project-portfolio-snapshots.md를 따른다.
+
+## 프로필 프로젝트 활동 — 2026-11-10 실제 구현
+
+- GET /api/v1/users/me/projects: 인증 본인의 주최/참여 이력.
+- GET /api/v1/users/{slug}/projects: 활성 프로필 태그의 주최/참여 이력, 비공개 프로젝트는 조회자 현재 팀원 권한으로 제한.
+- page(0부터)/size(1~50, 기본 10); 상세 계약: [프로필 프로젝트 활동](project-profile-activity.md).

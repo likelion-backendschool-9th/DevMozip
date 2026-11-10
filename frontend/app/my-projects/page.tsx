@@ -11,7 +11,7 @@ import { useProjects } from '@/lib/state/projectStore';
 import { myProjects } from '@/lib/projects/myProjectsService';
 import { myProjectTabs } from '@/mocks/projectWorkspace';
 import { ProjectDateSimulator } from '@/components/projects/ProjectDateSimulator';
-import { Card } from '@/components/common/Card';
+import { RecruitmentCard } from '@/components/projects/RecruitmentCard';
 function MockMyProjectsPage() {
     const { user } = useAuth();
     const { state, now } = useProjects();
@@ -58,80 +58,20 @@ function MockMyProjectsPage() {
                 {entries.map(({ project: p, host, member, application }) => {
                     const joined = !!member;
                     return (
-                        <Card className={[styles.scope, 'my-project-card'].join(' ')} key={p.id}>
-                            <header>
-                                <span className={[styles.scope, `project-mark ${p.color}`].join(' ')}>{p.mark}</span>
-                                <span className={[styles.scope, 'demo-pill'].join(' ')}>{p.status || '모집 중'}</span>
-                            </header>
-                            <Link href={`/my-projects/${p.id}/manage`}>
-                                <h2>{p.title}</h2>
-                            </Link>
-                            <p>{p.summary}</p>
-                            <dl>
-                                <div>
-                                    <dt>주최자</dt>
-                                    <dd>{profiles.profiles[p.hostId]?.nickname || p.hostId}</dd>
-                                </div>
-                                <div>
-                                    <dt>내 역할</dt>
-                                    <dd>
-                                        {host ? '주최자' : member?.role || application?.role} ·{' '}
-                                        {host
-                                            ? '모집 운영'
-                                            : joined
-                                              ? p.status === '프로젝트 종료'
-                                                  ? '참여 종료'
-                                                  : '참여 중'
-                                              : application?.status}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt>모집 기간</dt>
-                                    <dd>
-                                        {p.recruitmentStart} — {p.deadline}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt>진행 기간</dt>
-                                    <dd>
-                                        {p.developmentStart} — {p.developmentEnd}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt>현재 참여</dt>
-                                    <dd>
-                                        {p.members}/{p.capacity}명
-                                    </dd>
-                                </div>
+                        <RecruitmentCard key={p.id} project={p} returnTo={'/my-projects'+(params.size?'?'+params.toString():'')}>
+                            <dl className={styles.projectFacts}>
+                                <div><dt>주최자</dt><dd>{profiles.profiles[p.hostId]?.nickname || p.hostId}</dd></div>
+                                <div><dt>내 역할</dt><dd>{host ? '주최자 · 모집 운영' : `${member?.role || application?.role || '참여자'} · ${joined ? (p.status === '프로젝트 종료' ? '참여 종료' : '참여 중') : application?.status}`}</dd></div>
+                                <div><dt>모집 기간</dt><dd>{p.recruitmentStart} — {p.deadline}</dd></div>
+                                <div><dt>현재 참여</dt><dd>{p.members}/{p.capacity}명</dd></div>
                             </dl>
-                            {p.status !== '프로젝트 종료' &&
-                                new Date(`${p.developmentEnd}T23:59:59.999+09:00`).getTime() < now.getTime() && (
-                                    <p className={[styles.scope, 'form-error'].join(' ')}>예정 종료일이 지났습니다.</p>
-                                )}
-                            <div className={[styles.scope, 'workspace-actions'].join(' ')}>
-                                <Link
-                                    className={[styles.scope, 'button secondary'].join(' ')}
-                                    href={`/my-projects/${p.id}/manage`}
-                                >
-                                    {host ? '프로젝트 관리' : '참여 정보'}
-                                </Link>
-                                {joined &&
-                                    !state.deletedChatIds.includes(p.id) &&
-                                    !state.chatExclusions[p.id]?.includes(user.id) && (
-                                        <Link
-                                            className={[styles.scope, 'text-link'].join(' ')}
-                                            href={`/messages/projects/${p.id}`}
-                                        >
-                                            단체 채팅방 →
-                                        </Link>
-                                    )}
+                            {p.status !== '프로젝트 종료' && new Date(`${p.developmentEnd}T23:59:59.999+09:00`).getTime() < now.getTime() && <p className="form-error">예정 종료일이 지났습니다.</p>}
+                            <div className={styles.cardActions}>
+
+                                {joined && !state.deletedChatIds.includes(p.id) && !state.chatExclusions[p.id]?.includes(user.id) && <Link className="text-link" href={`/messages/projects/${p.id}`}>단체 채팅방 →</Link>}
                             </div>
-                            {state.chatExclusions[p.id]?.includes(user.id) && (
-                                <p className={[styles.scope, 'form-error'].join(' ')}>
-                                    채팅방 강퇴 · 프로젝트 참여 이력 유지
-                                </p>
-                            )}
-                        </Card>
+                            {state.chatExclusions[p.id]?.includes(user.id) && <p className="form-error">채팅방 강퇴 · 프로젝트 참여 이력 유지</p>}
+                        </RecruitmentCard>
                     );
                 })}
             </div>
