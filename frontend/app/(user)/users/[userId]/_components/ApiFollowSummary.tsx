@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { FollowButton } from '@/components/profile/FollowButton';
-import { fetchFollowStatus } from '@/lib/profiles/followApi';
+import { fetchFollowStatus, isPrivateAccountError, PRIVATE_ACCOUNT_MESSAGE } from '@/lib/profiles/followApi';
 import { useAuth } from '@/lib/state/authStore';
 import type { FollowStatus } from '@/types/followApi';
 import type { OwnProfileDetail } from '@/types/profileDetail';
@@ -12,7 +12,7 @@ import { useOwnProfile } from '../../../_components/OwnProfileProvider';
 import { ApiFollowSettings } from './ApiFollowSettings';
 import styles from './ApiFollowSummary.module.css';
 
-type StatusState = { status: 'loading' } | { status: 'ready'; value: FollowStatus } | { status: 'error'; message: string };
+type StatusState = { status: 'loading' } | { status: 'ready'; value: FollowStatus } | { status: 'error'; message: string } | { status: 'private' };
 
 /**
  * 프로필 상단의 팔로워·팔로잉 수와 팔로우 버튼. 수를 누르면 /users/{tag}/follows 목록으로 이동한다.
@@ -34,7 +34,10 @@ export function ApiFollowSummary({ profile }: { profile: OwnProfileDetail }) {
         void fetchFollowStatus(slug, controller.signal).then(value => {
             if (!controller.signal.aborted) setResult({ key, state: { status: 'ready', value } });
         }).catch(error => {
-            if (!controller.signal.aborted) setResult({ key, state: { status: 'error', message: error instanceof Error ? error.message : '팔로우 정보를 불러오지 못했어요.' } });
+            if (controller.signal.aborted) return;
+            // 비공개 계정(WBS 17.7)은 다시 시도해도 같으므로 오류 대신 안내만 보여 준다.
+            setResult({ key, state: isPrivateAccountError(error) ? { status: 'private' }
+                : { status: 'error', message: error instanceof Error ? error.message : '팔로우 정보를 불러오지 못했어요.' } });
         });
         return () => controller.abort();
     }, [slug, key]);
@@ -61,6 +64,7 @@ export function ApiFollowSummary({ profile }: { profile: OwnProfileDetail }) {
         {state.status === 'error' && <span className={styles.error} role="alert">
             {state.message} <button className={styles.retry} onClick={() => setAttempt(v => v + 1)}>다시 시도</button>
         </span>}
+        {state.status === 'private' && <span className={styles.hint} role="status">{PRIVATE_ACCOUNT_MESSAGE}</span>}
         {!mine && ownKnown && value && <span className={styles.actions}>
             {user
                 ? <>

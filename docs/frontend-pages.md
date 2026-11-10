@@ -11,7 +11,7 @@
 | `/onboarding` | 가입 후 4단계 기본/개발자/협업/미리보기 | 로그인 신규 계정, 기존/데모는 완료 안내 |
 | `/profile/me/likes` | 내가 좋아요한 글·날짜·취소 | 로그인, 본인 전용 Aside |
 | `/profile/me/bookmarks` | 게시글/프로젝트 북마크·해제 | 로그인, 본인 전용 Aside |
-| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지 |
+| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지. 공개/비공개 전환은 Mock 토글 OFF이면 서버 값(`/api/v1/users/me/account-lock`), ON이면 Mock 저장값을 쓴다 ([privacy-settings-api.md](privacy-settings-api.md)) |
 | `/login` | 서버 로그인·카카오 로그인·계정 전환 | 공개 |
 | `/signup` | 입력 검증·DB 중복 확인·서버 가입 후 자동 로그인·카카오 가입(`?kakao=signup`이면 비밀번호 입력 없음) | 공개, localhost/HTTPS 권장 |
 | `/forgot-password` | 재설정 메일 요청·메일 링크로 새 비밀번호 저장 | 공개 |

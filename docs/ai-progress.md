@@ -2162,3 +2162,9 @@ KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px �
 최신 develop 0d6f533을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 알림·개발자 탐색·SNS 및 이미지 제공 범위와 관련 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 미커밋 작업과 실행 서버·공유 DB·배포 설정은 변경하지 않는다.
 
 검증: 별도 컨테이너 npm run build 성공, npm test -- --maxWorkers=1 전체 143개 파일·1,613개 테스트 통과. backend ./gradlew test --tests '*notification.*' 49개, 실패 0·오류 0·건너뜀 0. 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
+
+## 2026-11-10 PR #133 충돌 해결
+
+최신 develop 2af95a7을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 개인정보 설정(비공개 계정)과 develop의 SNS·검색·알림 및 이미지 제공 범위와 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 로컬 작업·실행 서버·공유 DB는 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공. npm test -- --maxWorkers=1 전체 146개 파일·1,646개 테스트 통과. backend ./gradlew test에 AccountLock*・AccountVisibilityPolicyTest・FollowPrivacyIntegrationTest 필터를 적용해 36개 통과(실패·오류·건너뜀 0). 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.

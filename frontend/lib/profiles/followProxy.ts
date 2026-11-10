@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/auth/backend';
 import type { FollowListTab } from '@/types/followApi';
 import { validProfileSlug } from './profileDetail';
-import { followListQuery, followListSearch, parseFollowPage } from './followApi';
+import { followListQuery, followListSearch, parseFollowPage, PRIVATE_ACCOUNT_MESSAGE } from './followApi';
 import { profileError } from './profileProxy';
 
 const headers = { 'Cache-Control': 'no-store' };
@@ -37,12 +37,20 @@ export function followPath(slug: string, name: 'follow' | 'notify' | FollowListT
     return `/api/v1/users/${encodeURIComponent(slug)}/${name}${search ? `?${search}` : ''}`;
 }
 
+// 백엔드의 403은 정지 회원과 비공개 계정 두 경우다. 비공개 계정은 계약 문구로 구분해 그 문구만 그대로 넘긴다.
+async function privateAccount(response: Response) {
+    if (response.status !== 403) return false;
+    try { return (await response.json())?.message === PRIVATE_ACCOUNT_MESSAGE; }
+    catch { return false; }
+}
+
 export async function proxyFollow<T>(path: string, init: RequestInit, parse: (body: unknown) => T, check?: (value: T) => boolean,
     overrides: Record<number, string> = {}) {
     let response: Response;
     try { response = await backendFetch(path, init); }
     catch { return profileError(502, '팔로우 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.'); }
     if (!response.ok) {
+        if (await privateAccount(response)) return profileError(403, PRIVATE_ACCOUNT_MESSAGE);
         const message = overrides[response.status] ?? messages[response.status];
         return profileError(message ? response.status : 502, message ?? '팔로우 서버 요청을 완료하지 못했어요.');
     }
