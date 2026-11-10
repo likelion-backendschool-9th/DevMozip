@@ -2156,3 +2156,25 @@ KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px �
 추가 통합 불일치: develop의 신고 초기 상태 AWATING과 #131의 RECEIVED 참조가 달라 첫 backend 컴파일이 실패했다. ProjectReportManagementService·관리자 BFF 필터·관리자 UI·관련 테스트·project-reports 문서를 AWATING으로 통일했다. DB 변경은 하지 않는다.
 
 최종 검증: 수정 후 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 139개 파일·1,521개 테스트 통과. backend `./gradlew test`에 ProjectMemberReportIntegrationTest·ProjectMemberRemovalIntegrationTest·UserReportApiIntegrationTest·ProjectReportIntegrationTest·FeedPostgresIntegrationTest 필터를 적용해 격리 PostgreSQL에서 89개 통과(실패·오류·건너뜀 0). 첫 컴파일 실패는 위 상태 값 통일 후 해소했다. 전체 백엔드 테스트 및 브라우저 수동 검증은 미실행. 생성 next-env.d.ts 원복, git diff --check 통과.
+
+## 2026-11-10 모집 중 필터에서 마감 공고 제외
+
+사용자가 모집 중 조건에서도 모집 마감 공고가 나타난다고 제보했다. 실제 로컬 개발 API GET /api/v1/projects?status=RECRUITING&size=50에서 총6개 중 IDs5/6/8은 모집 마감일이 지난 recruitmentClosed=true 공고임을 재현했다. DB의 RECRUITING 상태는 유지되지만 화면은 날짜로 모집 마감이라 표시하는데, ProjectQueryRepository의 상태 필터에는 날짜 조건이 빠져 있었다.
+
+ProjectQueryRepository에서 RECRUITING 조건에만 recruitment_end>=KST today를 추가했다. 같은 WHERE로 결과·전체 수·페이지 수를 계산한다. 다른 상태와 필터 없는 전체 조회는 유지한다. 마감일 당일은 포함하고 다음 날 자정부터 제외한다. DB 상태·데이터·프론트 디자인은 변경하지 않았다. 기존 Mock 검색은 이미 projectStatus로 날짜를 반영하므로 수정하지 않았다.
+
+ProjectQueryIntegrationTest에 결과/집계/페이지·당일·KST 자정·다른 상태 보존 회귀를 추가했다. 독립 build/cache에서 ./gradlew test --tests '*ProjectQueryIntegrationTest'로14개 통과(실패/오류/스킵0). 프론트 Mock 검색/프로젝트 테스트2개 파일38개 통과, 별도 .next 볼륨 npm run build/TypeScript 성공. 백엔드 전체 테스트는 이 작은 조회 변경에서 반복하지 않았다.
+
+기존 보호 설정으로 로컬 Compose backend만 재시작 후 같은 실제 API의 모집 중 결과가3개, 마감 결과0개임을 확인했다. Chromium 1440px에서 실제 BFF/개발 DB로 /projects?status=RECRUITING을 열어 결과3개(40/41/7)·마감 배지0·pageerror0을 확인했다. 응답 대역이나 실제 상세 조회/지원 쓰기는 사용하지 않았다. 근거 docs/artifacts/project-recruiting-filter/browser-report.json. 변경 파일은 위 Repository·테스트·문서/보고서이며 로컬 fix/project-recruiting-filter 브랜치에 보존했다. 커밋·푸시·운영 배포는 하지 않았다.
+
+## 2026-11-10 개발자 탐색에서 프로젝트 선택 제거
+
+사용자 요청으로 /explore를 개발자 검색 전용으로 정리했다. SearchBar에서 대상 select와 target 상태를 제거하고 검색어 입력 너비를 확장했다. page/layout·SearchFilters에서 프로젝트 결과/실제 프로젝트 API 대체 화면/모집 조건 분기를 제거하고 개발자용 제목·필터·결과만 표시한다. lib/search/searchService.ts의 developerSearchParams를 통해 이전 type=projects URL도 개발자로 해석하고 검색 제출/조건 변경 시 프로젝트 전용 role/field/status를 제거한다. 공유 검색 서비스의 기존 프로젝트 유틸과 /projects의 검색·실제 API는 보존했다.
+
+기존 SearchPage 테스트를 전용 정책으로 갱신했다. 프론트 전체126개 파일1,427개 통과, 격리 .next 볼륨에서 npm run build/TypeScript 성공. Chromium1440px Mock 화면에서 이전 프로젝트 URL의 개발자 결과·대상 선택0·검색 제출 type=developers·프로젝트 조건 제거·페이지 오류/가로 넘침0을 확인했다. 보고서 docs/artifacts/developer-only-search/browser-report.json. 실제 개발자 검색 API 신규 구현이나 DB 변경은 하지 않았고 운영 배포·커밋·푸시는 하지 않았다. 앞선 모집 중 필터 백엔드 수정은 같은 로컬 브랜치에 보존했다.
+
+## 2026-11-10 보관한 검색 수정 최신 develop에 복원
+
+stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-recruiting 브랜치에 적용했다. SearchPage·SearchFilters·진행 문서 충돌을 해결했다. develop의 실제 API 검색·팔로우 상태·페이지 이동·서버 선택지는 유지하면서 /explore는 개발자 검색 전용으로 제한한다. 예전 type=projects URL도 개발자 조회로 정규화한다. 모집 중 필터의 모집 종료일 검사와 경계 테스트도 복원했다. 커밋·푸시는 하지 않는다.
+
+검증 결과: 최초 실행 중인 개발 컨테이너에서 NODE_ENV=development 빌드가 prerender 오류로 실패했고, 동일 환경의 테스트는 이미지 BACKEND_URL 기대값 불일치 및 프로세스 종료137로 완료되지 않았다. 환경을 분리한 컨테이너(NODE_ENV=production, 별도 .next)에서 npm run build 성공·전체 frontend 139개 파일/1,522개 통과. 마지막 검색어 변경 시 page 초기화 보존 후 빌드 재통과·검색 관련 25개 재통과. backend ./gradlew test --tests '*ProjectQueryIntegrationTest' 14개 통과(실패/건너뜀0, 격리 PostgreSQL). /explore?type=projects HTTP200 및 backend health UP 확인. 브라우저 수동 조작은 미실행. stash는 보존하고 생성 next-env.d.ts는 원복했다.

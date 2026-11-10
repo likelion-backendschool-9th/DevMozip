@@ -1,0 +1,11 @@
+{
+  "mode": "Mock developer UI with real local frontend; no DB writes",
+  "viewport": 1440,
+  "targetSelects": 0,
+  "legacyProjectUrlShowsDevelopers": true,
+  "submitType": "developers",
+  "query": "김하늘",
+  "projectOnlyFiltersRemoved": true,
+  "overflow": false,
+  "pageErrors": []
+}

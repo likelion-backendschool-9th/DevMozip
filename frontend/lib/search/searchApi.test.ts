@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     apiFilterChoices, applyFollowChange, explorePage, pageAfterEmpty, parseApiSearch, parseSearchResult, searchApiQuery, searchProxyQuery,
 } from './searchApi';
-import { changeSearchTarget, mockFilterChoices, parseSearch } from './searchService';
+import { changeSearchTarget, developerSearchParams, mockFilterChoices, parseSearch } from './searchService';
 import { GET } from '@/app/api/search/route';
 import { backendFetch } from '@/lib/auth/backend';
 import type { DeveloperSearchItem, SearchPage } from '@/types/searchApi';
@@ -170,5 +170,20 @@ describe('검색 BFF (/api/search)', () => {
         expect((await request('type=projects&page=0&size=20')).status).toBe(502);
         vi.mocked(backendFetch).mockRejectedValue(new Error('down'));
         expect((await request('type=projects')).status).toBe(502);
+    });
+});
+
+
+describe('개발자 탐색 전용 URL', () => {
+    it('이전 프로젝트 조건을 제거하고 API에서도 개발자만 조회한다', () => {
+        const original = url('type=projects&q=Java&role=BACKEND&field=웹&status=RECRUITING&stack=Java&interest=핀테크&tab=following&page=2');
+        const normalized = developerSearchParams(original);
+        const query = searchApiQuery(parseApiSearch(normalized), explorePage(normalized));
+        expect(query.get('type')).toBe('developers');
+        expect(query.get('q')).toBe('Java');
+        expect(query.get('page')).toBe('2');
+        expect(query.get('following')).toBe('true');
+        for (const key of ['role', 'field', 'status']) expect(normalized.has(key)).toBe(false);
+        expect(original.get('type')).toBe('projects');
     });
 });
