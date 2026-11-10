@@ -38,18 +38,19 @@ public class AiRecommendationScoringServiceImpl implements AiRecommendationScori
 			.filter(role -> AiCandidateMatchingUtils.hasRole(candidate.jobCategories(), role.name()))
 			.mapToInt(role -> role.count()).sum();
 		items.add(item("role", weights.roleWeight(), roleRequested, ratio(matchedPeople, requestedPeople)));
-		if (matchedPeople > 0) reasons.add("모집 직군과 일치합니다.");
 		Set<String> requested = AiCandidateMatchingUtils.values(conditions.stacks(), true);
 		Set<String> matching = intersection(requested, AiCandidateMatchingUtils.values(candidate.skills(), true));
 		items.add(item("skills", weights.skillWeight(), !requested.isEmpty(), ratio(matching.size(), requested.size())));
-		if (!matching.isEmpty()) reasons.add("요청 기술 " + requested.size() + "개 중 " + matching.size() + "개가 일치합니다.");
+		if (!matching.isEmpty()) {
+			var labels = candidate.skills().stream().filter(skill -> !java.util.Collections.disjoint(
+				AiCandidateMatchingUtils.values(java.util.Collections.singletonList(skill), true), matching)).map(String::strip).distinct().toList();
+			reasons.add(String.join(", ", labels) + " 기술 스택을 활용할 수 있습니다.");
+		}
 		items.add(new ScoreItem("experience", Evaluation.UNASSESSED, weights.experienceWeight(), BigDecimal.ZERO));
 		BigDecimal trustRatio = candidate.trustScore() == null ? BigDecimal.ZERO : candidate.trustScore()
 			.subtract(AiScoringProperties.BASE_TEMPERATURE)
 			.divide(weights.trustCeiling().subtract(AiScoringProperties.BASE_TEMPERATURE), 12, RoundingMode.HALF_UP);
 		items.add(item("trust", weights.trustWeight(), true, trustRatio));
-		if (trustRatio.signum() > 0) reasons.add("신뢰 온도가 기본 36.5도보다 높습니다.");
-		if (candidate.trustScore() == null) reasons.add("신뢰 온도 정보가 없어 해당 항목은 0점입니다.");
 		Set<String> interests = intersection(AiCandidateMatchingUtils.values(conditions.interests(), false),
 			AiCandidateMatchingUtils.values(candidate.interests(), false));
 		if (!interests.isEmpty()) reasons.add("관심 분야가 " + interests.size() + "개 일치합니다(가산점 없음).");

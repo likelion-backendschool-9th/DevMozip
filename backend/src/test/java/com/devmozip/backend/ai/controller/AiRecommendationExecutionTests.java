@@ -170,6 +170,57 @@ class AiRecommendationExecutionTests {
 		verify(engine).recommend(any(), eq("교육 플랫폼"));
 	}
 
+	@Test void cumulativeUserMessagesUseBoundaryAndReplayNeverIncludesLaterMessages() throws Exception {
+		var own = conversations.findById(conversationId).orElseThrow();
+		messages.saveAndFlush(new AiMessage(own, "교육 프로젝트", LocalDateTime.now()));
+		long boundary = messages.saveAndFlush(new AiMessage(own, "Java로 만들어요", LocalDateTime.now())).getId();
+		String body = "{\"messageId\":" + boundary + "}";
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "cumulative").contentType("application/json").content(body))
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.messageId").value(boundary));
+		verify(engine).recommend(any(), eq("교육 프로젝트\n\nJava로 만들어요"));
+		messages.saveAndFlush(new AiMessage(own, "나중에 추가한 메시지", LocalDateTime.now()));
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "cumulative").contentType("application/json").content(body))
+			.andExpect(status().isOk());
+		verify(engine, times(1)).recommend(any(), any());
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "same-boundary").contentType("application/json").content(body))
+			.andExpect(status().isCreated());
+		verify(engine, times(2)).recommend(any(), eq("교육 프로젝트\n\nJava로 만들어요"));
+	}
+
+	@Test void publicDeveloperMetadataUsesRealMemberAndUnavailableProfilesAreHidden() throws Exception {
+		long id = execute("metadata");
+		mvc.perform(auth(get(path()))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer.nickname").value("developer"))
+			.andExpect(jsonPath("$.developers[0].developer.tag").value("developer"))
+			.andExpect(jsonPath("$.developers[0].developer.jobCategories[0]").value("백엔드 개발자"))
+			.andExpect(jsonPath("$.developers[0].developer.skills[0]").value("Java"))
+			.andExpect(jsonPath("$.developers[0].developer.career").value("3년 차"))
+			.andExpect(jsonPath("$.developers[0].developer.trustScore").value(50.0))
+			.andExpect(jsonPath("$.developers[0].developer.collaborationStatus").value("AVAILABLE"))
+			.andExpect(jsonPath("$.developers[0].developer.email").doesNotExist());
+		jdbc.update("UPDATE users SET nickname='새 닉네임', collaboration_status='BUSY', career='5년 차' WHERE id=?", developerId);
+		mvc.perform(auth(get(path()).param("requestId", String.valueOf(id)))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer.nickname").value("새 닉네임"))
+			.andExpect(jsonPath("$.developers[0].developer.career").value("5년 차"))
+			.andExpect(jsonPath("$.developers[0].developer.collaborationStatus").value("BUSY"))
+			.andExpect(jsonPath("$.developers[0].matchScore").value(100.0));
+		jdbc.update("UPDATE users SET status='WARNED' WHERE id=?", developerId);
+		mvc.perform(auth(get(path()))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.developers[0].developer").isEmpty())
+			.andExpect(jsonPath("$.developers[0].matchScore").value(100.0));
+	}
+
+	@Test void oversizedExistingHistoryStaysReadableButCannotStartNewRecommendation() throws Exception {
+		var own = conversations.findById(conversationId).orElseThrow();
+		for (int i = 0; i < 7; i++) messages.saveAndFlush(new AiMessage(own, "가".repeat(1500), LocalDateTime.now()));
+		mvc.perform(auth(get("/api/v1/ai/conversations/" + conversationId))).andExpect(status().isOk())
+			.andExpect(jsonPath("$.messages.length()").value(7));
+		mvc.perform(auth(post(path())).header("Idempotency-Key", "too-long")).andExpect(status().isBadRequest());
+		assertEquals(0, count("ai_recommendation_requests"));
+		assertEquals(7, count("ai_messages"));
+		verifyNoInteractions(engine);
+	}
+
 	@Test void engineFailureIsDurablyRecordedAndSameKeyDoesNotRetry() throws Exception {
 		doThrow(new IllegalStateException("test failure")).when(engine).recommend(any(), any());
 		String body = mvc.perform(auth(post(path())).header("Idempotency-Key", "fail")).andExpect(status().isInternalServerError())

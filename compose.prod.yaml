@@ -49,6 +49,13 @@ x-backend: &backend
     MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     MAIL_FROM: ${MAIL_FROM:-}
     DOMAINNAME: ${DOMAINNAME:-}
+
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+    GEMINI_CONNECT_TIMEOUT: ${GEMINI_CONNECT_TIMEOUT:-3s}
+    GEMINI_TIMEOUT: ${GEMINI_TIMEOUT:-25s}
+    GEMINI_MAX_OUTPUT_TOKENS: ${GEMINI_MAX_OUTPUT_TOKENS:-4096}
+
   depends_on:
     redis:
       condition: service_healthy

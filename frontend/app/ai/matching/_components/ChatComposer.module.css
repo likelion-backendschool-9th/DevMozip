@@ -1,0 +1,9 @@
+.container {padding:12px 28px 15px;flex-shrink:0;background:white;border-top:1px solid #f0f0f6;}
+.composer {border:1px solid #dfdce9;border-radius:15px;padding:13px 14px 10px;background:#fff;box-shadow:0 3px 12px #25203905;}
+.composer:focus-within {border-color:#a58adf;box-shadow:0 0 0 3px #7955df08;}
+.composer textarea {display:block;width:100%;min-height:28px;max-height:144px;resize:none;border:0;outline:none;font:inherit;font-size:13px;line-height:1.8;color:var(--text);background:transparent;overflow-y:auto;}
+.composer textarea::placeholder {color:#81758e;}
+.bottom {display:flex;align-items:center;justify-content:space-between;margin-top:5px;gap:8px;}.bottom span {display:flex;align-items:center;gap:5px;font-size:11px;color:#81758e;}
+.bottom button {border:0;border-radius:9px;background:var(--purple);color:white;width:33px;height:33px;display:grid;place-items:center;cursor:pointer;flex-shrink:0;}.bottom button:disabled {background:#e9e6f2;color:#b6a9d4;cursor:default;}
+.container>p {font-size:11px;color:#81758e;text-align:center;margin:9px 0 0;}
+@media(max-width:700px){.container{padding:10px 12px;}.bottom span{font-size:10px;}.container>p{font-size:10px;}}
