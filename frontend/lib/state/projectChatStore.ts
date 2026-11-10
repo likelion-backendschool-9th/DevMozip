@@ -231,6 +231,10 @@ function handleSignal(signal: MessengerSignal) {
         } else if (isOpen) openChat.poke({ evenIfHidden: true });
         // 내 다른 탭에서 읽었으면 안 읽은 수가 바뀐다. 다른 팀원의 읽음이면 바뀌지 않으므로 다시 읽지 않는다.
         if (!reader || reader.me) overview.poke({ evenIfHidden: true });
+    } else if (signal.type === 'project.members.changed') {
+        if(signal.status==='PASSED')notify('강퇴 투표가 가결되어 프로젝트 참여 및 채팅 멤버가 변경됐어요.');
+        overview.poke({ evenIfHidden: true });
+        if (isOpen) openChat.poke({ evenIfHidden: true });
     } else if (isOpen) {
         const name = typistName(signal.nickname);
         clearTimeout(typingTimers.get(name));

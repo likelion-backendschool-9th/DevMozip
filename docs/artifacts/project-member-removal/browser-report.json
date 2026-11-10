@@ -1,0 +1,33 @@
+{
+  "mode": "UI response stubs; no real login or shared DB mutation",
+  "viewport": 1440,
+  "emptyPanelHidden": true,
+  "hostTargetHidden": true,
+  "createVote": true,
+  "voteAndDuplicateDisabled": true,
+  "inChat": true,
+  "ancestorClasses": [
+    "ChatWindow-module__oe0tFW__scope message-history",
+    "ChatWindow-module__oe0tFW__scope chat-window",
+    "MessengerLayout-module__4X4jvW__scope conversation-pane",
+    "MessengerLayout-module__4X4jvW__scope messenger-layout",
+    "MessengerLayout-module__4X4jvW__scope container messenger-page project-chat-page"
+  ],
+  "overflow": false,
+  "calls": [
+    {
+      "path": "/api/projects/5/members",
+      "body": {
+        "projectMemberId": 103,
+        "reason": "반복적인 욕설 또는 비방"
+      }
+    },
+    {
+      "path": "/api/projects/5/kick-votes/8/ballots",
+      "body": {
+        "agree": true
+      }
+    }
+  ],
+  "pageErrors": []
+}

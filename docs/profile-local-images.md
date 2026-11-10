@@ -92,3 +92,7 @@ PNG/JPEG/WebP 실제 디코딩, 위장/손상/크기/화소/경로 검증,
 참고: https://github.com/haraldk/TwelveMonkeys — ImageIO WebP 읽기 및 플러그인 사용법.
 
 최종 검증: 백엔드 전체 118개 테스트·빌드 통과, 프론트 npm run build 통과.
+
+## Docker 출처 검사 보정 (2026-11-10)
+
+이미지 PUT/DELETE와 프로필 쓰기 공통 profileRequestGuard는 브라우저 Origin을 요청의 Host 및 프로토콜과 비교한다. Next 내부 바인딩 주소(0.0.0.0:3000)를 브라우저 주소로 오인하지 않도록 hostname/port를 함께 교체하며, x-forwarded-host만으로 검증을 우회하지 않는다. 다른 사이트 요청 차단과 기존 이미지 형식·크기·인증 검증은 유지한다.

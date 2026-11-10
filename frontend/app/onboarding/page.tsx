@@ -56,7 +56,7 @@ function OnboardingForm({ user }: { user: AuthUser }) {
         }
         if (act({ type: 'onboarding', input: draft }) && completeOnboarding(draft)) {
             notify('온보딩을 완료했습니다. 나의 프로필을 확인해 보세요.');
-            navigate(`/users/${user.id}`, { replace: true });
+            navigate('/profile/me', { replace: true });
         }
     };
     return (
@@ -327,7 +327,7 @@ export default function OnboardingPage() {
                 <section className={[styles.scope, 'planned-card'].join(' ')}>
                     <h1>이미 온보딩을 완료했어요.</h1>
                     <p>프로필에서 내 정보를 확인하거나 수정할 수 있습니다.</p>
-                    <Link className={[styles.scope, 'button'].join(' ')} href={`/users/${user.id}`}>
+                    <Link className={[styles.scope, 'button'].join(' ')} href="/profile/me">
                         내 프로필로 이동
                     </Link>
                 </section>
