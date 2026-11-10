@@ -230,3 +230,7 @@
 | storage | `FeedImageStorage` |
 | config | `FeedConfiguration`(`feedClock`), `SecurityConfig`의 공개 GET |
 | frontend | BFF `app/api/feeds/**`·`app/api/comments/**`, 이미지 `app/images/[filename]/route.ts`, `lib/social/feedApi.ts`·`feedProxy.ts`, `types/feedApi.ts`, 화면 `app/feeds/**` |
+
+## 메인 미리보기 (2026-11-11)
+
+메인도 위 목록 API와 동일한 `FeedPost` 응답을 사용한다. 새 `/preview` 엔드포인트는 추가하지 않았다. 추천은 선택 카테고리와 동일 seed로 `GET /api/v1/feeds/recommands`를 `sort=recommended/popular/views/latest`, `page=0`, `size=12`로 각각 요청하고, 정렬별 상위 글을 중복 없이 번갈아 최대 12개 합친다. 팔로잉은 로그인한 경우에만 `GET /api/v1/feeds/following?sort=latest&page=0&size=12`와 선택 카테고리를 사용한다. 서버의 열람·인증·팔로우 조건은 기존과 같다. 빈 팔로잉의 팔로우 0명 여부만 기존 본인 프로필·팔로우 상태 API로 확인한다. 동작 정책은 [피드 계획의 메인 연결 기록](feed-plan.md)을 따른다.

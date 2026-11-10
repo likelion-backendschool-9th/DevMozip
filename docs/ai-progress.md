@@ -1,5 +1,15 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-11 메인 피드 연결 (`feat/main-feeds`)
+
+- 요청 범위: 메인 하단 추천·팔로잉을 기존 피드 API에 연결하고 카테고리별 정렬 상위 글 최대 12개, PC 4열 가로 탐색, 선택 조건을 유지하는 더보기, 비로그인·팔로우 없음 안내를 제공한다. 사용자가 브랜치를 지정했고 시작 시 이미 `feat/main-feeds`여서 해당 브랜치에서 작업했다. 백엔드·DDL·Member/Portfolio·SNS 목록 자체의 추천 정책은 변경하지 않았다.
+- 변경 파일: `frontend/app/_components/FeedPreview.tsx`, `FeedPreview.module.css`, 신규 `FeedPreview.test.tsx`, 신규 `frontend/lib/social/homeFeedService.ts`·`homeFeedService.test.ts`, `frontend/tests/screens/FeedPage.test.tsx`, `docs/feed-plan.md`, `docs/feed-api.md`, 이 문서.
+- 완료: 로컬 게시글/팔로우/반응 계산 제거, 기존 `FeedPost` 기반 카드와 실제 작성자 태그/게시글 숫자 ID 연결. 선택 카테고리마다 추천/인기/조회/최신 API 상위 글을 순환 선택해 중복 없이 최대 12개 표시. 팔로잉은 로그인한 사용자 전용 서버 목록을 사용하고 비로그인은 로그인 링크 안내. 빈 목록이면 기존 본인 프로필·팔로우 상태 API로 팔로우 0명을 구분한다. 태그 없는 기존 계정은 수 확인이 불가능하므로 게시글 부재만 안내한다. PC 4열·모바일 가로 탐색·끝 더보기·탭/카테고리 유지. 로딩·오류/재시도·계정/필터 변경 시 오래된 글 숨김·취소 응답 무시 포함.
+- 검증: `frontend`에서 `npm test -- app/_components/FeedPreview.test.tsx lib/social/homeFeedService.test.ts tests/screens/FeedPage.test.tsx lib/social/feedApi.test.ts lib/profiles/followApi.test.ts tests/screens/FollowingMatching.test.tsx` 실행, **6개 파일 96개 테스트 통과**. API 응답 대역과 React 상태/effect 테스트 harness를 사용하며 실제 브라우저·DB 검증은 아니다. 정렬 우선/중복/12개 제한·5개 카테고리/seed·비로그인 무요청·팔로잉/실제 수 조회·0명/글 없음 구분·오류·취소·로그아웃 즉시 이전 글 숨김·숫자 ID/반응/조건 링크·기존 메인 기능을 검사했다. 최초 피드 화면 테스트는 메인에 Mock 글이 표시돼야 한다는 이전 기대 1건이 실패해 새 API 전환 기준(프로필 로컬 글은 메인에 섞이지 않음)으로 갱신한 뒤 통과했다.
+- 빌드·정적 검사: `npm run build` 성공(TypeScript 검사·84개 정적 페이지 생성), `npm run typecheck` 성공(새 테스트 추가 후에도 재실행 성공). `npx eslint app/_components/FeedPreview.tsx lib/social/homeFeedService.ts lib/social/homeFeedService.test.ts tests/screens/FeedPage.test.tsx`는 오류 0·경고 1(`<img>`의 Next Image 권고)·종료 0. `npx eslint app/_components/FeedPreview.test.tsx` 오류/경고 0·종료 0. `git diff --check` 성공. 빌드가 자동 변경한 `frontend/next-env.d.ts`의 import 경로는 원래 값으로 복원해 변경 대상에서 제외한다.
+- 미검증·다음 작업: 실제 브라우저에서 PC/모바일 스크롤·4열 배치·로그인 왕복 및 실제 실행 서버/DB의 게시글·팔로우 연결 대조는 수행하지 않았다. 이번 변경은 프론트엔드만이므로 `./gradlew test`는 실행하지 않았다. 추천 조회는 카테고리당 기존 API 4회이며 별도 서버 집계 API는 만들지 않았다. 다음 기능 단계는 자동 시작하지 않는다. 커밋·푸시·병합·배포는 수행하지 않았다.
+
+
 ## 2026-11-10 회원가입 시 이메일 앞부분을 사용자 태그로 저장 (`develop`)
 
 - 요청 범위: 회원가입 때 가입 이메일의 @ 왼쪽 값을 `users.tag`에 저장한다. 확인 결과 기존 가입(이메일·카카오)은 tag를 넣지 않아 NULL이었다.
