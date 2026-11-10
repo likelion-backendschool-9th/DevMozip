@@ -38,6 +38,20 @@ if [ ! -e "$SITE" ]; then
 server {
     listen 80;
     server_name devmozip.newlecture.com;
+    # 메신저 WebSocket. certbot 이 이 블록을 443 으로 옮길 때 함께 옮겨진다. 타임아웃은 서버 ping(30초)보다 길게 둔다
+    location = /ws/messages {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_read_timeout 75s;
+        proxy_send_timeout 75s;
+    }
     location / {
         proxy_pass http://127.0.0.1:3002;
         proxy_http_version 1.1;

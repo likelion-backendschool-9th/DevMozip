@@ -13,7 +13,7 @@
 | `devmozip:profiles:v1` | `profiles`, `portfolios`, `posts`, `reposts`, `reviews`, `following`, `followPreferences`, `followNotices`, `social`, `socialNotices` | 프로필·SNS·검색·추천 |
 | `devmozip:account-area:v1` | 계정별 `kakaoLinked`(기존 저장값 호환용, 화면 표시에 쓰지 않음), `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
-| `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수 |
+| `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수. Mock 토글 OFF의 1:1·프로젝트 채팅·메신저 신고는 서버에 저장하고 이 키를 쓰지 않는다(알림 읽음은 계속 사용) |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |
 | `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 구독 권한·회원 제재·운영 화면 |
 
@@ -44,3 +44,18 @@
 ## Next.js에서 복원
 
 `app/ClientProviders.tsx`는 서버/첫 클라이언트 렌더에 동일한 로딩 상태를 표시하고 마운트 후 기존 Provider를 초기화합니다. 따라서 localStorage 데이터를 서버에서 읽거나 Provider의 초기 저장 효과로 덮어쓰지 않습니다. 일반 Next 링크/쿼리 이동 중에는 루트 Provider가 유지됩니다. 새로고침은 같은 키로 복원합니다. Next RSC/청크 요청은 프레임워크 내비게이션이며 실제 서비스 API 요청이 아닙니다.
+
+## MVP 완성 후 제거
+
+기본 MVP가 모두 완성되면 frontend의 목업 시연용 Service 계층을 모두 제거합니다. 업무 규칙은 백엔드 Service가 맡습니다. 그 전까지는 Mock 토글 ON 시연을 위해 유지합니다.
+
+- 대상은 브라우저 저장소(`readDemoStorage`, `writeDemoStorage`)에 업무 상태를 저장하는 서비스입니다.
+  - `lib/messaging/messagingService.ts`
+  - `lib/projects/projectService.ts`
+  - `lib/profiles/profileService.ts`
+  - `lib/account/accountAreaService.ts`
+  - `lib/administration/administrationService.ts`
+  - `lib/matching/homeService.ts`
+- 이 서비스들을 쓰는 `lib/state` 저장소, Mock 토글(`lib/demo/mockVisibility.ts`)과 위 표의 데모 저장소 키도 함께 정리합니다.
+- 서버와 연결된 화면이 아직 쓰는 검증·표시 함수가 이 파일들에 들어 있으면, 제거하기 전에 해당 도메인 모듈로 옮깁니다.
+- `messagingService.ts`는 1:1·프로젝트 채팅·사용자 신고의 Mock 외에 알림 화면(`/notifications`)과 헤더 알림 배지도 맡습니다. 알림 서버가 생긴 뒤에 제거합니다.

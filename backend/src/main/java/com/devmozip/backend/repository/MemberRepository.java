@@ -14,6 +14,12 @@ import com.devmozip.backend.entity.Member.MemberStatus;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByTagAndStatus(String tag, MemberStatus status);
+    // 사용자 신고 대상은 계정 상태와 무관하게 찾는다
+    Optional<Member> findByTag(String tag);
+    // 1:1 방 생성과 사용자 신고처럼 DB 제약 없이 중복을 막는 작업을 회원 단위로 한 줄로 세운다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Member m where m.id = :id")
+    Optional<Member> findForMessengerById(@Param("id") Long id);
     boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
     boolean existsByTagIgnoreCaseAndIdNot(String tag, Long id);
 
