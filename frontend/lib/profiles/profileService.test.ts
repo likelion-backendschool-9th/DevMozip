@@ -1,6 +1,6 @@
 import { describe,it,expect,vi,afterEach } from 'vitest';
 import { allProfiles, applyProfileAction, canViewPortfolioDetail, freshProfileState, keywordStats, parseProfileState, portfolioErrors, reviewEligibility, safeExternalUrl, starColor, temperature, saveProfiles, loadProfiles } from '@/lib/profiles/profileService';
-import { collaborations, emptyPortfolio } from '@/mocks/profile';
+import { collaborations, emptyPortfolio, reviewKeywords } from '@/mocks/profile';
 import { filterPosts, recommend } from '@/lib/matching/homeService';
 import { demoAccounts } from '@/mocks/auth';
 import { projects } from '@/mocks/home';
@@ -36,4 +36,10 @@ describe('프로필 저장과 이전 기능 유지',()=>{
  it('전체 변경 상태를 저장·로드하고 손상값은 초기화한다',()=>{const map=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>map.get(key)||null,setItem:(key:string,value:string)=>map.set(key,value)});const next=applyProfileAction(freshProfileState(),'demo-user',reviewAction(),now);expect(saveProfiles(next)).toBe(true);expect(loadProfiles()).toEqual(next);expect(parseProfileState('{broken')).toEqual(freshProfileState());expect(parseProfileState(JSON.stringify({...next,posts:[{id:'broken'}]}))).toEqual(freshProfileState());});
  it('리뷰 등 내역이 없는 신규 계정도 기본 36.5도를 가진다',()=>{expect(temperature(freshProfileState().reviews,'new-user')).toBe(36.5);});
  it('종료 프로젝트 추가 후에도 추천 동점에서는 최신 프로젝트를 먼저 보여준다',()=>{expect(recommend({description:'AI 학습 도우미를 만들어요',stacks:['Python'],interest:'AI'}).projects[0].id).toBe('learnloop');});
+});
+
+it('리뷰 키워드는 등록 목록에서 0~5개만 선택할 수 있다',()=>{
+ const initial=freshProfileState();
+ expect(applyProfileAction(initial,'demo-user',reviewAction({keywords:reviewKeywords.slice(0,5)}),now).reviews[0].keywords).toHaveLength(5);
+ expect(()=>applyProfileAction(initial,'demo-user',reviewAction({keywords:reviewKeywords.slice(0,6)}),now)).toThrow('키워드');
 });

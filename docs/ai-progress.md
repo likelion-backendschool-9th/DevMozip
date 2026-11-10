@@ -2,6 +2,15 @@
 
 기준일: 2026-11-06. 현재 작업 브랜치는 `feat/run-ai-recommendation`이다. 3단계 엔진을 포함한 상태에서 **4단계 백엔드 추천 실행·요청/결과 저장·조회**를 구현했다. 프론트 연결과 5~7단계는 시작하지 않는다. 아래 과거 기록은 당시 상태이며 현재 완료 범위·미완료·최종 검증은 이 절을 우선한다. 다른 도메인·팀원 기록은 보존한다.
 
+## 2026-11-09 PR #86 최신 develop 충돌 해결
+
+- 사용자 요청으로 기존 `feat/50-project-reviews` 작업 폴더에 최신 `origin/develop` a04608f를 `--no-commit`으로 병합했다. GitHub의 f47ca029 기준 15개 충돌과 달리 로컬 다중 기준 병합에서는 진행 문서 한 파일의 3구간만 충돌했다. 양쪽 기록을 모두 보존하고 자동 병합된 지원·리뷰·키워드·BFF 코드를 확인했다.
+- 통합 과정에서 AI 테스트 2곳이 과거 enum을 문자열 모집 직군 생성자에 전달해 컴파일 실패했다. `AiRecommendationExecutionTests`·`AiRecommendationDatabaseTest`의 테스트 입력만 BACKEND.name()으로 맞췄으며 AI/리뷰 업무 코드는 수정하지 않았다.
+- backend `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 644개 중 631개 통과·12개 스킵·기존 `KakaoClientTest.java:153` 로그 검증 1개 실패. 프로젝트 114개 중 103개 통과·11개 스킵·실패 없음, 리뷰 통합 10개 통과.
+- frontend `npm test -- --maxWorkers=1`: 72개 파일 795개 통과. `npm run build -- --webpack`: 빌드·TypeScript 성공. 충돌 표시와 unmerged 파일 없음, git diff --check 통과. develop 대비 YAML 추가 변경 없음.
+- 실제 팀 DB·실행 서버·브라우저는 변경/재검증하지 않았다. 기존 리뷰 30일·키워드 0~5개·토큰·재알림 정책과 미연동 사항을 유지한다. 현재는 로컬 충돌 해결만 완료했으며 병합 커밋·푸시·GitHub PR 수정은 하지 않았다. 따라서 원격 #86의 충돌 표시는 아직 남을 수 있다.
+
+
 ## 현재 AI 상태·검증 (2026-11-06)
 
 - 완료: 1단계 대화·USER 메시지·실사용자 인증/소유권, 2단계 조건 전체 교체·검증, 3단계 실제 DB 후보 기반 내부 추천 엔진을 유지했다. 4단계 POST/GET `/api/v1/ai/conversations/{id}/recommendations`, 요청 조건 스냅샷, PENDING/SUCCESS/FAILED, 결과 점수·기본 이유·대상별 순위 저장, 최신/특정 과거 요청 조회를 추가했다. GET은 재계산하지 않는다.
@@ -34,6 +43,38 @@
 - backend 신규 PostgreSQL 통합 테스트 23개 및 전체 222개 통과(스킵 0). frontend 48개 파일·525개 테스트와 빌드 성공. 상세 변경 파일·계약·최초 컴파일 실패 수정과 재실행 결과는 [프로젝트 수정·삭제](project-update-delete.md)를 참조한다.
 - #48 실제 지원자 직군 제한 연결, #47 기간/상태 API 연결, #45 병합 후 HTTP 비노출 검증 및 프론트 수정 페이지·API 연결은 후속 범위다. 실제 팀 DB에 접속하거나 커밋·푸시하지 않았다.
 
+
+## 2026-11-06 #50 PR 준비 및 develop 통합
+
+- 사용자 요청으로 feat/50-project-reviews의 리뷰/키워드 구현을 e879f41로 커밋했다. 최신 develop 0719b2f 프로필 변경을 통합하고 문서 충돌은 양쪽 기록을 보존했다. 선행 PR #81/#85는 미병합 상태다.
+- 통합 후 frontend 빌드/TypeScript와 704개 테스트 통과. backend 466개 중 454개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패. 프로젝트 110개 중 99개 통과·11개 스킵·실패 없음. 이번 PR 준비에서 실제 DB/브라우저 재검증·데이터 변경은 수행하지 않았다.
+
+## 2026-11-06 리뷰 변경 잔재 정리
+
+- DB 미연결 시 임시 ProjectReviewKeywords/ProjectReviewConfiguration을 제거하고 실제 Repository만 사용한다. 활성 키워드 중복 조회/검증·미사용 import·지원 목록의 오래된 501 안내를 정리했다. API·권한·트랜잭션·디자인·기존 DB는 유지한다.
+- 리뷰 문서를 최신 연결 구조 중심으로 정리하고 과거 JSONB 보존 안내를 제거했다. 다른 DB에 필요한 이관 SQL 및 Mock 기능은 보존한다.
+- 이번 backend ./gradlew test는 449개 중 438개 통과·11개 스킵·실패 0개다. 이전에 실패하던 카카오 테스트도 이번 실행에서는 통과했으며 카카오 코드를 변경하지 않았다. 프론트 빌드/674개 테스트 통과. 실제 DB를 사용하는 1440px 조회/권한 확인에 오류 없음. 변경 파일은 [리뷰 기록](project-reviews.md)에 기록했다. 커밋·푸시는 하지 않았다.
+
+## 2026-11-06 리뷰 테이블 중복 키워드 컬럼 제거
+
+- 최신 사용자 요청으로 reviews.selected_keywords를 실제 DB와 엔티티에서 제거했다. 선택 관계와 기존 리뷰 조회/집계는 review_keyword_selections 및 review_keywords 조인만 사용한다.
+- 기존 9개 리뷰의 12개 연결과 원본 배열 일치를 검증한 뒤 컬럼을 삭제했다. 신규 생성/샘플/기존 DB 이관 SQL과 청사진을 함께 정리했다. 원본 키워드명 변경은 기존 리뷰 표시에도 반영한다. 리뷰 통합 10개·frontend 빌드/674개 테스트 통과. backend 전체 449개 중 기존 카카오 로그 검증 1개 실패·11개 스킵. 실제 DB 리뷰 조회/권한 확인 완료. 상세 검증 결과는 [리뷰 기록](project-reviews.md)에 기록했다. 커밋·푸시는 하지 않았다.
+
+## 2026-11-06 리뷰 키워드 연결 테이블·최대 5개
+
+- 사용자 요청으로 review_keyword_selections 연결 테이블을 생성하고 FK/UNIQUE로 선택 관계를 관리한다. 리뷰마다 등록된 활성 긍정 키워드 0~5개만 허용하고 자유 입력은 제공하지 않는다. 기본 4개에 10개를 추가해 총 14개다.
+- 기존 리뷰 9건·선택값 12개를 내용 변경 없이 이관했다. 실제 PostgreSQL 리뷰 통합 테스트 9개 통과. backend 448개 중 기존 카카오 로그 검증 1개 실패·11개 스킵, 프로젝트 영역 실패 없음. 프론트 빌드·674개 테스트 통과. 실제 DB 14개 반환 및 1440px 응답 대역 UI에서 5개 선택/6번째 차단/해제 확인. 변경 파일·검증 한계는 [리뷰 기록](project-reviews.md)에 기록했다. 커밋·푸시는 하지 않았다.
+
+## 2026-11-06 리뷰 키워드 DB 원본 연결
+
+- 사용자 요청으로 ERD의 review_keywords 테이블을 팀 DB에 생성했다. 기본 키워드 4개를 넣고 기존 리뷰 9건을 보존했다. 활성 DB 목록을 조회·제출 검증에 연결하며 기존 이름 JSONB 저장과 Mock 디자인을 유지한다.
+- [청사진](project-backend-blueprint.md), [DDL](sql/review-keywords.sql), [리뷰 기록](project-reviews.md)을 갱신했다. 실제 Repository 기반 리뷰 통합 테스트 8개 통과. 이번 전체 backend 447개 중 435개 통과·11개 스킵·기존 카카오 로그 검증 1개 실패. frontend 빌드·672개 테스트 통과, 실제 API의 DB 키워드 4개 반환 확인. 상세 결과는 리뷰 기록에 기재한다. 커밋·푸시는 수행하지 않았다.
+
+## 2026-11-06 프로젝트 #50 종료 후 리뷰
+
+- 사용자 요청으로 #49 투표를 보류하고 #50을 구현했다. 기존 리뷰 Mock 디자인을 재사용하고 종료 시 요청 생성·30일 기한·전체 제출·링크 재발급·3일 재알림을 연결했다.
+- frontend 빌드와 672개 테스트 통과, 신규 리뷰 통합 7개 통과. backend 전체 446개 중 기존 카카오 로그 검증 1개 실패, 11개 스킵. 프로젝트 107개 중 96개 통과·11개 스킵. 1440px 실제 DB 리뷰 조회/권한 확인 완료.
+- 당시 키워드 원본 미연결은 후속 요청으로 해소했다. 알림 발송·프로필 신뢰 계산 연결은 남았다. 변경 파일·계약·검증 한계는 [프로젝트 리뷰](project-reviews.md)를 참조한다. 커밋·푸시·다음 단계는 진행하지 않았다.
 
 ## 2026-11-06 프로젝트 #48 지원·승인·팀원 관리
 
@@ -875,6 +916,11 @@ erDiagram
 - 검증: frontend npm test 651개·npm run build 통과. 로컬 HTTP: tag=NULL 본인 BFF 200, 최초 아이디 설정 PUT 200, 공개 BFF GET 200, 빈 아이디 거절 400, 재조회 값 유지 확인. 백엔드 변경이 없어 백엔드 테스트는 재실행하지 않았다. 실제 PostgreSQL·브라우저 수동 UI 검증은 미실행.
 - 아직 커밋·푸시는 하지 않았다. 프론트는 기존 5173 포트와 backend 18080 연결로 복구했다.
 
+## #50 PR #86 추가 develop 충돌 해결
+
+- PR 생성 도중 #63이 develop에 병합되어 f47ca02를 추가 반영했다. 충돌 파일을 비교하고 직접 입력 직군·프리미엄 생성 인가·상태/기간·실제 지원 직군 보호·확장 테스트 및 양쪽 문서 이력을 보존했다. 해결 직후 파일 트리는 이전 검증 상태와 동일하며 프론트 704개/빌드 결과를 유지한다. 추가 백엔드 검증 결과는 리뷰 문서/PR에 기록한다.
+
+- #50 PR #86 최종 확인: f47ca02 통합 후 backend 466개 중 455개 통과·11개 스킵·실패 없음. frontend 704개 및 빌드 성공. GitHub 충돌 없음 확인. develop에 병합하지 않았다.
 ## PR #87 최신 develop 병합 및 충돌 해결
 
 - 포트폴리오 PR #87 생성 후, 외부 링크 PR #66·프로젝트 수정/삭제 PR #63이 반영된 origin/develop f47ca02와 충돌을 확인했다. SecurityConfig의 추가 인증 경로, ApiProfileTabs의 외부 링크/포트폴리오 연결 안내, 화면 테스트, docs/ai-progress의 같은 위치 추가 기록이 원인이다.
@@ -888,3 +934,15 @@ erDiagram
 - 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
+
+### 2026-11-10 PR #86 리뷰 DTO·알림 이벤트 명명 정리
+
+- 사용자 요청 범위: 팀의 Request/Response record 규칙에 맞춰 리뷰 응답을 정리하고, 요청 DTO와 혼동되던 이벤트 이름을 변경했다. 작업 브랜치는 기존 `feat/50-project-reviews`이며 후속 사용자 요청에 따라 해당 변경만 커밋·푸시한다.
+- `ProjectReviewView`를 `ProjectReviewResponse`로 변경하고 링크·요청 현황·통계를 각각 ProjectReviewLinkResponse / ProjectReviewRequestStatusResponse / ProjectReviewSummaryResponse로 분리했다. 응답에 종속된 Target·Keyword·Received는 해당 응답 안의 record로 유지한다.
+- 재알림의 임의 Map 응답은 ProjectReviewReminderResponse record로 교체했다. 기존 JSON 필드 requested는 유지하여 클라이언트 계약을 변경하지 않았다. 입력 DTO SubmitProjectReviewsRequest는 그대로다.
+- `ProjectReviewRequested`는 `ProjectReviewNotificationEvent`로 변경하고 서비스 발행·통합 테스트·docs/project-reviews.md의 참조를 함께 수정했다. 최초 요청 및 재알림용 알림 연동 이벤트이며 HTTP 요청이나 실제 발송 완료를 뜻하지 않는다. 링크/이벤트 toString의 토큰 숨김 처리는 유지했다.
+- ProjectReviewController는 공통 @RequestMapping과 탭 들여쓰기로 정리했다. API 전체 경로·메서드·응답 필드·권한·트랜잭션 정책은 동일하다. DB·프론트 소스·실행 중 Docker 서버 변경 없음.
+- 관련 PostgreSQL 통합 테스트: `./backend/gradlew -p backend test --tests '*ProjectReviewIntegrationTest' --tests '*ProjectLifecycleIntegrationTest' --tests '*ProjectApplicationIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m` 성공(32개: 리뷰 10·상태 15·지원 7). 이후 컨트롤러 공통 경로 정리를 포함한 최종 전체 테스트를 실행한다.
+- 최종 `./backend/gradlew -p backend test --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx384m`: 644개 중 631 통과·1 실패·12 건너뜀. 실패는 기존 KakaoClientTest.java:153의 DEBUG HTTP 폼 로그 비밀값 포함 여부 검사이며 이번 범위에서 수정하지 않았다. 최종 리뷰/상태/지원 통합 테스트 32개는 모두 통과했다.
+- 프론트 `npx vitest run lib/projects/projectReviewRoutes.test.ts`: 4개 통과. DB와 실제 알림 서비스·브라우저 시연은 검증하지 않았다.
+- 프론트 `npm run build -- --webpack`: 성공(TypeScript 검사·57개 페이지 생성 포함). 자동 생성 next-env.d.ts는 원복했고 `git diff --check` 통과. 후속 사용자 요청에 따라 기존 PR #86 브랜치에 푸시한다. 실제 실행 서버 반영과 PR 병합은 수행하지 않는다.
