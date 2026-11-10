@@ -1,0 +1,30 @@
+{
+  "mock": {
+    "title": "20px",
+    "summary": "14px",
+    "bookmarkInCover": true,
+    "rightInset": 12,
+    "topInset": 12,
+    "href": "/projects/learnloop",
+    "detail": {
+      "rightInset": 0,
+      "aboveTitleBottom": true,
+      "controls": 3,
+      "noHorizontalOverflow": true
+    }
+  },
+  "api": {
+    "title": "20px",
+    "summary": "14px",
+    "bookmarkInCover": true,
+    "rightInset": 12,
+    "topInset": 12,
+    "href": "/projects/40",
+    "detail": {
+      "rightInset": 0,
+      "aboveTitleBottom": true,
+      "controls": 3,
+      "noHorizontalOverflow": true
+    }
+  }
+}

@@ -35,3 +35,11 @@ describe('마감 임박 취소와 부가 상태',()=>{
  it('LAN HTTP의 secure context가 없어도 Mock 레코드 ID를 생성한다',()=>{vi.stubGlobal('crypto',{});const result=applyRecruitmentAction(freshRecruitmentState(),apply,member,freshProfileState(),now);expect(result.state.applications[0].id).toMatch(/^mock-/);});
  it('손상된 저장값은 복원하고 저장 실패를 처리한다',()=>{expect(parseRecruitmentState('{broken')).toEqual(freshRecruitmentState());expect(parseRecruitmentState(JSON.stringify({...freshRecruitmentState(),applications:[{id:'broken'}]}))).toEqual(freshRecruitmentState());const memory=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(k:string)=>memory.get(k)||null,setItem:(k:string,v:string)=>memory.set(k,v)});const state=applyRecruitmentAction(freshRecruitmentState(),apply,member,freshProfileState(),now).state;expect(saveRecruitmentState(state)).toBe(true);expect(loadRecruitmentState()).toEqual(state);vi.stubGlobal('localStorage',{getItem:()=>{throw new Error();},setItem:()=>{throw new Error();}});expect(loadRecruitmentState()).toEqual(freshRecruitmentState());expect(saveRecruitmentState(state)).toBe(false);});
 });
+
+it('프로젝트 좋아요는 북마크와 분리해 계정별 저장·취소·복원한다',()=>{
+ let state=applyRecruitmentAction(freshRecruitmentState(),{type:'like',projectId:'pocket'},member,freshProfileState(),now).state;
+ expect(state.likes?.[member.id]).toEqual(['pocket']);expect(state.likes?.[premium.id]).toBeUndefined();expect(state.bookmarks[member.id]??[]).toEqual([]);
+ state=parseRecruitmentState(JSON.stringify(state));expect(state.likes?.[member.id]).toEqual(['pocket']);
+ state=applyRecruitmentAction(state,{type:'like',projectId:'pocket'},member,freshProfileState(),now).state;expect(state.likes?.[member.id]).toEqual([]);
+ expect(()=>applyRecruitmentAction(state,{type:'like',projectId:'pocket'},null,freshProfileState(),now)).toThrow('로그인');
+});

@@ -63,6 +63,8 @@ class AiPortfolioAnalysisIntegrationTest {
 	@BeforeEach void setup() {
 		reset(gemini);
 		jdbc.execute("CREATE TABLE IF NOT EXISTS portfolios(id BIGINT PRIMARY KEY,user_id BIGINT,title VARCHAR(255),summary TEXT,role VARCHAR(100),tech_stack JSONB,description TEXT,visibility VARCHAR(20),updated_at TIMESTAMP)");
+		// 이 클래스 전용 H2 fixture를 사용해 공통 구독 엔티티의 DDL과 분리한다.
+		jdbc.execute("DROP TABLE IF EXISTS subscriptions CASCADE");
 		jdbc.execute("CREATE TABLE IF NOT EXISTS subscriptions(id BIGINT PRIMARY KEY,user_id BIGINT,status VARCHAR(30),starts_at TIMESTAMP,current_period_end TIMESTAMP,ended_at TIMESTAMP)");
 		for (String table : List.of("portfolios", "subscriptions", "ai_recommendations", "ai_recommendation_requests", "ai_messages", "ai_conversations", "users")) jdbc.update("DELETE FROM " + table);
 		owner = member("premium", Member.MemberRole.PREMIUM).getId();

@@ -31,7 +31,10 @@ export const routes: RouteDefinition[] = [
  { path: '/messages/chats/:conversationId', title: '쪽지', description: '선택한 1:1 대화', stage: 4, group: '소통' },
  { path: '/messages/projects/:projectId', title: '프로젝트 채팅', description: '참여 상태와 연결되는 팀 단체 대화', stage: 4, group: '소통' },
  { path: '/notifications', title: '알림', description: '프로젝트와 개발자 활동 소식 확인', stage: 4, group: '소통' },
- { path: '/subscription', title: '프리미엄', description: '요금제 비교와 데모 구독 상태 관리', stage: 4, group: '운영' },
+ { path: '/subscription', title: '프리미엄', description: '프리미엄 상품 안내와 요금제 비교', stage: 4, group: '운영' },
+ { path: '/subscription/checkout', title: '프리미엄 결제', description: '결제 수단 선택과 정기결제 동의', stage: 4, group: '운영' },
+ { path: '/subscription/manage', title: '구독 관리', description: '구독 상태·다음 결제일 확인과 해지', stage: 4, group: '운영' },
+ { path: '/subscription/history', title: '결제 내역', description: '첫 결제와 매월 결제 내역', stage: 4, group: '운영' },
  { path: '/admin', title: '관리자', description: '회원, 프로젝트, 게시글과 신고 관리', stage: 4, group: '운영' },
  { path: '/admin/users', title: '관리자', description: '회원 조회와 제재', stage: 4, group: '운영' },
  { path: '/admin/reports', title: '관리자', description: '프로젝트 신고 처리', stage: 4, group: '운영' },
@@ -42,7 +45,8 @@ export const routes: RouteDefinition[] = [
  { path: '/admin/subscriptions', title: '관리자', description: '구독과 결제 현황', stage: 4, group: '운영' },
 ];
 // SNS는 /feeds만 강조한다(게시글 상세·작성 /feeds/... 은 기존 /posts/... 처럼 강조하지 않음)
-export const navigation = [{ label: '프로젝트 모집', to: '/projects', end: false }, { label: 'SNS', to: '/feeds', end: true }, { label: '개발자 탐색', to: '/explore?type=developers', end: false }];
+// 프리미엄은 결제·구독 관리·결제 내역(/subscription/...)에서도 강조한다
+export const navigation = [{ label: '프로젝트 모집', to: '/projects', end: false }, { label: 'SNS', to: '/feeds', end: true }, { label: '개발자 탐색', to: '/explore?type=developers', end: false }, { label: '프리미엄', to: '/subscription', end: false }];
 export const roadmap = [
  { number: '01', title: '기반을 단단하게', label: '현재 단계', text: '프로젝트 구조 · 라우팅 · 디자인 시스템' },
  { number: '02', title: '개발자를 만나는 화면', label: '다음 단계', text: '메인 · 계정 · 검색 · 프로필 · 프로젝트' },

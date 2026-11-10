@@ -28,13 +28,14 @@ const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.
 export const authSources = [serverSessionStore, ...prototypeSources, administrationStore, accountAreaStore, profileNamesStore];
 
 /**
- * 백엔드가 확인한 로그인 계정에 브라우저 데모 상태(구독 데모·관리자 데모 제재)를 화면 표시용으로만 반영한다.
- * 관리자 역할은 데모 상태로 얻을 수 없고, 실제 인가는 proxy와 백엔드가 토큰 역할로 한다.
+ * 백엔드가 확인한 로그인 계정에 브라우저 데모 제재(관리자 데모 정지)를 화면 표시용으로만 반영한다.
+ * 역할(무료·프리미엄·관리자)은 서버 토큰의 역할만 쓴다. 구독은 실제 결제로 바뀌므로 저장된 데모 구독 전환은 적용하지 않는다
+ * (docs/premium-payment-plan.md 6절). 저장 형식은 기존 데이터를 읽을 수 있도록 유지한다.
  */
 const accountUser = derived(authSources, () => {
     const { identity } = serverSessionStore.get();
     const user = identity ? projectServerIdentity(identity) : null;
-    return user && !isSuspended(administrationStore.get(), user.id) ? effectiveUser(user, administrationStore.get()) : null;
+    return user && !isSuspended(administrationStore.get(), user.id) ? user : null;
 });
 
 /** 화면에 쓰는 로그인 사용자(프로필에서 바꾼 닉네임 반영) */

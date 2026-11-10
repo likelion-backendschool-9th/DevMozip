@@ -49,6 +49,19 @@ x-backend: &backend
     MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     MAIL_FROM: ${MAIL_FROM:-}
     DOMAINNAME: ${DOMAINNAME:-}
+    # 프리미엄 결제 (포트원). 값이 없으면 결제만 쓸 수 없고 서버는 정상 기동한다
+    PORTONE_STORE_ID: ${PORTONE_STORE_ID:-}
+    PORTONE_API_SECRET: ${PORTONE_API_SECRET:-}
+    TOSS_CHANNEL_KEY: ${TOSS_CHANNEL_KEY:-}
+    KAKAOPAY_CHANNEL_KEY: ${KAKAOPAY_CHANNEL_KEY:-}
+    PAYMENT_ENCRYPTION_KEY: ${PAYMENT_ENCRYPTION_KEY:-}
+    # Gemini API 키 및 그 외 설정
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+    GEMINI_CONNECT_TIMEOUT: ${GEMINI_CONNECT_TIMEOUT:-3s}
+    GEMINI_TIMEOUT: ${GEMINI_TIMEOUT:-25s}
+    GEMINI_MAX_OUTPUT_TOKENS: ${GEMINI_MAX_OUTPUT_TOKENS:-4096}
+
   depends_on:
     redis:
       condition: service_healthy
