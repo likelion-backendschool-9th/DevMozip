@@ -83,13 +83,52 @@ class ProjectApplicationIntegrationTest {
 		mvc.perform(get(base(id))).andExpect(status().isOk()).andExpect(jsonPath("$.rejectionReason").doesNotExist());
 	}
 	@Test void sevenDayBoundaryUsesSeoulCalendarAndRequiresAcknowledgementOnlyAfterConfirmation() throws Exception {
+		jdbc.update("UPDATE users SET trust_score=36.5");
 		long id=project(3),a=apply(id,202),b=apply(id,303);update(id,a,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());update(id,b,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());
 		date("2026-11-13T23:59:59");update(id,a,202,"{\"status\":\"CANCELLED\"}").andExpect(status().isOk());
+		assertScore(202,"36.5");
 		date("2026-11-14T00:00:00");update(id,b,303,"{\"status\":\"CANCELLED\"}").andExpect(status().isBadRequest());
+		assertScore(303,"36.5");
 		update(id,b,303,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andExpect(status().isOk());
+		assertScore(303,"36.0");
 		update(id,b,303,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andExpect(status().isConflict());
+		assertScore(303,"36.0");
 		assertEquals(1L,events.stream(com.devmozip.backend.event.ProjectApplicationChanged.class).filter(e->e.applicationId()==b&&e.penaltyRequired()).count());
 	}
+	private void assertScore(long user,String expected){assertEquals(0,new java.math.BigDecimal(expected).compareTo(jdbc.queryForObject("SELECT trust_score FROM users WHERE id=?",java.math.BigDecimal.class,user)));}
+	@Test void pendingLateCancellationHasNoPenalty() throws Exception {
+		long id=project(1),a=apply(id,202);jdbc.update("UPDATE users SET trust_score=36.5 WHERE id=202");date("2026-11-14T00:00:00");
+		update(id,a,202,"{\"status\":\"CANCELLED\"}").andExpect(status().isOk());assertScore(202,"36.5");
+	}
+	@org.junit.jupiter.params.ParameterizedTest
+	@org.junit.jupiter.params.provider.CsvSource(value={"NULL,36.0","0.2,0","0,0"},nullValues="NULL")
+	void latePenaltyUsesInitialScoreForNullAndNeverDropsBelowZero(String initial,String expected) throws Exception {
+		long id=project(1),a=apply(id,202);update(id,a,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());
+		jdbc.update("UPDATE users SET trust_score=? WHERE id=202",initial==null?null:new java.math.BigDecimal(initial));date("2026-11-14T00:00:00");
+		update(id,a,202,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andExpect(status().isOk());assertScore(202,expected);
+	}
+	@Test void penaltyFailureRollsBackCancellationAndMembership() throws Exception {
+		long id=project(1),a=apply(id,202);update(id,a,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());
+		jdbc.update("UPDATE users SET trust_score=36.5 WHERE id=202");date("2026-11-14T00:00:00");
+		jdbc.execute("ALTER TABLE users ADD CONSTRAINT test_penalty_failure CHECK (id<>202 OR trust_score>=36.5)");
+		try {
+			update(id,a,202,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andExpect(status().isInternalServerError());
+			assertScore(202,"36.5");assertEquals("APPROVED",jdbc.queryForObject("SELECT status FROM project_applications WHERE id=?",String.class,a));
+			assertEquals("ACTIVE",jdbc.queryForObject("SELECT status FROM project_members WHERE project_id=? AND user_id=202",String.class,id));
+		}finally{jdbc.execute("ALTER TABLE users DROP CONSTRAINT test_penalty_failure");}
+	}
+	@Test void concurrentCancellationsOnDifferentProjectsAccumulatePenalties() throws Exception {
+		long one=project(1),two=project(1),a=apply(one,202),b=apply(two,202);
+		update(one,a,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());update(two,b,101,"{\"status\":\"APPROVED\"}").andExpect(status().isOk());
+		jdbc.update("UPDATE users SET trust_score=36.5 WHERE id=202");date("2026-11-14T00:00:00");
+		var pool=Executors.newFixedThreadPool(2);var start=new CountDownLatch(1);
+		try {
+			var first=pool.submit(()->{start.await();return update(one,a,202,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andReturn().getResponse().getStatus();});
+			var second=pool.submit(()->{start.await();return update(two,b,202,"{\"status\":\"CANCELLED\",\"acknowledgePenalty\":true}").andReturn().getResponse().getStatus();});
+			start.countDown();assertEquals(200,first.get(20,TimeUnit.SECONDS));assertEquals(200,second.get(20,TimeUnit.SECONDS));assertScore(202,"35.5");
+		}finally{pool.shutdownNow();}
+	}
+
 	@Test void concurrentApprovalCannotExceedLastSeat() throws Exception {
 		long id=project(1),a=apply(id,202),b=apply(id,303);var executor=Executors.newFixedThreadPool(2);var start=new CountDownLatch(1);
 		try{List<Future<Integer>> results=new ArrayList<>();for(long app:new long[]{a,b})results.add(executor.submit(()->{start.await();return update(id,app,101,"{\"status\":\"APPROVED\"}").andReturn().getResponse().getStatus();}));start.countDown();var codes=results.stream().map(f->{try{return f.get(15,TimeUnit.SECONDS);}catch(Exception e){throw new RuntimeException(e);}}).sorted().toList();assertEquals(List.of(200,409),codes);assertEquals(1L,jdbc.queryForObject("SELECT count(*) FROM project_members WHERE project_id=? AND role='PARTICIPANT' AND status='ACTIVE'",Long.class,id));}finally{executor.shutdownNow();}
