@@ -34,7 +34,7 @@ public class AiCandidateRepository {
 	public List<SimilarProjectCandidate> projects(long afterId, int batchSize) {
 		return entityManager.createQuery("""
 			select new com.devmozip.backend.dto.ai.internal.SimilarProjectCandidate(
-				p.id, p.title, p.description, p.techStacks, p.interests, p.status, p.developmentStart, p.developmentEnd)
+				p.id, p.title, p.summary, p.description, p.techStacks, p.interests, p.status, p.developmentStart, p.developmentEnd)
 			from Project p where p.id > :afterId and p.isPublic = true and p.deletedAt is null
 			order by p.id asc
 			""", SimilarProjectCandidate.class)

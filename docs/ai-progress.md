@@ -1,5 +1,134 @@
 # AI 추천 개발 청사진·진행 현황
 
+## 2026-11-10 6B 불필요 코드·로그 점검
+
+- PR 정리 요청으로6B 및 함께 변경된 AI 제품 코드를 점검했다. `AiRecommendationServiceImpl`의 미사용 `Transactional` import1개를 제거했다. 정책·트랜잭션 경계·실제 동작은 변경하지 않았다.
+- 제품 코드에 console 출력·System.out·printStackTrace·디버그 로그는 없었다. `AiPortfolioAnalysisService`의 실패 상태 저장 불가 경고1개는 임대 회복/저장소 장애 진단에 필요해 유지했다. 인용·본문·API키·예외 스택을 이 경고에 기록하지 않는다. 테스트/문서/정상 예외 처리와 운영에 필요한 상태 정보는 삭제하지 않았다.
+- 검증: `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(4분34초), 총726개 중714개 통과·12개 스킵·실패/오류0. `frontend`의 `npm run build` 성공. 프론트 기능 코드는 바꾸지 않아 직전 통과한 프론트 테스트/ESLint는 반복 실행하지 않았다. 빌드 생성 next-env.d.ts 복원 및 `git diff --check` 통과. 로그 `/tmp/devmozip-6b-cleanup-{backend,build}.log`. 실제 Gemini·브라우저 수동 검증·새 기능 테스트는 추가하지 않았다. 기능 추가·커밋·푸시는 하지 않았다.
+
+## 2026-11-10 6B 종료 점검 — 현재 구현 기준
+
+이번 요청은 문서 정리만 수행했다. 브랜치는 `feat/gemini-portfolio-analysis`, 구현 커밋은 `0f4b415`다. 이후 무료 안내·단일 별 UI와 관련 문서는 아직 미커밋 상태이며 보존했다. 아래 날짜별 기록은 작업 당시 이력이고 이 절과 [6B 구현 계약](ai-portfolio-analysis.md)의 최신 정리를 우선한다. 7단계는 시작하지 않았다.
+
+### 완료 기능
+
+- 저장된 SUCCESS 개발자 추천 결과 소유자의 명시 요청으로만 포트폴리오 상세 분석을 생성한다. 현재 DB PREMIUM/ADMIN 역할과 현재 유효 구독을 모두 요구하며 무료·구독 없음·만료·정지·타인 결과·비공개 자료를 차단한다. 회원/포트폴리오/구독 도메인·공통 보안·DDL은 수정하지 않았다.
+- 요청 당시 조건·명시 요구와 현재 PUBLIC 제목/요약/역할/기술을 비교해 관련도 양수인 최대5개를 선택한 뒤 본문을 분석한다. 본문은 자료당6000자, 요구는8개씩 처리하며 정확 인용·허용 출처를 검증한다. 관련 자료가 없으면 개수를 채우거나 Gemini를 호출하지 않는다.
+- 기존 detailed_reason TEXT의 version1 JSON·DB CAS·180초 임대·자료 지문 캐시로 중복 생성과 오래된 저장을 제어한다. 생성/조회/저장 전후 권한·구독·자료를 다시 검사하고 실패/만료 임대는 명시 재시도로 회복한다. 개별 모델 최대60초·전체 예산180초·BFF190초다.
+- 인용을 개발자 이름·출처 포트폴리오 제목 링크로 묶어 읽기 쉬운 문장으로 표시한다. UNKNOWN/자료 부족/빈 평가 목록은 숨기며 PARTIAL·구현 중·명시 차이는 유지한다. 메타데이터 선택 이유는 API에 보존하고 화면은 선택 원칙을 접어서 표시한다.
+- 완료 후 정기 조회·포커스 복귀 조회는 제거했다. PENDING에서만3초 간격 GET을 최대60회 수행하고 완료/오류/취소 시 종료한다. 무료 버튼은 API 호출 없이 프리미엄 안내와 `/subscription` 링크를 표시한다. 프리미엄 화면에서403이면 유효 구독 확인 안내와 같은 링크를 제공한다. 최종 아이콘은 시안색 단일 별28px이며 두 별 시안은 대체됐다.
+- 함께 확정한6A 보완: 프로젝트 summary를 기존 공개 평가 자료에 추가했다. 새 추천은 기술·직군·검증된 세부 요구와 연결되지 않는 개발자, 분야·기술·텍스트·검증된 요구와 연결되지 않는 프로젝트를 제외한다. 고정 점수 하한 없이 부분/진행 중 근거는 유지하며 관련성 평가 후 상위10개를 정한다. 기본80%+요구20%·UNKNOWN0점 분모를 유지하고 저장된 과거 점수/순위/GET/replay는 재계산하지 않는다. 6B 본문은 가산점에 사용하지 않는다.
+- 합성 포트폴리오20개는 앞선 승인 작업에서 기존 데모6명에 연결했다(당시 기존3개 포함 총23개). 전용 seed/cleanup SQL을 제공하며 이번 점검에서는 DB 조회·삽입·정리 작업을 하지 않았다.
+
+### 변경 파일 목록
+
+`0f4b415`의36개 파일과 이후 프론트 변경을 확인했다. 경로가 긴 목록은 공통 루트를 생략해 표기한다.
+
+| 범위/루트 | 파일 |
+|---|---|
+| `backend/src/main/java/com/devmozip/backend/` | `controller/AiPortfolioAnalysisController.java`, `dto/ai/PortfolioAnalysisResponse.java`, `repository/AiPortfolioAnalysisRepository.java`, `service/AiPortfolioAnalysisService.java`, `service/AiPortfolioAnalysisModel.java`, `service/AiPortfolioSelection.java` |
+| 같은 백엔드 루트의6A 보완 | `dto/ai/internal/SimilarProjectCandidate.java`, `repository/AiCandidateRepository.java`, `service/impl/AiRecommendationServiceImpl.java` |
+| `backend/src/main/resources/ai/` | `portfolio-instruction.txt`, `portfolio-schema.json`, `requirements-instruction.txt` |
+| `backend/src/test/java/com/devmozip/backend/ai/` | `portfolio/AiPortfolioAnalysisIntegrationTest.java`, `engine/AiRecommendationServiceTest.java`, `engine/AiRecommendationDatabaseTest.java` |
+| `frontend/app/ai/matching/_components/` | `PortfolioAnalysis.tsx`, `PortfolioAnalysis.module.css`, `PortfolioAnalysisContent.tsx`, `RecommendationCards.tsx` |
+| `frontend/app/api/ai/recommendations/[id]/detailed-analysis/` | `route.ts`, `route.test.ts` |
+| `frontend/lib/matching/` | `portfolioAnalysis.ts`, `portfolioAnalysis.test.ts`, `portfolioPresentation.ts`, `portfolioPresentation.test.tsx`, `recommendationPresentation.ts`, `recommendationPresentation.test.ts` |
+| 프론트 기타 | `frontend/types/aiPortfolioAnalysis.ts`, `frontend/tests/screens/FollowingMatching.test.tsx`, `frontend/public/icons/premium-star.svg` |
+| `docs/` | `ai-matching.md`, `ai-api-spec.md`, `ai-progress.md`, `ai-step6-design.md`, `ai-portfolio-analysis.md`, `sql/ai-portfolio-demo.sql`, `sql/ai-portfolio-demo-cleanup.sql` |
+
+### 확인한 테스트 결과와 검증 범위
+
+이번 문서 작업에서는 테스트·빌드를 재실행하거나 새 테스트를 작성하지 않았다. 직전 실행 로그와 현재 남아 있는 JUnit XML을 직접 대조했다. 아래 숫자는 이번 문서 수정의 신규 실행 결과가 아니다. 문서 수정 후 `git diff --check`를 통과했고, 작업 시작/종료 시 백엔드·프론트 기능 파일845개의 SHA-256을 비교해 이번 작업의 기능 코드 변경0건을 확인했다. 기존 미커밋 UI/SVG는 그대로 보존했다.
+
+| 직전 검증 | 명령/산출물 | 결과 |
+|---|---|---|
+| 백엔드 전체 | `backend`: `DEBUG=false ./gradlew test --no-daemon`; `/tmp/devmozip-relevance-backend-final.log`, `backend/build/test-results/test/TEST-*.xml` | 총726개,714개 통과·12개 opt-in 스킵·실패/오류0,2분38초 |
+| 6B 격리 통합 | 위 실행의 `AiPortfolioAnalysisIntegrationTest` | 19개 통과. 실제 인증/HTTP/서비스/격리 H2 저장 + Gemini 테스트 대역 |
+| 추천 엔진 | 위 실행의 `AiRecommendationServiceTest` | 13개 통과. summary 입력·관련성 제외·2.50점 부분 기술 유지·기본0에서도 구현 중 근거 유지 |
+| 최종 프론트 전체 | `frontend`: `npm test -- --maxWorkers=2`; `/tmp/devmozip-premium-single-star-tests.log` | 79개 파일884개 통과 |
+| 최종 프론트 빌드 | `frontend`: `npm run build`; `/tmp/devmozip-premium-single-star-build.log` | 성공, TypeScript·정적57개 생성 |
+| 변경 TSX 검사 | `npx eslint app/ai/matching/_components/PortfolioAnalysis.tsx`; `/tmp/devmozip-premium-single-star-eslint.log` | 종료0, 오류 출력 없음 |
+
+6B19개는 무료/타인/구독없음/만료/미래시작/해지/기간내취소예정·권한회수·비공개/삭제·본문 변경 캐시 무효화·선택 최대5개·비공개 미전송·위조 인용/ID·429/502/503/504 실패와 재시도·동시 생성 소유자1개/202·임대 회복/오래된 CAS 거절·생성 중 만료/자료 변경·기존 점수/순위/요청 수 보존을 확인한다. 프론트는 완료 후 추가 요청 없음·PENDING 종료/취소·근거 문장/출처 링크·UNKNOWN 숨김·부분 구현 유지 등을 검증한다. 최근 무료 안내 클릭과 단일 별의 브라우저 수동/시각 검증을 이884개 테스트의 통과로 대신 주장하지 않는다.
+
+### 미해결 문제·한계
+
+- 실제 Gemini의 의미 판단·지연·할당량, 공유 PostgreSQL 신규 상세 API/다중 인스턴스 동시성, 실제 계정 브라우저 흐름과 모바일 시각 확인은 미검증이다. 격리 DB·테스트 대역 통과와 구분한다.
+- 사용자가 보고한 Java/Spring 추가 질문 뒤 짧은 “네”에 다시 확인하는 대화 문제는 이번6B에서 수정하지 않았다. 앞선 문서의 본문/summary 입력 차이는 해결했지만 대화 의도·확인 대기 처리와 다른 문제다. 별도 승인 후 재현/수정해야 한다.
+- 자료 선택은 어휘 포함 비교다. 동의어/메타데이터에 없는 본문 경험을 놓칠 수 있고 선택된 상위5개 중 빈 본문을 제거한 뒤6번째 자료로 다시 채우지는 않는다. 본문6000자 이후는 분석하지 않는다.
+- 완료된 상세를 열어 둔 화면의 구독 만료/비공개 전환을 백그라운드로 지우지 않는다. 다음 명시 요청·출처 열람에서는 서버가 현재 권한을 검사한다. UNKNOWN·NO_DATA를 화면에서 숨기므로 빈 결과의 사용자 안내는 향후 검토 대상이다.
+- `/subscription`은 현재 결제 없는 프로토타입이다. 링크 이동이나 로컬 프리미엄 표시는 실제 DB 구독을 활성화하지 않는다. `premium@devmozip.demo`의 구독0건은 앞선 확인 시점 기록이며 이번에 재조회하지 않았다. 실제 사용은 유효 DB 역할/구독을 갖춘 계정이 필요하다.
+- 프론트는403을 유효 구독 안내로 통합하므로 정지 계정·동일 출처 검증 실패 같은 다른403 사유를 세분화하지 않는다. 관련 기능 코드는 이번에 수정하지 않았다.
+- 6B 상세 임대 회복은 기존 기본 추천 요청의 장기 PENDING 자동 복구와 별개다. 기본 추천 자동 복구·월 사용량·포트폴리오 가산점/순위 변경·첨부/PDF/외부URL 분석은 미구현이다.
+
+### 다음 단계 주의사항
+
+- 7단계는 별도 구현 요청 후 시작한다. 무료5/프리미엄100·KST월·성공한 신규 추천만1회·조회/상세 미차감 정책을 유지하고 `GET /api/v1/ai/usage` JSON/초과 오류 계약·현재 실제 DDL·동시/멱등 차감/롤백·대화 삭제 후 사용량 보존을 먼저 확인한다. 구독/결제 도메인까지 자동 확장하지 않는다.
+- 모델·프롬프트·선택/분류 규칙 변경 시 `AiPortfolioAnalysisModel.version()`의 현재 고정 `portfolio-v1`을 함께 올려야 한다. 현재 지문은 모델명·고정 정책 버전과 자료를 반영하지만 프롬프트 파일 내용을 자동 해시하지 않는다.
+- 기존6A 점수/순위/요청 스냅샷과 공개 프로필의 최신 표시를 구분한다. 새 관련성 정책을 과거 결과에 소급 적용하지 않는다. 6B 본문 가산점은 별도 확정 없이 켜지 않는다.
+- 실사용 검증은 유효 구독 계정으로 성공/만료/무료 접근·캐시/비공개 전환·중복 요청·실제 Gemini 품질을 확인한다. 실제 Gemini 결과는 인용 출처와 의미 판단을 사람이 함께 점검한다. 합성 자료를 실제 경력 인증으로 제시하지 않는다.
+- AI 백엔드 변경 반영에는 백엔드 재시작/배포가 필요하고, 최신 단일 별/무료 안내만은 프론트 반영 대상이다. 운영 `npm run start`는 새 빌드로 재시작/배포하며 이번 문서 작업은 앱을 재시작하거나 커밋·푸시하지 않는다.
+
+## 2026-11-10 포트폴리오 추천 버튼 단일 별로 변경
+
+- 최신 사용자 요청으로 두 별 시안을 단일 브랜드 시안색 별로 교체하고 아이콘 영역을24px에서28px로 확대했다. SVG 내부 여백도 줄여 기존 큰 별보다 크게 보이도록 했다. 기존 버튼 문구·프리미엄 안내·분석 동작은 유지한다.
+- 변경: `frontend/public/icons/premium-star.svg`(앞선 미커밋 두 별 SVG 대체), `PortfolioAnalysis.tsx`, 같은 경로 CSS Module, 이 기록. 아래 두 별 적용 기록은 이전 시안이다.
+- 검증: `frontend`의 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 및 변경 TSX ESLint·`git diff --check` 통과. next-env.d.ts 복원. 백엔드 변경이 없어 Gradle 미실행이며 브라우저 수동 시각 검증은 미실행이다. 로그 `/tmp/devmozip-premium-single-star-{tests,build,eslint}.log`. 커밋·푸시는 하지 않았다.
+
+## 2026-11-10 포트폴리오 추천 버튼 브랜드 별 적용
+
+- 사용자 확정 시안에 따라 연결선 없이 독립된 큰 별·작은 별을 문구 왼쪽에 적용했다. 큰 별은 브랜드 시안색, 작은 별은 시안→연보라 그라데이션이며 장식 아이콘은 빈 alt로 처리한다. 래스터 시안 대신24px SVG로 표시해 확대 시 선명도를 유지한다. 버튼은 흰 배경·연보라 테두리·보라 문구를 유지한다.
+- 변경: `frontend/public/icons/premium-sparkles.svg`, `PortfolioAnalysis.tsx`, 같은 경로 CSS Module. 무료 안내·구독 페이지 링크·권한/분석 동작과 앞선 미커밋 변경을 보존한다. 백엔드·점수·DB 변경 없음.
+- 검증: `frontend`에서 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 성공(TypeScript·정적57개), 변경 TSX ESLint·`git diff --check` 통과. next-env.d.ts는 작업 전으로 복원했다. 백엔드 변경이 없어 Gradle 미실행, 브라우저 수동 시각 검증은 미실행이다. 로그 `/tmp/devmozip-premium-stars-{tests,build,eslint}.log`. 이번 디자인/앞선 무료 안내 변경은 아직 커밋·푸시하지 않았다.
+
+## 2026-11-10 6B 무료 사용자 안내 및 구독 페이지 연결
+
+- 사용자 요청으로 무료 사용자에게도 포트폴리오 추천 이유 버튼을 제공하고 클릭 시 API 호출 없이 프리미엄 전용 안내·`/subscription` 링크·닫기를 표시한다. 프리미엄 역할이지만403인 경우 유효 구독 안내와 같은 링크를 표시하며 그 외 오류는 기존 메시지를 유지한다.
+- 변경 파일: `frontend/app/ai/matching/_components/PortfolioAnalysis.tsx`, 같은 경로 CSS Module, AI 정책/API/6B 문서와 이 기록. 백엔드·구독 도메인·결제/사용량 변경 없음.
+- 검증: `frontend`에서 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 성공(TypeScript·정적57개), 변경 TSX ESLint 및 `git diff --check` 통과. 빌드 생성 next-env.d.ts는 변경 전으로 복원했다. 백엔드 변경이 없어 Gradle은 재실행하지 않았다. 브라우저 클릭/실제 계정 수동 검증은 미실행이다. 로그 `/tmp/devmozip-premium-notice-{tests,build,eslint}.log`. 7단계는 시작하지 않았으며 이번 추가 변경은 아직 커밋·푸시하지 않았다.
+
+## 2026-11-10 6B 최종 정리 및 요청 관련성 필터
+
+- 사용자 확정 기준: 협업 가능/경력/신뢰온도만으로 남던 개발자는 새 추천에서 제외한다. 요청 직군·기술 일치 또는 정확 인용으로 검증된 요구 MET/PARTIAL이면 유지한다. 프로젝트는 분야·기술·텍스트 또는 요구 근거를 사용하고 상태만 맞는 후보를 제외한다. 점수 하한 없이 구현 중·부분 부합은 유지한다. 세부 평가 후 상위10개 전에 적용하며 과거 저장 결과/점수/순위/멱등 재조회는 유지한다.
+- 변경: AiRecommendationServiceImpl 관련성 판정, AiRecommendationServiceTest 회귀 사례, RecommendationCards 빈 결과 안내 및 FollowingMatching 화면 검증. 이전6B·반복 상세 요청 중단·근거 문장과 포트폴리오 링크·UNKNOWN 숨김·프로젝트 summary 평가 입력 변경을 함께 커밋하는 범위다. 회원/프로젝트/포트폴리오/구독 도메인 및 DDL 변경 없음.
+- 프론트 최종: `npm test -- --maxWorkers=2` 전체79개 파일884개 통과, `npm run build` 성공(TypeScript 및 정적57개), 변경 제품6개 파일 ESLint·`git diff --check` 통과. 최초 화면 테스트는 이전 빈 결과 문구 기대값1건을 수정 후 전체 재실행했다. 제한 환경 빌드는 TypeScript 설정 조회 실패로 끝났으며 권한 확장으로 재실행해 통과했다. 생성 next-env.d.ts는 작업 전 내용으로 복원했다.
+- 백엔드 최종: `DEBUG=false ./gradlew test --no-daemon` 성공(2분38초). 총726개 중714개 통과·12개 opt-in 스킵·실패/오류0. 추천 엔진13개와6B 통합19개 모두 통과. 무관한 후보 제외·기술 일부 일치2.50점 유지·요청 직군 일치 유지·상태만 맞는 프로젝트 제외·관련 있는 진행/완료 프로젝트 유지·기술 기본0에서도 구현 중 PARTIAL 유지·가짜 인용/UNKNOWN/MISMATCH만인 후보 제외를 확인했다. 최초 제한 환경은 Gradle 캐시 lock 쓰기 거절로 실행하지 못했다. 권한 확장 첫 전체 실행에서는 신규 테스트의 정렬 기대값1건이 실패했고, 기존 점수식의 순서를 올바르게 반영한 뒤 전체 재실행으로 통과했다.
+- 한계: Gemini는 테스트 대역을 사용했으며 실제 Gemini 품질·브라우저 수동·공유 DB 신규 API 실사용 검증은 미실행이다. 6B 가산점·순위 재계산·월 사용량은 보류 상태를 유지한다. 이 커밋은 신규 추천 관련성 필터와 지금까지6B 변경만 포함하며 이후 단계는 자동 시작하지 않는다. 최종 로그 `/tmp/devmozip-relevance-{backend-final,frontend-final,build-final,eslint}.log`.
+
+## 2026-11-10 프로젝트 한줄 소개 평가 입력 연결
+
+- 범위: 사용자 명시 요청으로 프로젝트 공개 summary를6A 세부 요구사항의 근거 자료에 추가했다. `feat/gemini-portfolio-analysis`의 기존6B/UX 미커밋 변경을 보존한다. 낮은 점수 후보 제외는 의견 요청이며 기준 미확정이므로 이번에 필터를 추가하지 않는다. 기존 Member/Project/Portfolio/구독 도메인·테이블 구조·인증·배포·6B 생성·사용량은 변경하지 않는다.
+- 코드: `SimilarProjectCandidate`에 summary 추가(기존8인자 생성자는 summary=NULL로 호환), `AiCandidateRepository`의 공개·미삭제 조회에 p.summary 추가, `AiRecommendationServiceImpl`에 `project:{id}:summary`/field=summary source 추가. 기존 source의 HTML제거·개인정보 패턴 마스킹·3000자 제한과 정확 인용 검증을 재사용한다. `requirements-instruction.txt`는 프로젝트 주제/예정 기능과 완료 경험을 구분하도록 보완했다.
+- 계산/이력: 요약은 동일 요구의 추가 근거이지 별도 가산점이 아니다. 요구별 동일 비중·기본80%+요구20%·UNKNOWN0점 분모와 후보/상위10개 정책을 유지한다. 정형 조건만 있거나 세부 요구가 없는 경우의 기존 기본 텍스트 계산은 바꾸지 않는다. 새 요청부터 적용하고 과거GET/동일키 replay의 저장 점수·이유·순위는 재계산하지 않는다.
+- 회귀 검증 추가: `AiRecommendationDatabaseTest`에서 실제 JPA projection이 공개 summary/NULL을 유지하고 PRIVATE를 제외하는지 확인한다. `AiRecommendationServiceTest`는 요약에만 존재하는 ‘개발자들이 함께 공부하는 스터디 커뮤니티’ 근거가 HTML/이메일 제거 후 모델 입력에 포함되고, NULL summary는 빈 자료이며 기본 점수는 같은 상태에서 요구100/UNKNOWN0에 따라 최종100/80·순위가 달라지고 요구는1번만 채점되는지 검증한다. 모델 응답은 fixture이며 실제 Gemini의 의미 판단 정확도를 검증한 것은 아니다.
+- 변경 파일: 백엔드 `dto/ai/internal/SimilarProjectCandidate.java`, `repository/AiCandidateRepository.java`, `service/impl/AiRecommendationServiceImpl.java`, `resources/ai/requirements-instruction.txt`, 관련 테스트2개; 문서 `ai-matching.md`, `ai-api-spec.md`, 이 파일. 이번에 프론트 제품 파일은 수정하지 않았으며 빌드 생성 next-env.d.ts만 원래 상태로 복원했다.
+- 검증: 프론트 관련3개 파일35개 테스트와 `npm run build`(TypeScript·57개 정적 페이지) 성공. `backend`에서 `DEBUG=false ./gradlew test --no-daemon` 성공(5분13초): JUnit총723개 중711개 통과·12개 opt-in 스킵·실패/오류0. AI 엔진10개·DB projection5개 모두 통과하며 신규 summary 회귀2개 포함. 이번 실행은 기존 PostgreSQL/Redis 컨테이너 테스트도 가능했고 직전 Docker불가 실행의 총수/스킵 수와 구분한다. 로그 `/tmp/devmozip-summary-{backend,frontend,build}.log`. `git diff --check` 통과.
+- 미확정/후속: 협업·경력은 필터이지 점수가 아니므로 기술·직군·세부 요구의 일치 없이 신뢰온도만으로0점/작은 점수 후보가 반환될 수 있다. 단순 점수선보다 실질 관련 근거가 없는 후보를 제외하는 기준을 제안하되 사용자 확정 전 구현하지 않는다. 구현 중/PARTIAL 근거는 보존한다. 실제 Gemini·새 브라우저/공유DB 실행 검증·스키마/데이터 쓰기·앱 재시작·커밋·푸시는 수행하지 않는다.
+
+## 2026-11-10 상세 분석 반복 조회·추천 설명 UX 수정
+
+- 사용자 승인 범위: 완료된 포트폴리오 상세의 반복 네트워크 요청 중단, 자료 부족 UNKNOWN 언급 숨김(개발자/프로젝트), 근거가 있는 구현 중/PARTIAL/명시 차이는 유지, 이름·포트폴리오 출처로 연결되는 읽기 쉬운 추천 문장. 6A 긴 요구사항 평가표는 알려진 근거 설명으로 정리한다. 요구사항 계산·후보·과거 결과·서버 입력은 변경하지 않는다. 브랜치는 `feat/gemini-portfolio-analysis`; 기존6B 미커밋 변경을 보존했다. 이번에 백엔드/DB/스키마/공통 도메인·구독·인증·배포·기술 확인 대화 로직을 수정하지 않았다.
+- 반복 요청 원인과 수정: 기존30초 완료 조회와 window focus/document visibility 조회를 제거했다. `runPortfolioAnalysis`는 명시 POST 후 PENDING에서만3초 간격 GET을 하며 완료/NO_DATA/오류/취소 시 멈춘다. 최대60번 대기 후 명시 재확인을 안내하며 자동 POST 재시도는 없다. 프론트의 백그라운드 만료 감지는 중단되고 다음 명시 요청에서 기존 서버 권한/자료 검사를 수행한다. 계정·권한·추천 변경/닫기 시 요청과 대기 타이머 취소 및 이전 응답 숨김은 유지한다.
+- 표시: 6A UNKNOWN 항목·기본/요구 점수 분해·빈 평가박스/내부 계산 안내를 숨기고 알려진 MET/PARTIAL/MISMATCH의 근거를 간결히 표시한다. 프로젝트 진행 상태는 한국어로 남긴다. 6B UNKNOWN·NO_DATA/빈 목록·UNKNOWN 확인 질문을 숨기며 후보를 탈락시키지 않는다. 일부 구현/명시 차이는 유지한다. 포트폴리오별로 실제 인용과 요구의 관계를 이름과 연결한 문장으로 묶고 중복 인용·기술 JSON을 합친다. 출처는 제목의 `/portfolios/{id}` 링크이며 자동 prefetch를 끄고 실제 열람 시 기존 권한 검사를 따른다. 선택 원칙은 접어서 제공하고 미확인 요구가 selectionReason을 통해 우회 노출되지 않게 긴 원문 열거를 제거했다. 추가 Gemini 호출/기능·경험 창작 없이 검증된 응답으로 문장을 구성한다.
+- 질문에 대한 코드 확인: 현재 카드의 한줄 summary와 상세 description은 별도 컬럼이다. 프로젝트6A는 제목/description/기술을 받고 summary는 받지 않는다. 따라서 카드에 보이는 ‘스터디 커뮤니티’가 모델 입력에는 없을 수 있다. 실제 요구목록과20%계산은 이미 반영되며 모든 UNKNOWN이면100×0.8+0×0.2=80이다. 이번에는 표시만 변경해 산식·분모/과거 결과를 보존했다. summary 포함 또는 본문 의미 판단 보완은 평가 입력/품질 측의 별도 작업이며 아직 수정하지 않았다.
+- 이번 변경 파일: `frontend/app/ai/matching/_components/PortfolioAnalysis.tsx`, `PortfolioAnalysis.module.css`, 신규 `PortfolioAnalysisContent.tsx`, `RecommendationCards.tsx`; `lib/matching/portfolioAnalysis.ts`/테스트, 신규 `portfolioPresentation.ts`/`portfolioPresentation.test.tsx`, `recommendationPresentation.ts`/테스트, `tests/screens/FollowingMatching.test.tsx`; 문서 `ai-matching.md`, `ai-api-spec.md`, `ai-portfolio-analysis.md`, 이 파일. 기존6B의 다른 미커밋 파일은 이번 변경에 섞어 수정하지 않았다. 빌드 생성 next-env.d.ts만 원래 상태로 복원했다.
+- 검증: 관련4개 파일45개 테스트 통과. 최종 `frontend`의 `npm test -- --maxWorkers=2` 전체79개 파일884개 통과(실패0), `npm run build` 성공(TypeScript·57개 정적 페이지 생성 포함), 변경 제품6개 파일 ESLint 및 `git diff --check` 통과. 테스트는 READY 후10분 추가요청0, PENDING3초 GET→완료 종료, 취소 시 후속0, NO_DATA/STALE/FAILED/오류 자동재생성0, UNKNOWN/자료부족/무근거 포트폴리오 비노출, 인용중복·기술JSON 정리·닉네임/출처링크, 진행중/PARTIAL/MISMATCH와 프로젝트 유지·점수 미변경을 확인한다. 로그 `/tmp/devmozip-6b-ux-{targeted,frontend-final,build-final,eslint-final}.log`.
+- 이번 백엔드 코드 변경이 없어 Gradle 테스트는 재실행하지 않았다. 실제 Gemini·새 브라우저 수동/시각 검증·공유 DB 쓰기는 미실행이다. 서버의 구독/동시성 검증은 직전6B 기록과 구분한다. 커밋·푸시·앱 재시작·추가 점수 정책/요약 평가 입력 변경은 수행하지 않았다.
+
+## 2026-11-09 STEP 6B 구현·검증
+
+- 범위/브랜치: 사용자 구현 지시로 `feat/gemini-portfolio-analysis`에서 수행했다. 시작 HEAD `2150b01`, 작업 트리 깨끗함. fetch한 origin/develop `a04608f`가 HEAD의 조상임을 재확인했다. Member/Portfolio/구독 엔티티·공통 인증·배포·기존 테이블 구조·6A 필터/점수·순위·월 사용량은 변경하지 않았다. 커밋·푸시·다음 단계는 수행하지 않는다.
+- 최종 확정: 추천된 개발자의 포트폴리오 근거만 제공하고 가산점/순위 재계산은 후속이다. 공개 메타데이터를 요청 당시 요구와 비교해 관련도 높은 최대5개 본문을 분석한다. 관련도0/본문 부재를 채우지 않으며 선택 이유·사용 자료를 표시한다. 최신 답변으로 PREMIUM/ADMIN 현재 역할과 **현재 유효한 실제 구독 기록을 모두 요구**한다. 구독 없는 데모 PREMIUM을 역할만으로 허용하는 제안은 폐기했다. 상세 원문/분석은 무료 응답에 섞지 않는다.
+- 실제 계약 대조: Java21/Boot4.1.2/Gradle9.8.2/JPA, 팀 DB PostgreSQL17.11 유지. portfolios의 identity PK·기존 본문/JSONB·공개 범위, subscriptions starts_at/current_period_end/ended_at 및 상태 CHECK(ACTIVE/RENEWING/CANCEL_REQUESTED/EXPIRED/CANCELED)를 읽기 전용 확인했다. 원본 ERD는 없어 전사/코드/실제 메타데이터만 대조했다. 현재 Docker WSL 통합이 없어 기존 Compose 기반 DB 조회 스크립트가 실패했으며 .env 비밀값을 출력하지 않는 직접 psql 연결로 확인했다. 기존 실행 설정은 고치지 않았다.
+- 구현: AI 전용 JDBC 읽기로 소유한 SUCCESS 개발자 결과·현재 역할/계정·최신 구독 기간/상태·대상 ACTIVE/tag·PUBLIC 자료를 검증한다. POST/GET detailed-analysis 및 전용 DTO, 공개 전체 메타데이터 커서 스캔·어휘 관련도 최대5개 선택, 본문6000자 제한·마스킹·정확 출처/인용 검증, 서버 구성 질문·자료 부족 표시를 추가했다. 관련도는 자료 선택용이며 추천 점수가 아니다. 임베딩/별도 의미 검색은 없고 동의어·요약 밖 본문 경험은 놓칠 수 있다.
+- 실행/저장: 기존 detailed_reason TEXT에 version1 JSON. 요청/전체 공개 메타데이터/선택 본문 전체 해시/모델·정책 지문 캐시, DB CAS180초 임대와 토큰 소유 저장으로 여러 인스턴스의 정상 동시 중복 실행/오래된 덮어쓰기를 막는다. Gemini는 트랜잭션 밖, 전체180초/기존 개별 최대60초/BFF190초. 만료·권한 회수·자료 변경은 생성/조회/저장 전후 다시 검사한다. 실패는 부분 성공 없이 FAILED·원래 오류 상태 보존, 명시 재시도 가능. 죽은 PENDING은 임대 만료 후 회복한다. 공통 DB 시각을 KST로 변환해 구독과 임대를 비교한다. 상세는 기존 점수/이유/순위/사용량을 갱신하지 않는다.
+- 프론트: 개발자 카드 상세 분석 버튼·자료/선택 이유·인용·미확인/확인 질문·재시도/닫기, 별도 no-store BFF와 응답 파서를 연결했다. 열어 둔 상세의 PENDING3초/완료30초 및 포커스 복귀 GET, 무료/계정 변경 시 이전 상세 숨김과 요청 취소, 영구 저장 없음. 현재 UI 역할이 프리미엄으로 보이더라도 서버의 유효 구독 검사에서403일 수 있다.
+- 합성 데이터: 사용자 별도 승인에 따라 `docs/sql/ai-portfolio-demo.sql`로 기존 데모6명에 PUBLIC 합성20개 삽입 성공. minjun6/premium3/member3/yuna3/seoyeon3/jiho2, 제목/요약/본문에 합성 표시. 실제 DB에서 총23·합성20·기존 ID1~3 보존 확인. 기존 회원/구독/자료/스키마는 수정하지 않았다. 중복 방지·회원 연결 검사·20건 트랜잭션 검증과 전용 cleanup SQL 제공. cleanup은 실행하지 않았다. 원래 `premium@devmozip.demo`는 PREMIUM이지만 구독0건이므로 새 정책에서403이며 임의 구독을 생성하지 않았다.
+- 변경 파일: 백엔드 신규 `AiPortfolioAnalysisController`, `PortfolioAnalysisResponse`, `AiPortfolioAnalysisRepository`, `AiPortfolioSelection`, `AiPortfolioAnalysisModel`, `AiPortfolioAnalysisService`, `ai/portfolio-instruction.txt`, `ai/portfolio-schema.json`, `ai/portfolio/AiPortfolioAnalysisIntegrationTest`; 프론트 기존 `RecommendationCards.tsx`, 신규 `PortfolioAnalysis.tsx`/CSS Module, `types/aiPortfolioAnalysis.ts`, `lib/matching/portfolioAnalysis.ts`/테스트, `app/api/ai/recommendations/[id]/detailed-analysis/route.ts`/테스트. 문서 AI3개·설계·신규 `ai-portfolio-analysis.md`·SQL2개·이 파일. 빌드 생성 next-env.d.ts만 작업 전으로 복원했다.
+- 최종 백엔드: `backend`의 `DEBUG=false ./gradlew test --no-daemon` 성공(1분16초), JUnit688개 중577개 통과·111개 스킵·실패/오류0. 6B 신규19개는 전부 통과. 스킵은 Docker 불가로 기존 PostgreSQL/Redis/컨텍스트99개와 팀 DB 쓰기/운영DDL opt-in12개다. PostgreSQL 테스트 컨테이너가 가능한 이전 실행 수와 단순 비교하지 않는다. 6B 실제 인증/HTTP/격리 H2 서비스·저장 검증에 가짜 Gemini 응답을 사용했다. 무료/타인/구독없음·만료·미래시작·해지상태·기간내취소예정, 현재역할/권한회수·비공개/삭제·본문해시변경, 원점수/이유/요청수 보존, 선택5개/자료부족/비공개전송금지, 가짜인용/위조ID,429/502/503/504·재시도·동시중복1회/202·임대회복·오래된CAS실패·모델중트랜잭션없음·생성중만료/변경·저장소오류를 검증했다.
+- 최종 프론트: `npm test -- --maxWorkers=2` 전체78개 파일872개 통과, `npm run build` 성공(57개 정적 페이지 생성, 신규 상세 분석 라우트 포함), 변경 제품4개 파일 ESLint 통과. `git diff --check` 통과. 최종 로그 `/tmp/devmozip-6b-{backend-final,frontend,build,eslint-final,demo-apply}.log`. 최초 타깃 테스트는 Mockito 기존 throw/Answer를 재설정하는 fixture5개가 실패해 doAnswer로 수정 후19개 통과했으며 이후 최종 전체도 통과했다. 최초 root의 Gradle/ESLint 및 프론트 테스트 파일 작성은 경로 오류로 실패해 올바른 디렉터리에서 실행/작성했다. 성공으로 간주하지 않았다.
+- 미완료/실사용 조건: 이 도구 프로세스에는 GEMINI_API_KEY가 없어 실제 Gemini 품질/지연/할당량은 미실행이다. 변경 코드의 브라우저 수동 검증·공유 PostgreSQL 신규 API/동시성·운영 배포/백엔드 재시작은 미실행이며 격리 테스트로 대신 성공했다고 보고하지 않는다. 현재 구독/역할 모두 유효한 계정이 필요하다. 원 계정의 구독 정정은 해당 담당자 범위. 첨부/PDF·다른 자료 수동 선택·가산점·순위·월 사용량은 미구현이다. 상세 계약·한계는 [6B 구현 계약](ai-portfolio-analysis.md)을 따른다.
+
 ## 2026-11-09 6A 보완 커밋
 
 - 사용자 요청으로 직전 6A 재검증·신뢰온도 평가 누락 보완·빈 결과 안내·회귀 테스트·6B 준비 문서 변경을 `feat/gemini-recommend`에 커밋한다. 직전 절의 커밋 미실행 기록은 해당 작업 당시 상태다. 제품 코드는 추가 변경하지 않아 직전 검증 결과를 유지하고 `git diff --check`를 다시 확인했다. 푸시·6B 브랜치 생성·6B 구현은 수행하지 않는다. 6B 브랜치명 후보는 `feat/gemini-portfolio-analysis`다.
@@ -1531,3 +1660,12 @@ erDiagram
 - backend `./gradlew test --no-daemon`: 최초 Gradle 사용자 캐시 쓰기 제한으로 실패, 권한 확장 후 기존 프로세스의 프로젝트 캐시 잠금(Owner PID 43)으로 실패했다. 기존 서버·잠금은 유지하고 `--project-cache-dir /tmp/devmozip-pr-gradle-cache`로 분리했다. 분리 실행에서 DTO 이름 불일치 컴파일 오류를 발견해 위 5줄을 수정했다. 중간 루트 경로에서 `./gradlew -p backend` 실행은 파일 부재로 종료 127, backend 경로에서 재실행했다. 수정 후 제품·전체 테스트 코드 컴파일은 통과했으나 전체 테스트는 기존 Docker 컨테이너 조회 응답 대기로 장시간 지연되어 이번 작업의 Gradle/테스트 프로세스만 종료했다. 전체 회귀 테스트 성공으로 간주하지 않는다. 로그: `/tmp/devmozip-pr106-backend-test.log`, `/tmp/devmozip-pr106-backend-test-retry.log`, `/tmp/devmozip-pr106-backend-test-final.log`.
 - backend 관련 검증: backend에서 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache` 성공(종료 0), 10개 클래스·113개 중112개 통과·1개 스킵·실패/오류0. 스킵은 별도 PostgreSQL 부분 인덱스 검증이다. 로그: `/tmp/devmozip-pr106-ai-test.log`. 가짜 Gemini/H2 테스트이며 실제 Gemini·공유 DB·브라우저 검증을 뜻하지 않는다.
 - 점검: 미해결 충돌 없음, `git diff --check origin/develop` 통과. 기존 develop 문서에 있던 끝 공백은 범위 밖이라 보존했다. 다음 작업은 검증된 추천 브랜치를 포트폴리오 분석 브랜치에 전달하고 해당 AI 테스트·프론트 빌드를 확인하는 것이다.
+
+
+## 2026-11-10 PR #111 순차 통합 준비 — 추천 브랜치 전달
+
+- 기준: `feat/gemini-portfolio-analysis`의 원격 `19a3232`에 검증된 추천 병합 커밋 `984292e`를 병합했다. 최신 develop `d6a5720`과 앞 단계 DTO 이름 수정을 함께 포함한다. 텍스트 충돌은 없었다. PR #106은 푸시 후 GitHub `mergeable: true`를 확인했다.
+- 직접 수정 파일: `backend/src/test/java/com/devmozip/backend/ai/portfolio/AiPortfolioAnalysisIntegrationTest.java`, 이 문서. 새로 통합된 구독 엔티티의 자동 생성 테이블 때문에 기존 AI 테스트의 positional INSERT가 실패했다. 이 클래스에 고정된 `jdbc:h2:mem:ai-portfolio` 안에서만 구독 fixture를 재생성하는 2줄(설명 포함)을 추가했다. UNKNOWN 등 기존 상태 검증도 그대로 보존했다. 공통 구독 코드·제품 동작·실제 DB/DDL은 바꾸지 않았다.
+- frontend `npm test -- --maxWorkers=2`: 성공, 109개 파일·1,258개 테스트 통과. `npm run build`: 성공(종료 0). 로그: `/tmp/devmozip-pr111-frontend-test.log`, `/tmp/devmozip-pr111-build.log`. 생성된 `next-env.d.ts`만 복원했다. 백엔드 테스트 fixture 변경 후에는 프론트 코드 변화가 없어 프론트 검증을 반복하지 않았다.
+- backend: 앞 단계와 같은 `JAVA_TOOL_OPTIONS=-XX:ActiveProcessorCount=2 DEBUG=false ./gradlew test --tests 'com.devmozip.backend.ai.*' --no-daemon --max-workers=2 --project-cache-dir /tmp/devmozip-pr-gradle-cache`를 backend에서 실행했다. 최초137개 중 포트폴리오19개가 fixture 준비의 컬럼 수 불일치로 실패했고, 위 보정 후 재실행은137개 중136개 통과·1개 스킵·실패/오류0, 종료0이다. 중간 루트에서 wrapper 경로를 잘못 지정한 명령은 종료127이었고 backend에서 재실행했다. 로그: `/tmp/devmozip-pr111-ai-test.log`, `/tmp/devmozip-pr111-ai-test-final.log`. Docker 의존 전체 회귀 테스트는 앞 단계에서 확인한 응답 대기 문제로 다시 실행하지 않았다.
+- 점검: 미해결 충돌 없음, `git diff --check origin/develop` 통과. 실제 Gemini·공유 DB·브라우저 검증은 미실행이다. 다음 작업은 이 병합 결과를 사용량 PR에 전달하고 동일한 테스트 fixture 충돌을 보정하는 것이다. develop/main·기존 로컬 ai-usage의 미푸시 배포 커밋은 보존한다.

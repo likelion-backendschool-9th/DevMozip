@@ -23,7 +23,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiRecommendationServiceImpl implements AiRecommendationService {
@@ -84,7 +83,10 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 			}
 			for (int offset = 0; offset < added.size(); offset += 4) {
 				var chunk = added.subList(offset, Math.min(offset + 4, added.size()));
-				if (requirements.isEmpty()) { developers.addAll(chunk); continue; }
+				if (requirements.isEmpty()) {
+					for (var developer : chunk) if (relevant(developer.score(), false)) developers.add(developer);
+					continue;
+				}
 				var inputs = chunk.stream().map(d -> {
 					var c = batch.stream().filter(v -> v.id() == d.id()).findFirst().orElseThrow();
 					String ref = "developer:" + c.id();
@@ -98,8 +100,10 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 				var bases = new java.util.HashMap<String, RecommendationResult.Score>();
 				chunk.forEach(d -> bases.put("developer:" + d.id(), d.score()));
 				var evaluated = requirementsEvaluator.evaluate(inputs, requirements, bases);
-				for (var d : chunk) developers.add(new Developer(d.id(), d.nickname(), d.tag(), d.matchedRoles(),
-					requirementsEvaluator.combine(d.score(), evaluated.get("developer:" + d.id()))));
+				for (var d : chunk) {
+					var score = requirementsEvaluator.combine(d.score(), evaluated.get("developer:" + d.id()));
+					if (relevant(score, false)) developers.add(new Developer(d.id(), d.nickname(), d.tag(), d.matchedRoles(), score));
+				}
 			}
 			trim(developers, DEVELOPERS);
 			cursor = batch.getLast().id();
@@ -119,6 +123,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 						String ref = "project:" + c.id();
 						return new AiRequirementEvaluationService.Candidate(ref, List.of(
 							requirementsEvaluator.source(ref + ":title", "title", c.title()),
+							requirementsEvaluator.source(ref + ":summary", "summary", c.summary()),
 							requirementsEvaluator.source(ref + ":description", "description", c.description()),
 							requirementsEvaluator.source(ref + ":skills", "techStacks", String.join(", ", c.techStacks() == null ? List.of() : c.techStacks()))));
 					}).toList();
@@ -126,7 +131,8 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 				}
 				for (var c : chunk) {
 					var base = bases.get("project:" + c.id());
-					projects.add(new SimilarProject(c.id(), c.title(), requirements.isEmpty() ? base : requirementsEvaluator.combine(base, evaluated.get("project:" + c.id())),
+					var score = requirements.isEmpty() ? base : requirementsEvaluator.combine(base, evaluated.get("project:" + c.id()));
+					if (relevant(score, true)) projects.add(new SimilarProject(c.id(), c.title(), score,
 						duration(c, conditions.durationMonths())));
 				}
 			}
@@ -145,6 +151,21 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 		if (developers.isEmpty()) notices.add("추천 조건을 충족하는 공개 개발자 후보가 없습니다.");
 		if (projects.isEmpty()) notices.add("추천 가능한 공개 프로젝트가 없습니다.");
 		return new RecommendationResult(List.copyOf(developers), List.copyOf(projects), List.copyOf(coverage), List.copyOf(notices));
+	}
+
+	/** 점수 하한 없이 요청과의 연결을 확인한다. 상태·경력·신뢰온도만으로 추천을 채우지 않는다. */
+	private static boolean relevant(RecommendationResult.Score score, boolean project) {
+		var fields = project ? java.util.Set.of("interests", "skills", "text") : java.util.Set.of("role", "skills");
+		if (score.items().stream().anyMatch(item -> fields.contains(item.name())
+			&& item.evaluation() == RecommendationResult.Evaluation.SCORED && item.points().signum() > 0)) return true;
+		var evaluation = score.requirementEvaluation();
+		if (evaluation == null || !evaluation.applied()) return false;
+		return evaluation.assessments().stream().anyMatch(item ->
+			(item.status() == com.devmozip.backend.dto.ai.RequirementEvaluation.Status.MET
+				|| item.status() == com.devmozip.backend.dto.ai.RequirementEvaluation.Status.PARTIAL)
+			&& item.source() != null && !item.source().isBlank()
+			&& item.quote() != null && !item.quote().isBlank()
+			&& item.field() != null && !java.util.Set.of("career", "trustScore").contains(item.field()));
 	}
 
 	private static <T> void trim(List<T> items, Comparator<T> comparator) {
