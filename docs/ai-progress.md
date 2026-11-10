@@ -1322,12 +1322,12 @@ erDiagram
 - `git check-ignore --no-index`로 공통 설정 3종은 포함 가능, application-local.yaml·임의 개인 yml·.env는 제외됨을 확인했다. `git diff --check` 통과.
 - Git 제외 규칙과 문서만 수정했으며 실제 YAML 내용·앱 코드·DB·실행 서버는 변경하지 않았다. 앱 빌드 및 기능 테스트는 미실행이다. 후속 사용자 요청으로 해당 변경만 커밋하고 기존 PR #96 브랜치에 푸시한다.
 
-
 ## #50 PR #86 추가 develop 충돌 해결
 
 - PR 생성 도중 #63이 develop에 병합되어 f47ca02를 추가 반영했다. 충돌 파일을 비교하고 직접 입력 직군·프리미엄 생성 인가·상태/기간·실제 지원 직군 보호·확장 테스트 및 양쪽 문서 이력을 보존했다. 해결 직후 파일 트리는 이전 검증 상태와 동일하며 프론트 704개/빌드 결과를 유지한다. 추가 백엔드 검증 결과는 리뷰 문서/PR에 기록한다.
 
 - #50 PR #86 최종 확인: f47ca02 통합 후 backend 466개 중 455개 통과·11개 스킵·실패 없음. frontend 704개 및 빌드 성공. GitHub 충돌 없음 확인. develop에 병합하지 않았다.
+
 ## PR #87 최신 develop 병합 및 충돌 해결
 
 - 포트폴리오 PR #87 생성 후, 외부 링크 PR #66·프로젝트 수정/삭제 PR #63이 반영된 origin/develop f47ca02와 충돌을 확인했다. SecurityConfig의 추가 인증 경로, ApiProfileTabs의 외부 링크/포트폴리오 연결 안내, 화면 테스트, docs/ai-progress의 같은 위치 추가 기록이 원인이다.
@@ -1335,13 +1335,19 @@ erDiagram
 - 병합 후 frontend 전체 688개 중 687개 통과, 기존 프로젝트 모집의 날짜 의존 테스트 1개 실패. npm run build 및 git diff --check 통과. backend 최초 실행은 PostgreSQL 테스트 컨테이너 시작 시간 초과로 422개 중 1개 실패했다. 개발 백엔드를 잠시 중지해 자원을 확보한 뒤 전체 재실행했고 최종 422개 통과(실패·오류·스킵 0)를 확인했다.
 - API 정상 실데이터·브라우저 수동 확인은 여전히 미실행이며 portfolios 테이블 및 잠정 데이터/권한 계약 확인은 필요하다. 기존 개발 서버는 검증 후 복구한다.
 
-
 ### 2026-11-09 PR #82 최신 develop 충돌 해결
 - origin/develop 5b3719b 병합. SecurityConfig에서 좋아요 인증 경로와 포트폴리오·외부 링크 경로가 같은 위치에 추가되어 충돌했고, 모든 규칙을 유지했다. 진행 문서도 양쪽 기록을 보존했다.
 - 공통 likes.post_id → feeds.id 조회와 프로젝트 좋아요 제외 조건 유지. 공유 DB 변경 없음.
 - 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 전체 770개 중 769 통과, 기존 projectService.test.ts의 날짜 의존 모집 테스트 1개 실패.
 - npm run build -- --webpack 및 git diff --check 통과. 별도 worktree의 외부 node_modules 심볼릭 링크 제한 때문에 Webpack 사용. 공유 DB 실데이터 브라우저 검증은 미실행.
 
+
+### 2026-11-09 좋아요 조회를 최종 posts 구조에 맞춤
+- 공유 DB와 origin/feat/91-posts의 최신 계획을 대조해 게시글 posts, 원본 original_post_id, 공통 likes.post_id 계약 확인. posts는 0행이므로 VISIBLE/HIDDEN 값은 최신 계획을 근거로 유지한다.
+- LikedPostsQueryRepository와 PostgreSQL 통합 테스트를 posts 구조로 수정했다. 프로젝트 좋아요·잘못된 참조 제외, 본인 격리·공개·퍼가기 조건 및 API 응답은 유지한다.
+- 이번 DB 스키마·데이터 변경 없음.
+- 검증: 백엔드 전체 616개, 실패 0·오류 0·건너뜀 12. 프론트 관련 32개 및 npm run build -- --webpack, git diff --check 통과. 공유 DB 실데이터 화면 검증은 미실행. 이번 수정 미커밋·미푸시.
+- 
 ### 2026-11-10 PR #96 최신 develop 충돌 해결
 
 - 사용자 요청으로 feat/51-project-reports에 origin/develop a04608f를 병합했다. 충돌은 docs/ai-progress.md, docs/project-backend-blueprint.md, frontend/app/projects/_components/api/ApiProjectDetail.tsx의 3곳이었다.
