@@ -78,6 +78,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}").permitAll()
                 // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
+                // 프리미엄 상품 안내(/subscription)는 비로그인도 볼 수 있다. 결제·구독 관리는 기본 정책(인증 필요)을 따른다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/subscription/plans").permitAll()
                 // 관리자만 접근 가능
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능

@@ -15,7 +15,7 @@
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
 | `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수. Mock 토글 OFF의 1:1·프로젝트 채팅·메신저 신고는 서버에 저장하고 이 키를 쓰지 않는다(알림 읽음은 계속 사용) |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |
-| `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 구독 권한·회원 제재·운영 화면 |
+| `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 회원 제재·운영 화면. `subscriptions`·`payments`는 관리자 구독 현황의 Mock이며 로그인 계정의 역할에는 반영하지 않는다 |
 
 이번 마이그레이션은 키/스키마/버전을 변경하지 않았습니다. 접이식 메뉴의 펼침 상태는 화면 로컬 상태이며 새로고침 시 작은 화면에서 기본 접힘으로 시작합니다. 기존 저장 데이터와 대화/사용량은 그대로 복원합니다.
 
@@ -27,7 +27,7 @@
 - 승인 시 참여자와 채팅 멤버가 연결됩니다. 취소는 팀원/채팅에서 제외합니다. `chatExclusions[projectId]`는 강퇴된 사용자이며 프로젝트 참여 이력과 별개입니다. 화면 목록뿐 아니라 메시지 서비스에서도 접근을 검사합니다.
 - 강퇴 투표는 대상/고정 유권자/계정별 찬반/생성·만료·종료 상태를 보존합니다. 결과 알림은 이벤트/수신자로 중복을 막습니다.
 - 프로젝트 종료는 실제 종료 시각과 계정별 리뷰 요청을 생성합니다. 요청은 대상 ID·임시 토큰·만료·사용 시각을 가집니다. 제출된 별점/키워드는 `profiles.reviews`에 반영되어 평균·버블·온도/별 색상을 계산합니다.
-- 구독 상태는 AuthProvider에서 계정 역할에 반영됩니다. 공고 생성/지원자 상세 권한은 같은 현재 역할을 검사합니다. 관리자도 공고 생성의 프리미엄 조건을 우회하지 않습니다.
+- 구독 상태는 서버 API(`/api/v1/subscription/me`)와 서버 역할(USER/PREMIUM)로 정해집니다. 브라우저에 저장된 이전 데모 구독 전환은 로그인 계정의 역할을 바꾸지 않습니다. 공고 생성/지원자 상세 권한은 같은 현재 역할을 검사합니다. 관리자도 공고 생성의 프리미엄 조건을 우회하지 않습니다.
 - AI 대화는 `chat.conversations[userId]`에 `{id,title,createdAt,updatedAt,requirements,messages}`로 저장합니다. 메시지는 사용자/assistant 구분, 본문, 생성 시각, 추천 시점 조건/결과를 가집니다. 분야·관심·기술은 배열, 직군은 `{name,count}[]`입니다.
 - AI 사용량은 `matching.usage[userId]['YYYY-MM']`이며 한국 시각 월 기준입니다. 결과 생성과 차감량은 동일 Home 상태 변경으로 저장합니다. 일반 메시지·추가 질문·대화 조회/삭제는 차감하지 않습니다. 과거 추천은 스냅샷이며 현재 비공개 계정의 카드는 다시 숨깁니다.
 

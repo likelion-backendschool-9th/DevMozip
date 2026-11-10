@@ -51,7 +51,7 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 
 로그아웃은 헤더 프로필 옆의 로그아웃 버튼으로 실행한다. 다른 계정으로 바꾸려면 로그아웃 후 다시 로그인한다. 로그인 상태는 운영 쿠키 정책(액세스·리프레시 HttpOnly 쿠키)을 따른다.
 
-업무 데이터는 계속 Mock이다. JWT+BFF 인증과 회원가입은 users 테이블을 쓰지만 실제 프로젝트·SNS·결제 API는 구현하지 않았다. 메신저는 Mock 토글을 끈 회원에게 `chat_rooms`·`chat_members`·`messages`·`reports` 테이블과 Redis Pub/Sub으로 동작한다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 구독 데모 상태는 서버 역할을 바꾸지 않는다.
+업무 데이터는 계속 Mock이다. JWT+BFF 인증과 회원가입은 users 테이블을 쓰지만 실제 SNS API는 구현하지 않았다. 메신저는 Mock 토글을 끈 회원에게 `chat_rooms`·`chat_members`·`messages`·`reports` 테이블과 Redis Pub/Sub으로 동작한다. 프리미엄 구독·결제는 포트원 API로 동작하며(아래 "프리미엄 결제"), 결제가 서버 역할을 USER/PREMIUM으로 바꾼다. 서버 역할은 USER/PREMIUM/ADMIN이며 화면의 이전 구독 데모 상태는 서버 역할을 바꾸지 않는다.
 
 .env, 기존 PostgreSQL 볼륨, JWT_SECRET과 DB 비밀번호를 임의로 초기화하지 않는다. DB_PASSWORD 환경변수만 바꿔도 기존 DB 사용자의 비밀번호가 변경되는 것은 아니다. 비밀값 교체는 영향 범위를 확인하고 진행한다.
 
@@ -65,6 +65,17 @@ docker compose -f compose.prod.yaml logs --tail=100 backend-green frontend-green
 - `MailAuthenticationException`이면 앱 비밀번호를 확인한다. 구글 계정 비밀번호를 바꾸면 앱 비밀번호도 폐기된다.
 - 호스트 nginx가 X-Real-IP를 실제 접속 IP로 설정해야 IP 제한이 동작한다. 호스트 설정은 저장소에 없다.
 - 공용 데모 계정의 비밀번호를 아는 사람은 실제로 바꿀 수 있다. 바뀌면 이후 로그인에 영향이 있으므로 변경 사실을 팀에 공유한다.
+
+## 프리미엄 결제
+
+계약은 [프리미엄 구독·결제 API](premium-payment-api.md), 계획과 남은 운영 항목은 [구현 계획](premium-payment-plan.md) 8단계를 참조한다.
+
+- 값: 서버 ~/DevMozip/.env의 PORTONE_STORE_ID, PORTONE_API_SECRET, TOSS_CHANNEL_KEY, KAKAOPAY_CHANNEL_KEY, PAYMENT_ENCRYPTION_KEY, DOMAINNAME. PAYMENT_ENCRYPTION_KEY는 서버에서 `openssl rand -base64 32`로 만들고 안전한 곳에 보관한다. 바꾸면 저장된 빌링키를 읽을 수 없다.
+- 값이 없으면 결제만 503이고 다른 기능은 정상이다.
+- 테스트 채널은 실제 청구가 없다. 실제 청구에는 토스페이먼츠 자동결제 계약, 카카오페이 가맹 계약, 포트원 실연동 채널 전환이 필요하다.
+- 매월 결제는 백엔드 스케줄러가 매일 24:00(0시, 한국 시간)에 실행해 그날이 결제일인 구독을 결제한다(`payment.renewal-cron`). 실행 시각에 서버가 멈춰 있었으면 다음 날 실행에서 함께 처리한다. 블루그린의 두 백엔드가 함께 실행해도 한 구독을 한 번만 결제한다.
+- 결과를 모르는 매월 결제는 구독이 `RENEWING`, 결제가 `PENDING`으로 남는다. 백엔드 로그의 `매월 결제 결과를 알 수 없어`에 있는 주문 번호로 포트원 결제 조회를 확인해 처리한다.
+- 해지·결제 실패 후 빌링키 삭제에 실패하면 로그 `빌링키 삭제 실패`가 남는다. 결제는 일어나지 않지만 포트원 콘솔에서 빌링키를 삭제한다.
 
 ## 롤백
 
