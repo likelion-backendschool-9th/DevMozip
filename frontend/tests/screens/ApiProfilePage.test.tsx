@@ -46,6 +46,7 @@ describe('API 프로필 화면', () => {
             expect(html).toContain('외부 링크를 불러오는 중…');
             expect(html).not.toContain('외부 링크는 아직 조회 API에 연결되지 않았습니다.');
         } else if (tab === 'portfolio') expect(html).toContain('포트폴리오를 불러오는 중');
+        else if (tab === 'activity') { expect(html).toContain('프로젝트 이력을 불러오고 있습니다.'); expect(html).not.toContain('활동 조회 연결 전'); }
         else expect(html).toContain('아직 조회 API에 연결되지 않았습니다.');
         expect(html).toContain('38.5');
     });
