@@ -33,6 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProfileUpdateIntegrationTest {
     @org.springframework.test.context.bean.override.mockito.MockitoBean
     com.devmozip.backend.security.jwt.RefreshTokenStore refreshTokenStore;
+    // Redis 없이 실행한다. DB에 없는 회원의 토큰은 accountId 클레임이 없어 JwtProvider가 탈퇴 토큰 목록(Redis)을 확인하므로 대신한다
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    com.devmozip.backend.service.AccountWithdrawalTasks withdrawalTasks;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;

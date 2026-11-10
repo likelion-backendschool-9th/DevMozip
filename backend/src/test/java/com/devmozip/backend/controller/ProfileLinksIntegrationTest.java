@@ -2,6 +2,7 @@ package com.devmozip.backend.controller;
 
 import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.service.AccountWithdrawalTasks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -11,6 +12,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -31,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "INSERT INTO users (id,email,nickname,tag,status,role) VALUES (4,'suspended@profile.test','정지회원','suspended-user','SUSPENDED','USER')"
 })
 class ProfileLinksIntegrationTest {
+    // Redis 없이 실행한다. DB에 없는 회원의 토큰은 accountId 클레임이 없어 JwtProvider가 탈퇴 토큰 목록(Redis)을 확인하므로 대신한다
+    @MockitoBean AccountWithdrawalTasks withdrawalTasks;
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;
     @Autowired JdbcTemplate jdbc;
