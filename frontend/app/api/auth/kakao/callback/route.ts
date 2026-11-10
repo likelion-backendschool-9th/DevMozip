@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { backendFetch } from '@/lib/auth/backend';
 import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, KAKAO_SIGNUP_MAX_AGE, WITHDRAWAL_KAKAO_COOKIE, cookieOptions } from '@/lib/auth/cookies';
 import { kakaoResultPath, parseKakaoFlow, type KakaoFlow } from '@/lib/auth/kakao';
+import { loginNext } from '@/lib/auth/paths';
 import { writeSessionCookies } from '@/lib/auth/sessionCookies';
 
 // 백엔드가 카카오를 두 번 호출하므로 기본 5초보다 길게 기다린다.
@@ -20,7 +21,7 @@ async function completeLogin(flow: KakaoFlow, code: string) {
     const response = await backendFetch(`/api/v1/auth/kakao/callback?code=${encodeURIComponent(code)}&intent=${flow.intent}`, { signal: AbortSignal.timeout(KAKAO_TIMEOUT) });
     if (!response.ok) return failurePath(flow, response.status);
     const data = await response.json();
-    if (data.status === 'LOGIN') return await writeSessionCookies(data) ? flow.next : kakaoResultPath(flow.intent, 'failed');
+    if (data.status === 'LOGIN') return await writeSessionCookies(data) ? loginNext(flow.next) : kakaoResultPath(flow.intent, 'failed');
     if (data.status === 'ALREADY_REGISTERED') return kakaoResultPath(flow.intent, 'already-registered');
     if (data.status !== 'SIGNUP_REQUIRED' || typeof data.kakaoSignupToken !== 'string') return kakaoResultPath(flow.intent, 'failed');
     (await cookies()).set(KAKAO_SIGNUP_COOKIE, data.kakaoSignupToken, { ...cookieOptions, maxAge: KAKAO_SIGNUP_MAX_AGE });

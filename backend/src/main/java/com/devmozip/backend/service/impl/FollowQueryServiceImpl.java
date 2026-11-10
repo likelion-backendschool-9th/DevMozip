@@ -15,6 +15,7 @@ import com.devmozip.backend.repository.FollowQueryRepository.Direction;
 import com.devmozip.backend.repository.FollowRepository;
 import com.devmozip.backend.repository.MemberRepository;
 import com.devmozip.backend.security.member.CurrentMemberProvider;
+import com.devmozip.backend.service.AccountVisibilityPolicy;
 import com.devmozip.backend.service.FollowQueryService;
 import com.devmozip.backend.service.FollowTargetFinder;
 import org.springframework.http.HttpStatus;
@@ -35,22 +36,27 @@ public class FollowQueryServiceImpl implements FollowQueryService {
 	private final MemberRepository members;
 	private final FollowTargetFinder targets;
 	private final CurrentMemberProvider currentMember;
+	private final AccountVisibilityPolicy visibility;
 
 	public FollowQueryServiceImpl(FollowRepository follows, FollowQueryRepository queries, MemberRepository members,
-		FollowTargetFinder targets, CurrentMemberProvider currentMember) {
+		FollowTargetFinder targets, CurrentMemberProvider currentMember, AccountVisibilityPolicy visibility) {
 		this.follows = follows;
 		this.queries = queries;
 		this.members = members;
 		this.targets = targets;
 		this.currentMember = currentMember;
+		this.visibility = visibility;
 	}
 
 	@Override
 	public FollowStatusResponse status(String slug) {
 		Member target = targets.find(slug);
-		// 본인 프로필이면 자기 자신과의 관계가 없으므로 false가 된다.
-		Optional<Follow> mine = currentMember.find()
-			.flatMap(requester -> follows.findById(new FollowId(requester.getId(), target.getId())));
+		Optional<Member> requester = currentMember.find();
+		// 비공개 계정의 팔로우 상태는 본인에게만 보인다(403 "비공개 계정입니다.").
+		visibility.requireVisibleAccount(requester.map(Member::getId).orElse(null), target);
+		// 본인 프로필이면 자기 자신과의 관계가 없으므로 false가 된다. 수는 비공개 계정을 포함해 모든 관계를 센다.
+		Optional<Follow> mine = requester
+			.flatMap(member -> follows.findById(new FollowId(member.getId(), target.getId())));
 		return new FollowStatusResponse(follows.countFollowers(target.getId()), follows.countFollowing(target.getId()),
 			mine.isPresent(), mine.map(Follow::isActivityNotificationEnabled).orElse(false));
 	}
@@ -75,6 +81,8 @@ public class FollowQueryServiceImpl implements FollowQueryService {
 		String keyword = query == null || query.isBlank() ? null : query.trim();
 		Member target = targets.find(slug);
 		Long requesterId = currentMember.find().map(Member::getId).orElse(null);
+		// 비공개 계정의 목록은 본인에게만 보인다. 목록 항목의 비공개 계정은 Repository 조건에서 뺀다.
+		visibility.requireVisibleAccount(requesterId, target);
 
 		var result = queries.find(target.getId(), direction, requesterId, keyword, availableOnly, page, size);
 		var byId = members.findAllById(result.rows().stream().map(FollowQueryRepository.Row::userId).toList()).stream()

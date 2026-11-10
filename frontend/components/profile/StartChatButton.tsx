@@ -7,7 +7,10 @@ import { startChatWithMember } from '@/lib/state/directChatStore';
 import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 
-/** 실제 회원끼리의 대화라서 Mock 토글 OFF에서만 표시한다. 본인 프로필에는 호출하는 쪽에서 넣지 않는다. */
+/**
+ * 1:1 대화 시작(WBS 11.5). 프로필 상단과 개발자 탐색 카드(6.7)가 함께 쓴다.
+ * 실제 회원끼리의 대화라서 Mock 토글 OFF에서만 표시한다. 본인 프로필·카드에는 호출하는 쪽에서 넣지 않는다.
+ */
 export function StartChatButton({ slug }: { slug: string }) {
     const { enabled } = useMockVisibility();
     const { user } = useAuth();

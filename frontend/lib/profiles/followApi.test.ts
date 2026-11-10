@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     appendFollowUsers, changeFollow, fetchFollowList, fetchFollowStatus, FollowRequestError, followListQuery, followListSearch,
-    followTab, followUserName, parseFollowPage, parseFollowResult, parseFollowStatus, updateFollowNotification,
+    followTab, followUserName, isPrivateAccountError, parseFollowPage, parseFollowResult, parseFollowStatus, updateFollowNotification,
 } from './followApi';
 import type { FollowUser } from '@/types/followApi';
 
@@ -89,6 +89,14 @@ describe('브라우저 요청', () => {
         expect(error).toBeInstanceOf(FollowRequestError);
         expect(error.status).toBe(409);
         expect(error.message).toBe('팔로우한 개발자의 알림만 설정할 수 있어요.');
+    });
+    it('비공개 계정 403만 비공개로 구분한다', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => Response.json({ message: '비공개 계정입니다.' }, { status: 403 })));
+        expect(isPrivateAccountError(await fetchFollowStatus('dev-one').catch(e => e))).toBe(true);
+        expect(isPrivateAccountError(await fetchFollowList('dev-one', 'followers', { q: '', available: false, page: 0, size: 20 }).catch(e => e))).toBe(true);
+        expect(isPrivateAccountError(new FollowRequestError(403, '이 계정으로는 팔로우 기능을 이용할 수 없어요.'))).toBe(false);
+        expect(isPrivateAccountError(new FollowRequestError(404, '비공개 계정입니다.'))).toBe(false);
+        expect(isPrivateAccountError(new Error('비공개 계정입니다.'))).toBe(false);
     });
     it('요청한 페이지와 다른 응답을 받지 않는다', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => Response.json({ ...page(), page: 1 })));

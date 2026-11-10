@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devmozip.backend.dto.member.AccountLockRequest;
+import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
@@ -43,6 +45,19 @@ public class MemberController {
     public void setPassword(Authentication authentication,
                             @Valid @RequestBody PasswordSetRequest request) {
         memberService.setPassword(authentication.getName(), request);
+    }
+
+    // 내 계정 잠금(비공개 계정) 여부 조회 - WBS 17.7. 토큰의 주인만 대상이다
+    @GetMapping("/me/account-lock")
+    public AccountLockResponse getAccountLock(Authentication authentication) {
+        return memberService.getAccountLock(authentication.getName());
+    }
+
+    // 내 계정 잠금(비공개 계정) 변경 - WBS 17.7. 원하는 최종 값을 받는다
+    @PatchMapping("/me/account-lock")
+    public AccountLockResponse updateAccountLock(Authentication authentication,
+                                                 @Valid @RequestBody AccountLockRequest request) {
+        return memberService.updateAccountLock(authentication.getName(), request);
     }
 
     // 로그인 확인 - 프론트엔드 BFF가 쿠키의 액세스 토큰 주인과 역할을 확인한다

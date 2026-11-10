@@ -114,11 +114,12 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		}
 		applications.flush();projects.flush();emit(application,type,penalty,now);return response(application);
 	}
-	@Override public List<ProjectMemberResponse> members(long id,String jobRole){
+	@Override public List<ProjectMemberResponse> members(long id,String jobRole,boolean includeInactive){
 		var project=live(id);long user=currentUser.getCurrentUserId();
 		if(!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw forbidden("현재 팀원만 팀원 목록을 조회할 수 있습니다.");
+		if(includeInactive&&project.getHostMemberId()!=user)throw forbidden("주최자만 참여 이력을 조회할 수 있습니다.");
 		String key=jobRole==null||jobRole.isBlank()?null:ProjectRoleValues.key(jobRole);
-		return members.findByProjectId(id).stream().filter(m->m.getStatus()==ProjectMember.Status.ACTIVE)
+		return members.findByProjectId(id).stream().filter(m->includeInactive||m.getStatus()==ProjectMember.Status.ACTIVE)
 			.filter(m->key==null||m.getJobRole()!=null&&ProjectRoleValues.key(m.getJobRole()).equals(key)).map(m->{
 				var profile=users.findById(m.getUserId());return new ProjectMemberResponse(m.getId(),m.getUserId(),profile.map(Member::getNickname).orElse(null),profile.map(Member::getTag).orElse(null),m.getRole().name(),m.getJobRole(),m.getStatus().name(),m.getJoinedAt());
 			}).toList();
@@ -126,7 +127,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private ProjectApplicationResponse response(ProjectApplication a){
 		var user=users.findById(a.getApplicantMemberId());
 		var copies=snapshots.summaries(a.getId());
-		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),copies.isEmpty()?links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList():copies.stream().map(ProjectApplicationPortfolioResponse::sourcePortfolioId).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7),copies);
+		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),copies.isEmpty()?links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList():copies.stream().map(ProjectApplicationPortfolioResponse::sourcePortfolioId).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7),copies,members.findByProjectIdAndUserId(a.getProject().getId(),a.getApplicantMemberId()).map(m->m.getStatus().name()).orElse(null));
 	}
 	private boolean late(ProjectApplication a){return a.getStatus()==ProjectApplication.Status.APPROVED&&LocalDate.now(clock).isAfter(a.getProject().getRecruitmentEnd().minusDays(7));}
 	private String unavailable(Project p,long user){

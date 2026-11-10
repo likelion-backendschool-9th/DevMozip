@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Siren } from 'lucide-react';
+import { MessageSquare, Siren, UserRoundMinus } from 'lucide-react';
 import { MessengerLayout, messengerStyles as styles } from '@/app/messages/_components/MessengerLayout';
 import { ConversationSidebar } from '@/app/messages/_components/ConversationSidebar';
 import { ChatWindow } from '@/app/messages/_components/ChatWindow';
@@ -15,11 +15,12 @@ import { projectChatStatusLabel } from '@/lib/messaging/projectChatApi';
 import { currentMemberKeys, projectMemberKey, projectMemberName, projectTypingText, toProjectChatMessages } from '@/lib/messaging/projectChatView';
 import { profileImageUrl } from '@/lib/profiles/profileDetail';
 import { useAuth } from '@/lib/state/authStore';
-import { submitUserReport } from '@/lib/state/directChatStore';
+import {submitProjectMemberReport} from '@/lib/projects/projectMemberReport';
 import {
     loadOlderProjectMessages, notifyProjectChatTyping, openProjectChat, sendOpenProjectMessage, setProjectChatAtBottom, useProjectChats,
 } from '@/lib/state/projectChatStore';
 import type { ProjectChatMember } from '@/types/messaging';
+import {ApiKickVotePanel,ApiKickVoteDialog} from './ApiKickVotePanel';
 import memberStyles from '../page.module.css';
 
 function Refused({ title, reason, href, label }: { title: string; reason: string; href: string; label: string }) {
@@ -36,11 +37,13 @@ function Refused({ title, reason, href, label }: { title: string; reason: string
 
 /**
  * Mock 토글 OFF의 프로젝트 단톡방(7.18~7.23). 멤버·메시지·읽음·입력 중 표시를 서버 데이터로 그린다.
- * 강퇴 투표와 투표 기한 시뮬레이터는 Mock 전용이라 표시하지 않는다(#49). 채팅방 삭제는 프로젝트 관리 화면이 맡는다.
+ * 강퇴 투표는 실제 프로젝트 참여 상태와 채팅 멤버에 함께 반영한다(#49). 채팅방 삭제는 프로젝트 관리 화면이 맡는다.
  */
 export function ServerProjectChat({ projectId }: { projectId: string }) {
     const { user } = useAuth();
     const { open, sessionExpired } = useProjectChats();
+    const [kickTarget,setKickTarget]=useState<ProjectChatMember|null>(null);
+    const [voteVersion,setVoteVersion]=useState(0);
     const [showMembers, setShowMembers] = useState(false);
     const [reportTarget, setReportTarget] = useState<ProjectChatMember | null>(null);
     const id = validChatId(projectId) ? Number(projectId) : null;
@@ -57,7 +60,7 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
     const chat = id !== null && open?.projectId === id ? open : null;
     if (id === null || chat?.status === 'missing') {
         return <Refused title="채팅방에 입장할 수 없어요."
-            reason="승인된 팀원만 들어올 수 있어요. 모집 시작 전이거나, 삭제됐거나, 참여가 끝난 채팅방일 수 있어요."
+            reason="승인된 팀원만 들어올 수 있어요. 모집 시작 전이거나, 삭제됐거나, 참여가 끝났거나 강퇴된 채팅방일 수 있어요."
             href="/messages/chats" label="메신저로" />;
     }
 
@@ -89,6 +92,8 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                                 <Button variant="secondary" onClick={() => setShowMembers(true)}>멤버 {current.length}명</Button>
                             </header>
                             <ChatWindow
+                                historyContent={<ApiKickVotePanel projectId={id} version={voteVersion}/>}
+                                historyVersion={voteVersion}
                                 channelKey={projectId}
                                 messages={toProjectChatMessages(ready.members, ready.messages, ready.nextBefore !== null, user.id)}
                                 members={currentMemberKeys(ready.members, user.id)}
@@ -132,13 +137,16 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                             </>;
                             return (
                                 <div className={memberStyles.memberRow} key={member.id}>
-                                    {href ? <Link href={href}>{label}</Link> : <div>{label}</div>}
-                                    {!member.me && member.tag && (
+                                    {href ? <Link className={memberStyles.memberIdentity} href={href}>{label}</Link> : <div className={memberStyles.memberIdentity}>{label}</div>}
+                                    <div className={memberStyles.memberActions}>
+                                    {!member.me && !completed && ready.canSend && member.role!=='HOST' && member.projectMemberId && <button type="button" className={memberStyles.kickIcon} aria-label={`${name} 강퇴 투표 요청`} title="강퇴 투표 요청" onClick={()=>{setShowMembers(false);setKickTarget(member);}}><UserRoundMinus size={17}/></button>}
+                                    {!member.me && member.projectMemberId && (
                                         <button type="button" className={memberStyles.reportIcon} aria-label={`${name} 신고`} title="사용자 신고"
                                             onClick={() => { setShowMembers(false); setReportTarget(member); }}>
                                             <Siren size={16} aria-hidden="true" />
                                         </button>
                                     )}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -148,10 +156,11 @@ export function ServerProjectChat({ projectId }: { projectId: string }) {
                     </aside>
                 </Modal>
             )}
-            {reportTarget?.tag && (
+            {kickTarget?.projectMemberId && <ApiKickVoteDialog projectId={id} targetMemberId={kickTarget.projectMemberId} name={projectMemberName(kickTarget)} onClose={()=>setKickTarget(null)} onCreated={()=>setVoteVersion(v=>v+1)}/>}
+            {reportTarget?.projectMemberId && (
                 <UserReportDialog
                     key={reportTarget.id}
-                    server={{ name: projectMemberName(reportTarget), onSubmit: reason => submitUserReport(reportTarget.tag!, reason) }}
+                    server={{projectContext:true, name: projectMemberName(reportTarget), onSubmit:(reason,detail)=>submitProjectMemberReport(id,reportTarget.projectMemberId!,reason,detail)}}
                     onClose={() => setReportTarget(null)}
                 />
             )}

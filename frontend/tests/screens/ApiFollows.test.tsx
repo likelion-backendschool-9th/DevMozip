@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { FollowListResult, type FollowListState } from '@/app/(user)/users/[userId]/follows/_components/FollowListResult';
 import FollowsPage from '@/app/(user)/users/[userId]/follows/page';
+import { FollowsPrivateNotice } from '@/app/(user)/users/[userId]/follows/_components/ApiFollowsContent';
 import { ProfileApiResult } from '@/app/(user)/users/[userId]/_components/ApiProfileContent';
 import { ApiFollowSettings } from '@/app/(user)/users/[userId]/_components/ApiFollowSettings';
 import { apiProfileFixture } from '@/tests/helpers/apiProfileFixture';
@@ -87,6 +88,12 @@ describe('API 팔로워·팔로잉 목록', () => {
         const html = renderToStaticMarkup(<MemoryRouter initialEntries={['/users/bad.tag/follows']}>
             <Routes><Route path="/users/:userId/follows" element={<FollowsPage />} /></Routes></MemoryRouter>);
         expect(html).toContain('사용자를 찾을 수 없어요.');
+    });
+    it('비공개 계정의 목록은 Mock 목록 화면과 같은 안내를 보여 준다', () => {
+        const html = renderToStaticMarkup(<FollowsPrivateNotice />);
+        expect(html).toContain('<h1>비공개 계정입니다.</h1>');
+        expect(html).toContain('이 사용자의 팔로워와 팔로잉 목록은 공개되지 않습니다.');
+        expect(html).toContain('href="/explore"');
     });
     it('알림 설정 창은 체크박스 하나로 활동 알림을 고른다', () => {
         const html = renderToStaticMarkup(<ApiFollowSettings slug="dev-one" name="개발자" enabled onSaved={noop} onClose={noop} />);

@@ -1,0 +1,19 @@
+{
+  "viewport": 1440,
+  "myProjects": {
+    "data": "public API records with intercepted my-list/session/detail responses",
+    "gridColumns": "433.328px 433.328px 433.344px",
+    "cardCount": 12,
+    "returnHref": "/my-projects?tab=HOSTED&query=React",
+    "returnedUrl": "http://localhost:3000/my-projects?tab=HOSTED&query=React",
+    "overflow": false
+  },
+  "pageErrors": [],
+  "activity": {
+    "data": "real public API",
+    "cards": 4,
+    "mark": "L",
+    "detailHref": "/projects/7?returnTo=%2Fusers%2Fjiho%3Ftab%3Dactivity",
+    "overflow": false
+  }
+}

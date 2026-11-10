@@ -11,9 +11,9 @@
 | `devmozip:prototype:v1` | 안내 표시 설정 | 공통 안내 |
 | `devmozip:auth:v1` | 계정 ID 세션 | 로그인 유지 시 localStorage, 해제 시 sessionStorage |
 | `devmozip:profiles:v1` | `profiles`, `portfolios`, `posts`, `reposts`, `reviews`, `following`, `followPreferences`, `followNotices`, `social`, `socialNotices` | 프로필·SNS·검색·추천 |
-| `devmozip:account-area:v1` | 계정별 `kakaoLinked`(기존 저장값 호환용, 화면 표시에 쓰지 않음), `isPrivate`, `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
+| `devmozip:account-area:v1` | 계정별 `kakaoLinked`(기존 저장값 호환용, 화면 표시에 쓰지 않음), `isPrivate`(Mock 토글 ON의 공개 설정과 Mock 화면 판정에만 사용. 실제 계정 값은 서버 `users.is_private`), `passwordConfirmedAt`, `onboardingCompleted`, `draft`, `step` | Aside 화면·공개 범위·온보딩 |
 | `devmozip:recruitment:v1` | `created`, `overrides`, `deletedIds`, `applications`, `bookmarks`, `reports`, `notifications`, `chatMembers`, `endedAt`, `deletedChatIds`, `reviewRequests`, `kickVotes`, `chatExclusions`, `simulationDate` | 모집·내 프로젝트·리뷰 요청·채팅 멤버 |
-| `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수. Mock 토글 OFF의 1:1·프로젝트 채팅·메신저 신고는 서버에 저장하고 이 키를 쓰지 않는다(알림 읽음은 계속 사용) |
+| `devmozip:messaging:v1` | `conversations`, `rooms`, `notificationReads`, `userReports` | 1:1/단체 대화·알림 읽음/개수. Mock 토글 OFF의 1:1·프로젝트 채팅·메신저 신고·알림은 서버에 저장하고 이 키를 쓰지 않는다. `notificationReads`는 토글 ON의 Mock 알림에만 쓴다 |
 | `devmozip:home:v1` | `input`, `matching.usage`, `matching.last`, `chat.conversations`, `chat.active` | 메인 입력·계정별 월 사용량·대화/결과 기록 |
 | `devmozip:administration:v1` | `subscriptions`, `members`, `resolutions`, `keywords`, `audit`, `payments` | 회원 제재·운영 화면. `subscriptions`·`payments`는 관리자 구독 현황의 Mock이며 로그인 계정의 역할에는 반영하지 않는다 |
 
@@ -58,4 +58,4 @@
   - `lib/matching/homeService.ts`
 - 이 서비스들을 쓰는 `lib/state` 저장소, Mock 토글(`lib/demo/mockVisibility.ts`)과 위 표의 데모 저장소 키도 함께 정리합니다.
 - 서버와 연결된 화면이 아직 쓰는 검증·표시 함수가 이 파일들에 들어 있으면, 제거하기 전에 해당 도메인 모듈로 옮깁니다.
-- `messagingService.ts`는 1:1·프로젝트 채팅·사용자 신고의 Mock 외에 알림 화면(`/notifications`)과 헤더 알림 배지도 맡습니다. 알림 서버가 생긴 뒤에 제거합니다.
+- `messagingService.ts`는 1:1·프로젝트 채팅·사용자 신고의 Mock 외에 토글 ON의 Mock 알림(`components/notifications/MockNotificationList.tsx`, 헤더 Mock 알림 배지)도 맡습니다. 토글 OFF의 알림은 서버 API(`lib/state/notificationStore.ts`)를 씁니다. 서버 알림은 프로젝트·리뷰 종류만 있으므로, 팔로우·피드 알림이 서버에 연결된 뒤에 Mock 알림을 제거합니다.

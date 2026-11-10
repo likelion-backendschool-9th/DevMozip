@@ -3,6 +3,7 @@ package com.devmozip.backend.repository;
 import java.text.Normalizer;
 import com.devmozip.backend.service.ProjectRoleValues;
 import java.time.LocalDate;
+import com.devmozip.backend.entity.enums.ProjectStatus;
 import java.util.*;
 import com.devmozip.backend.dto.project.MyProjectsTab;
 import com.devmozip.backend.dto.project.ProjectSearchRequest;
@@ -40,7 +41,11 @@ public class ProjectQueryRepository {
 			params.addValue("jobRole", ProjectRoleValues.key(request.jobRole()));
 			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE lower(s.value->>'roleCode')=:jobRole)");
 		}
-		if (request.status() != null) { params.addValue("status", request.status().name()); where.append(" AND p.status=:status"); }
+		if (request.status() != null) {
+			params.addValue("status", request.status().name());
+			where.append(" AND p.status=:status");
+			if (request.status() == ProjectStatus.RECRUITING) where.append(" AND p.recruitment_end>=:today");
+		}
 		if (request.interests() != null && !request.interests().isEmpty()) {
 			params.addValue("interests", request.interests().stream().map(this::normalize).toList());
 			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.interests) i(value) WHERE lower(i.value) IN (:interests))");

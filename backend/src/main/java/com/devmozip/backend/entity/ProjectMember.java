@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectMember extends BaseEntity {
 	public enum Role { HOST, PARTICIPANT }
-	public enum Status { ACTIVE, LEFT }
+	public enum Status { ACTIVE, LEFT, KICKED }
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -39,6 +39,7 @@ public class ProjectMember extends BaseEntity {
 	public static ProjectMember participant(Project project,long userId,String jobRole,LocalDateTime now) {
 		var member=new ProjectMember(project,userId,now);member.role=Role.PARTICIPANT;member.jobRole=jobRole;return member;
 	}
+	public void kick(LocalDateTime now){status=Status.KICKED;leftAt=now;endRequestedAt=null;touch(now);}
 	public void leave(LocalDateTime now){status=Status.LEFT;leftAt=now;endRequestedAt=null;touch(now);}
 
 	public static ProjectMember host(Project project, long userId, LocalDateTime now) {

@@ -1909,23 +1909,283 @@ erDiagram
 - 최종 backend: 총 1,138개 중 1,126개 통과·12개 건너뜀·실패/오류 0. 변경28·조회18·파일5·제출본12 통합은 모두 건너뜀 없이 통과. frontend 전체 1,367개·npm run build·수정 파일 ESLint·git diff --check 통과.
 - 실제 공유 DB 브라우저 전환은 이번 통합 후 미실행. 직전 payments.currency schema validate 실패와 실행 환경/파일 공유 저장소 확인 등은 실제 통합 시 남은 검증이다.
 
+### 2026-11-10 포트폴리오 임시저장 동선 보완
 
-### 2026-11-10 회원 탈퇴 구현 및 누락 서비스 컴파일 오류 해결
+- 사용자 요청으로 확인한 결과, 기존 API/Mock 작성기 모두 500ms localStorage 자동 저장·beforeunload 저장·다음 진입 복원 기능은 있었지만 수동 버튼이 없고 취소는 초안을 삭제했다. develop 24b524e 기준 fix/portfolio-draft-actions에서 기능 자체의 신규 서버 구현 대신 명시적 동선을 보완한다.
+- PortfolioComposer 상단 ‘임시저장’ 추가. 취소 창에 ‘임시저장 후 나가기’를 추가하고 ‘계속 작성’/‘변경 취소’를 유지한다. 일반 돌아가기도 현재 입력을 먼저 저장하며 저장소 실패 시 이동하지 않는다. 파일 업로드/등록 중에는 수동 저장·저장 후 이동을 차단한다. 수정키/새 탭 열기는 유지한다. 초안을 삭제하는 동작은 기존 변경 취소와 등록 성공 경로에만 유지한다.
+- ApiPortfolioComposer에서 로드한 초안 여부를 전달하고 API/Mock 양쪽에 복원 안내와 현재 기기·브라우저 저장 한계를 표시한다. 기존 계정·문서별 v1 키, 미완성 입력·파일 참조·원래 수정 버전 저장 형식, 공개 범위 및 등록 API/DB는 변경하지 않는다. SSR 복원/수동 버튼/안내 회귀 검증 추가, portfolio-crud-api.md 갱신.
+- 최종 frontend npm test -- --maxWorkers=2: 118개 파일·1,368개 통과(기존 localStorage 계정 분리·미완성 초안·저장 실패·첨부 복원 테스트 포함). npm run build/TypeScript, 변경 파일 ESLint, git diff --check 통과. backend 변경이 없어 backend 테스트 미실행. 실제 브라우저 클릭으로 새 나가기 동작·저장소 용량 오류를 재현하는 검증은 미실행이며 SSR/기존 저장 로직 테스트와 구분한다. 새 DB 초안 API·기기 간 동기화 기능은 추가하지 않는다.
+### 2026-11-10 Docker 프로필 쓰기 출처 검사 수정
 
-- 사용자 확정: `feat/auth-delete-user`에서 작업. users에는 기록 참조용 ID·닉네임만 보존하고 다른 개인정보는 NULL로 제거한다. deleted_at·DDL 변경·주최자 위임 없음. 회원 재가입은 새 ID이며 과거 기록과 연결하지 않는다. 삭제되지 않은 미종료 프로젝트의 주최자는 탈퇴 409. 활동 본문·프로젝트·참여 이력·리뷰·거래 기록은 보존하고 잔여 이용기간 이월·환불은 없다. 계약/한계: [회원 탈퇴](auth-delete-user.md).
-- 오류 원인: AccountWithdrawalController가 아직 작성되지 않은 AccountWithdrawalService를 참조한 상태였다. 빈 서비스나 주석으로 건너뛰지 않고 서비스의 인증·정책 검사·트랜잭션·개인정보 정리·외부 실패 처리 전체를 구현했다. 사용자 커밋 b55551b를 되돌리거나 변경하지 않았다.
-- 백엔드 변경 파일: 신규 `service/AccountWithdrawalService.java`, `controller/AccountWithdrawalIntegrationTest.java`(테스트), `service/AccountWithdrawalCleanupTest.java`(테스트). 기존 탈퇴 코드 `repository/AccountWithdrawalRepository.java`, `service/AccountWithdrawalTasks.java`, `service/AccountWithdrawalCleanup.java` 보완. 탈퇴와 직접 연결된 `repository/MemberRepository.java`, `repository/ProjectApplicationRepository.java`, `repository/ProjectQueryRepository.java`, `security/jwt/JwtProvider.java`, `service/MessageService.java`, `service/ProjectCreationPolicy.java`, `service/impl/ProjectApplicationServiceImpl.java`, `websocket/MessengerSessionRegistry.java`만 수정했다. 원본 Member·Portfolio 엔티티·DDL·배포 설정은 수정하지 않았다.
-- 구현: 인증된 본인의 비밀번호 확인/카카오 동일 계정 재인증, 미종료 주최·RENEWING 결제 차단, 구독 즉시 종료/거래 보존, 양방향 팔로우·좋아요·북마크 정리, 진행 중 참여/지원 종료와 정족수 재계산, 제출본 작성자 태그·사진 제거, 계정 ID에 묶인 JWT/기존 토큰 폐기 및 WebSocket 차단. PortOne V2 빌링키·프로필 이미지 삭제 실패는 Redis에 암호문/파일명만 보관해 재시도한다. 카카오 해제 실패는 최대 3회 요청 후 롤백하며 새 재인증으로 재시도한다.
-- 프론트 변경 파일: `app/(user)/settings/privacy/_components/AccountWithdrawalPanel.tsx`, `AccountWithdrawalPanel.module.css`, `app/(user)/settings/privacy/page.tsx`, `app/api/auth/kakao/callback/route.ts`·`route.test.ts`, `app/login/page.tsx`, `lib/auth/actions.ts`, `cookies.ts`, `kakao.ts`, `withdrawal.test.ts`, `withdrawalLocalState.ts`·`withdrawalLocalState.test.ts`, `types/auth.ts`. 설정에 탈퇴 안내/동의/비밀번호/카카오 재인증을 연결했다. OAuth 콜백 GET은 탈퇴하지 않는다. 성공 후 쿠키와 본인 브라우저 초안만 정리하고 실패를 알린다. 다른 계정의 초안과 Mock 원본은 보존한다.
-- 환경/DB 확인: Spring Boot 4.1.2·Java 21·Gradle 9.8.2·JPA·PostgreSQL 17 설정을 재확인했다. 기존 dev-postgres.py를 통한 실제 팀 DB 읽기 전용 조회에서 users 22컬럼과 참조 FK를 확인했다. ID 외 NULL 허용이므로 DDL 없이 제거 가능. 최신 ERD 원본은 미제공으로 직접 대조 불가. 공유 DB의 데이터·스키마는 변경하지 않았다.
-- 확인한 검증: `./gradlew compileJava --no-daemon` 성공. 초기 신규 탈퇴 PostgreSQL 통합 6개(건너뜀 0)·기존 MemberController/JwtProvider 묶음 성공. 프론트 최초 전체 테스트는 3개가 5초 시간 초과로 실패했고, `npm run test -- --maxWorkers=2`로 재실행해 121파일/1,379개 모두 통과했다. 샌드박스 내 Node 자식 프로세스 stdout이 비어 TypeScript --showConfig를 해석하지 못하는 빌드 실패를 재현했고, 같은 명령을 권한 확장 환경에서 실행해 npm run build 성공을 확인했다. 린트의 effect 내 setState 1건은 URL 상태를 직접 읽도록 수정했다. 최종 재검증 결과는 이어 기록한다.
-- 남은 검증/제약: 실제 카카오·PortOne 외부 API 및 브라우저 조작 통합은 이번에 실행하지 않았다. local/test의 정리 작업 저장소는 메모리이므로 재시작 내구성은 운영 Redis AOF 구성에 의존한다. 닉네임 UNIQUE 제약 유지로 보존 닉네임 재사용은 불가하다. 자유 본문/첨부의 개인정보 자동 분석·제거는 하지 않는다. 새로운 기능 단계·main 병합·커밋·푸시는 수행하지 않는다.
+- 사용자 이미지 업로드의 "같은 사이트에서 요청해 주세요" 보고를 확인했다. profileRequestGuard만 request.url.origin을 직접 비교해 Next 내부 0.0.0.0 주소에서 정상 브라우저 Origin을 거절하고 있었다. 팔로우·포트폴리오의 기존 Host 비교 코드는 변경하지 않았다.
+- develop 24b524e 기반 fix/profile-origin-guard 별도 브랜치. lib/profiles/profileProxy.ts에서 브라우저 Host를 엄격히 검증하고 URL hostname/port를 함께 교체해 Origin과 비교한다. HTTPS 기본 포트가 내부 포트로 남지 않도록 처리. 다른 Origin·포트·프로토콜·Origin 누락/손상·위조 forwarded-host 차단은 유지한다. 공통 guard를 사용하는 이미지·기본 수정·소개·옵션·링크에 적용되며 파일 제한/백엔드/DB 변경 없음.
+- profileProxy.test.ts와 기존 이미지 route.test.ts에 Docker 내부 URL/Host 불일치·배포 HTTPS·외부/위조 출처 차단 및 업로드 전달 회귀 검증 추가. 첫 검사에서 HTTPS 기본 포트 처리 누락을 발견해 수정 후 전체 frontend 119개 파일·1,372개 통과, npm run build/ESLint/git diff --check 통과. 백엔드 변경이 없어 backend 테스트 재실행 없음.
+- 실제 Docker 프론트 재시작 후 localhost Origin의 지원하지 않는 SVG 요청은403이 아닌 파일 검증415까지 도달, 외부 Origin은403 차단 확인. 저장되지 않는 입력으로 검사해 실제 파일/DB 변경 없음. 정상 이미지 실제 저장·배포 환경 검증은 미수행. 생성 next-env.d.ts 원복, 기존 frontend/.vite 보존. 커밋·푸시·PR은 아직 하지 않았다.
+### 2026-11-10 #123 프로필 포스팅 목록 조회·화면 연결
 
-- 최종 보완 파일: `service/AuthService.java`, `service/AuthServiceTest.java`(테스트), `websocket/MessengerSessionRegistryTest.java`(테스트), `service/AccountWithdrawalTasksRedisTest.java`(테스트)도 포함한다. 액세스뿐 아니라 리프레시 JWT도 계정 ID에 묶고 로그인/카카오 발급/재발급과 탈퇴를 같은 회원 잠금으로 직렬화했다. 이전 형식 토큰의 이메일 지문 차단 기간은 액세스·리프레시 중 더 긴 수명+60초다. 실제 Redis에서 작업 복원·작업 ID 조건부 삭제·작업 임대·기존 토큰 차단 TTL을 검증한다.
-- 전체 백엔드 `./gradlew test --no-daemon` 실행은 기존 KakaoClientTest·PortOneClientTest의 로그 검증 2건 실패를 재확인한 뒤 Mockito 호출에서 장시간 정체하여 17분 56초 시점에 제가 시작한 테스트 JVM만 중단했다(exit 137). 전체 성공으로 보고하지 않는다. 저장된 전체 실행 XML의 1,151개 중 실패 55개에는 위 2개 외에 중단으로 발생한 Shutdown in progress/컨텍스트 로드 실패 53개가 포함된다. 앱 서버나 공유 DB는 종료/수정하지 않았다.
-- 새 JVM에서 테스트 컨텍스트 캐시만 4로 제한해 탈퇴·JWT·회원·프로젝트 지원/인증·메신저 API/세션/실시간 관련 111개 테스트를 실행했고 실패 0·건너뜀 0으로 통과했다(`/tmp/devmozip-withdrawal-backend-final.log`). 토큰 경합 보완 후 인증·탈퇴 묶음도 `BUILD SUCCESSFUL`을 확인했다(`/tmp/devmozip-withdrawal-auth-final.log`). 마지막 Redis 배치 경계 추가 검증은 별도 로그에 기록한다.
-- 최종 프론트 `npm run test -- --maxWorkers=2`: 121파일/1,379개 전부 통과(`/tmp/devmozip-withdrawal-frontend-final-test.log`). `npm run build` 성공(`/tmp/devmozip-withdrawal-frontend-final-build.log`), 변경 파일 ESLint 오류 0, `git diff --check` 성공. 빌드가 생성한 next-env.d.ts의 경로 변경은 원래대로 복원했다. 샌드박스 내 별도 typecheck 프로세스의 빈 출력을 성공 근거로 사용하지 않고 정상 실행 환경의 Next 빌드 TypeScript 성공을 근거로 삼았다.
+- develop 24b524e에서 feat/123-profile-posts 생성. 이전 로그인 PR #122는 별도 브랜치로 유지한다. #91 SNS 쓰기 기능/공통 게시글 Entity·테이블은 변경하지 않는다.
+- 공유 개발 PostgreSQL의 posts 15개 컬럼과 users 비공개 컬럼 부재를 읽기 전용 확인. 현재 글 0건. 기존 좋아요 조회의 POST/REPOST/VISIBLE 계약을 재사용한 조회 전용 API: GET /api/v1/users/me/posts, GET /api/v1/users/{slug}/posts. 인증 주체로 본인을 찾고 공개 slug는 ACTIVE만 허용. 삭제·숨김·원본 조회 불가 퍼간 글 제외, 최신순 페이지/카운트 같은 필터 사용.
+- 신규 ProfilePostsController/ExceptionHandler, service 인터페이스 및 impl, JDBC Repository, profile DTO 2종, PostgreSQL 통합 테스트 추가. SecurityConfig는 본인 인증 경로를 공개 경로보다 먼저 배치한다. DB/배포 설정 변경 없음.
+- frontend types/profilePosts, lib/profiles/profilePostsApi, /api/profiles/[slug]/posts BFF, 프로필 근처 ApiProfilePosts 및 테스트 추가. 기존 탭 구조·Card를 유지하고 글/원본 링크·페이지·로딩·빈 상태·오류·재시도를 연결했다. ApiProfileTabs 및 ApiProfilePage 회귀 기대값 갱신. 내부 SQL/타인 신원 쿼리 전달 차단·응답 구조/페이지/공개 작성자 일치 검증·HTML 이스케이프.
+- frontend npm test -- --maxWorkers=2: 121개 파일 / 1,376개 통과. npm run build: 성공. 첫 빌드에서 분기 축소 후 남은 불가능한 posts 비교를 TypeScript가 지적해 제거하고 재빌드 성공. 수정/신규 제품·테스트 파일 ESLint 및 git diff --check 통과. 빌드 생성 next-env.d.ts 원복, 기존 frontend/.vite 보존.
+- backend ./gradlew test --no-daemon --max-workers=2 전체 시도: KakaoClientTest.java:153, PortOneClientTest.java:105 기존 CapturedOutput 로그 검증 실패가 출력되고 종료1. 전체 성공으로 보고하지 않는다. 해당 도메인 파일은 수정하지 않았다. 별도 ./gradlew test --tests '*ProfilePostsIntegrationTest' --no-daemon --max-workers=2 성공: 5개 통과, 스킵/실패/오류0. 실제 격리 PostgreSQL에서 작성/퍼간 글·본인 신원·정렬/페이지·삭제/숨김/정지 원본 제외·잘못된 조건·DB 미준비503 검증.
+- 실제 로컬 공유 DB 조회: backend 공개 목록200·0건, 비로그인 본인401. BFF 첫 경로 컴파일 중 시간초과 후 재조회 공개200·0건/본인401 확인. 공유 데이터 생성·수정 없음. 카드 데이터·원본 링크는 SSR/격리 테스트 검증이며 실제 브라우저 데이터 있는 게시글 상세 이동은 미검증.
+- 미완료: #91 담당자와 조회 경로/DTO/공개·퍼간 글 처리 계약 최종 합의, #110 계정 비공개 공통 정책 연결(현 develop·DB에 컬럼 없음), 실제 데이터 및 피드 상세 연동 확인. docs/profile-posts-api.md에 현행/미확정을 구분했다. 활동·리뷰·배포 포폴503 해결·커밋/푸시/PR 생성은 이번 단계에 포함하지 않았다.
 
-- 최종 실행 명령(backend): `JAVA_TOOL_OPTIONS=-Dspring.test.context.cache.maxSize=4 ./gradlew test --tests '*AccountWithdrawal*' --tests '*MemberControllerTest' --tests '*JwtProviderTest' --tests '*ProjectApplicationIntegrationTest' --tests '*ProjectAuthenticatedUserIntegrationTest' --tests '*MessageApiIntegrationTest' --tests '*MessengerSessionRegistryTest' --tests '*MessengerSignalFlowTest' --no-daemon` → 111개 통과·실패 0·건너뜀 0.
-- 토큰 경합 수정 후 실행(backend): `JAVA_TOOL_OPTIONS=-Dspring.test.context.cache.maxSize=4 ./gradlew test --tests '*AccountWithdrawal*' --tests '*AuthServiceTest' --tests '*AuthControllerTest' --tests '*KakaoMemberAuthIntegrationTest' --tests '*ProjectAuthenticatedUserIntegrationTest' --tests '*JwtProviderTest' --tests '*MemberControllerTest' --no-daemon` → 101개 통과·실패 0·건너뜀 0. 앞선 111개와 중복된 테스트가 있으므로 합산한 별도 테스트 수로 보고하지 않는다.
-- 마지막 Redis 150건 스캔 경계와 인증/정리 확인(backend): `JAVA_TOOL_OPTIONS=-Dspring.test.context.cache.maxSize=4 ./gradlew test --tests '*AccountWithdrawalTasksRedisTest' --tests '*AccountWithdrawalCleanupTest' --tests '*AuthServiceTest' --tests '*JwtProviderTest' --no-daemon` → 33개 통과·실패 0·건너뜀 0(`/tmp/devmozip-withdrawal-queue-final.log`). 마지막 변경까지 compileJava/compileTestJava 성공. 테스트용 PostgreSQL·Redis에서 검증했으며 실제 공유 회원을 탈퇴시키지 않았다. 최종 `git diff --check` 성공.
+### 2026-11-10 #123 받은 리뷰 통합 확장
+
+- 사용자 요청으로 포스팅·리뷰를 같은 브랜치에서 구현하고 GitHub #123 제목/본문에 받은 리뷰 범위를 추가했다. 사용자는 타인의 공개 프로필에서도 별점·키워드·작성자·프로젝트명 표시를 확정했다. 비공개/삭제 프로젝트명·상세 ID는 타인 응답에서 가리고 본인 기존 협업 기록은 유지한다.
+- 신규 ProfileReviewsController/ExceptionHandler, profile/ProfileReviewsResponse, ProfileReviewsService 인터페이스/impl, ProfileReviewsIntegrationTest 추가. 기존 ProjectReviewService.received의 SUBMITTED·유효 별점·정규화된 키워드 집계를 재사용하며 기존 리뷰 Entity/Repository/업무 서비스·활동 기능은 수정하지 않았다. SecurityConfig 본인/공개 GET 경로를 순서대로 추가했다.
+- frontend types/profileReviews, lib/profiles/profileReviewsApi, /api/profiles/[slug]/reviews BFF와 각 테스트, 프로필 경로 근처 ApiProfileReviews 및 SSR 테스트 추가. 기존 리뷰 CSS의 요약·키워드 버블·작성자·별점·프로젝트 기록 배치를 보존하고 페이지·로딩·빈 상태·오류·재시도 연결. ApiProfileContent에서 실제 trustScore 전달하고 임의 Mock 온도 계산은 적용하지 않았다. 응답/집계/페이지 검증과 내부 오류 비노출·no-store 유지.
+- 격리 PostgreSQL 포스팅5+리뷰4 통합 테스트 9개 모두 통과(스킵/실패/오류0). 실제 Entity·기존 리뷰 집계 서비스·키워드 연결을 사용해 제출 전 리뷰 제외, 비활성 키워드 과거 기록, 평균/분포, 본인 신원, 공개/비공개/삭제 프로젝트 차이, 토큰/이메일 비노출, 저장소503을 검증했다.
+- frontend 전체 npm test -- --maxWorkers=2: 124개 파일 / 1,385개 통과. npm run build 및 신규 리뷰/수정 제품·테스트 파일 ESLint 성공. 빌드 생성 next-env.d.ts는 원복했다. 실제 로컬 공개 리뷰 backend/BFF 모두200·2건, 비로그인 본인401 확인. 공유 DB에 리뷰·글·키워드를 생성하거나 변경하지 않았다.
+- 문서: docs/profile-reviews-api.md 추가, profile-posts-api/project-reviews와 진행 기록 갱신. 미완료: #91 포스팅 계약 최종협의, #110 대상/작성자 계정 비공개 공통 정책, 실제 브라우저 카드/상세 이동, 전체 리뷰를 읽는 기존 집계의 DB 페이징 최적화. 배포 포폴503은 별개로 보류. 커밋·푸시·PR은 아직 하지 않았다.
+
+- 리뷰 통합 후 전체 backend 회귀 재실행에서도 기존 KakaoClientTest.java:153 및 PortOneClientTest.java:105 CapturedOutput 검증 실패를 확인했다. 새 포스팅/리뷰 9개 통합 성공과 전체 회귀 성공은 구분한다. 로그: /private/tmp/devmozip-123-reviews-backend-full.log. 최종 전체 실행은 6분22초 후 종료1: 1,147개 중 1,133 통과·2 실패·12 스킵·오류0. 실패 XML은 KakaoClientTest/PortOneClientTest 두 파일이며 새 포스팅5·리뷰4는 모두 통과했다.
+
+## 2026-11-10 프로필 활동 탭 프로젝트 실제 연결
+
+사용자 요청 범위는 프로필 활동 탭의 프로젝트 이력 연결이다. develop 24b524e 작업 폴더에서 구현했으며 AI·다른 도메인 기능은 추가하지 않았다. 공유 DB의 테이블·데이터는 변경하지 않았다.
+
+### 변경 파일과 동작
+
+- backend controller/ProjectActivityController, service/ProjectActivityService, repository/ProjectActivityRepository, dto/project/ProjectActivityResponse·ProjectActivityPageResponse: 본인/프로필 태그별 주최·참여 이력과 페이지 조회. 기존 projects/project_members 사용, 지원 대기 제외·LEFT 이력 보존·삭제 제외. 비공개는 조회자의 현재 ACTIVE 팀원 권한을 목록/개수에 함께 적용한다.
+- backend config/SecurityConfig: GET /users/me/projects 인증 및 /users/{slug}/projects 공개 경로만 추가. 인증 신원은 기존 ProjectCurrentUserProvider로 조회한다.
+- frontend ApiProfileTabs·ApiActivityTab·ActivityTab.module.css, types/projectActivity.ts, app/api/projects/activity/[slug]/route.ts: 기존 카드·공통 버튼·useProjectResource 재사용, 제목 상세 링크·역할/직군·기간/상태·참여 종료·본인 관리 버튼·페이지 이동·로딩/오류/빈 상태. 원래 Mock 활동 컴포넌트는 유지했다. 실제 프로필의 기존 API 라우팅은 Mock 토글과 무관하게 유지한다.
+- backend ProjectQueryIntegrationTest, frontend projectActivityRoutes.test.ts·ApiActivityTab.test.tsx·ApiProfilePage.test.tsx: 공개/비공개·탈퇴자·신원/페이지·BFF 입력 제한 및 화면 회귀 검증.
+- docs/project-backend-blueprint.md, api-plan.md, frontend-pages.md, project-profile-activity.md 및 artifacts/project-profile-activity/browser-report.json: 빠져 있던 프로필 이력 계약과 실제 검증 결과 기록.
+
+### 이번 실행 결과
+
+- 프론트 npm test -- --maxWorkers=1: 120개 파일·1,381개 통과. NODE_ENV=production npm run build 및 TypeScript 통과. 개발 컨테이너의 development 환경으로 한 초기 빌드 실패와 활동 탭 분기 타입 오류는 올바른 환경/수정 후 재검증했다. 구형 미연결 문구를 기대한 기존 테스트도 새 동작에 맞췄다.
+- 백엔드 ./gradlew test --no-daemon --max-workers=1: 1,142개 중 1,128개 통과·12개 스킵·2개 실패. 실패는 수정하지 않은 카카오 오류 로그 검증(KakaoClientTest:153), 결제 오류 로그 검증(PortOneClientTest:105)이다.
+- 프로젝트 패키지 140개 중 129개 통과·11개 스킵·실패 0. 조회 통합 테스트 12개(새 활동 4개 포함)는 격리 PostgreSQL에서 모두 통과. 컨테이너 내부 실행의 Docker 부재 스킵을 성공으로 간주하지 않았고, 호스트 캐시 권한 충돌은 /tmp의 별도 빌드/캐시로 회피했다.
+- 실제 공유 DB 공개 프로필 프로젝트 4건 조회. 1440px Chromium에서 Mock OFF·프로젝트 카드/제목 링크·가로 넘침 없음·pageerror 0, 비로그인 본인 401·없는 프로필 404 확인. 본인 로그인/비공개/LEFT 화면의 실제 브라우저 시나리오는 미실행이며 해당 권한은 격리 통합 테스트로 검증했다.
+- Docker 서버 재실행 및 포트 복구 후 frontend 3000/backend 8080 유지, 헬스 UP. 로컬 정기 결제는 비활성, DDL validate/SQL init never 유지. git diff --check 통과.
+
+### 남은 문제
+
+카카오·결제 로그 테스트 실패 2건은 이번 범위에서 수정하지 않았다. Member에 전체 프로필 공개 범위 필드가 없어 기존 활성 회원 조회 정책을 그대로 따랐다. 실계정 본인 화면·비공개 화면 브라우저 검증은 남았다. 다음 이슈 개발·커밋·푸시·PR 생성은 하지 않았다.
+
+
+## 2026-11-10 내 프로젝트 복귀 경로·모집 카드 통일·활동 디자인 복원
+
+- 사용자 요청: 내 프로젝트에서 상세로 이동 후 모집 목록으로 잘못 돌아가는 동선을 수정하고, 내 프로젝트 화면을 모집 목록과 유사하게, 활동 탭을 기존 Mock 디자인으로 맞춘다. 앞선 미커밋 활동 API 구현은 보존했다.
+- 원인: ApiProjectDetail·Mock 상세의 상단 링크가 /projects에 고정되어 있고 내 프로젝트 진입 출처를 전달하지 않았다.
+- 변경: projectNavigation.ts·ProjectBackLink로 내부 복귀 경로를 제한/보존한다. 내 프로젝트 카드 제목·상세·관리와 프로필 활동에서 returnTo를 전달하며 탭·검색·페이지를 유지한다. 직접 접속 시 안전한 기본 목록을 사용한다.
+- 화면: MyProjectsPage·ApiProjectList가 기존 RecruitmentCard/ProjectSummaryCard를 사용해 커버·태그·직군·일정 및 3열 배치를 공유한다. 주최/역할/모집 기간/참여 인원·관리/참여 정보·Mock 채팅/강퇴 안내를 유지했다. API 주최자 관리 링크는 기존 실제 관리 경로로 직접 연결한다.
+- 활동: ActivityProjectCard를 추출해 Mock/API 카드의 마크·상태·제목·기간/직군 배치를 공유한다. API에서 임의로 넣었던 ‘주최/참여’ 마크를 없애고 첫 글자+기존 색상 팔레트를 사용한다. 기존 상세 이동 및 본인 관리 버튼 유지.
+- 주요 파일: lib/projects/projectNavigation.ts, components/projects/ProjectBackLink.tsx·ProjectSummaryCard.tsx/module.css·RecruitmentCard.tsx, app/my-projects/page.tsx/module.css·[projectId]/manage/page.tsx, app/projects/[projectId]/page.tsx·_components/api/ApiProjectList.tsx·ApiProjectDetail.tsx, 프로필 _components/ActivityProjectCard.tsx·ActivityTab.tsx·ApiActivityTab.tsx·ActivityTab.module.css. 문서는 docs/project-navigation-layout.md·frontend-pages.md 및 브라우저 보고서를 갱신했다.
+- 최종 frontend npm test -- --maxWorkers=1: 122개 파일·1,393개 통과. NODE_ENV=production npm run build/TypeScript 성공. 새 테스트에서 목록/선택지 응답 대역을 구분하지 않아 발생한 초기 2개 실패는 대역을 수정한 후 재검증했다. git diff --check 통과, 빌드 생성 next-env.d.ts만 기존 dev 타입 경로로 복구.
+- 1440px Chromium: 내 프로젝트 3열·모집 카드 커버, 상세→내 프로젝트의 HOSTED 탭/React 검색 조건 복귀, 가로 넘침 없음·pageerror 0. 이 시나리오는 공개 API 데이터를 이용한 테스트용 쿠키·목록/세션/상세 응답 대역이며 실제 인증·DB 저장 성공을 뜻하지 않는다. 활동은 실제 공개 API 4건·첫 글자 마크·프로필 활동 복귀 정보를 확인했다. 초기 브라우저 시도의 비로그인 리다이렉트와 카드 선택자 오류는 검증 절차를 수정해 재실행했다.
+- 이번 단계는 frontend·문서만 변경했다. 기존 backend 미커밋 파일은 수정하지 않았고 Gradle 재실행·DB 변경·모바일 작업은 하지 않았다. 실계정 관리 동작의 종단 검증은 이번 실행 범위가 아니다. 커밋·푸시·PR 생성 없이 종료한다.
+
+
+## 2026-11-10 주최자 자동 관리·내 프로젝트 카드 단일 진입
+
+- 사용자 요청: ‘주최자 관리’ 진입 버튼 제거, 주최자는 즉시 관리 화면·그 외는 조회 화면. 내 프로젝트의 별도 관리/조회 진입을 제거하고 카드 전체를 클릭하게 한다.
+- ApiProjectDetail은 공통 상세 API 응답의 HOST 관계와 기존 실제 회원 identity ID를 함께 검증해 관리 UI를 자동 표시한다. manage URL/클라이언트 목록의 myRole만으로 권한을 부여하지 않는다. 비주최자에게 관리/수정/삭제/연장 컨트롤을 표시하지 않으며 기존 일반 지원·북마크 등은 보존했다.
+- Mock 상세도 주최자에게 기존 관리 컴포넌트를 바로 표시한다. 중복 상세/공개 상세 링크를 정리하고 관리 탭 전환·삭제 후에도 returnTo를 유지한다.
+- RecruitmentCard/ProjectSummaryCard는 내 프로젝트에서 단일 제목 링크의 클릭 영역을 전체 카드로 확장한다. 상세 보기·관리하기·참여 정보 링크를 제거한다. 카드 안 북마크와 기존 Mock 채팅은 독립 조작 영역을 유지한다. 모든 카드는 공통 /projects/{id}?returnTo=...로 들어가므로 목록의 역할이 오래됐어도 진입 화면의 서버 신원을 기준으로 분기한다.
+- 변경 파일: frontend/app/projects/[projectId]/page.tsx·manage/page.tsx·_components/api/ApiProjectDetail.tsx, app/my-projects/page.tsx/module.css, components/projects/RecruitmentCard.tsx/module.css·ProjectSummaryCard.tsx/module.css, tests/screens/ApiProjectOwnerView.test.tsx·MyProjectsLayout.test.tsx·ProjectsPage.test.tsx·ProjectManagePage.test.tsx. 문서는 project-navigation-layout.md 및 artifacts/project-owner-entry/browser-report.json을 갱신했다.
+- 최종 프론트 npm test -- --maxWorkers=1: 123개 파일·1,397개 통과. NODE_ENV=production npm run build·TypeScript 성공. 초기 기존 테스트의 별도 관리 링크 기대 및 관리 제목 문구까지 금지한 신규 기대는 새 동작과 버튼 범위에 맞게 조정한 후 전체 재검증했다.
+- 1440px Chromium: 카드 커버 클릭·주최자 즉시 관리·비주최자 조회·동일 진입 URL·별도 진입 버튼 제거·복귀 탭 유지, pageerror 0. 실제 공개 레코드를 사용했으나 세션·신원·상세는 응답 대역이므로 실제 로그인/관리 명령/DB 기록 검증을 뜻하지 않는다.
+- git diff --check 통과. next-env.d.ts의 빌드 생성 차이만 기존 dev 타입 경로로 복구했다. 이번 단계에서 backend·DB 변경은 없고 Gradle은 재실행하지 않았다. 커밋·푸시·PR 생성은 하지 않았다.
+
+
+## 2026-11-10 프로젝트 헤더 수정 버튼·조회수 재배치
+
+- 사용자 요청으로 ApiProjectDetail.tsx·projects/[projectId]/page.module.css만 제품 코드 변경. 수정 버튼은 헤더 오른쪽 위에 연필 아이콘과 배치하고 반응/공유 아이콘은 그 아래 정렬했다. 조회수는 설명 아래 왼쪽에 눈 아이콘과 보조 텍스트로 분리했다. 권한·API 동작은 유지한다.
+- frontend npm test -- --maxWorkers=1: 123개 파일·1,397개 통과. NODE_ENV=production npm run build 및 TypeScript 성공. 1440px Chromium에서 좌표/스크린샷으로 버튼 오른쪽/아이콘 위 및 조회수 왼쪽 하단 배치 확인, pageerror 0. 테스트용 세션/신원/상세 응답 대역을 사용했으며 실제 로그인·DB 저장 검증은 아니다.
+- docs/project-navigation-layout.md 및 artifacts/project-header-position/browser-report.json에 결과 기록. git diff --check 통과, next-env.d.ts의 자동 생성 차이만 dev 타입 경로로 복구. 백엔드 변경 없음으로 Gradle 미실행. 커밋·푸시·PR 생성 없음.
+
+
+## 2026-11-10 공고 수정 버튼 크기 통일
+
+사용자 요청으로 projects/[projectId]/page.module.css의 헤더 도구 묶음을 stretch 정렬하고 공고 수정 버튼 높이 52px·반경 14px·글자 15px·아이콘 18px로 조정했다. 아래 아이콘 3개 그룹과 같은 너비/높이를 사용한다. NODE_ENV=production npm run build/TypeScript 및 ApiProjectOwnerView 3개 테스트 통과. 1440px Chromium 응답 대역에서 버튼과 아이콘 그룹의 너비·높이 차이 1px 이하를 확인하고 기존 역할 분기·목록 복귀/pageerror 0을 재확인했다. 새 테스트·백엔드 변경·Gradle 실행·커밋·푸시 없음. next-env.d.ts 생성 차이만 기존 dev 경로로 복구했다.
+
+
+## 2026-11-10 활동 탭 ‘내 프로젝트 관리’ 상단 이동
+
+사용자 요청으로 Mock ActivityTab.tsx·실제 ApiActivityTab.tsx의 관리 링크를 목록 하단에서 ‘함께 만들어온 프로젝트’ 제목 오른쪽으로 이동했다. 본인만 표시하는 조건·이동 경로를 보존했다. ActivityTab.module.css의 footer 스타일을 제거하고 제목/버튼 Flex 정렬을 추가했다. 청사진·project-profile-activity.md에 최신 위치 반영. NODE_ENV=production npm run build/TypeScript 성공, ApiActivityTab·ApiProfilePage·ProfilePage 3개 파일·32개 테스트 통과, git diff --check 통과. next-env.d.ts 생성 차이만 기존 dev 경로 복구. 별도 브라우저·모바일 검증/백엔드 변경/Gradle 실행/커밋·푸시 없음.
+
+
+## 2026-11-10 프로젝트 활동/관리 화면 PR 준비
+
+사용자가 커밋·푸시·PR 생성을 요청해 develop 24b524e에서 feat/project-profile-activity 브랜치를 분리했다. 앞선 활동 이력 API·화면·단일 카드 진입·주최자 자동 관리·복귀 경로·헤더/활동 관리 버튼 위치 변경을 함께 반영한다. 원격 develop과 기준 커밋이 동일한 것을 확인했다. PR 준비의 최종 프론트 전체 테스트는 123개 파일·1,397개 통과. 마지막 버튼 위치 변경 단계에서 npm run build/TypeScript와 관련 32개 테스트도 통과했다. 백엔드 전체 테스트의 카카오/결제 로그 실패 2건과 프로젝트 129개 통과·11개 스킵, 실제 DB·브라우저 검증 한계를 PR에 명시한다. 환경설정·YAML·DB 변경을 추가하지 않았으며 다른 worktree의 변경은 포함하지 않는다. 헤더 배치 보고서는 마지막 실측 144×52px로 갱신했다.
+
+
+## 2026-11-10 활동 카드의 프로젝트 대표 이미지 연결
+
+- 사용자 요청: 활동 왼쪽 글자 마크 대신 저장된 프로젝트 대표 이미지 표시. ProjectActivityResponse에 imageUrl, ProjectActivityRepository에 기존 p.image_url 반환을 추가하고 frontend projectActivity 타입·ApiActivityTab·ActivityProjectCard·ActivityTab.module.css에 연결했다. 기존 58×58px 영역/둥근 모서리 유지, object-fit:cover, 이미지 없음/로드 실패 시 기존 글자/색상 마크 복원.
+- DB 스키마·데이터를 변경하지 않는다. Mock 모델에 이미지가 없으면 마크 유지. 리뷰 연결 롤백은 유지하며 기존 PR #124에 자동 푸시하지 않는다.
+- frontend NODE_ENV=production npm run build/TypeScript 성공, ApiActivityTab·ApiProfilePage·ProfilePage 32개 통과. backend ./gradlew test --tests '*ProjectQueryIntegrationTest' --no-daemon --max-workers=1 (/tmp 별도 빌드/캐시)로 격리 PostgreSQL 12개 통과·스킵/실패 없음. 기존 활동 테스트에 저장된 imageUrl 응답 확인을 추가했다. 전체 백엔드는 변경 범위에 맞춰 재실행하지 않았다.
+- Docker 백엔드 재시작 후 실제 DB/API 이미지 4개와 화면 src 일치·58×58px·로드 성공, 1440px Chromium에서 이미지 요청 실패 주입 시 마크 복원·pageerror 0·가로 넘침 없음. 검증한 4개 프로젝트의 저장 URL은 모두 기존 기본 이미지였고 임의로 교체하지 않았다. 보고서 docs/artifacts/project-activity-image/browser-report.json.
+- 청사진·project-profile-activity.md·project-navigation-layout.md를 현재 이미지 정책으로 갱신. git diff --check 통과, next-env.d.ts 생성 차이만 기존 dev 경로 복구. 커밋·푸시·PR 생성 없음.
+
+## 2026-11-10 프로젝트 #49 — 채팅 강퇴 투표 연결
+
+사용자 요청에 따라 프로젝트 도메인만 변경한다. 주최자는 강퇴 대상에서 제외하고, 가결 시 채팅뿐 아니라 현재 프로젝트 팀원에서도 제외하되 KICKED 상태·처리 시각·승인 지원서·활동·기존 메시지를 보존한다. AI·회원·인증·결제 설정과 다른 PR의 프로필 리뷰 연결은 변경하지 않는다. 앞선 활동 대표 이미지 미커밋 변경도 보존한다.
+
+### 변경 파일
+
+- 백엔드 신규: MemberRemovalVoteController/Service, MemberRemovalVote/Ballot 엔티티·Repository, CreateMemberRemovalVoteRequest/CastMemberRemovalBallotRequest/MemberRemovalVoteResponse, ProjectMembersChangedFrame, ProjectMemberRemovalResolved, ProjectMemberRemovalIntegrationTest.
+- 백엔드 수정: ProjectMember, ProjectMemberRepository, ProjectChatService/ProjectChatMemberResponse, ProjectApplicationController/Service/Impl/Response. 프로젝트 상태·채팅 멤버 변경과 같은 프로젝트 행 잠금을 사용한다.
+- 프론트: 프로젝트 members BFF 및 kick-votes/ballots BFF, ApiKickVotePanel/ServerProjectChat 및 멤버 버튼 CSS, 기존 Mock KickVotePanel/채팅 페이지, messengerSocket/parser 및 projectChatStore, 프로젝트 selectors/서비스/Mock 정책, ApiProjectApplications, ActivityTab/ApiActivityTab 및 관련 타입·테스트.
+- 문서: project-member-removal.md, project-backend-blueprint.md, messenger-plan.md, 이 진행 기록. 브라우저 근거: docs/artifacts/project-member-removal.
+
+### 이번 실행 결과
+
+- 백엔드 compileJava 성공. Docker 소유 build 디렉터리 삭제 실패 후 /tmp 전용 build·Gradle project cache로 분리해 검증했다.
+- 격리 PostgreSQL 강퇴 통합 최종 8개 통과(스킵/실패/오류 0): 투표권 스냅샷·주최자/본인 대상 제한·중복·과반수·KICKED 이력·메시지 보존·접근 차단·기한·명단 변경·동시 요청·결과 이벤트·짝수 정족수·다른 프로젝트/비로그인·종료 동의 재계산 검증. 명령: `./gradlew --project-cache-dir /tmp/devmozip-kick-gradle-cache -I /tmp/devmozip-kick-build.gradle test --tests '*ProjectMemberRemovalIntegrationTest' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m`.
+- 프론트 최종 전체 `npm test -- --maxWorkers=1`: 124개 파일 1,412개 통과. 강퇴 실시간 접근 차단·활동 이력 테스트를 포함한다. 앞선 전체 1,410개 및 관련 67개 실행과 중복 합산하지 않는다.
+- 프론트 `NODE_ENV=production npm run build`: 성공. TypeScript 검사·정적 페이지 77개 생성 완료, 신규 강퇴 BFF 라우트 포함.
+- Chromium 1440px 응답 대역: 초기 투표 숨김, 주최자 대상 버튼 없음, 멤버→사유→생성, 채팅 message-history 내부 표시, 찬성 후 중복 버튼 비활성 확인. 가로 넘침 없음, pageerror 없음. 실제 로그인/공유 DB 쓰기 시연을 뜻하지 않는다.
+- 환경 재시작 전 백엔드 컨테이너의 PostgreSQL ddl-auto=validate 기동 성공과 /actuator/health 200을 확인했다. 이후 환경 재시작으로 해당 서버는 중지되었다. 현재 서버 실행 중을 뜻하지 않는다. 공유 DB 테이블·샘플 데이터를 변경하지 않았다.
+
+### 남은 연동
+
+실시간 결과 신호·토스트와 ProjectMemberRemovalResolved 계약을 제공한다. 전역 알림함 DB 저장/발송은 알림 담당 소비자 연결이 남아 있다. 72시간·기권·명단 변경 취소는 기존 Mock의 임시 정책이다. 실제 전역 알림 전달을 완료했다고 보고하지 않는다. 커밋·푸시·PR 수정은 요청받지 않아 하지 않는다. 다음 이슈를 자동 시작하지 않는다.
+
+- 전체 백엔드 `./gradlew test`도 실행했으나 KakaoClientTest:153 및 PortOneClientTest:105의 기존 로그 검증 실패가 나타났다. MessengerWebSocketTest의 종료 대기 중 환경 재시작으로 실행 세션과 /tmp 산출물이 소실되어 최종 전체 결과는 확정하지 않는다. 신규 강퇴 8개는 재실행하여 통과를 확인했다. 포트를 점유한 다른 프로젝트 서버는 중지하지 않고 프론트 검증은 임시 컨테이너에서 수행했다.
+
+- 환경 재시작 후 최종 프로젝트 관련 회귀 `./gradlew test --tests '*Project*'` (/tmp 별도 build/cache, max-workers=1): 26개 클래스, 187개 중 176개 통과·11개 스킵·실패/오류 0, BUILD SUCCESSFUL. 강퇴 8개를 포함하므로 별도 합산하지 않는다. 최종 프론트 전체 1,412개와 빌드도 재실행 성공. 집계 근거 docs/artifacts/project-member-removal/verification.json.
+
+## 2026-11-10 #51 프로젝트 팀원 신고·관리자 처리
+
+### 범위와 구현
+
+사용자가 #51 진행을 요청해 프로젝트 맥락의 팀원 신고와 관리자 검토 결과 저장을 구현했다. 기존 reports 필드·사용자 신고·공고 신고·채팅의 작은 사이렌·관리자 화면 디자인을 재사용한다. 팀원 신고는 project_id와 reported_user_id를 함께 저장하고, 일반 사용자 신고/다른 프로젝트/공고 신고와 중복 판정을 분리한다. 현재 ACTIVE 팀원만 같은 프로젝트 참여 이력자를 신고하며 본인 신고는 차단한다. 신고 접수/처리만으로 강퇴·정지·감점하지 않는다.
+
+관리자는 공고·팀원 신고만 상태별 페이지 조회하고 REVIEWING/RESOLVED/REJECTED로 처리한다. JWT와 실제 DB ADMIN 역할·회원 상태를 검증한다. 처리자와 시각은 서버에서 설정하고 최종 결과는 재처리할 수 없다. 일반 사용자·SNS·댓글 신고 관리자 영역은 확장하지 않는다.
+
+### 변경 파일
+
+- backend 신규: dto/project의 CreateProjectMemberReportRequest, HandleProjectReportRequest, ManagedProjectReportResponse, ProjectReportPageResponse; service/ProjectReportManagementService; controller/ProjectReportManagementController; message/ProjectMemberReportIntegrationTest.
+- backend 수정: entity/Report의 팀원 신고 생성/관리자 처리, repository/ReportRepository의 중복·목록·잠금 조회, service/UserReportService의 일반 사용자 신고 중복 범위 분리.
+- frontend 신규: app/api/projects/[projectId]/members/[memberId]/reports, app/api/admin/project-reports 및 [id] BFF; admin/reports/_components/ApiProjectReports; lib/projects/projectMemberReport, adminReportProxy 및 신고 BFF·Mock 테스트; types/projectReportAdmin.
+- frontend 수정: 프로젝트 ServerProjectChat/Mock 채팅, 공통 UserReportDialog, 관리자 reports 페이지, Mock messagingService 및 messaging 타입. optional projectId로 기존 v1 저장 데이터 호환을 유지한다.
+- 문서: project-reports.md, project-backend-blueprint.md, 이 기록.
+
+### 검증 진행
+
+- compileJava 성공.
+- 격리 PostgreSQL/JWT 신규 팀원 신고·관리자 통합 6개 통과(스킵/실패/오류 0). 일반 사용자 신고 응답을 잘못 204로 기대한 초기 테스트 3건 실패는 기존 201 계약에 맞춰 수정했다. 제품 응답 계약을 변경한 것이 아니다. 이후 DB 실제 역할 검증을 추가한 최종 관련 테스트에서도 같은 6개가 통과했다.
+- 프론트 전체 테스트 126개 파일 1,427개 통과. 최종 Mock 처리 버튼의 완료 상태 제한을 포함해 npm run build/TypeScript도 성공.
+- 전체 백엔드 ./gradlew test는 실패했다. 기존 KakaoClientTest:153, PortOneClientTest:105 로그 검증 실패와 MessengerRedisSignalIntegrationTest의 OutOfMemoryError가 나타나 해당 테스트 JVM에 TERM을 보내 종료했다. 전체 통과나 전체 테스트 개수를 확정하지 않는다.
+
+### 경계와 미완료
+
+공유 팀 DB·운영 DB/컨테이너·인증 설정·결제·배포 YAML은 변경하지 않는다. 실제 팀 DB의 신규 접수/실계정 관리자 종단 검증은 아직 수행하지 않았다. 최신 ERDCloud export는 받지 않았고 새 스키마를 추가하지 않았다. 별도의 대상 배타 CHECK 제약이 실제 DB에 있다면 팀원 신고의 복합 맥락과 대조해야 한다. 코드만으로 공유 DB에서 검증됐다고 보고하지 않는다. 커밋·푸시·PR·GitHub 이슈 종료는 하지 않는다. 로컬 feat/51-project-member-reports 브랜치에 기존 #128 선행 커밋을 보존했다.
+
+- Chromium 1440px 응답 대역: 채팅 멤버의 사이렌 → 프로젝트 팀원 신고/상세 설명 → 관리자 접수 조회 → 완료 처리/메모 → 완료 후 처리 버튼 제거 → 접수 필터 빈 목록을 검증했다. 가로 넘침·pageerror 0. 보고서 docs/artifacts/project-member-reports/browser-report.json. 임시 프리뷰(3011)는 검증 후 종료했다. 상태 필터 테스트의 정확한 label 선택자 때문에 최초 자동화가 대기해, 표시된 combobox 선택자로 수정 후 통과했다.
+- 기존 읽기 전용 dev-postgres.py로 실제 reports 제약 대조를 시도했으나 이 worktree 루트에 .env가 없어 연결하지 못했다. 접속 정보 탐색이나 공유 DB 변경은 하지 않았다. 실제 DB 제약 대조는 미완료로 남긴다.
+
+- 관련 회귀 첫 재실행은 앞선 JVM의 종료 정리와 같은 build 디렉터리를 공유해 JUnit binary 결과 파일 NoSuchFileException으로 실패했다. 이를 제품 코드 실패/통과로 집계하지 않는다. 독립 /tmp/devmozip-project51-related-build·cache, 테스트 heap 768m와 Spring 컨텍스트 캐시 8개를 사용하는 임시 init script로 최종 관련 회귀를 재실행한다. 저장소 Gradle 설정은 바꾸지 않았다.
+
+- 최종 독립 관련 회귀: `./backend/gradlew -p backend --project-cache-dir /tmp/devmozip-project51-related-cache -I /tmp/devmozip-project51-related.gradle test --tests '*Project*' --tests '*UserReport*' --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx512m` → 29개 클래스, 총 219개 중 208개 통과·11개 스킵·실패/오류 0, BUILD SUCCESSFUL(1분48초). 신규 신고 6개가 포함되므로 별도 합산하지 않는다. 집계 근거 docs/artifacts/project-member-reports/verification.json.
+
+## 2026-11-10 #51 테스트용 프로젝트 팀원 추가
+
+사용자가 개발 DB를 명시적으로 선택해 김선아(users.id=10) 주최의 진행 중 43번 `[데모] TeamFlow 팀 일정 관리`에 기존 데모 계정 김하늘(1, FRONTEND)·이유나(6, BACKEND)·박민준(7, DESIGNER)을 ACTIVE 팀원으로 추가했다. project_members 신규 ID는 66·67·68이다. PROJECT 채팅방과 주최자를 포함한 4명의 chat_members를 같은 트랜잭션으로 생성했다. 주최자·계정·프로젝트 내용·지원서·포트폴리오·결제는 변경하지 않았다. 승인 흐름을 실행한 것이 아니라 신고/채팅 시연을 위한 직접 팀원 픽스처다. 정원·사용자 상태·프로젝트 상태·기존 탈퇴/강퇴·활성 투표 유무를 먼저 검사하고 기존 이력은 덮어쓰지 않았다.
+
+기존 프로젝트 루트 /home/luvsuna/DevMozip의 앱 Compose 설정을 사용했고, 호스트 cloud.newlecture.com·포트5442·DB devmozip이 일치할 때만 실행했다. 자격 증명은 출력/복사/문서 저장하지 않았다. COMMIT 후 별도 읽기 전용 연결에서 ACTIVE 프로젝트 팀원4·채팅 멤버4를 확인했다. 운영 DB는 변경하지 않았다. 소스 변경 없이 데이터만 추가하여 빌드·테스트는 재실행하지 않았다.
+
+같은 읽기 전용 점검에서 개발 DB reports 제약은 PK·reporter/reported_user FK·상태 CHECK만 존재함을 확인했다. project_id+reported_user_id를 함께 쓰는 것을 막는 배타 CHECK는 없다. 위 #51 단계의 .env 부재로 인한 제약 대조 미완료는 개발 DB에 한해 해소됐으며 실제 로그인으로 신고를 접수한 검증이나 운영 DB 대조를 뜻하지 않는다.
+
+## 2026-11-10 #51 로컬 Compose 실행
+
+사용자 요청으로 프로젝트 루트의 Compose를 사용해 최신 worktree 소스를 마운트한 backend/frontend/redis를 실행했다. ncafe가 3000을 사용해 해당 컨테이너는 유지하고 DevMozip 프론트를 3011→3000, 백엔드를 8080으로 실행했다. 개발 DB는 cloud.newlecture.com:5442/devmozip, Hibernate validate·SQL init never·payment renewal false를 실제 컨테이너 환경에서 확인했다. 메신저 allowed-origin은 localhost:3011로 지정했다. 설정은 저장소 밖 /tmp/devmozip-local-3011.yaml이며 프로젝트 YAML/.env는 수정하지 않았다.
+
+최초 `docker compose ... up --build`는 호스트 docker-buildx 실행 파일 부재로 이미지 빌드에 실패했다. 의존성 변경이 없고 기존 dev 이미지에 최신 소스를 마운트하므로 `up -d --no-deps --no-build backend frontend`로 실행했다. 백엔드 자체 compileJava/bootRun 후 Started BackendApplication 및 실제 PostgreSQL 17.11 validate 기동을 확인했다. 초기 프론트 health 503은 백엔드 시작 대기 중이었고 기동 완료 후 /api/health는 UP을 반환했다. 운영 서버·데이터·타 프로젝트 컨테이너는 변경하지 않았다.
+
+### Compose 포트 전환 — 후속 사용자 요청
+
+사용자가 기존 3000 서비스 중지를 명시적으로 요청해 ncafe-frontend만 정지하고 DevMozip을 3000으로 전환했다. 컨테이너/볼륨 삭제나 ncafe 백엔드·DB 정지는 하지 않았다. 최신 실행 override는 /tmp/devmozip-local-3000.yaml이며 messenger allowed-origin도 localhost:3000이다. 기존 개발 DB·validate·SQL init never·자동 갱신 false를 유지했다. 프론트 / HTTP200 및 /api/health HTTP200·UP을 전환 후 직접 확인했다. 앞선 3011 안내는 이 기록으로 대체한다.
+
+## 2026-11-10 채팅 멤버 강퇴·신고 버튼 정렬
+
+사용자 디자인 수정 요청으로 프로젝트 채팅 page.module.css의 신고 absolute 배치와 강퇴 버튼의 독립 margin 배치를 제거했다. ServerProjectChat 및 Mock page.tsx에서 프로필/이름과 작업 버튼을 각각 memberIdentity/memberActions로 묶고 2열 Grid를 사용한다. 버튼은 우측에 34×34px·간격8px로 통일했으며 강퇴 보라색, 신고 빨간색의 작은 아이콘·hover·focus 표시를 유지한다. Mock의 텍스트 강퇴 버튼도 같은 아이콘으로 통일했다. 기존 신고·투표 권한과 동작은 변경하지 않았다.
+
+npm run build/TypeScript 성공(실행 중인 개발 서버 .next와 분리한 임시 볼륨). 관련 채팅·투표·신고 회귀4개 파일43개 통과. 1440px Chromium 응답 대역에서 일반/긴 이름/프로필 링크 없는 멤버3명의 버튼을 측정해 동일Y·34px 크기·8px 간격·동일 우측 정렬을 확인했다. 페이지 오류·가로 넘침0, 스크린샷을 직접 확인했다. 실제 DB 신고 접수는 하지 않았다. 근거 docs/artifacts/chat-member-actions/browser-report.json 및 members-1440.png. 백엔드 변경 없이 프론트 소스만 수정했고 커밋·푸시하지 않았다.
+
+## 2026-11-10 강퇴 투표 카드·만료 표시 정리
+
+사용자 요청으로 ApiKickVotePanel/KickVotePanel의 만료를 분까지만 표시한다. lib/projects/kickVoteView.ts에서 서버 LocalDateTime은 KST로 해석하고 Mock UTC/오프셋도 KST로 변환한다. 마이크로초를 받아도 화면에는 연·월·일·시·분만 표시한다. 원본 만료 값과 투표 기간/판정 로직은 변경하지 않는다.
+
+KickVotePanel.module.css를 카드 중심으로 정리해 연한 배경·18px 모서리·상태 배지·4개 집계 칸·찬성 진행 막대·만료 보조 표시를 적용했다. 실제 API의 긴 임시 정책은 details 안내로 유지하고 기본 접는다. 완료된 투표에는 추가 투표를 유도하는 문구를 표시하지 않는다. Mock도 같은 카드 스타일과 날짜 형식을 사용한다.
+
+격리 .next 볼륨에서 npm run build/TypeScript 성공, 채팅·투표·신고 관련4개 파일43개 테스트 통과. Node에서 서버 2026-11-13T10:15:59.123456과 Mock 2026-11-13T01:15:59.123Z가 모두 2026. 11. 13. 10:15로 표시됨을 확인했다. Chromium 1440px 응답 대역에서 분 단위 만료·안내 접힘·진행값1·페이지 오류/가로 넘침0을 확인하고 스크린샷을 직접 점검했다. 근거 docs/artifacts/chat-vote-design/browser-report.json 및 vote-1440.png. 백엔드·DB·결제·투표 데이터는 변경하지 않았으며 커밋·푸시하지 않았다.
+### 2026-11-10 로그인 후 데모 프로필 이동 오류 수정
+
+- 사용자 보고: 카카오 로그인 후 `/users/demo-user`에서 공개 프로필 404, `/profile/me`는 정상. 로그인 복귀 next는 기존 내부 주소를 그대로 사용하고 온보딩 완료/이미 완료 링크도 화면용 user.id를 공개 slug로 사용하던 코드 확인. 실제 사용자 브라우저의 flow 쿠키/로그인은 재현하지 않아 최초 next 생성 지점은 미확정이다.
+- `fix/login-profile-redirect`에서 `frontend/lib/auth/paths.ts`에 로그인 완료 전용 loginNext 추가. 기존 demo-user/demo-premium/demo-admin 공개 경로만 `/profile/me`로 교정하고 탭 query/hash 보존. 일반 공개 프로필·메시지·외부 URL 차단 정책 유지. 일반 로그인 actions와 카카오 callback에 적용하고 온보딩 두 내 프로필 링크 수정. 해당 actions/callback 회귀 테스트 추가.
+- `npm test -- --maxWorkers=2`: 118개 파일·1,374개 성공. 인증 관련 선별 테스트 79개 성공. `npm run build`: 성공. 인증 변경 파일 ESLint 성공. 백엔드·DB·카카오 외부 API는 변경/호출하지 않았고 실제 OAuth 브라우저 재검증·배포·커밋·푸시는 미수행. 빌드 생성 next-env.d.ts는 원복, 기존 frontend/.vite 보존.
+- 남은 사항: 새 로그인으로 실제 next 복귀 검증. 배포 포폴 503은 별개이며 배포 로그 접근 필요. 활동 담당자 작업과 기타 프로필 탭 연동은 이번 단계에서 수정하지 않음.
+
+- 후속 로컬 실행 확인: 카카오 시작 실패 보고를 확인하니 기존 dev 백엔드 프로세스가 최신 WebSocketConfigurer 의존성을 반영하지 못해 기동 실패 상태였다. 사용자 로그인 오류 해결 범위에서 devmozip-backend-1만 재시작해 최신 Gradle 의존성으로 기동. PostgreSQL 연결 및 /actuator/health HTTP 200 확인. 서버 재시작은 공유 DB 스키마/데이터 변경을 수행하지 않았다. 실제 OAuth 동의/콜백은 별도 브라우저 재확인 필요.
+
+## 2026-11-10 PR #124 develop 충돌 해결
+
+사용자 요청으로 별도 pr124-conflicts worktree에서 origin/develop 6cb3d47을 병합했다. 충돌은 이 진행 문서의 말미 한 구간뿐이며 활동/관리 화면 기록과 로그인 프로필 복귀 수정 기록을 모두 보존했다. develop의 AI 초기 분석 및 로그인 수정 코드는 원본을 유지했다. 실행 중인 worktree의 모집 중 필터/개발자 전용 탐색 미커밋 변경과 #128/#131 브랜치는 수정하지 않았다. 이번 작업에서 백엔드 코드·DB·배포 설정은 변경하지 않는다.
+
+- 충돌 해결 최종 검증: 별도 작업 폴더 소스로 npm run build/TypeScript 성공, npm test -- --maxWorkers=1 전체124개 파일1,408개 통과. 실행 서버의 node_modules 의존성 볼륨만 재사용하고 빌드 .next는 독립 볼륨으로 분리했다. 생성된 next-env.d.ts는 기존 dev 경로로 복원했다. git diff --check 및 미해결 충돌 파일0 확인. 백엔드 코드 변경이 없어 백엔드 테스트와 실제 DB/외부 API 검증은 재실행하지 않았다. 기존 #124에 일반 푸시하며 강제 푸시·develop/main 직접 변경·다른 PR 갱신은 하지 않는다.
+
+## 2026-11-10 PR #125 develop 충돌 해결
+
+사용자 요청으로 별도 pr125-conflicts worktree에서 최신 develop 5592e21을 병합했다. 진행 문서와 ApiProfileTabs·ApiProfilePage 테스트가 충돌했다. #125 포스팅/받은 리뷰와 #124 활동 API 연결을 모두 보존해 소개·포트폴리오·포스팅·활동·리뷰 5개 탭을 함께 연결했다. 기존 본인/공개 slug·own·trustScore 전달을 유지하며 연결 전 안내가 잘못 나오지 않게 했다. 진행 문서는 양쪽 기록을 보존했다. 다른 PR과 실행 서버/미커밋 검색 수정·공유 DB·배포 설정은 변경하지 않는다.
+
+검증 결과: 별도 컨테이너에서 `npm run build` 성공, `npm test -- --maxWorkers=1` 130개 파일·1,426개 테스트 통과. 백엔드는 격리된 Testcontainers 환경에서 `./gradlew test --tests '*ProfilePostsIntegrationTest' --tests '*ProfileReviewsIntegrationTest' --tests '*ProjectQueryIntegrationTest'` 성공 (21개, 실패·오류·건너뜀 0/0/0). 전체 백엔드 테스트와 브라우저 수동 검증은 이번 작업에서 실행하지 않았다. 공유 DB와 실행 중 서버는 변경하지 않았다.
+
+## 2026-11-10 PR #127 충돌 해결
+
+최신 develop 37d40f6 병합 중 진행 문서만 충돌하여 양쪽 기록을 보존했다. 프로필 쓰기 요청 출처 검사 수정과 develop의 프로필·검색 연결 코드는 유지한다. 기존 미커밋 작업과 실행 서버, DB, 배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 `npm run build` 성공. `npm test -- --maxWorkers=1` 133개 파일·1,455개 테스트 통과(출처 검사·이미지 업로드 회귀 포함). `git diff --check` 통과. 백엔드 충돌/수정은 없어 백엔드 테스트 재실행은 생략했으며 실제 이미지 저장 및 배포 브라우저 검증은 미실행.
+
+## 2026-11-10 PR #129 충돌 해결
+
+최신 develop 07412db 병합에서 AGENTS.md와 SecurityConfig.java가 충돌했다. SNS 피드·업로드 이미지의 공개 GET 경로와 통합 검색 공개 GET 경로를 모두 보존했다. 인증이 필요한 쓰기 및 팔로잉 경로 정책은 유지했다. 작업 규칙 문서는 SNS와 개발자 탐색 범위를 함께 보존했다. 별도 worktree를 사용해 기존 미커밋 작업·실행 서버·공유 DB는 변경하지 않았다.
+
+검증: 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 137개 파일·1,505개 테스트 통과. 격리된 PostgreSQL 환경에서 `./gradlew test --tests '*FeedPostgresIntegrationTest*' --tests '*SearchIntegrationTest*'` 67개 통과(실패·오류·건너뜀 0). `git diff --check` 통과. 전체 백엔드 및 브라우저 수동 검증은 미실행. 빌드 생성 next-env.d.ts 변경은 원복했다.
+
+## 2026-11-10 PR #131 충돌 해결
+
+최신 develop 7a6fee3 병합에서 공통 Report 엔티티·Repository와 진행 문서가 충돌했다. 프로젝트 팀원 신고 생성·관리자 처리·중복 검사·잠금 조회와 SNS 게시글·댓글 신고 생성·중복 조회를 모두 보존했다. 진행 기록도 양쪽을 유지했다. 별도 worktree에서 작업하며 기존 미커밋 변경·실행 서버·공유 DB는 변경하지 않았다.
+
+추가 통합 불일치: develop의 신고 초기 상태 AWATING과 #131의 RECEIVED 참조가 달라 첫 backend 컴파일이 실패했다. ProjectReportManagementService·관리자 BFF 필터·관리자 UI·관련 테스트·project-reports 문서를 AWATING으로 통일했다. DB 변경은 하지 않는다.
+
+최종 검증: 수정 후 별도 컨테이너 `npm run build` 성공, `npm test -- --maxWorkers=1` 139개 파일·1,521개 테스트 통과. backend `./gradlew test`에 ProjectMemberReportIntegrationTest·ProjectMemberRemovalIntegrationTest·UserReportApiIntegrationTest·ProjectReportIntegrationTest·FeedPostgresIntegrationTest 필터를 적용해 격리 PostgreSQL에서 89개 통과(실패·오류·건너뜀 0). 첫 컴파일 실패는 위 상태 값 통일 후 해소했다. 전체 백엔드 테스트 및 브라우저 수동 검증은 미실행. 생성 next-env.d.ts 원복, git diff --check 통과.
+
+## 2026-11-10 모집 중 필터에서 마감 공고 제외
+
+사용자가 모집 중 조건에서도 모집 마감 공고가 나타난다고 제보했다. 실제 로컬 개발 API GET /api/v1/projects?status=RECRUITING&size=50에서 총6개 중 IDs5/6/8은 모집 마감일이 지난 recruitmentClosed=true 공고임을 재현했다. DB의 RECRUITING 상태는 유지되지만 화면은 날짜로 모집 마감이라 표시하는데, ProjectQueryRepository의 상태 필터에는 날짜 조건이 빠져 있었다.
+
+ProjectQueryRepository에서 RECRUITING 조건에만 recruitment_end>=KST today를 추가했다. 같은 WHERE로 결과·전체 수·페이지 수를 계산한다. 다른 상태와 필터 없는 전체 조회는 유지한다. 마감일 당일은 포함하고 다음 날 자정부터 제외한다. DB 상태·데이터·프론트 디자인은 변경하지 않았다. 기존 Mock 검색은 이미 projectStatus로 날짜를 반영하므로 수정하지 않았다.
+
+ProjectQueryIntegrationTest에 결과/집계/페이지·당일·KST 자정·다른 상태 보존 회귀를 추가했다. 독립 build/cache에서 ./gradlew test --tests '*ProjectQueryIntegrationTest'로14개 통과(실패/오류/스킵0). 프론트 Mock 검색/프로젝트 테스트2개 파일38개 통과, 별도 .next 볼륨 npm run build/TypeScript 성공. 백엔드 전체 테스트는 이 작은 조회 변경에서 반복하지 않았다.
+
+기존 보호 설정으로 로컬 Compose backend만 재시작 후 같은 실제 API의 모집 중 결과가3개, 마감 결과0개임을 확인했다. Chromium 1440px에서 실제 BFF/개발 DB로 /projects?status=RECRUITING을 열어 결과3개(40/41/7)·마감 배지0·pageerror0을 확인했다. 응답 대역이나 실제 상세 조회/지원 쓰기는 사용하지 않았다. 근거 docs/artifacts/project-recruiting-filter/browser-report.json. 변경 파일은 위 Repository·테스트·문서/보고서이며 로컬 fix/project-recruiting-filter 브랜치에 보존했다. 커밋·푸시·운영 배포는 하지 않았다.
+
+## 2026-11-10 개발자 탐색에서 프로젝트 선택 제거
+
+사용자 요청으로 /explore를 개발자 검색 전용으로 정리했다. SearchBar에서 대상 select와 target 상태를 제거하고 검색어 입력 너비를 확장했다. page/layout·SearchFilters에서 프로젝트 결과/실제 프로젝트 API 대체 화면/모집 조건 분기를 제거하고 개발자용 제목·필터·결과만 표시한다. lib/search/searchService.ts의 developerSearchParams를 통해 이전 type=projects URL도 개발자로 해석하고 검색 제출/조건 변경 시 프로젝트 전용 role/field/status를 제거한다. 공유 검색 서비스의 기존 프로젝트 유틸과 /projects의 검색·실제 API는 보존했다.
+
+기존 SearchPage 테스트를 전용 정책으로 갱신했다. 프론트 전체126개 파일1,427개 통과, 격리 .next 볼륨에서 npm run build/TypeScript 성공. Chromium1440px Mock 화면에서 이전 프로젝트 URL의 개발자 결과·대상 선택0·검색 제출 type=developers·프로젝트 조건 제거·페이지 오류/가로 넘침0을 확인했다. 보고서 docs/artifacts/developer-only-search/browser-report.json. 실제 개발자 검색 API 신규 구현이나 DB 변경은 하지 않았고 운영 배포·커밋·푸시는 하지 않았다. 앞선 모집 중 필터 백엔드 수정은 같은 로컬 브랜치에 보존했다.
+
+## 2026-11-10 보관한 검색 수정 최신 develop에 복원
+
+stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-recruiting 브랜치에 적용했다. SearchPage·SearchFilters·진행 문서 충돌을 해결했다. develop의 실제 API 검색·팔로우 상태·페이지 이동·서버 선택지는 유지하면서 /explore는 개발자 검색 전용으로 제한한다. 예전 type=projects URL도 개발자 조회로 정규화한다. 모집 중 필터의 모집 종료일 검사와 경계 테스트도 복원했다. 커밋·푸시는 하지 않는다.
+
+검증 결과: 최초 실행 중인 개발 컨테이너에서 NODE_ENV=development 빌드가 prerender 오류로 실패했고, 동일 환경의 테스트는 이미지 BACKEND_URL 기대값 불일치 및 프로세스 종료137로 완료되지 않았다. 환경을 분리한 컨테이너(NODE_ENV=production, 별도 .next)에서 npm run build 성공·전체 frontend 139개 파일/1,522개 통과. 마지막 검색어 변경 시 page 초기화 보존 후 빌드 재통과·검색 관련 25개 재통과. backend ./gradlew test --tests '*ProjectQueryIntegrationTest' 14개 통과(실패/건너뜀0, 격리 PostgreSQL). /explore?type=projects HTTP200 및 backend health UP 확인. 브라우저 수동 조작은 미실행. stash는 보존하고 생성 next-env.d.ts는 원복했다.
+## 2026-11-10 PR #132 충돌 해결
+
+최신 develop 0d6f533을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 알림·개발자 탐색·SNS 및 이미지 제공 범위와 관련 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 미커밋 작업과 실행 서버·공유 DB·배포 설정은 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공, npm test -- --maxWorkers=1 전체 143개 파일·1,613개 테스트 통과. backend ./gradlew test --tests '*notification.*' 49개, 실패 0·오류 0·건너뜀 0. 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
+
+## 2026-11-10 PR #133 충돌 해결
+
+최신 develop 2af95a7을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 개인정보 설정(비공개 계정)과 develop의 SNS·검색·알림 및 이미지 제공 범위와 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 로컬 작업·실행 서버·공유 DB는 변경하지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공. npm test -- --maxWorkers=1 전체 146개 파일·1,646개 테스트 통과. backend ./gradlew test에 AccountLock*・AccountVisibilityPolicyTest・FollowPrivacyIntegrationTest 필터를 적용해 36개 통과(실패·오류·건너뜀 0). 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.

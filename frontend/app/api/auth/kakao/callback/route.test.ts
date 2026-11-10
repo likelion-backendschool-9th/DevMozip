@@ -81,6 +81,17 @@ describe('카카오 콜백: 로그인·가입', () => {
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, access, expect.objectContaining({ httpOnly: true, sameSite: 'lax' }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, 'refresh', expect.objectContaining({ httpOnly: true, maxAge: 1209600 }));
     });
+    it.each([
+        ['/users/demo-user', '/profile/me'],
+        ['/users/demo-premium/?tab=portfolio#list', '/profile/me?tab=portfolio#list'],
+        ['/users/demo-admin', '/profile/me'],
+        ['/users/another-member', '/users/another-member'],
+        ['/login', '/'],
+    ])('로그인 후 복귀 주소 %s는 %s로 이동한다', async (next, expected) => {
+        startedAs('login', next);
+        doubles.fetch.mockResolvedValue(Response.json({ status: 'LOGIN', accessToken: access, refreshToken: 'refresh' }));
+        expect(locationOf(await callback())).toBe(expected);
+    });
     it('저장된 next가 외부 주소면 메인으로 이동한다', async () => {
         startedAs('login', '//outside.test');
         doubles.fetch.mockResolvedValue(Response.json({ status: 'LOGIN', accessToken: access, refreshToken: 'refresh' }));

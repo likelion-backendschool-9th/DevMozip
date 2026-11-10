@@ -1,7 +1,6 @@
 'use client';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { KakaoNotice } from '@/app/_components/KakaoNotice';
 import { Button } from '@/components/common/Button';
@@ -9,6 +8,7 @@ import { Input } from '@/components/common/Input';
 import { Modal } from '@/components/common/Modal';
 import { needsFirstPassword, passwordChangeErrors, passwordSetErrors } from '@/lib/account/accountAreaService';
 import { changePasswordAction, kakaoAccountStatusAction, setPasswordAction, startKakaoAction } from '@/lib/auth/actions';
+import { AccountLockPanel } from './_components/AccountLockPanel';
 import { AccountPasswordForm, passwordCopy } from './_components/AccountPasswordForm';
 import { PaymentInfoPanel } from './_components/PaymentInfoPanel';
 import { AccountWithdrawalPanel } from './_components/AccountWithdrawalPanel';
@@ -17,12 +17,12 @@ import type { KakaoAccountStatus } from '@/types/auth';
 const blankPassword = (): PasswordChangeInput => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
 const ACCOUNT_LOAD_ERROR = '계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 function AccountSettingsContent() {
-    const { accountUser: user, accountArea, accountAct } = useAuth();
+    const { accountUser: user } = useAuth();
     const [password, setPassword] = useState(blankPassword);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [busy, setBusy] = useState(false);
-    const [modal, setModal] = useState<'password' | 'kakao' | 'privacy' | null>(null);
+    const [modal, setModal] = useState<'password' | 'kakao' | null>(null);
     const [account, setAccount] = useState<KakaoAccountStatus | null>(null);
     const [accountError, setAccountError] = useState('');
     const [kakaoError, setKakaoError] = useState('');
@@ -45,8 +45,6 @@ function AccountSettingsContent() {
     const firstPassword = needsFirstPassword(account);
     const passwordText = firstPassword ? passwordCopy.first : passwordCopy.change;
     const kakaoLinked = !!account?.kakaoLinked;
-    const prefs = user ? accountArea.accounts[user.id] : undefined;
-    const isPrivate = !!prefs?.isPrivate;
     return (
         <>
             <header className={[styles.scope, 'personal-page-heading'].join(' ')}>
@@ -62,7 +60,7 @@ function AccountSettingsContent() {
                         <Input value={user?.email || ''} readOnly />
                     </label>
                     <p className={[styles.scope, 'auth-hint'].join(' ')}>
-                        표시된 이메일은 기존 Mock 계정 정보입니다. 실제 개인정보를 추가로 저장하지 않습니다.
+                        로그인한 계정의 이메일입니다.
                     </p>
                     <h3>{passwordText.heading}</h3>
                     {!account ? (
@@ -114,24 +112,7 @@ function AccountSettingsContent() {
                     )}
                 </section>
                 <PaymentInfoPanel role={user?.role} />
-                <section className={[styles.scope, 'account-panel'].join(' ')}>
-                    <h2>
-                        <ShieldCheck size={20} /> 계정 공개 설정
-                    </h2>
-                    <div className={[styles.scope, 'account-setting-row'].join(' ')}>
-                        <div>
-                            <strong>{isPrivate ? '비공개 계정' : '공개 계정'}</strong>
-                            <p>
-                                {isPrivate
-                                    ? '다른 사용자에게 프로필과 작성한 SNS 게시글이 표시되지 않습니다. 본인은 모든 기능을 그대로 이용할 수 있습니다.'
-                                    : '다른 사용자가 내 프로필과 SNS 게시글을 볼 수 있습니다.'}
-                            </p>
-                        </div>
-                        <Button variant="secondary" onClick={() => setModal('privacy')}>
-                            {isPrivate ? '공개 계정으로 전환' : '비공개 계정으로 전환'}
-                        </Button>
-                    </div>
-                </section>
+                <AccountLockPanel />
             </>
             <AccountWithdrawalPanel account={account} />
             {modal && (
@@ -139,26 +120,18 @@ function AccountSettingsContent() {
                     title={
                         modal === 'password'
                             ? passwordText.modalTitle
-                            : modal === 'privacy'
-                              ? isPrivate
-                                  ? '계정을 공개할까요?'
-                                  : '계정을 비공개로 전환할까요?'
-                              : kakaoLinked
-                                ? '카카오 연동을 해제할까요?'
-                                : '카카오 계정을 연동할까요?'
+                            : kakaoLinked
+                              ? '카카오 연동을 해제할까요?'
+                              : '카카오 계정을 연동할까요?'
                     }
                     onClose={() => setModal(null)}
                 >
                     <p>
                         {modal === 'password'
                             ? passwordText.modalBody
-                            : modal === 'privacy'
-                              ? isPrivate
-                                  ? '다른 사용자가 내 프로필과 작성한 SNS 게시글을 다시 볼 수 있습니다.'
-                                  : '프로필 상세와 작성한 SNS 게시글을 다른 사용자에게 숨깁니다. 로그인과 본인의 활동은 그대로 유지됩니다.'
-                              : kakaoLinked
-                                ? '카카오 인증을 한 번 더 진행한 뒤 연동을 해제합니다. 이후에는 이메일과 비밀번호로 로그인합니다.'
-                                : '카카오 로그인 화면으로 이동합니다. 인증을 마치면 이 계정에 연동됩니다.'}
+                            : kakaoLinked
+                              ? '카카오 인증을 한 번 더 진행한 뒤 연동을 해제합니다. 이후에는 이메일과 비밀번호로 로그인합니다.'
+                              : '카카오 로그인 화면으로 이동합니다. 인증을 마치면 이 계정에 연동됩니다.'}
                     </p>
                     <div className={[styles.scope, 'modal-actions'].join(' ')}>
                         <Button variant="secondary" disabled={busy} onClick={() => setModal(null)}>
@@ -189,7 +162,7 @@ function AccountSettingsContent() {
                                     } finally {
                                         setBusy(false);
                                     }
-                                } else if (modal === 'kakao') {
+                                } else {
                                     setBusy(true);
                                     setKakaoError('');
                                     try {
@@ -204,8 +177,6 @@ function AccountSettingsContent() {
                                     }
                                     setBusy(false);
                                     setModal(null);
-                                } else {
-                                    if (accountAct({ type: 'privacy', isPrivate: !isPrivate })) setModal(null);
                                 }
                             }}
                         >

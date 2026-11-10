@@ -4,7 +4,20 @@ import { backendFetch } from '@/lib/auth/backend';
 const headers = { 'Cache-Control': 'no-store' };
 export const profileError = (status: number, message: string) => NextResponse.json({ message }, { status, headers });
 export function profileRequestGuard(request?: Request) {
-    if (request && request.headers.get('origin') !== new URL(request.url).origin) return profileError(403, '같은 사이트에서 요청해 주세요.');
+    if (!request) return null;
+    // Docker 내부 URL 대신 브라우저가 보낸 Host를 비교한다.
+    // 임의 x-forwarded-host는 출처 판단에 사용하지 않는다.
+    const target = new URL(request.url);
+    const host = request.headers.get('host');
+    if (host) {
+        try {
+            const external = new URL(`${target.protocol}//${host}`);
+            if (external.host !== host || external.username || external.password || external.pathname !== '/' || external.search || external.hash) throw new Error('host');
+            target.hostname = external.hostname;
+            target.port = external.port;
+        } catch { return profileError(403, '같은 사이트에서 요청해 주세요.'); }
+    }
+    if (request.headers.get('origin') !== target.origin) return profileError(403, '같은 사이트에서 요청해 주세요.');
     return null;
 }
 const messages: Record<number, string> = {
