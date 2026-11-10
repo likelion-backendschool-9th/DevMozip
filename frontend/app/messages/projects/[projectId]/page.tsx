@@ -18,12 +18,17 @@ import { useMessaging } from '@/lib/state/messagingStore';
 import { roomAccess } from '@/lib/messaging/messagingService';
 import { ChatWindow } from '@/app/messages/_components/ChatWindow';
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar';
+import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { ServerProjectChat } from './_components/ServerProjectChat';
+
+/** Mock 토글 OFF는 서버 프로젝트 채팅, ON은 기존 Mock 단체 채팅을 그린다(D5). */
 export default function ProjectChatPage() {
-    const { projectId = '' } = useParams<{
-        projectId: string;
-        postId: string;
-        userId: string;
-    }>();
+    const { projectId = '' } = useParams<{ projectId: string }>();
+    const { enabled } = useMockVisibility();
+    return enabled ? <MockProjectChat projectId={projectId} /> : <ServerProjectChat projectId={projectId} />;
+}
+
+function MockProjectChat({ projectId }: { projectId: string }) {
     const [reportTarget, setReportTarget] = useState<string | null>(null);
     const [showMembers, setShowMembers] = useState(false);
     const [target, setTarget] = useState<string | null>(null);

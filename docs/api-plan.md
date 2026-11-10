@@ -4,13 +4,15 @@
 아래 URL은 기본 경로를 생략했습니다. 인증 방식, 페이지네이션, 오류 스키마, 권한 정책은 백엔드 단계에서 확정합니다.
 요청 필드/응답 필드는 개념 수준이며 최종 계약이 아닙니다. 향후 공통 응답은 `{ data, message? }`, 오류는 `{ code, message }`를 검토합니다.
 
+**메신저(1:1·프로젝트 단톡방·사용자 신고·WebSocket)도 구현됐습니다. 계약은 [메신저 API](messenger-api.md)를 따르며, 아래 표의 Message·Project Chat·`/conversations`·`/projects/{id}/chat` 행과 사용자 신고는 이전 초안입니다.**
+
 | 도메인 | Method | URL | 기능 | 인증 필요 | 요청 | 응답 | 프리미엄 |
 |---|---|---|---|---|---|---|---|
 | Auth | POST | /auth/login | 로그인 | 아니오 | email, password | user, session | 아니오 |
 | Auth | GET | /auth/signup/options | 회원가입 선택지(직군·기술 스택·관심 분야) | 아니오 | 없음 | jobCategories, skills, interests | 아니오 |
 | Auth | GET | /auth/check-email | 이메일 중복 확인 (남용 방지 정책 필요) | 아니오 | email | available | 아니오 |
 | Auth | GET | /auth/check-nickname | 닉네임 중복 확인 (남용 방지 정책 필요) | 아니오 | nickname | available | 아니오 |
-| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, stacks, interests, available | id, email, nickname | 아니오 |
+| Auth | POST | /auth/signup | 회원가입 | 아니오 | email, password, confirmPassword, nickname, job, career, skills, interests, available | id, email, nickname | 아니오 |
 | User | PATCH | /users/me/availability | 협업 가능 상태·연락 가능 시간 수정 | 예 | collaborationStatus, contactHours (보낸 값만 변경) | collaborationStatus, contactHours | 아니오 |
 | User | GET | /users/{id} | 사용자 조회 | 선택 | id | user | 아니오 |
 | Profile | PATCH | /users/me/profile | 프로필 수정 | 예 | 소개, 기술, 연락 시간 | profile | 아니오 |

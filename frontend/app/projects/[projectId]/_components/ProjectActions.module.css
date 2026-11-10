@@ -4,3 +4,5 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.project-detail-actions .button){padding:.5rem .625rem;font-size:0.875rem}
 }}
+
+:where(.scope):global(.project-detail-actions)>div[role=group]{order:1}

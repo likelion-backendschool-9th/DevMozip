@@ -34,7 +34,7 @@ class ProjectApplicationIntegrationTest {
 	@MockitoBean(name="projectClock") Clock clock;
 	private String token(long id){return "Bearer "+jwt.createAccessToken(id+"@application.test",id==101?"PREMIUM":"USER");}
 	@BeforeEach void reset(){
-		jdbc.update("DELETE FROM project_application_portfolios");jdbc.update("DELETE FROM project_applications");jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
+		jdbc.update("DELETE FROM project_application_portfolios");jdbc.update("DELETE FROM project_applications");jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
 		for(long id:new long[]{101,202,303,404})jdbc.update("INSERT INTO users(id,email,password_hash,role,status) VALUES (?,?,?,?,?)",id,id+"@application.test",encoder.encode("Test1234!"),id==101?"PREMIUM":"USER","ACTIVE");
 		when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));date("2026-11-06T12:00:00");
 		when(portfolios.available()).thenReturn(true);when(portfolios.ownedBy(anyLong())).thenAnswer(i->List.of(new ProjectPortfolioAccess.Portfolio(i.getArgument(0,Long.class)*10,"본인 포트폴리오")));

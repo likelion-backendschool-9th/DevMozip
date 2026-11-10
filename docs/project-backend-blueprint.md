@@ -13,9 +13,11 @@
 | project_members | 기존 테이블 유지, 실제 담당 직군 job_role 추가 |
 | member_removal_votes / member_removal_ballots | 기존 이름 유지, 미투표·종료 시각 보완 |
 | reviews | 요청·평가·임시 링크를 한 테이블에서 관리, 재알림 시각 보완 |
+| review_keywords | 별도 원본 목록, 긍정적인 활성 키워드만 선택·제출 가능 |
+| review_keyword_selections | 리뷰-키워드 연결, 리뷰당 선택 0~5개 |
 | reports / bookmarks | 기존 공통 테이블 사용. 프로젝트 전용 테이블 중복 생성 안 함 |
 
-직접 설계할 테이블은 프로젝트·지원·제출 연결·멤버·강퇴 투표·개인 투표·리뷰 7개다. 공통 신고·북마크와 외부 users·portfolios·review_keywords·chat_members는 결합 지점이다.
+프로젝트 관련 7개 테이블에 리뷰 키워드 원본 review_keywords와 연결 review_keyword_selections를 별도로 둔다(총 9개). 공통 신고·북마크와 외부 users·portfolios·chat_members는 결합 지점이다. 2026-11-06 사용자 요청으로 기존 ERD의 review_keywords 생성·연결을 이번 범위에 포함했다.
 
 ## 2. 공통 기준
 
@@ -182,11 +184,44 @@
 | token_hash | VARCHAR(255) | 리뷰 임시 링크 토큰 해시 |
 | expires_at | DATETIME | 작성·링크 만료 시각 |
 | rating | INT / NULL | 별점 1~5, 미작성은 NULL |
-| selected_keywords | JSONB | 선택 키워드 배열, 미선택은 [] |
 | submitted_at | DATETIME / NULL | 제출 시각 |
 | last_reminded_at | DATETIME / NULL | 마지막 재알림 생성 시각. 추가 필드 |
 
-원본 selected_keywords의 JSON은 JSONB로 변경 제안한다. 기존 review_keywords의 활성 목록에서 선택한 이름을 저장하는 초안이며 키워드 담당자와 ID/이름 저장 계약을 맞춘다.
+키워드 컬럼은 reviews에 두지 않는다. 선택은 review_keyword_selections(review_id, keyword_id)로만 저장한다. 리뷰별 0~5개 선택 가능하며 사용자는 등록된 활성 키워드에서만 선택한다. 별점은 필수이고 선택을 생략하면 연결 행이 0개다. 리뷰 조회/통계는 연결 테이블과 키워드 원본을 조인한다. API의 keywords 이름 배열은 조회 시 조합하며 JSONB에 중복 저장하지 않는다.
+
+### review_keywords — 리뷰 선택 키워드 원본
+
+| 필드 | 타입 | 의미 |
+|---|---|---|
+| id | BIGINT / PK | 자동 증가 키워드 ID |
+| name | VARCHAR(100) / UNIQUE / NOT NULL | 선택지에 표시할 키워드명 |
+| is_active | BOOLEAN / NOT NULL / DEFAULT true | 신규 리뷰에서 선택 가능한지 여부 |
+| created_at | DATETIME / NOT NULL | 생성 시각, 공통 BaseEntity |
+| updated_at | DATETIME / NOT NULL | 수정 시각, 공통 BaseEntity |
+
+PostgreSQL의 시각 타입은 TIMESTAMP WITHOUT TIME ZONE, Java는 LocalDateTime이다. name은 앞뒤 공백·빈 문자열을 허용하지 않는다. 목록은 id 오름차순이며 별도 순서 컬럼은 만들지 않으며 리뷰와의 다대다 관계는 아래 연결 테이블에 저장한다. 비활성 키워드는 새로 선택할 수 없지만 기존 연결은 조회한다. 표시명은 원본 name을 사용하므로 원본 이름 변경은 기존 리뷰 표시에도 반영된다. 연결 테이블의 keyword_id가 실제 원본 외래 키다. 제출 시 활성 여부·중복·최대 5개를 서버에서 재검증한다. 관리 시 삭제보다는 is_active=false를 사용한다. 관리자 키워드 CRUD API는 이번 범위에 추가하지 않는다.
+
+원본 DDL과 초기 4개는 [review-keywords.sql](sql/review-keywords.sql), 연결 테이블·추가 긍정 키워드 10개·기존 선택값 이관은 [review-keyword-selections.sql](sql/review-keyword-selections.sql)에 둔다. 총 14개 긍정 선택지를 제공하며 기존 리뷰 9건의 내용·시각·상태는 바꾸지 않는다.
+
+### review_keyword_selections — 리뷰별 선택 키워드
+
+| 필드 | 타입 | 의미 |
+|---|---|---|
+| id | BIGINT / PK | 자동 증가 선택 기록 ID |
+| review_id | BIGINT / FK / NOT NULL | reviews.id, 해당 리뷰 |
+| keyword_id | BIGINT / FK / NOT NULL | review_keywords.id, 선택한 원본 키워드 |
+| created_at | DATETIME / NOT NULL | 공통 생성 시각 |
+| updated_at | DATETIME / NOT NULL | 공통 수정 시각 |
+
+UNIQUE(review_id, keyword_id)로 같은 키워드 중복을 막는다. 리뷰 하나는 0~5개 연결을 가지며 키워드 하나는 여러 리뷰에 사용된다. 두 외래 키는 실제 DB 제약으로 보장한다. 선택 수 제한은 서버 검증·프로젝트 잠금·제출 트랜잭션으로 처리하며 DB의 행 개수 CHECK 제약을 추가하지 않는다. 선택하지 않으면 연결 행은 0개이며 별점만 저장한다. 이미 선택된 키워드는 삭제 대신 비활성화한다. 사용자 키워드 생성 API/자유 입력은 제공하지 않는다.
+
+```mermaid
+erDiagram
+    REVIEWS ||--o{ REVIEW_KEYWORD_SELECTIONS : "0~5개 선택"
+    REVIEW_KEYWORDS ||--o{ REVIEW_KEYWORD_SELECTIONS : "등록 키워드"
+```
+
+### 리뷰 요청·제출 정책
 
 프로젝트 종료 시 평가자→대상별 PENDING 행을 만든다. 프로젝트+평가자+대상은 유일하고 본인 제외다. 요청 생성 시각은 베이스 created_at이다. 별도 리뷰 요청 테이블은 없다.
 
@@ -212,9 +247,9 @@
 | resolution | TEXT / NULL | 처리 결과 |
 | handled_at | DATETIME / NULL | 처리 시각 |
 
-프로젝트 신고는 project_id, 팀원에 대한 회원 신고는 reported_user_id를 대상으로 사용한다. 대상 컬럼 중 하나를 선택하는 공통 계약을 제안한다. 여러 대상을 동시에 저장하거나 팀원 신고의 프로젝트 맥락까지 보관하려면 공통 신고 담당자와 별도 확정한다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
+프로젝트 신고는 project_id, 팀원에 대한 회원 신고는 reported_user_id를 대상으로 사용한다. 프로젝트 자체 신고는 #51 일부로 구현했으며 `POST /api/v1/projects/{id}/reports`로 공통 reports에 저장한다. 상세 계약과 검증은 [프로젝트 신고](project-reports.md)를 참조한다. 대상 컬럼 중 하나를 선택하는 공통 계약을 제안한다. 여러 대상을 동시에 저장하거나 팀원 신고의 프로젝트 맥락까지 보관하려면 공통 신고 담당자와 별도 확정한다. 게시글·댓글 신고는 프로젝트 담당 범위가 아니다.
 
-### bookmarks — 공통 북마크(기존)
+### bookmarks — 공통 북마크(#56 구현)
 
 | 필드 | 타입 | 의미 |
 |---|---|---|
@@ -223,7 +258,7 @@
 | project_id | BIGINT / NULL | 저장한 프로젝트 ID |
 | post_id | BIGINT / NULL | 저장한 게시글 ID |
 
-프로젝트 북마크는 project_id만 채우고 post_id는 NULL이다. 대상 중 하나만 선택하고 사용자+프로젝트 중복을 막는다. 프로젝트 전용 북마크 테이블은 만들지 않는다. 신고·북마크 시각도 베이스 생성일을 사용한다.
+프로젝트 북마크는 project_id만 채우고 post_id는 NULL이다. #56에서 공통 테이블 생성과 실제 인증 회원 기반 저장·해제·개인 목록 API를 연결했다. 상세 구현과 DB 반영은 [프로젝트 북마크](project-bookmarks.md)를 참조한다. 대상 중 하나만 선택하고 사용자+프로젝트 중복을 막는다. 프로젝트 전용 북마크 테이블은 만들지 않는다. 신고·북마크 시각도 베이스 생성일을 사용한다.
 
 ## 5. 관계도
 
@@ -243,7 +278,7 @@ erDiagram
     PROJECTS o|--o{ BOOKMARKS : "저장 대상"
 ```
 
-회원·포트폴리오·직군·키워드·채팅 등의 기존 테이블은 새로 만들지 않는다. 위 관계도는 프로젝트 관련 연결만 표시했다.
+회원·포트폴리오·직군·채팅 등의 외부 테이블은 새로 만들지 않는다. review_keywords만 최신 사용자 요청에 따라 별도 생성한다. 위 관계도는 프로젝트 관련 연결만 표시했다.
 
 ## 6. WBS 7.0 URL·API 검토
 
@@ -268,7 +303,7 @@ erDiagram
 | 7.15 | 프로젝트 신고 | /projects/{id} | POST /api/v1/projects/{id}/reports |
 | 7.16 | 북마크 추가·해제 | /projects/{id}, /explore?type=projects | POST /api/v1/projects/{id}/bookmark, DELETE /api/v1/projects/{id}/bookmark |
 | 7.17 | 외부 공유 | /projects/{id} | URL 복사, 별도 API 없음 |
-| 7.18 | 프로젝트 단톡방 | /messages/projects/{id} | GET /api/v1/messages/projects/{id}, POST /api/v1/messages/projects/{id} |
+| 7.18~7.23 | 프로젝트 단톡방(현재 WBS 7.19 생성·관리 등) | /messages/projects/{id} | GET·POST /api/v1/messages/projects/{id}, POST /api/v1/messages/projects/{id}/delete, PATCH /api/v1/messages/projects/{id}/read, GET /api/v1/messages/projects/unread-count, 목록은 GET /api/v1/messages/chats?type=project. 계약은 [메신저 API](messenger-api.md) |
 
 ### 7.4 프로젝트 수정 상세 계획
 
@@ -335,7 +370,7 @@ PUT 요청은 수정 가능한 공고 필드 전체를 받는다. 기술·분야
 - **7.13:** WBS대로 PATCH /api/v1/projects/{id}/update를 사용한다. 일반 공고 전체 수정은 7.4 PUT으로, PATCH는 상태·기간 변경과 팀원의 종료 요청을 별도 DTO/명령으로 구분해 처리한다. 상태·기간 동시 요청은 검증 후 한 트랜잭션으로 반영한다.
 - **7.14:** 기한이 지나면 신규 지원을 차단하고 모집 마감 표시를 계산한다. 운영 상태를 자동으로 프로젝트 종료로 바꾸지 않는다. 관리자 알림 배치는 이벤트 키로 중복을 막으며 실제 스케줄러는 해당 단계에서 구현한다.
 - **7.16:** WBS의 POST·DELETE를 유지한다. 반복 추가는 중복 저장 없이 같은 결과를 반환하고 삭제도 안전하게 처리한다. 공통 bookmarks를 사용한다.
-- **7.18:** GET/POST 모두 WBS의 /api/v1/messages/projects/{id}를 사용한다. POST의 동작이 방 생성인지 메시지 전송인지는 채팅 담당자와 요청·응답 계약으로 명시한다. 이 문서에서 경로를 추가하거나 바꾸지 않는다.
+- **7.18:** GET/POST 모두 WBS의 /api/v1/messages/projects/{id}를 사용한다. 메신저 작업에서 계약을 정했다. POST는 메시지 전송이고, 방은 모집 시작일 이후 첫 GET·POST 때 서버가 만든다. 방 삭제는 POST .../delete 논리 삭제다. 채팅은 project_members의 ACTIVE를 읽기만 하고 프로젝트 코드를 바꾸지 않는다. 세부는 [메신저 API](messenger-api.md)와 [메신저 계획](messenger-plan.md) 3.5에 있다.
 
 PUT/PATCH 구분 근거: [HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html#name-put), [PATCH 정의](https://www.rfc-editor.org/rfc/rfc5789.html). 이 청사진은 제공된 WBS의 URL·HTTP 메서드를 그대로 따른다.
 
@@ -392,7 +427,7 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 | 종료 요청 동작 | #47에서 확정: 진행 중에만 요청, 종료 확정 전 취소 허용. 확정 후 취소 불가 |
 | 취소 패널티 연동 | 신뢰 점수 계산식의 입력·반영 인터페이스, 정확한 7일 경계 시각 |
 | 조회수 집계 | #45 확정: 비로그인 포함 성공한 상세 열람마다 1회. 새로고침도 집계하며 view_count에 저장 |
-| 나머지 | 이미지 용량·형식, 강퇴 투표 기간·기권 처리, 리뷰 키워드 저장 계약·온도 계산식 |
+| 나머지 | 이미지 용량·형식, 강퇴 투표 기간·기권 처리, 온도 계산식 |
 
 삭제된 프로젝트는 지원·참여 이력을 보존하며 일반 조회에서 제외한다. 지원자 안내·채팅 처리·진행 중 종료 투표 무효화는 후속 연동 계약에서 정한다. 리뷰·투표·알림 등의 후속 정책은 해당 이슈에서 결정하며 프로젝트 생성 개발 전체를 막는 전제조건은 아니다.
 
@@ -425,7 +460,18 @@ ERD 작성·WBS URL 결정은 완료로 기록한다. 아래 정책은 사용자
 
 사용자 승인으로 진행 중 종료 요청·확정 전 취소 정책을 확정했다. WBS PATCH update 명령·현재 ACTIVE 과반수·기간 연장·대기 지원서 읽기 및 검증은 [상태·기간 API](project-lifecycle.md)에 기록한다. 실제 스케줄러·알림/채팅/리뷰 소비자·#48 팀원 변경 즉시 재집계는 후속이다.
 
+## 공통 좋아요 연결 — 2026-11-09
+
+사용자 요청으로 `bookmarks`와 동일한 구조의 `likes`를 사용한다. 컬럼은 `id`, `user_id`, `project_id`, `post_id`, `created_at`, `updated_at`이며 사용자+프로젝트/사용자+게시글 중복을 방지하고 대상은 하나만 지정한다. 프로젝트 좋아요에는 `project_id`만 채운다. `POST·DELETE /api/v1/projects/{id}/like`, `GET /api/v1/projects/likes`를 인증된 회원 기준으로 처리한다. 게시글 API 및 post_id FK는 공통 게시글 담당 범위다.
+
 
 ## #48 구현 반영 (2026-11-06)
 
 지원·승인·취소 API, 기존 지원 연결 테이블, 정원 동시성 및 취소 경계 정책을 [프로젝트 지원·승인](project-applications.md)에 반영했다. 포트폴리오 원본 테이블/소유권 어댑터, 알림·채팅·신뢰 계산 소비자는 미연결이며 실제 신규 지원은 차단한다.
+
+
+## #50 현재 구현 상태 (2026-11-06)
+
+#49는 사용자 요청으로 보류했다. #50은 종료 당시 리뷰 요청 생성·30일 기한·전체 제출·재발급·3일 재알림을 구현했다. 실제 review_keywords와 review_keyword_selections를 사용하며 리뷰마다 등록된 활성 긍정 키워드 0~5개를 선택한다. 기본 선택지는 14개다. reviews에 키워드 중복 컬럼을 두지 않는다. 선택 목록과 제출 검증은 ReviewKeywordRepository로 직접 처리한다.
+
+기존 DB는 [선택값 이관 SQL](sql/review-keyword-selections.sql)을 적용한 뒤 [검증 후 중복 컬럼 제거 SQL](sql/reviews-normalize-keywords.sql)을 적용한다. 새 DB는 [원본 스키마](sql/project-schema.sql), [키워드](sql/review-keywords.sql), 연결 테이블 순서로 생성한다. 기존 리뷰 9건과 선택 연결 12건을 보존했다. 실제 알림 발송·프로필 신뢰 계산은 미연결이다. API 경로·변경 파일·검증 결과는 [프로젝트 리뷰](project-reviews.md)를 참조한다.

@@ -40,6 +40,7 @@ class AiRecommendationDatabaseTest {
 	@Autowired EntityManager entityManager;
 	@Autowired JdbcTemplate jdbc;
 	@Autowired AiScoringProperties properties;
+	@Autowired com.devmozip.backend.repository.AiCandidateRepository candidates;
 	@MockitoBean CurrentUserProvider requester;
 	@MockitoBean RefreshTokenStore tokens;
 
@@ -65,7 +66,7 @@ class AiRecommendationDatabaseTest {
 	Project project(boolean visible) {
 		var start = LocalDate.of(2026, 1, 31);
 		return projects.saveAndFlush(new Project(999, "교육 플랫폼", null, "교육 플랫폼", null, "https://example.com/a.png",
-			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND, 1, 3)), List.of("Java", "React"), List.of("교육"),
+			visible, List.of(new ProjectRecruitmentSlot(ProjectJobRole.BACKEND.name(), 1, 3)), List.of("Java", "React"), List.of("교육"),
 			start.minusDays(2), start, start, start.plusMonths(1), LocalDateTime.of(2026, 1, 1, 0, 0)));
 	}
 
@@ -106,6 +107,37 @@ class AiRecommendationDatabaseTest {
 		assertEquals(n("100.00"), result.projects().getFirst().score().total());
 		assertEquals(0L, result.projects().getFirst().duration().differenceDays());
 		assertEquals(3, projects.count());
+	}
+
+	@Test void publicProjectSummaryProjectionUsesStoredValueAndKeepsNullWithoutExposingPrivateProjects() {
+		var visible = project(true);
+		var noSummary = project(true);
+		var hidden = project(false);
+		jdbc.update("UPDATE projects SET summary=? WHERE id=?", "개발자들이 함께 공부하는 스터디 커뮤니티", visible.getId());
+		jdbc.update("UPDATE projects SET summary=? WHERE id=?", "비공개 한줄 소개", hidden.getId());
+		entityManager.clear();
+		var rows = candidates.projects(0, 200);
+		assertEquals(2, rows.size());
+		assertEquals("개발자들이 함께 공부하는 스터디 커뮤니티", rows.stream()
+			.filter(row -> row.id() == visible.getId()).findFirst().orElseThrow().summary());
+		assertNull(rows.stream().filter(row -> row.id() == noSummary.getId()).findFirst().orElseThrow().summary());
+		assertTrue(rows.stream().noneMatch(row -> row.id() == hidden.getId()));
+	}
+
+	@Test void unavailableRequestedJobsReturnNoDevelopersWhileProjectsRemainAndStackMismatchDoesNotFilter() {
+		when(requester.getCurrentUserId()).thenReturn(999L);
+		member("backend", Member.MemberStatus.ACTIVE, Member.CollaborationStatus.AVAILABLE, List.of("백엔드 개발자"));
+		project(true);
+		var missingJobs = conditions(List.of(new RecruitmentRoleConditionDto("게임", 1),
+			new RecruitmentRoleConditionDto("모바일", 1), new RecruitmentRoleConditionDto("UI/UX", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		var empty = engine.recommend(missingJobs, null);
+		assertTrue(empty.developers().isEmpty());
+		assertEquals(1, empty.projects().size());
+		assertTrue(empty.roleCoverage().stream().allMatch(role -> role.eligibleCount() == 0));
+		var matchingJob = conditions(List.of(new RecruitmentRoleConditionDto("백엔드", 1)),
+			List.of("React"), com.devmozip.backend.entity.enums.RequiredCareer.ANY);
+		assertEquals(1, engine.recommend(matchingJob, null).developers().size());
 	}
 
 	@Test void keysetScanScoresCandidatesAfterFirstDatabaseBatchBeforeLimitingToTen() {

@@ -11,9 +11,16 @@ import management from '../../[projectId]/manage/page.module.css';
 import {Modal} from '@/components/common/Modal';
 import {useProjectResource,projectRequest,ProjectApiError} from '@/lib/projects/useProjectApi';
 import {projectRoleLabel} from '@/lib/projects/projectChoices';
-import {statusLabels,roleLabels,validProjectId} from '@/lib/projects/projectApiContract';
+import {statusLabels,validProjectId} from '@/lib/projects/projectApiContract';
 import type {ProjectDetailResult,ProjectIdentity} from '@/types/projectApi';
 import {ApiError} from './ApiCommon';
+import {ProjectLikeButton} from '@/components/projects/ProjectLikeButton';
+import {ProjectShareButton} from '@/components/projects/ProjectShareButton';
+import {ProjectReportButton} from '@/components/projects/ProjectReportButton';
+import {ProjectIconActions} from '@/components/projects/ProjectIconActions';
+import {ProjectBookmarkButton} from '@/components/projects/ProjectBookmarkButton';
+
+import {ApiProjectReviewStatus} from './ApiProjectReviewStatus';
 import {ApiProjectApplications} from './ApiProjectApplications';
 import styles from './ApiCommon.module.css';
 export function ApiProjectDetail({manage=false}:{manage?:boolean}){
@@ -34,10 +41,10 @@ export function ApiProjectDetail({manage=false}:{manage?:boolean}){
  const state=resource.data.recruitmentClosed&&p.status==='RECRUITING'?'모집 마감':statusLabels[p.status];
  return <section className={cls('container project-detail-page')}>
   <Link className="text-link" href={manage?'/my-projects':'/projects'}><ArrowLeft size={14}/>{manage?'내 프로젝트':'프로젝트 모집'}</Link>
-  <header className={cls('project-detail-heading')}>
+  <header className={[cls('project-detail-heading'),original.heading].join(' ')}>
    <div className={cls('project-detail-labels')}><span className="outline-badge">{p.interests.join(' · ')||'프로젝트'}</span><span className="availability-badge">{state}</span>{!p.isPublic&&<span className="outline-badge">팀원 공개</span>}</div>
    <h1>{p.title}</h1><p>{p.summary}</p>
-   <div className={styles.actions}>{own&&!manage&&<Link className="button" href={'/projects/'+p.id+'/manage'}>주최자 관리</Link>}{own&&!completed&&<Link className="button secondary" href={'/projects/'+p.id+'/edit'}>공고 수정</Link>}<span className={styles.muted}>조회 {p.viewCount}</span></div>
+   <div className={original.headerActions}><ProjectIconActions><ProjectLikeButton projectId={p.id}/><ProjectShareButton projectId={p.id}/><ProjectBookmarkButton projectId={p.id}/>{!own&&<ProjectReportButton projectId={p.id}/>}</ProjectIconActions></div><div className={[styles.actions,original.headerMeta].join(' ')}>{own&&!manage&&<Link className="button" href={'/projects/'+p.id+'/manage'}>주최자 관리</Link>}{own&&!completed&&<Link className="button secondary" href={'/projects/'+p.id+'/edit'}>공고 수정</Link>}<span className={styles.muted}>조회 {p.viewCount}</span></div>
   </header>
   {manage&&own&&<div className={managementCls('manage-metrics')}>
    <Card><span>현재 참여 인원</span><strong>{resource.data.memberCount}<small>/ {p.totalCapacity}명</small></strong></Card>
@@ -60,7 +67,8 @@ export function ApiProjectDetail({manage=false}:{manage?:boolean}){
      {p.status==='RECRUITING'&&<Button disabled={pending} variant="secondary" onClick={()=>setRemove(true)}>공고 삭제</Button>}
     </div>{!completed&&<form className={styles.form} onSubmit={e=>{e.preventDefault();run({action:'EXTEND_PERIOD',recruitmentEnd,developmentEnd});}}><h3>기간 연장</h3><div className="auth-two-columns"><label>모집 종료일<Input type="date" required min={p.recruitmentEnd} value={recruitmentEnd} onChange={e=>setRecruitmentEnd(e.target.value)}/></label><label>개발 종료일<Input type="date" required min={p.developmentEnd} value={developmentEnd} onChange={e=>setDevelopmentEnd(e.target.value)}/></label></div><Button disabled={pending} type="submit">기간 연장 저장</Button></form>}<p className="auth-hint">대기 지원서가 남아 있으면 시작할 수 없습니다. 지원자 관리와 참여 팀원은 아래에서 확인할 수 있습니다. 채팅·리뷰 발송은 별도 연결이 필요합니다.</p></Card>}
     <ApiProjectApplications projectId={p.id} title={p.title} host={own} team={!!membership} onChanged={resource.reload}/>
-    {membership&&<Card className={cls('profile-section')}><h2>프로젝트 종료 동의</h2><p>{membership.endRequestCount}명 동의 · 과반수 기준 {membership.requiredEndRequestCount}명</p><p className="auth-hint">진행 중 현재 팀원의 과반수가 동의하면 종료됩니다. 확정 전에는 본인 요청을 취소할 수 있습니다.</p>{p.status==='IN_PROGRESS'&&<Button disabled={pending} onClick={()=>run({action:membership.myEndRequested?'CANCEL_END_REQUEST':'REQUEST_END'})}>{membership.myEndRequested?'종료 요청 취소':'프로젝트 종료 요청'}</Button>}{completed&&<p>프로젝트가 종료되었습니다. 종료 요청을 취소할 수 없습니다.</p>}</Card>}
+    {manage&&own&&completed&&<ApiProjectReviewStatus projectId={p.id}/>}
+    {membership&&<Card className={cls('profile-section')}><h2>프로젝트 종료 동의</h2><p>{membership.endRequestCount}명 동의 · 과반수 기준 {membership.requiredEndRequestCount}명</p><p className="auth-hint">진행 중 현재 팀원의 과반수가 동의하면 종료됩니다. 확정 전에는 본인 요청을 취소할 수 있습니다.</p>{p.status==='IN_PROGRESS'&&<Button disabled={pending} onClick={()=>run({action:membership.myEndRequested?'CANCEL_END_REQUEST':'REQUEST_END'})}>{membership.myEndRequested?'종료 요청 취소':'프로젝트 종료 요청'}</Button>}{completed&&<><p>프로젝트가 종료되었습니다. 종료 요청을 취소할 수 없습니다.</p><Link className="button secondary" href={'/projects/'+p.id+'/reviews'}>팀원 리뷰 작성 · 제출 결과</Link></>}</Card>}
    </div>
    <aside className={cls('project-detail-sidebar')}>
     <Card className={cls('profile-section apply-summary')}><span className="eyebrow">YOUR NEXT CHALLENGE</span><h2>함께 만들어볼까요?</h2><p><Users size={14}/>현재 {resource.data.memberCount} / {p.totalCapacity}명</p><p><CalendarDays size={14}/>모집 마감 {p.recruitmentEnd}</p><p className="auth-hint">아래 프로젝트 지원 영역에서 지원 상태를 확인할 수 있습니다.</p>{membership&&<p>내 역할: {membership.myRole==='HOST'?'주최자':'참여자'}</p>}</Card>

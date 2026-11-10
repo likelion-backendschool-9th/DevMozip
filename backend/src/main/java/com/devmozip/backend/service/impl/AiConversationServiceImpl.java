@@ -1,6 +1,9 @@
 package com.devmozip.backend.service.impl;
 
+import com.devmozip.backend.utils.AiMessageLimits;
+
 import com.devmozip.backend.service.AiConversationService;
+import com.devmozip.backend.service.AiConditionsDocument;
 
 import com.devmozip.backend.entity.AiConversation;
 import com.devmozip.backend.entity.AiMessage;
@@ -22,7 +25,6 @@ import com.devmozip.backend.dto.ai.ConversationDetailResponse;
 import com.devmozip.backend.dto.ai.MessageResponse;
 import com.devmozip.backend.dto.ai.UpdateConditionsRequest;
 import com.devmozip.backend.dto.ai.ConversationConditionsResponse;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,15 +33,15 @@ public class AiConversationServiceImpl implements AiConversationService {
 	private final AiConversationRepository conversations;
 	private final AiMessageRepository messages;
 	private final AiConversationDeletionRepository deletion;
-	private final ObjectMapper mapper;
+	private final AiConditionsDocument documents;
 
 	public AiConversationServiceImpl(CurrentUserProvider currentUser, AiConversationRepository conversations,
-		AiMessageRepository messages, AiConversationDeletionRepository deletion, ObjectMapper mapper) {
+		AiMessageRepository messages, AiConversationDeletionRepository deletion, AiConditionsDocument documents) {
 		this.currentUser = currentUser;
 		this.conversations = conversations;
 		this.messages = messages;
 		this.deletion = deletion;
-		this.mapper = mapper;
+		this.documents = documents;
 	}
 
 	@Transactional
@@ -62,7 +64,7 @@ public class AiConversationServiceImpl implements AiConversationService {
 		AiConversation conversation = owned(id, false);
 		return new ConversationDetailResponse(conversation.getId(), conversation.getTitle(), conversation.getCurrentConditions(),
 			conversation.getCreatedAt(), conversation.getUpdatedAt(), messages.findByConversationIdOrderByCreatedAtAscIdAsc(id)
-				.stream().map(MessageResponse::from).toList());
+				.stream().map(MessageResponse::from).toList(), conversation.getClientKey());
 	}
 
 	@Transactional
@@ -72,6 +74,10 @@ public class AiConversationServiceImpl implements AiConversationService {
 		if (request == null || request.content() == null || request.content().isBlank()) {
 			throw new IllegalArgumentException("메시지 내용을 입력해 주세요.");
 		}
+		AiMessageLimits.validateMessage(request.content());
+		var previous = messages.findByConversationIdOrderByCreatedAtAscIdAsc(id);
+		AiMessageLimits.validateTotal(AiMessageLimits.length(previous) + request.content().length()
+			+ (previous.stream().anyMatch(m -> m.getRole() == AiMessage.Role.USER) ? 2 : 0));
 		LocalDateTime now = LocalDateTime.now();
 		AiMessage message = messages.save(new AiMessage(conversation, request.content(), now));
 		conversation.touch(now);
@@ -83,7 +89,7 @@ public class AiConversationServiceImpl implements AiConversationService {
 	public ConversationConditionsResponse replaceConditions(long id, UpdateConditionsRequest request) {
 		AiConversation conversation = owned(id, true);
 		if (request == null) throw new IllegalArgumentException("조건 객체를 입력해 주세요.");
-		conversation.replaceConditions(mapper.writeValueAsString(request), LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+		conversation.replaceConditions(documents.manual(conversation.getCurrentConditions(), request), LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
 		return new ConversationConditionsResponse(conversation.getId(), conversation.getCurrentConditions(), conversation.getUpdatedAt());
 	}
 

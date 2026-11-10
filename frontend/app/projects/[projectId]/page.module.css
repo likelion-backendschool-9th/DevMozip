@@ -60,3 +60,9 @@
 @layer devmozip-responsive{@media(max-width:30rem){
  :where(.scope):global(.role-row){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:.5rem;padding:.75rem}
 }}
+
+.heading{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:32px;align-items:start}
+.heading>h1{grid-column:1;overflow-wrap:anywhere}
+.heading>p{grid-column:1;min-width:0;overflow-wrap:anywhere}
+.headerActions{grid-column:2;grid-row:1 / span 3;align-self:center;justify-self:end}
+.headerMeta{grid-column:1 / -1;margin-top:8px}

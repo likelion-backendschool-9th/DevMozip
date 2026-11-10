@@ -37,7 +37,7 @@ class ProjectAuthenticatedUserIntegrationTest {
 	@MockitoBean RefreshTokenStore refresh;
 	private static final String PASSWORD="Test-member123!";
 	@BeforeEach void reset(){
-		jdbc.update("DELETE FROM project_applications");jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
+		jdbc.update("DELETE FROM project_applications");jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members");jdbc.update("DELETE FROM projects");jdbc.update("DELETE FROM users");
 		for(long id:new long[]{101,202})jdbc.update("INSERT INTO users(id,email,password_hash,role,status) VALUES (?,?,?,?,?)",id,id+"@project.test",encoder.encode(PASSWORD),id==101?"PREMIUM":"USER","ACTIVE");
 	}
 	private String login(long id) throws Exception {

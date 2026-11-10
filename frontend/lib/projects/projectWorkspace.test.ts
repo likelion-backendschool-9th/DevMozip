@@ -43,3 +43,9 @@ describe('3일 재알림·저장 복원',()=>{
  it('요청/날짜를 복원하며 손상된 요청·중복 발급은 초기화한다',()=>{const s=ended();s.simulationDate=future(3).toISOString();expect(parseRecruitmentState(JSON.stringify(s))).toEqual(s);expect(parseRecruitmentState(JSON.stringify({...s,reviewRequests:[...s.reviewRequests,s.reviewRequests[0]]}))).toEqual(freshRecruitmentState());expect(parseRecruitmentState(JSON.stringify({...s,simulationDate:'bad-date'}))).toEqual(freshRecruitmentState());});
  it('프로필 저장 실패로 완료 메타데이터만 남은 경우 재시도 가능 상태로 복구한다',()=>{const s=ended();mine(s).usedAt=now.toISOString();const fixed=syncProjectState(s,now,profiles);expect(mine(fixed).usedAt).toBeUndefined();});
 });
+
+it('프로젝트 리뷰 전체 제출에서도 키워드를 최대 5개로 제한한다',()=>{
+ const s=ended(),request=mine(s);const batch=entries(s).map(e=>({...e,keywords:reviewKeywords.slice(0,5)}));
+ expect(()=>validateReviewSubmission(s,profiles,member.id,'pocket',request.id,request.token,batch,reviewKeywords,now)).not.toThrow();
+ expect(()=>validateReviewSubmission(s,profiles,member.id,'pocket',request.id,request.token,batch.map(e=>({...e,keywords:reviewKeywords.slice(0,6)})),reviewKeywords,now)).toThrow('키워드');
+});
