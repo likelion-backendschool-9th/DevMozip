@@ -2189,3 +2189,9 @@ stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-
 최신 develop 2af95a7을 별도 worktree에서 병합했다. AGENTS.md만 충돌하여 개인정보 설정(비공개 계정)과 develop의 SNS·검색·알림 및 이미지 제공 범위와 문서 안내를 모두 보존했다. 제품 코드는 자동 병합되었다. 기존 로컬 작업·실행 서버·공유 DB는 변경하지 않는다.
 
 검증: 별도 컨테이너 npm run build 성공. npm test -- --maxWorkers=1 전체 146개 파일·1,646개 테스트 통과. backend ./gradlew test에 AccountLock*・AccountVisibilityPolicyTest・FollowPrivacyIntegrationTest 필터를 적용해 36개 통과(실패·오류·건너뜀 0). 전체 backend 및 브라우저 수동 검증은 미실행. git diff --check 통과, 생성 next-env.d.ts 변경 원복.
+
+## 2026-11-10 좋아요 목록 포스트·프로젝트 탭
+
+좋아요 페이지의 기존 포스트 조회·페이지 이동을 유지하고 프로젝트 탭을 추가했다. LikedProjectsResult에서 기존 useProjectLikes·ProjectSummaryCard·ApiError를 재사용해 목록·취소·로딩·오류·빈 상태를 연결했다. 탭은 URL에 보존하고 전환 시 포스트 페이지 조건을 초기화한다. 비로그인은 기존 로그인 안내를 유지한다. 백엔드·DB 변경 없음. 실제 프로젝트 좋아요 상태를 사용하며 임의 Mock 목록은 만들지 않는다.
+
+검증: 별도 컨테이너 npm run build 성공(TypeScript 포함), npm test -- --maxWorkers=1 전체147개 파일·1,652개 통과. 신규5개는 포스트/프로젝트 탭·직접 URL·비로그인·로딩/오류·카드/처리중 버튼을 확인한다. 기존 projectLikeStore 테스트에서 저장/해제 후 공통 상태·계정 전환·중복 요청을 검증한다. 비로그인 실제 경로 요청은307 로그인 이동 확인. 로그인 브라우저 수동 조작은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 생성 next-env.d.ts 원복·git diff --check 통과. 커밋·푸시 없음.
