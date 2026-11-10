@@ -2195,3 +2195,13 @@ stash를 삭제하지 않고 최신 develop 0d6f533 기반 fix/developer-search-
 좋아요 페이지의 기존 포스트 조회·페이지 이동을 유지하고 프로젝트 탭을 추가했다. LikedProjectsResult에서 기존 useProjectLikes·ProjectSummaryCard·ApiError를 재사용해 목록·취소·로딩·오류·빈 상태를 연결했다. 탭은 URL에 보존하고 전환 시 포스트 페이지 조건을 초기화한다. 비로그인은 기존 로그인 안내를 유지한다. 백엔드·DB 변경 없음. 실제 프로젝트 좋아요 상태를 사용하며 임의 Mock 목록은 만들지 않는다.
 
 검증: 별도 컨테이너 npm run build 성공(TypeScript 포함), npm test -- --maxWorkers=1 전체147개 파일·1,652개 통과. 신규5개는 포스트/프로젝트 탭·직접 URL·비로그인·로딩/오류·카드/처리중 버튼을 확인한다. 기존 projectLikeStore 테스트에서 저장/해제 후 공통 상태·계정 전환·중복 요청을 검증한다. 비로그인 실제 경로 요청은307 로그인 이동 확인. 로그인 브라우저 수동 조작은 미실행. 백엔드 변경 없어 테스트 재실행 생략. 생성 next-env.d.ts 원복·git diff --check 통과. 커밋·푸시 없음.
+
+## 2026-11-10 승인 후 취소 실제 신뢰 온도 감점
+
+사용자가 감점만 진행하고 강퇴 결과 알림 저장은 제외하도록 변경했다. 이번에 추가했던 NotificationType/EventHandler/Messages·강퇴 알림 테스트 변경과 notification-member-removal-type.sql을 되돌렸다. 공유 DB에는 읽기 조회만 했으며 알림 CHECK 변경이나 감점 데이터 쓰기를 수행하지 않았다.
+
+확정 정책은 패널티 대상 APPROVED 취소 1건당 0.5°C, 최저0°C다. ProjectApplicationRepository의 원자 UPDATE를 ProjectApplicationServiceImpl 취소 트랜잭션에 연결했고 기존 상태 전이·프로젝트 잠금·서울7일 경계 및 안내 확인을 유지한다. 취소 모달 안내·프로젝트 지원 문서/청사진을 갱신했다. 기존 감사 문서/진행 기록의 미커밋 변경은 보존했다.
+
+첫 격리 DB 검증에서 users에 존재하지 않는 updated_at을 참조하는 SQL 오류로 감점 테스트5개가 실패했다. 실제 Member 매핑에 맞춰 해당 참조를 제거하고 재검증한다. Member 엔티티나 DB 컬럼을 새로 추가하지 않는다. 추가 검증은 7일 경계·미승인 취소 면제·중복 취소·NULL 초기값·0 하한·다른 프로젝트 동시 취소 누적·감점 실패 시 상태 롤백을 다룬다.
+
+최종 검증: backend ./gradlew test에 ProjectApplicationIntegrationTest·ProjectAuthenticatedUserIntegrationTest·ProjectMemberRemovalIntegrationTest·NotificationProjectEventIntegrationTest 필터 적용, 격리 PostgreSQL에서 33개 통과(실패 0·오류 0·건너뜀 0). 최초 SQL 오류는 수정 후 재통과했다. frontend 별도 컨테이너 npm run build 성공(TypeScript 포함), 전체147개 파일·1,652개 테스트 통과. 공유 DB 감점 쓰기·DDL 적용 및 실제 로그인 브라우저 취소 시나리오는 미실행. 새 강퇴 결과 알림은 추가하지 않았다. 커밋·푸시·이슈 완료 체크는 하지 않았다.
