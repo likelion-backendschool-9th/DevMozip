@@ -22,7 +22,8 @@ public class ProjectQueryRepository {
 	public Result search(ProjectSearchRequest request, LocalDate today, Long userId, MyProjectsTab tab) {
 		StringBuilder where = new StringBuilder(" WHERE p.deleted_at IS NULL");
 		MapSqlParameterSource params = new MapSqlParameterSource("today", today);
-		if (userId == null) where.append(" AND p.is_public = true");
+		// 관리자가 숨긴 공고(is_restricted)는 공개 목록에서 뺀다 (docs/admin-plan.md 5.5). 내 프로젝트 탭은 팀원이라 그대로 보인다.
+		if (userId == null) where.append(" AND p.is_public = true AND p.is_restricted = false");
 		else {
 			params.addValue("userId", userId);
 			String joined="EXISTS (SELECT 1 FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')";

@@ -3,6 +3,9 @@
 -- 실행 대상: reports 또는 posts가 이미 있는 DB(공유 개발 DB, 운영 DB). 새로 만드는 DB에는 필요 없다.
 -- 2026-11-10 공유 개발 DB 읽기 확인: reports 0행, reports_status_check가 RECEIVED·REVIEWING·RESOLVED·REJECTED만 허용.
 --   posts 0행, 인덱스 이름이 feeds_*(feeds 테이블 이름 변경 전 이름)이다.
+-- 2026-11-10 공유 개발 DB에 1번만 적용했다(관리자 계획 0단계, docs/admin-plan.md). reports 0행이라 옮긴 행은 없다.
+--   2번은 적용하지 않았다. 그사이 Hibernate가 posts_* 인덱스 3개를 새로 만들어 feeds_*와 함께 있으므로
+--   이름을 바꾸면 "이미 있음" 오류로 실패한다. 이 DB는 2번 대신 같은 내용의 feeds_* 인덱스를 지우는 것을 검토해야 한다.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '30s';

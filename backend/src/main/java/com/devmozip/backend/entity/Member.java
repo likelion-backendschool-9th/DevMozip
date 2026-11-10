@@ -191,6 +191,9 @@ public class Member {
     // 비공개 계정 설정. 원하는 최종 값을 받으므로 같은 값을 다시 넣어도 결과가 같다.
     public void changePrivacy(boolean isPrivate) { this.isPrivate = isPrivate; }
 
+    // 관리자 제재(WBS 14.3)로 계정 상태를 바꾼다. 이력은 sanctions에 따로 남긴다.
+    public void changeStatus(MemberStatus status) { this.status = status; }
+
     // 결제 수단 (docs/premium-payment-plan.md 4절). 빌링키는 암호화된 값으로만 들어온다. null이면 등록된 결제 수단이 없다.
     public void changePaymentMethods(String paymentMethods) { this.paymentMethods = paymentMethods; }
 

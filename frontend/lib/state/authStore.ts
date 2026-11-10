@@ -21,6 +21,13 @@ type PreferenceAction = Exclude<AccountAreaAction, { type: 'onboarding-complete'
 const serverSessionStore = createLocalStore<SessionSnapshot>(() => ({ identity: null }));
 export function syncServerSession(snapshot: SessionSnapshot) { serverSessionStore.set(snapshot); }
 
+// 서버가 확인한 경고 회원의 사유(docs/admin-plan.md D8). 경고 회원이 아니면 null, 사유가 비어 있으면 빈 문자열이다.
+const serverWarning = derived([serverSessionStore], () => {
+    const { identity } = serverSessionStore.get();
+    return identity?.status === 'WARNED' ? identity.warningReason ?? '' : null;
+});
+export function useServerWarning() { return useStore(serverWarning); }
+
 const administrationStore = createLocalStore(loadAdministration, true);
 const accountAreaStore = createLocalStore(loadAccountArea, true);
 const profileNamesStore = createLocalStore<Record<string, string>>(() => Object.fromEntries(Object.values(loadProfiles().profiles).map(p => [p.id, p.nickname])), true);

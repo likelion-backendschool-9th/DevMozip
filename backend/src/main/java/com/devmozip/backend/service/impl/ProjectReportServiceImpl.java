@@ -31,7 +31,7 @@ public class ProjectReportServiceImpl implements ProjectReportService {
 		if(projectId<=0||request==null||!ProjectReportReason.contains(request.reason())||(request.detail()!=null&&request.detail().length()>1000))throw error(HttpStatus.BAD_REQUEST,"신고 사유와 내용을 확인해 주세요.");
 		// 같은 공고의 동시 신고와 삭제를 직렬화한다. 사용자 신고 기록은 중복 판정에 포함하지 않는다.
 		var project=projects.findLiveForUpdate(projectId).orElseThrow(()->error(HttpStatus.NOT_FOUND,"프로젝트가 없거나 접근할 수 없습니다."));
-		if(!project.isPublic()&&!members.existsByProjectIdAndUserIdAndStatus(projectId,userId,ProjectMember.Status.ACTIVE))throw error(HttpStatus.NOT_FOUND,"프로젝트가 없거나 접근할 수 없습니다.");
+		if(!project.isPubliclyVisible()&&!members.existsByProjectIdAndUserIdAndStatus(projectId,userId,ProjectMember.Status.ACTIVE))throw error(HttpStatus.NOT_FOUND,"프로젝트가 없거나 접근할 수 없습니다.");
 		if(project.getHostMemberId()==userId)throw error(HttpStatus.BAD_REQUEST,"본인의 프로젝트는 신고할 수 없습니다.");
 		if(reports.existsByReporter_IdAndProjectIdAndReportedUserIsNullAndPostIdIsNullAndCommentIdIsNull(userId,projectId))throw error(HttpStatus.CONFLICT,"이미 신고한 프로젝트입니다.");
 		String detail=request.detail()==null?"":request.detail().trim();

@@ -21,16 +21,19 @@ import com.devmozip.backend.dto.member.AccountLockRequest;
 import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.MeResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.dto.member.SocialAccountsResponse;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
+import com.devmozip.backend.entity.Sanction;
 import com.devmozip.backend.entity.enums.Interest;
 import com.devmozip.backend.entity.enums.JobCategory;
 import com.devmozip.backend.entity.enums.Skill;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.repository.SanctionRepository;
 import com.devmozip.backend.security.jwt.RefreshTokenStore;
 
 @Service
@@ -53,13 +56,30 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenStore refreshTokenStore;
     private final PasswordResetService passwordResetService;
+    private final SanctionRepository sanctionRepository;
 
     public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-                         RefreshTokenStore refreshTokenStore, PasswordResetService passwordResetService) {
+                         RefreshTokenStore refreshTokenStore, PasswordResetService passwordResetService,
+                         SanctionRepository sanctionRepository) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenStore = refreshTokenStore;
         this.passwordResetService = passwordResetService;
+        this.sanctionRepository = sanctionRepository;
+    }
+
+    /**
+     * 로그인 확인 응답 (GET /api/v1/users/me). username·role은 토큰 값 그대로 두고,
+     * DB의 계정 상태와 경고 회원의 최근 제재 사유를 더한다 (docs/admin-plan.md D8). 회원을 찾지 못하면 두 값은 null이다.
+     */
+    @Transactional(readOnly = true)
+    public MeResponse me(String email, String role) {
+        Member member = memberRepository.findByEmail(email).orElse(null);
+        MemberStatus status = member == null ? null : member.getStatus();
+        String warningReason = status == MemberStatus.WARNED
+                ? sanctionRepository.findFirstByUser_IdAndRevokedAtIsNullOrderByIdDesc(member.getId()).map(Sanction::getReason).orElse(null)
+                : null;
+        return new MeResponse(email, role, status == null ? null : status.name(), warningReason);
     }
 
     /** 회원을 저장한다. 직군·기술 스택·관심 분야는 화면에서 고른 값을 users 칼럼에 그대로 담는다. */

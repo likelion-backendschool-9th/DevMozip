@@ -63,7 +63,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	@Override public ProjectApplicationOptions options(long id){
 		var project=live(id);long user=currentUser.getCurrentUserId();
 		var own=applications.findByProjectIdAndApplicantMemberId(id,user);
-		if(!project.isPublic()&&own.isEmpty()&&!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw missing();
+		if(!project.isPubliclyVisible()&&own.isEmpty()&&!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw missing();
 		boolean available=portfolios.available();String reason=unavailable(project,user);
 		var roles=project.getRecruitmentSlots().stream().map(s->new ProjectApplicationOptions.Role(s.roleCode(),s.capacity(),filled(id,s.roleCode()),s.minimumYears())).toList();
 		if(reason==null&&roles.stream().noneMatch(s->s.filled()<s.capacity()))reason="모집 정원이 찼습니다.";
@@ -139,6 +139,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		if(applications.existsByProjectIdAndApplicantMemberId(p.getId(),user))return "이미 지원 기록이 있습니다. 취소·거절 후 재지원은 허용하지 않습니다.";
 		if(members.existsByProjectIdAndUserId(p.getId(),user))return "이미 참여 기록이 있는 프로젝트입니다.";
 		if(!p.isPublic())return "비공개 프로젝트에는 지원할 수 없습니다.";
+		if(p.isRestricted())return "관리자가 숨긴 공고에는 지원할 수 없습니다.";
 		var today=LocalDate.now(clock);
 		if(p.getStatus()!=ProjectStatus.RECRUITING||today.isBefore(p.getRecruitmentStart())||today.isAfter(p.getRecruitmentEnd()))return "현재 지원을 받지 않는 프로젝트입니다.";
 		return null;

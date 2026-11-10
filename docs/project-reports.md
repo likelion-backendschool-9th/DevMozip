@@ -46,6 +46,8 @@
 
 ### 관리자 처리
 
+2026-11-11 관리자 기능(WBS 14.8, [admin-plan.md](admin-plan.md) D5)에서 아래 `project-reports` API·BFF·화면을 없애고 공고·팀원·사용자·게시글·댓글 신고를 함께 다루는 `/api/v1/admin/reports`([admin-api.md](admin-api.md))로 옮겼다. 처리 규칙은 같다. 아래는 당시 기록이다.
+
 - `GET /api/v1/admin/project-reports?status=&page=0&size=20`: 공고·팀원 신고만 조회, size 1~50, 최신 ID순, 페이지 및 전체 수 반환.
 - `PATCH /api/v1/admin/project-reports/{id}`: `{status, resolution}`. 상태는 REVIEWING/RESOLVED/REJECTED. 완료·기각은 공백 아닌 결과가 필수이며 최대 1,000자다. AWATING 복귀 및 완료 후 재처리는 허용하지 않는다.
 - JWT 관리자 권한과 실제 DB 회원의 ADMIN 역할·이용 가능 상태를 모두 확인한다. 처리자 handled_by, 처리 시각 handled_at은 서버에서 결정한다. 행 잠금으로 동시 최종 처리를 한 번만 적용한다.

@@ -38,7 +38,7 @@
 | `/subscription/checkout` | 결제 수단 선택(토스페이먼츠 카드·카카오페이)·결제 전 고지와 동의·포트원 결제창 | 로그인, 결제는 무료(USER) 회원만 |
 | `/subscription/manage` | 구독 상태·다음 결제일·결제 수단·해지(기간 끝까지 유지) | 로그인 |
 | `/subscription/history` | 결제 내역(첫 결제·매월 결제·실패), 다음 페이지 표시 | 로그인 |
-| `/admin` | 통계·회원/신고/콘텐츠/키워드·온도/AI/구독 | 관리자 |
+| `/admin` | 통계·회원/공고/신고/콘텐츠/키워드·온도/AI/구독. Mock 토글 OFF는 서버 관리자 API([admin-api.md](admin-api.md)), ON은 기존 Mock. `/admin/projects`(공고 관리)는 서버 화면만 있고, `/admin/trust-scores`는 Mock만 있다 | 관리자 |
 
 ## URL 조건
 
