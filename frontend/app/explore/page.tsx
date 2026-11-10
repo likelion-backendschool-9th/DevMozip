@@ -1,8 +1,7 @@
 'use client';
 import {useMockVisibility} from '@/lib/state/mockVisibilityStore';
-import {ApiProjectList} from '@/app/projects/_components/api/ApiProjectList';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AdvancedSearch } from '@/app/explore/_components/AdvancedSearch';
 import { advancedSearch } from '@/lib/administration/advancedSearchService';
 import { temperature } from '@/lib/profiles/profileService';
@@ -12,23 +11,40 @@ import { Search, X } from 'lucide-react';
 import { useAuth } from '@/lib/state/authStore';
 import { useProfiles } from '@/lib/state/profileStore';
 import { useProjects } from '@/lib/state/projectStore';
+import { usePrototype } from '@/lib/state/prototypeStore';
+import { signupOptionsAction } from '@/lib/auth/actions';
 import {
     parseSearch,
     searchDevelopers,
     searchProjects,
     activeFilterCount,
     searchType,
+    mockFilterChoices,
 } from '@/lib/search/searchService';
+import { apiFilterChoices, applyFollowChange, explorePage, pageAfterEmpty, parseApiSearch, searchApiQuery } from '@/lib/search/searchApi';
+import { useExploreSearch } from '@/lib/search/useExploreSearch';
+import { useOwnProfile } from '@/app/(user)/_components/OwnProfileProvider';
 import { SearchBar } from '@/app/explore/_components/SearchBar';
 import { Button } from '@/components/common/Button';
 import { SearchFilters } from '@/app/explore/_components/SearchFilters';
 import { DeveloperResults } from '@/app/explore/_components/DeveloperResults';
 import { ProjectResults } from '@/app/explore/_components/ProjectResults';
+import { ApiDeveloperResults } from '@/app/explore/_components/ApiDeveloperResults';
+import { ApiProjectResults } from '@/app/explore/_components/ApiProjectResults';
+import { SearchPager } from '@/app/explore/_components/SearchPager';
+import type { SignupOptions } from '@/types/auth';
+import type { FollowResult } from '@/types/followApi';
+// Mock 켜기는 Mock 저장소를 searchService로 거르고, Mock 끄기는 통합 검색 API(GET /api/v1/search)를 쓴다.
+// 두 모드의 화면 구조와 디자인은 같다(docs/explore-plan.md 5절).
 export default function SearchPage() {
+    const {enabled}=useMockVisibility();
     const { projects } = useProjects();
     const [params, setParams] = useSearchParams();
-    const filters = parseSearch(params);
+    const filters = enabled ? parseSearch(params) : parseApiSearch(params);
+    const page = explorePage(params);
     const { user, canViewProfile } = useAuth();
+    const own = useOwnProfile();
+    const { notify } = usePrototype();
     const { state } = useProfiles();
     const following = user ? state.following[user.id] || [] : [];
     const [minimum, setMinimum] = useState(0);
@@ -46,15 +62,36 @@ export default function SearchPage() {
         trustSort,
     );
     const foundProjects = searchProjects(projects, filters);
-    const count = filters.target === 'developer' ? developers.length : foundProjects.length;
     const signedOutFollowing = filters.target === 'developer' && filters.scope === 'following' && !user;
+    // Mock 끄기: 비로그인 팔로잉 탭은 요청하지 않고 로그인 안내를 보여 준다.
+    const search = useExploreSearch(enabled || signedOutFollowing ? null : searchApiQuery(filters, page).toString());
+    const [signupOptions, setSignupOptions] = useState<SignupOptions | null>(null);
+    useEffect(() => {
+        if (enabled) return;
+        let active = true;
+        void signupOptionsAction().then(value => { if (active && !('error' in value)) setSignupOptions(value); });
+        return () => { active = false; };
+    }, [enabled]);
+    const choices = enabled ? mockFilterChoices(filters.target, Object.values(state.profiles), projects) : apiFilterChoices(signupOptions);
+    const loading = search.state.status === 'loading';
+    const ready = search.state.status === 'ready' ? search.state.result : null;
+    const shown = ready ?? (search.state.status === 'loading' ? search.state.previous : null);
+    const apiError = search.state.status === 'error' ? search.state.error : null;
+    const count = enabled
+        ? filters.target === 'developer' ? developers.length : foundProjects.length
+        : shown?.page.totalCount ?? 0;
+    // 로그인했지만 내 프로필을 아직 모르면 본인 카드인지 알 수 없으므로 버튼을 잠시 숨긴다.
+    const ownTag = !user ? null : own.profile ? own.profile.tag : own.loading ? undefined : null;
     const update = (key: string, value: string | string[]) => {
         const next = new URLSearchParams(params);
         next.set('type', searchType(filters.target));
         next.delete(key);
         for (const v of Array.isArray(value) ? value : [value]) if (v) next.append(key, v);
+        // 검색어·필터·탭이 바뀌면 첫 페이지로 돌아간다.
+        if (key !== 'page') next.delete('page');
         setParams(next);
     };
+    const goPage = (target: number) => update('page', target > 0 ? String(target) : '');
     const reset = (clearQuery = false) => {
         const next = new URLSearchParams();
         next.set('type', searchType(filters.target));
@@ -62,6 +99,27 @@ export default function SearchPage() {
         if (!clearQuery && filters.scope === 'following') next.set('tab', 'following');
         setParams(next);
     };
+    // 팔로잉 탭에서 언팔로우하면 카드를 바로 빼고 현재 페이지를 다시 받는다. 다시 받은 페이지가 비어 있으면 앞 페이지로 간다.
+    const backOnEmpty = useRef(false);
+    const changeFollow = (tag: string, result: FollowResult) => {
+        const followingTab = filters.scope === 'following';
+        search.update(current => current.type === 'developers'
+            ? { ...current, page: applyFollowChange(current.page, tag, result.followed, followingTab) } : current);
+        if (followingTab && !result.followed) {
+            backOnEmpty.current = true;
+            search.reload();
+        }
+    };
+    useEffect(() => {
+        if (!ready || !backOnEmpty.current) return;
+        backOnEmpty.current = false;
+        const target = pageAfterEmpty(ready.page);
+        if (target === null) return;
+        const next = new URLSearchParams(params);
+        if (target > 0) next.set('page', String(target));
+        else next.delete('page');
+        setParams(next);
+    }, [ready, params, setParams]);
     const selected = [
         ...filters.stacks.map(s => ({ key: 'stack', value: s })),
         ...(filters.target === 'developer'
@@ -81,8 +139,73 @@ export default function SearchPage() {
                   { key: 'status', value: filters.status },
               ]),
     ].filter(v => v.value);
-    const {enabled}=useMockVisibility();
-    if(!enabled&&filters.target==='project')return <><Link href="/explore?type=developers">개발자 탐색</Link><ApiProjectList initialQuery={filters.q}/></>;
+    const emptyFilters = (
+        <div className={[styles.scope, 'search-empty'].join(' ')}>
+            <span>
+                <Search size={30} />
+            </span>
+            <h2>
+                {signedOutFollowing
+                    ? '로그인하고 동료들의 소식을 만나보세요.'
+                    : '조건에 맞는 결과가 없어요.'}
+            </h2>
+            <p>
+                {signedOutFollowing
+                    ? '팔로잉 목록은 계정별로 관리됩니다. 로그인해 주세요.'
+                    : '검색어를 바꾸거나 선택한 필터를 줄여 다시 찾아보세요.'}
+            </p>
+            {signedOutFollowing ? (
+                <Link href="/login" className={[styles.scope, 'button'].join(' ')}>
+                    로그인하기
+                </Link>
+            ) : (
+                <Button variant="secondary" onClick={() => reset(true)}>
+                    검색 조건 전체 초기화
+                </Button>
+            )}
+        </div>
+    );
+    const notice = (title: string, body: string, action: ReactNode) => (
+        <div className={[styles.scope, 'search-empty'].join(' ')} role="alert">
+            <span>
+                <Search size={30} />
+            </span>
+            <h2>{title}</h2>
+            <p>{body}</p>
+            {action}
+        </div>
+    );
+    const apiResults = () => {
+        if (signedOutFollowing) return emptyFilters;
+        if (apiError)
+            return notice(apiError.message, '잠시 후 다시 시도해 주세요.', (
+                <Button variant="secondary" onClick={search.reload}>다시 시도</Button>
+            ));
+        if (!shown) return null;
+        if (!shown.page.items.length) {
+            if (shown.page.totalCount === 0) return emptyFilters;
+            const last = shown.page.totalPages - 1;
+            return notice('이 페이지에는 결과가 없어요.', `검색 결과는 ${shown.page.totalPages}페이지까지 있어요.`, (
+                <Button variant="secondary" disabled={loading} onClick={() => goPage(last)}>마지막 페이지로 이동</Button>
+            ));
+        }
+        return (
+            <>
+                {shown.type === 'developers' ? (
+                    <ApiDeveloperResults
+                        items={shown.page.items}
+                        signedIn={!!user}
+                        ownTag={ownTag}
+                        onFollowChange={changeFollow}
+                        onFollowError={message => notify(message)}
+                    />
+                ) : (
+                    <ApiProjectResults items={shown.page.items} />
+                )}
+                <SearchPager page={shown.page.page} totalPages={shown.page.totalPages} disabled={loading} onChange={goPage} />
+            </>
+        );
+    };
     return (
         <div className={[styles.scope, 'container search-page'].join(' ')}>
             <header className={[styles.scope, 'search-page-heading'].join(' ')}>
@@ -97,6 +220,7 @@ export default function SearchPage() {
                 <div>
                     <SearchFilters
                         filters={filters}
+                        choices={choices}
                         onChange={update}
                         onReset={() => {
                             reset();
@@ -142,7 +266,7 @@ export default function SearchPage() {
                             )}
                         </div>
                         <span className={[styles.scope, 'search-count'].join(' ')} role="status">
-                            {count} {filters.target === 'developer' ? '명의 개발자' : '개의 프로젝트'}
+                            {!enabled && loading ? '조회 중…' : <>{count} {filters.target === 'developer' ? '명의 개발자' : '개의 프로젝트'}</>}
                         </span>
                     </div>
                     {filters.q && (
@@ -173,41 +297,18 @@ export default function SearchPage() {
                             ))}
                         </div>
                     )}
-                    {count > 0 ? (
+                    {!enabled ? apiResults() : count > 0 ? (
                         filters.target === 'developer' ? (
                             <DeveloperResults items={developers} />
                         ) : (
                             <ProjectResults items={foundProjects} />
                         )
-                    ) : (
-                        <div className={[styles.scope, 'search-empty'].join(' ')}>
-                            <span>
-                                <Search size={30} />
-                            </span>
-                            <h2>
-                                {signedOutFollowing
-                                    ? '로그인하고 동료들의 소식을 만나보세요.'
-                                    : '조건에 맞는 결과가 없어요.'}
-                            </h2>
-                            <p>
-                                {signedOutFollowing
-                                    ? '팔로잉 목록은 계정별로 관리됩니다. 로그인해 주세요.'
-                                    : '검색어를 바꾸거나 선택한 필터를 줄여 다시 찾아보세요.'}
-                            </p>
-                            {signedOutFollowing ? (
-                                <Link href="/login" className={[styles.scope, 'button'].join(' ')}>
-                                    로그인하기
-                                </Link>
-                            ) : (
-                                <Button variant="secondary" onClick={() => reset(true)}>
-                                    검색 조건 전체 초기화
-                                </Button>
-                            )}
-                        </div>
+                    ) : emptyFilters}
+                    {enabled && (
+                        <p className={[styles.scope, 'search-data-note'].join(' ')}>
+                            Mock 데이터 기반 검색 · 프로필 수정과 팔로우 상태가 공통으로 반영됩니다.
+                        </p>
                     )}
-                    <p className={[styles.scope, 'search-data-note'].join(' ')}>
-                        Mock 데이터 기반 검색 · 프로필 수정과 팔로우 상태가 공통으로 반영됩니다.
-                    </p>
                 </section>
             </div>
         </div>

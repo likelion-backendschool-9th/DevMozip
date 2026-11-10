@@ -47,6 +47,8 @@ describe('인증 서버 액션', () => {
     it.each([
         [null, '/'],
         ['/ai/matching', '/ai/matching'],
+        ['/users/demo-user?tab=portfolio', '/profile/me?tab=portfolio'],
+        ['/users/another-member', '/users/another-member'],
         ['/projects?sort=latest', '/projects?sort=latest'],
         ['/login?next=%2Fai%2Fmatching', '/'],
     ])('로그인 복귀 경로 %s를 %s로 반환한다', async (next, target) => {

@@ -5,6 +5,7 @@ import { useNavigation } from '@/lib/navigation';
 import { useHome } from '@/lib/state/homeStore';
 import { useAuth } from '@/lib/state/authStore';
 import { matchingLoginPath } from '@/lib/matching/loginPrompt';
+import { useInitialChatAnalysis } from '@/lib/matching/useInitialChatAnalysis';
 import { chatMessageLength, missingChatRequirements } from '@/lib/matching/matchingChatService';
 import { chatPromptExamples, chatRequirementLabels, emptyChatRequirements } from '@/mocks/matchingChat';
 import type { AiRecommendation } from '@/types/aiRecommendation';
@@ -104,14 +105,15 @@ function MatchingWorkspace() {
     const showConditions = () => { if (window.matchMedia('(max-width: 1100px)').matches) setDrawer('conditions'); else setConditions(true); };
     const changeText = (value: string) => { if (user) editChatMessage(value); else setGuestInput(value); setError(''); };
     const login = () => { try { navigate(matchingLoginPath(text)); } catch (e) { setError(e instanceof Error ? e.message : '입력을 보관하지 못했습니다.'); } };
-    const runAnalysis = async (conversationId = conversation?.id) => {
+    const runAnalysis = useCallback(async (conversationId?: string) => {
         const key = `${user?.email}:${conversationId || 'new'}`;
         currentKey.current = key;
         setBusyKey(key); setTask('analyze'); setRetryAnalysis(false); setError('');
         try { await analyzeChat(); }
         catch (e) { if (currentKey.current === key) { setRetryAnalysis(true); setError(e instanceof Error ? e.message : '메시지 분석을 완료하지 못했습니다. 다시 시도해 주세요.'); } }
         finally { setBusyKey(null); setTask(null); }
-    };
+    }, [user?.email, analyzeChat]);
+    useInitialChatAnalysis(conversation, !!user && !historyLoading && !busy, runAnalysis);
     const send = () => {
         if (!user) { login(); return; }
         const sent = sendChat(text); setError(sent.error || '');
@@ -149,7 +151,7 @@ function MatchingWorkspace() {
                     {busy && <div role="status" className={styles.loading}><LoaderCircle size={16} /><span>{task === 'analyze' ? '메시지를 분석하고 조건을 정리하고 있어요…' : '조건을 저장하고 추천 후보를 찾고 있어요…'}</span></div>}
                 </div>
                 <div className={styles.execution}><span><i />{conversation?.pendingRecommendation ? '이전 요청을 확인하면 같은 추천을 다시 만들지 않아요.' : recommendationUnchanged ? '같은 조건의 추천이 있어요. 추천 조건을 변경해 주세요.' : missing.length ? '조건을 설정하면 추천을 시작할 수 있어요.' : '조건이 준비됐어요. 새로운 동료를 찾아보세요.'}</span><button type="button" disabled={busy || recommendationUnchanged} onClick={recommend}><Sparkles size={13} />{conversation?.pendingRecommendation ? '이전 추천 확인/재시도' : '조건으로 추천 받기'}</button></div>
-                {(visibleError || conversation?.pendingAnalysisKey && !busy) && <div role="alert" className={styles.error}>{visibleError}{(retryAnalysis || conversation?.pendingAnalysisKey) && <button type="button" onClick={() => void runAnalysis()}>분석 다시 시도</button>}</div>}
+                {(visibleError || conversation?.pendingAnalysisKey && !busy) && <div role="alert" className={styles.error}>{visibleError}{(retryAnalysis || conversation?.pendingAnalysisKey) && <button type="button" disabled={busy} onClick={() => void runAnalysis(conversation?.id)}>분석 다시 시도</button>}</div>}
                 {user && text.trim() && !conversation?.pendingRecommendation && <div className={styles.conditionHint}><Sparkles size={16} /><div><strong>입력 중인 메시지는 아직 추천에 반영되지 않았어요</strong><button type="button" disabled={busy} onClick={send}>메시지 보내고 분석하기<ArrowRight size={12} /></button></div></div>}
                 <ChatComposer used={chatMessageLength(conversation?.messages || [])} value={text} busy={busy} signedIn={!!user} onChange={changeText} onSend={send} />
             </section>

@@ -66,6 +66,10 @@ public class SecurityConfig {
                 // 헬스체크는 토큰 없이 확인한다 (프론트 /api/health, 블루그린 배포 스크립트)
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me/reviews").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/reviews").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me/posts").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}/posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/liked-posts").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/portfolios", "/api/v1/portfolios/{id}").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me/projects").authenticated()
@@ -82,6 +86,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/{slug}", "/api/v1/profile-images/{filename}", "/api/v1/files/{id}").permitAll()
                 // 공개 프로젝트 조회만 허용한다. options·관리·생성은 기존 인증 정책을 유지한다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/projects", "/api/v1/projects/{id:[0-9]+}").permitAll()
+                // 통합 검색(개발자·프로젝트 탐색)은 비로그인도 쓴다. 팔로잉 탭의 로그인 확인은 Service에서 한다.
+                .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
                 // 프리미엄 상품 안내(/subscription)는 비로그인도 볼 수 있다. 결제·구독 관리는 기본 정책(인증 필요)을 따른다.
                 .requestMatchers(HttpMethod.GET, "/api/v1/subscription/plans").permitAll()
                 // 관리자만 접근 가능
