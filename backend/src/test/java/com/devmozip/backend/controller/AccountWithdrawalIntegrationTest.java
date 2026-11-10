@@ -82,6 +82,8 @@ class AccountWithdrawalIntegrationTest {
 		var row = jdbc.queryForMap("SELECT * FROM users WHERE id=?", member.getId());
 		assertThat(row.get("nickname")).isEqualTo(member.getNickname());
 		row.remove("id"); row.remove("nickname");
+		// 계정 잠금 설정(is_private)은 NOT NULL 열이라 NULL로 지울 수 없다. 개인정보가 아닌 설정 값이다
+		row.remove("is_private");
 		assertThat(row.values()).allMatch(value -> value == null);
 		verify(refreshTokens).remove(member.getEmail());
 		verify(resetTokens).removeToken(member.getEmail());

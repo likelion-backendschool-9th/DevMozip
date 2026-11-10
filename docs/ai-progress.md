@@ -2326,3 +2326,23 @@ PR 준비: 최신 develop 37564ae 기반 fix/mock-default-off에서 재검증했
 fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress.md 끝에 두 브랜치가 각각 기록을 덧붙인 부분만 충돌하여, 먼저 병합된 메인 추천 입력창 기록 뒤에 업로드 경로 통합 기록을 두는 방식으로 둘 다 보존했다. develop의 MatchingStart.module.css·portfolioProxy.ts(403 안내 문구) 변경은 자동 병합되었고, 업로드 경로 변경과 겹치는 코드는 없다(파일 BFF는 portfolioError만 쓰며 서명은 그대로다).
 
 검증: 병합 결과를 복사본에서 npm run build 성공, npm test 전체 172개 파일/1,820개 테스트 통과. develop에서 백엔드 변경이 들어오지 않아 백엔드 테스트는 다시 실행하지 않았다. 충돌 표시 없음, git diff --check 통과.
+
+## 2026-11-11 develop 백엔드 테스트 실패 11개 수정
+
+사용자 요청으로 develop CI/CD의 백엔드 테스트 실패 원인을 조사하고 테스트 코드만 고쳤다. #126(37d40f6) 뒤로 develop의 CI/CD는 test 단계에서 실패해 build-push·deploy가 실행되지 않았다. 최신 f8ccaa8 실행에서는 1,460개 중 11개가 실패했고, 원인은 모두 테스트 쪽이다. 운영 코드는 바꾸지 않았다.
+
+- ProfilePostsIntegrationTest 5개(#129 병합 뒤): Post 엔티티가 posts를 먼저 만들어, 테스트의 CREATE TABLE IF NOT EXISTS는 실행되지 않고 열 이름 없는 INSERT가 실패했다. 엔티티가 만든 테이블에 열 이름을 지정해 넣고 NOT NULL 열(tech_stacks·interests·image_urls·view_count·updated_at)을 채웠다. CREATE TABLE 문은 지웠다. 프로필 포스팅 조회 SQL을 실제 엔티티 열 구성으로 확인하게 된다.
+- ProfileImage·ProfileIntroduction·ProfileLinks·ProfileOptions·ProfileUpdate IntegrationTest 각 1개(#135 병합부터): DB에 없는 회원의 토큰에는 accountId 클레임이 없어 JwtProvider가 AccountWithdrawalTasks.legacyRevoked()로 Redis를 조회한다. 이 테스트들은 test 프로필 없이 H2로 실행해 메모리 모드가 아니다. @MockitoBean AccountWithdrawalTasks로 대신했다(ProfileUpdateIntegrationTest의 RefreshTokenStore와 같은 방식). test 프로필은 프로젝트·AI 개발 모드 설정도 바꾸므로 쓰지 않았다.
+- AccountWithdrawalIntegrationTest 1개(#135 병합부터): 탈퇴 뒤 id·nickname 말고는 모든 열이 NULL인지 확인하는데, users.is_private(#133)는 NOT NULL이라 false로 남는다. 이 열을 확인 대상에서 뺐다.
+
+변경 파일: backend/src/test/java/com/devmozip/backend/controller/의 ProfilePostsIntegrationTest, ProfileImageIntegrationTest, ProfileIntroductionIntegrationTest, ProfileLinksIntegrationTest, ProfileOptionsIntegrationTest, ProfileUpdateIntegrationTest, AccountWithdrawalIntegrationTest. 문서 docs/ai-progress.md.
+
+검증:
+- CI 기록: develop CI/CD의 실행별 실패 테스트를 확인했다. #128 실행의 테스트 JVM 메모리 부족은 #129의 테스트 힙 1GB 설정 뒤 다시 나오지 않았다.
+- 변경 전 HEAD 복사본에서 위 7개 클래스: 104개 중 11개 실패(CI와 같은 11개). 로컬 6379 포트에 Redis 없음(CI와 같은 조건).
+- 변경 후 복사본에서 위 7개 클래스: 104개 통과, 건너뜀 0.
+- 변경 후 복사본에서 전체 ./gradlew test(Docker Testcontainers): 146개 클래스 1,460개, 실패 0, 건너뜀 12(팀 DB 설정이 필요한 프로젝트 테스트 11개, AiRecommendationExecutionTests 1개, 기존과 같음).
+- 프론트(복사본): npm ci, npm run build 성공. 프론트 변경 없음.
+- git diff --check 통과.
+
+미완료: 커밋·푸시하지 않아 develop의 CI/CD는 아직 실패 상태이며, 반영 뒤 CI 통과는 확인하지 않았다.

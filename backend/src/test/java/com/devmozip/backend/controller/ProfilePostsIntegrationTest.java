@@ -34,7 +34,7 @@ class ProfilePostsIntegrationTest {
 	}
 	@BeforeEach void fixtures(){
 		assertNotEquals(5442,postgres.getMappedPort(5432));
-		jdbc.execute("CREATE TABLE IF NOT EXISTS posts(id BIGINT PRIMARY KEY,author_id BIGINT REFERENCES users(id),original_post_id BIGINT REFERENCES posts(id),type VARCHAR(20),category VARCHAR(30),title VARCHAR(150),content TEXT,visibility VARCHAR(20),created_at TIMESTAMP,deleted_at TIMESTAMP)");
+		// posts는 Post 엔티티가 만든 테이블(ddl-auto: create)을 그대로 쓴다. 운영 조회 SQL을 실제 열 구성으로 확인한다
 		jdbc.update("DELETE FROM posts");jdbc.update("DELETE FROM users");
 		for(int i=1;i<=4;i++)jdbc.update("INSERT INTO users(id,email,nickname,tag,role,status) VALUES (?,?,?,?,?,?)",i,"posts"+i+"@test.local","작성자"+i,"posts-"+i,"USER",i==3?"SUSPENDED":i==4?"WARNED":"ACTIVE");
 		post(1,1,null,"POST","VISIBLE",null);
@@ -47,7 +47,9 @@ class ProfilePostsIntegrationTest {
 		post(8,4,null,"POST","VISIBLE",null);
 	}
 	void post(long id,long author,Long original,String type,String visibility,String deleted){
-		jdbc.update("INSERT INTO posts VALUES (?,?,?,?,? ,?,?,?,TIMESTAMP '2026-11-10 10:00:00',CAST(? AS TIMESTAMP))",id,author,original,type,"INFO","제목"+id,"x".repeat(400),visibility,deleted);
+		jdbc.update("INSERT INTO posts(id,author_id,original_post_id,type,category,title,content,tech_stacks,interests,image_urls,view_count,visibility,created_at,updated_at,deleted_at) "
+			+"VALUES (?,?,?,?,?,?,?,CAST('[]' AS jsonb),CAST('[]' AS jsonb),CAST('[]' AS jsonb),0,?,TIMESTAMP '2026-11-10 10:00:00',TIMESTAMP '2026-11-10 10:00:00',CAST(? AS TIMESTAMP))",
+			id,author,original,type,"INFO","제목"+id,"x".repeat(400),visibility,deleted);
 	}
 	String token(int id){return "Bearer "+jwt.createAccessToken("posts"+id+"@test.local","USER");}
 	@Test void ownIdentityAndStablePages()throws Exception{

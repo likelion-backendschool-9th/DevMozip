@@ -2,6 +2,7 @@ package com.devmozip.backend.controller;
 
 import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.service.AccountWithdrawalTasks;
 import com.devmozip.backend.storage.ProfileImageTestFiles;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,6 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -42,6 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, trust_score) VALUES (3,'[\"백엔드 개발자\"]' FORMAT JSON,'suspended@image.test','정지회원','image-suspended','SUSPENDED','USER',36.50)"
 })
 class ProfileImageIntegrationTest {
+    // Redis 없이 실행한다. DB에 없는 회원의 토큰은 accountId 클레임이 없어 JwtProvider가 탈퇴 토큰 목록(Redis)을 확인하므로 대신한다
+    @MockitoBean AccountWithdrawalTasks withdrawalTasks;
     @TempDir static Path directory;
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;
