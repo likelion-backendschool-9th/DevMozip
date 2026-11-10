@@ -50,7 +50,7 @@ class ProjectUpdateDeleteIntegrationTest {
 	private static final String BASE = "/api/v1/projects";
 	private long id;
 	@BeforeEach void reset() throws Exception {
-		jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
+		jdbc.update("DELETE FROM review_keyword_selections"); jdbc.update("DELETE FROM reviews"); jdbc.update("DELETE FROM project_members"); jdbc.update("DELETE FROM projects");
 		when(user.getCurrentUserId()).thenReturn(101L);
 		when(applications.usedRoles(anyLong())).thenReturn(Set.of());
 		when(clock.getZone()).thenReturn(ZoneId.of("Asia/Seoul"));

@@ -18,7 +18,7 @@ export async function projectGuard(request?:Request,premium=false){
 export async function proxyProject(path:string,init:RequestInit={},parse?:(value:unknown)=>unknown){
  if(!projectApiEnabled())return projectError(503,'프로젝트 서버 연결이 비활성화되어 있습니다.');
  try{const response=await backendFetch(path,init);
-  if(!response.ok){const messages:Record<number,string>={400:'입력값과 날짜를 확인해 주세요.',401:'로그인이 필요하거나 만료되었습니다.',403:'이 프로젝트의 처리 권한이 없습니다.',404:'프로젝트가 없거나 접근할 수 없습니다.',409:'현재 상태·팀원·지원서·기간 조건으로 처리할 수 없습니다.',501:'지원 중 목록은 지원 기능 연결 후 제공됩니다.'};return projectError(response.status>=500&&response.status!==501?502:response.status,messages[response.status]||'요청을 처리하지 못했습니다.');}
+  if(!response.ok){const messages:Record<number,string>={400:'입력값과 날짜를 확인해 주세요.',401:'로그인이 필요하거나 만료되었습니다.',403:'이 프로젝트의 처리 권한이 없습니다.',404:'프로젝트가 없거나 접근할 수 없습니다.',409:'현재 상태·팀원·지원서·기간 조건으로 처리할 수 없습니다.'};return projectError(response.status>=500?502:response.status,messages[response.status]||'요청을 처리하지 못했습니다.');}
   if(response.status===204)return new Response(null,{status:204,headers:{'Cache-Control':'no-store'}});
   const data=await response.json();return NextResponse.json(parse?parse(data):data,{status:response.status,headers:{'Cache-Control':'no-store'}});
  }catch{return projectError(502,init.method&&init.method!=='GET'?'서버 응답을 확인하지 못했습니다. 중복 요청 전에 저장 상태를 확인해 주세요.':'서버 응답을 확인하지 못했습니다. 다시 시도해 주세요.');}
