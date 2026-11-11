@@ -2395,3 +2395,5 @@ README PR 준비: 최신 원격 확인으로 전체 Git 그래프를 357개 커�
 - npm run build 성공, 변경 파일 ESLint 통과, git diff --check 통과. 백엔드 변경이 없어 backend 테스트는 실행하지 않았다.
 
 미완료: 커밋·푸시·배포하지 않았고 운영에서 수정본 업로드를 확인하지 않았다. 이전 형식 파일 표시는 코드가 아니라 운영 파일 문제다. 서버에서 public/files와 이전 색 backend 컨테이너의 /app/uploads/portfolio-files에 파일이 있는지 확인하고, 있으면 docs/portfolio-files-api.md "기존 파일 이관" 순서로 옮긴다. 어디에도 없으면 올린 환경의 파일을 복사하거나 수정 배포 뒤 다시 올려야 한다.
+
+README PR #155 최종 갱신 검증: develop 8463c18을 병합했고 충돌은 작업 기록의 추가 위치 한 곳이었다. 양쪽 기록을 모두 보존했다. 통합 후 npm run build 성공(TypeScript 포함), 함께 반영된 포트폴리오 출처 검사2개 파일/23개 테스트 통과. 전체 그래프357개 SHA/11장 중복·누락0, README 자산 경로와 본문 목업 문구 제거·git diff --check를 재확인했다. 앱 코드 신규 수정·백엔드 테스트 재실행 없음. 미추적 계획서·이슈 감사 문서는 제외했다.
