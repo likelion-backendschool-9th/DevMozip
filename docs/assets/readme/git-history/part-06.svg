@@ -1,0 +1,1122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1895" viewBox="0 0 1440 1895" role="img" aria-labelledby="title desc">
+<title id="title">DevMozip actual Git history — 6/11</title>
+<desc id="desc">Actual origin remote history, newest first. Lines continue between pages.</desc>
+<rect width="1440" height="100%" rx="16" fill="#faf9fd"/>
+<rect width="7" height="100%" rx="3" fill="#00afc1"/>
+<text x="34" y="42" font-family="Pretendard,sans-serif" font-size="22" font-weight="700" fill="#292235">DevMozip · Git history 06 / 11</text>
+<text x="34" y="73" font-family="Pretendard,sans-serif" font-size="14" fill="#71657f">All origin branches · 357 commits · newest → oldest</text>
+<text x="34" y="98" font-family="Pretendard,sans-serif" font-size="13" fill="#71657f">main 4f1b2ed · develop 8463c18 · graph lines 376–450</text>
+<line x1="38.2" y1="121" x2="38.2" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="121" x2="55.1" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="121" x2="71.9" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="121" x2="88.8" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="121" x2="105.6" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="121" x2="122.5" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="121" x2="139.4" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="121" x2="156.2" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="121" x2="173.1" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="121" x2="189.9" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="121" x2="206.8" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="121" x2="223.7" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="121" x2="240.5" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="144" x2="253.1" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="121" x2="257.4" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.0" y1="121" x2="261.6" y2="144" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="144" x2="38.2" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="144" x2="55.1" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="144" x2="71.9" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="144" x2="88.8" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="144" x2="105.6" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="144" x2="122.5" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="144" x2="139.4" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="144" x2="156.2" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="144" x2="173.1" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="144" x2="189.9" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="144" x2="206.8" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="144" x2="223.7" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="144" x2="227.9" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="144" x2="240.5" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="144" x2="257.4" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="167" x2="38.2" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="167" x2="55.1" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="167" x2="71.9" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="167" x2="88.8" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="167" x2="105.6" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="167" x2="122.5" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="167" x2="139.4" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="167" x2="156.2" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="167" x2="173.1" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="167" x2="189.9" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="167" x2="206.8" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="167" x2="223.7" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="167" x2="240.5" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="257.4" cy="178" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/f00f7672e4fb9599f7b599f4f98e914b27378398"><title>feat: 포트폴리오 등록 수정 삭제 API 및 작성 화면 연동</title><text x="270.0" y="182" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">f00f767</text></a>
+<text x="352.0" y="182" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 포트폴리오 등록 수정 삭제 API 및 작성 화면 연동</text>
+<line x1="38.2" y1="190" x2="38.2" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="190" x2="55.1" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="190" x2="71.9" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="190" x2="88.8" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="213" x2="101.4" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="190" x2="105.6" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="213" x2="118.3" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="190" x2="122.5" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="213" x2="135.1" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="190" x2="139.4" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="213" x2="152.0" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="190" x2="156.2" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="213" x2="168.8" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="190" x2="173.1" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="213" x2="185.7" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="190" x2="189.9" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="213" x2="202.6" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="190" x2="206.8" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="213" x2="219.4" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="190" x2="223.7" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="213" x2="236.3" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="190" x2="240.5" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="190" x2="244.8" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="213" x2="38.2" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="213" x2="55.1" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="213" x2="71.9" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="213" x2="76.1" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="213" x2="88.8" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="213" x2="105.6" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="213" x2="122.5" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="213" x2="139.4" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="213" x2="156.2" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="213" x2="173.1" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="213" x2="189.9" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="213" x2="206.8" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="213" x2="223.7" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="213" x2="240.5" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="236" x2="38.2" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="236" x2="55.1" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="236" x2="71.9" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="236" x2="88.8" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="105.6" cy="247" r="4" fill="#7955df"/>
+<line x1="122.5" y1="236" x2="122.5" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="236" x2="139.4" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="236" x2="156.2" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="236" x2="173.1" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="236" x2="189.9" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="236" x2="206.8" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="236" x2="223.7" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="236" x2="240.5" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/56fed81062541d04a6c245f18a6680cbd5dd855f"><title>fix: 좋아요 목록 조회를 피드 테이블 구조에 맞게 수정</title><text x="253.2" y="251" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">56fed81</text></a>
+<text x="335.2" y="251" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 좋아요 목록 조회를 피드 테이블 구조에 맞게 수정</text>
+<line x1="38.2" y1="259" x2="38.2" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="270" r="4" fill="#7955df"/>
+<line x1="71.9" y1="259" x2="71.9" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="259" x2="88.8" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="259" x2="105.6" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="259" x2="122.5" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="259" x2="139.4" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="259" x2="156.2" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="259" x2="173.1" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="259" x2="189.9" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="259" x2="206.8" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="259" x2="223.7" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="259" x2="240.5" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/42c96ca6f40c8890c192dd6c66351a20c767d3fe"><title>Merge pull request #89 from likelion-backendschool-9th/feat/run-ai-recommendation</title><text x="270.0" y="274" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">42c96ca</text></a>
+<text x="352.0" y="274" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #89 from likelion-backendschool-9th/feat/run-ai-recommendation</text>
+<line x1="38.2" y1="282" x2="38.2" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="282" x2="55.1" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="282" x2="67.7" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="282" x2="84.5" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="282" x2="101.4" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="282" x2="118.3" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="282" x2="135.1" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="282" x2="152.0" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="282" x2="168.8" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="282" x2="185.7" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="282" x2="202.6" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="282" x2="219.4" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="282" x2="236.3" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="282" x2="253.1" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="305" x2="38.2" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="305" x2="55.1" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="305" x2="71.9" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="305" x2="88.8" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="305" x2="105.6" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="305" x2="122.5" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="305" x2="139.4" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="305" x2="156.2" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="305" x2="173.1" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="305" x2="189.9" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="305" x2="206.8" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="305" x2="223.7" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="305" x2="240.5" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="305" x2="257.4" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="274.2" cy="316" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/f6617871876d187da3ab391d8181ba8fd90bbc88"><title>Merge a9b8255c175de5da150e242735f011baab7401fc into f76e652a7b70e5a9a7b00ceb95dfee4e36565263</title><text x="286.9" y="320" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">f661787</text></a>
+<text x="368.9" y="320" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge a9b8255c175de5da150e242735f011baab7401fc into f76e652a7b70e5a9a7b00ceb95dfee4e36565263</text>
+<line x1="38.2" y1="328" x2="38.2" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="328" x2="55.1" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="328" x2="71.9" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="351" x2="84.5" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="328" x2="88.8" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="351" x2="101.4" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="328" x2="105.6" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="351" x2="118.3" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="328" x2="122.5" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="351" x2="135.1" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="328" x2="139.4" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="351" x2="152.0" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="328" x2="156.2" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="351" x2="168.8" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="328" x2="173.1" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="351" x2="185.7" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="328" x2="189.9" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="351" x2="202.6" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="328" x2="206.8" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="351" x2="219.4" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="328" x2="223.7" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="351" x2="236.3" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="328" x2="240.5" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="351" x2="253.1" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="328" x2="257.4" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.0" y1="328" x2="261.6" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="274.2" y1="328" x2="274.2" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="351" x2="38.2" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="351" x2="55.1" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="351" x2="59.3" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="351" x2="71.9" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="351" x2="88.8" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="351" x2="105.6" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="351" x2="122.5" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="351" x2="139.4" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="351" x2="156.2" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="351" x2="173.1" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="351" x2="189.9" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="351" x2="206.8" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="351" x2="223.7" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="351" x2="240.5" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="351" x2="257.4" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.0" y1="351" x2="261.6" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="374" x2="38.2" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="374" x2="55.1" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="374" x2="71.9" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="374" x2="88.8" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="397" x2="101.4" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="374" x2="105.6" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="397" x2="118.3" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="374" x2="122.5" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="397" x2="135.1" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="374" x2="139.4" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="397" x2="152.0" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="374" x2="156.2" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="397" x2="168.8" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="374" x2="173.1" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="397" x2="185.7" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="374" x2="189.9" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="397" x2="202.6" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="374" x2="206.8" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="397" x2="219.4" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="374" x2="223.7" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="397" x2="236.3" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="374" x2="240.5" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="374" x2="244.8" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="374" x2="257.4" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="397" x2="38.2" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="397" x2="55.1" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="397" x2="71.9" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="397" x2="76.1" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="397" x2="88.8" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="397" x2="105.6" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="397" x2="122.5" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="397" x2="139.4" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="397" x2="156.2" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="397" x2="173.1" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="397" x2="189.9" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="397" x2="206.8" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="397" x2="223.7" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="397" x2="240.5" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="397" x2="257.4" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="420" x2="38.2" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="431" r="4" fill="#7955df"/>
+<line x1="71.9" y1="420" x2="71.9" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="420" x2="88.8" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="420" x2="105.6" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="420" x2="122.5" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="420" x2="139.4" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="420" x2="156.2" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="420" x2="173.1" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="420" x2="189.9" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="420" x2="206.8" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="420" x2="223.7" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="420" x2="240.5" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="420" x2="257.4" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/f76e652a7b70e5a9a7b00ceb95dfee4e36565263"><title>Merge pull request #83 from likelion-backendschool-9th/feat/ai-recommend</title><text x="286.9" y="435" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">f76e652</text></a>
+<text x="368.9" y="435" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #83 from likelion-backendschool-9th/feat/ai-recommend</text>
+<line x1="38.2" y1="443" x2="38.2" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="443" x2="55.1" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="443" x2="67.7" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="443" x2="84.5" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="443" x2="101.4" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="443" x2="118.3" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="443" x2="135.1" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="443" x2="152.0" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="443" x2="168.8" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="443" x2="185.7" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="443" x2="202.6" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="443" x2="219.4" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="443" x2="236.3" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="443" x2="253.1" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="261.6" y1="443" x2="270.0" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="466" x2="38.2" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="466" x2="55.1" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="466" x2="71.9" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="466" x2="88.8" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="466" x2="105.6" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="466" x2="122.5" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="466" x2="139.4" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="466" x2="156.2" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="466" x2="173.1" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="466" x2="189.9" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="466" x2="206.8" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="466" x2="223.7" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="466" x2="240.5" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="466" x2="257.4" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="274.2" cy="477" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/b464bccfc685852feed02ca740a46e94c7b7ec05"><title>fix: 프리미엄 정기결제 스케줄러 실행 시간 변경 (10분마다 -&gt; 한국 시간 기준 매일 24:00)</title><text x="286.9" y="481" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">b464bcc</text></a>
+<text x="368.9" y="481" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 프리미엄 정기결제 스케줄러 실행 시간 변경 (10분마다 -&gt; 한국 시간 기준 매일 24:00)</text>
+<line x1="38.2" y1="489" x2="38.2" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="489" x2="55.1" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="489" x2="71.9" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="489" x2="88.8" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="489" x2="105.6" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="489" x2="122.5" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="489" x2="139.4" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="489" x2="156.2" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="489" x2="173.1" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="489" x2="189.9" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="489" x2="206.8" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="489" x2="223.7" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="489" x2="240.5" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="489" x2="257.4" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="274.2" cy="500" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/c4e816ce4a65de6a5ee39166ba6eee21ff37e55f"><title>feat: 프리미엄 정기결제 기능 API 구현 및 프론트엔드 연동</title><text x="286.9" y="504" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">c4e816c</text></a>
+<text x="368.9" y="504" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 프리미엄 정기결제 기능 API 구현 및 프론트엔드 연동</text>
+<line x1="38.2" y1="512" x2="38.2" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="512" x2="55.1" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="512" x2="71.9" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="512" x2="88.8" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="512" x2="105.6" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="512" x2="122.5" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="512" x2="139.4" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="512" x2="156.2" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="512" x2="173.1" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="512" x2="189.9" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="512" x2="206.8" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="512" x2="223.7" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="512" x2="240.5" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="257.4" cy="523" r="4" fill="#7955df"/>
+<line x1="274.2" y1="512" x2="274.2" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/556fe8453abe6eec74c8d909e6a2f813c8535127"><title>chore: 불필요한 코드 및 로그 제거</title><text x="286.9" y="527" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">556fe84</text></a>
+<text x="368.9" y="527" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: 불필요한 코드 및 로그 제거</text>
+<line x1="38.2" y1="535" x2="38.2" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="535" x2="55.1" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="535" x2="71.9" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="535" x2="88.8" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="535" x2="105.6" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="535" x2="122.5" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="535" x2="139.4" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="535" x2="156.2" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="535" x2="173.1" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="535" x2="189.9" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="535" x2="206.8" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="535" x2="223.7" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="535" x2="240.5" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="257.4" cy="546" r="4" fill="#7955df"/>
+<line x1="274.2" y1="535" x2="274.2" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/717da5621ad2caf4a65c81689087b47d0d32372a"><title>feat: AI 대화 분석에 부분 선택 조건 반영 및 필수 조건 검증</title><text x="286.9" y="550" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">717da56</text></a>
+<text x="368.9" y="550" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: AI 대화 분석에 부분 선택 조건 반영 및 필수 조건 검증</text>
+<line x1="38.2" y1="558" x2="38.2" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="558" x2="55.1" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="558" x2="71.9" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="558" x2="88.8" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="558" x2="105.6" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="558" x2="122.5" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="558" x2="139.4" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="558" x2="156.2" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="558" x2="173.1" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="558" x2="189.9" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="558" x2="206.8" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="558" x2="223.7" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="240.5" cy="569" r="4" fill="#7955df"/>
+<line x1="257.4" y1="558" x2="257.4" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="274.2" y1="558" x2="274.2" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/dad4d9cd84922a4769baf684b3b6aef1773d2764"><title>feat: 프로젝트 신고 페이지 및 접수 API 구현</title><text x="286.9" y="573" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">dad4d9c</text></a>
+<text x="368.9" y="573" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 프로젝트 신고 페이지 및 접수 API 구현</text>
+<line x1="38.2" y1="581" x2="38.2" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="581" x2="55.1" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="581" x2="71.9" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="581" x2="88.8" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="581" x2="105.6" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="581" x2="122.5" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="581" x2="139.4" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="581" x2="156.2" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="581" x2="173.1" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="581" x2="189.9" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="581" x2="206.8" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="581" x2="223.7" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="581" x2="227.9" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="581" x2="244.8" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.0" y1="581" x2="261.6" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="604" x2="38.2" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="604" x2="55.1" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="604" x2="71.9" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="604" x2="88.8" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="604" x2="105.6" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="604" x2="122.5" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="604" x2="139.4" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="604" x2="156.2" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="604" x2="173.1" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="604" x2="189.9" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="604" x2="206.8" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="604" x2="211.0" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="604" x2="223.7" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="604" x2="240.5" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="604" x2="257.4" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="627" x2="38.2" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="627" x2="55.1" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="627" x2="71.9" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="627" x2="88.8" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="627" x2="105.6" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="627" x2="122.5" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="627" x2="139.4" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="627" x2="156.2" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="627" x2="173.1" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="627" x2="189.9" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="627" x2="206.8" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="627" x2="223.7" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="240.5" cy="638" r="4" fill="#7955df"/>
+<line x1="257.4" y1="627" x2="257.4" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/81fc0c65aaa53fdef182855d2a85b15ee33c612e"><title>feat: Gemini AI 채팅 프론트 연동 및 오류 처리 보완</title><text x="270.0" y="642" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">81fc0c6</text></a>
+<text x="352.0" y="642" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: Gemini AI 채팅 프론트 연동 및 오류 처리 보완</text>
+<line x1="38.2" y1="650" x2="38.2" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="650" x2="55.1" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="650" x2="71.9" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="650" x2="88.8" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="650" x2="105.6" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="650" x2="122.5" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="650" x2="139.4" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="650" x2="156.2" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="650" x2="173.1" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="650" x2="189.9" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="650" x2="206.8" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="650" x2="223.7" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="650" x2="240.5" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="257.4" cy="661" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/354a8ab3464e1c5e5107a83484b36ab22e1763d8"><title>docs: 프리미엄/결제 기능 구현 계획</title><text x="270.0" y="665" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">354a8ab</text></a>
+<text x="352.0" y="665" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">docs: 프리미엄/결제 기능 구현 계획</text>
+<line x1="38.2" y1="673" x2="38.2" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="673" x2="55.1" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="673" x2="71.9" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="673" x2="88.8" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="673" x2="105.6" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="673" x2="122.5" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="673" x2="139.4" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="673" x2="156.2" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="673" x2="173.1" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="673" x2="189.9" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="673" x2="206.8" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="673" x2="223.7" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="673" x2="240.5" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="257.4" cy="684" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/ee8d4dd602db60059293cd12aa4e199842678e73"><title>docs: 팔로우 기능 구현 계획</title><text x="270.0" y="688" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">ee8d4dd</text></a>
+<text x="352.0" y="688" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">docs: 팔로우 기능 구현 계획</text>
+<line x1="38.2" y1="696" x2="38.2" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="696" x2="55.1" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="696" x2="71.9" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="696" x2="88.8" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="696" x2="105.6" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="696" x2="122.5" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="696" x2="139.4" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="696" x2="156.2" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="696" x2="173.1" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="696" x2="189.9" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="707" r="4" fill="#7955df"/>
+<line x1="223.7" y1="696" x2="223.7" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="696" x2="240.5" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="257.4" y1="696" x2="257.4" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/34c17477ad55d90076e07a23de9d0565aa016970"><title>feat: 프로젝트 북마크·좋아요 저장 및 액션 UI 구현</title><text x="270.0" y="711" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">34c1747</text></a>
+<text x="352.0" y="711" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 프로젝트 북마크·좋아요 저장 및 액션 UI 구현</text>
+<line x1="38.2" y1="719" x2="38.2" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="719" x2="55.1" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="719" x2="71.9" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="719" x2="88.8" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="719" x2="105.6" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="719" x2="122.5" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="719" x2="139.4" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="742" x2="152.0" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="719" x2="156.2" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="742" x2="168.8" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="719" x2="173.1" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="742" x2="185.7" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="719" x2="189.9" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="719" x2="194.2" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="719" x2="211.0" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="719" x2="227.9" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="719" x2="244.8" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="742" x2="38.2" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="742" x2="55.1" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="742" x2="71.9" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="742" x2="88.8" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="742" x2="105.6" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="742" x2="122.5" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.1" y1="742" x2="126.7" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="742" x2="139.4" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="742" x2="156.2" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="742" x2="173.1" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="742" x2="189.9" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="742" x2="206.8" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="742" x2="223.7" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="742" x2="240.5" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="765" x2="38.2" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="765" x2="55.1" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="765" x2="71.9" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="765" x2="88.8" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="765" x2="105.6" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="765" x2="122.5" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="765" x2="139.4" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="765" x2="156.2" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="765" x2="173.1" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="765" x2="189.9" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="765" x2="206.8" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="223.7" cy="776" r="4" fill="#7955df"/>
+<line x1="240.5" y1="765" x2="240.5" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/e0e9af15c15cdd1535c8d663edd45de0b9f199db"><title>feat: Gemini 기반 자연어 추천 의도 분석 구현</title><text x="253.2" y="780" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">e0e9af1</text></a>
+<text x="335.2" y="780" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: Gemini 기반 자연어 추천 의도 분석 구현</text>
+<line x1="38.2" y1="788" x2="38.2" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="788" x2="55.1" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="788" x2="71.9" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="788" x2="88.8" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="788" x2="105.6" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="788" x2="122.5" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="788" x2="139.4" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="788" x2="156.2" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="788" x2="173.1" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="788" x2="189.9" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="788" x2="206.8" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="788" x2="211.0" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="788" x2="227.9" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="811" x2="38.2" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="811" x2="55.1" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="811" x2="71.9" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="811" x2="88.8" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="811" x2="105.6" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="811" x2="122.5" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="811" x2="139.4" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="811" x2="156.2" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="811" x2="173.1" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="811" x2="189.9" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="811" x2="206.8" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="223.7" cy="822" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/00fd34afc2341492b6320c7ffad7aed6afea832a"><title>docs: SNS 피드 및 게시글 기능 구현 계획</title><text x="236.3" y="826" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">00fd34a</text></a>
+<text x="318.3" y="826" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">docs: SNS 피드 및 게시글 기능 구현 계획</text>
+<line x1="38.2" y1="834" x2="38.2" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="834" x2="55.1" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="834" x2="71.9" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="857" x2="84.5" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="834" x2="88.8" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="857" x2="101.4" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="834" x2="105.6" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="857" x2="118.3" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="834" x2="122.5" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="857" x2="135.1" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="834" x2="139.4" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="857" x2="152.0" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="834" x2="156.2" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="857" x2="168.8" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="834" x2="173.1" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="857" x2="185.7" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="834" x2="189.9" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="857" x2="202.6" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="834" x2="206.8" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="834" x2="211.0" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="857" x2="38.2" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="857" x2="55.1" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="857" x2="59.3" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="857" x2="71.9" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="857" x2="88.8" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="857" x2="105.6" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="857" x2="122.5" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="857" x2="139.4" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="857" x2="156.2" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="857" x2="173.1" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="857" x2="189.9" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="857" x2="206.8" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="880" x2="38.2" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="880" x2="55.1" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="880" x2="71.9" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="880" x2="88.8" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="880" x2="105.6" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="880" x2="122.5" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="880" x2="139.4" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="880" x2="156.2" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="880" x2="173.1" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="880" x2="189.9" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="891" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/c4582b5c67c04add6f978a7131e6af3dfac779d8"><title>chore: 미사용 추천 화면과 불필요한 코드 정리</title><text x="219.5" y="895" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">c4582b5</text></a>
+<text x="301.5" y="895" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: 미사용 추천 화면과 불필요한 코드 정리</text>
+<line x1="38.2" y1="903" x2="38.2" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="903" x2="55.1" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="903" x2="71.9" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="903" x2="88.8" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="903" x2="105.6" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="903" x2="122.5" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="903" x2="139.4" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="903" x2="156.2" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="903" x2="173.1" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="903" x2="189.9" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="914" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/519eda1ad585ac0bee1022cce5f414b5104e4064"><title>fix: 요청 조건에 맞춘 추천 이유 표현 개선</title><text x="219.5" y="918" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">519eda1</text></a>
+<text x="301.5" y="918" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 요청 조건에 맞춘 추천 이유 표현 개선</text>
+<line x1="38.2" y1="926" x2="38.2" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="926" x2="55.1" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="926" x2="71.9" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="926" x2="88.8" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="926" x2="105.6" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="926" x2="122.5" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="926" x2="139.4" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="926" x2="156.2" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="926" x2="173.1" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="926" x2="189.9" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="937" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/d718884de836bffd48e37e546707a177ac06fd68"><title>feat: 추천 대화 흐름과 개발자 카드 개선</title><text x="219.5" y="941" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">d718884</text></a>
+<text x="301.5" y="941" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 추천 대화 흐름과 개발자 카드 개선</text>
+<line x1="38.2" y1="949" x2="38.2" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="949" x2="55.1" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="949" x2="71.9" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="949" x2="88.8" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="949" x2="105.6" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="949" x2="122.5" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="949" x2="139.4" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="949" x2="156.2" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="949" x2="173.1" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="189.9" cy="960" r="4" fill="#7955df"/>
+<line x1="206.8" y1="949" x2="206.8" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/ee2ab8561c0436b34e13f5d111fda0f8f82bbce2"><title>feat: 대화방(1:1/프로젝트) 백엔드 API 구현 및 연동</title><text x="219.5" y="964" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">ee2ab85</text></a>
+<text x="301.5" y="964" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 대화방(1:1/프로젝트) 백엔드 API 구현 및 연동</text>
+<line x1="38.2" y1="972" x2="38.2" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="972" x2="55.1" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="972" x2="71.9" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="972" x2="88.8" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="972" x2="105.6" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="972" x2="122.5" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="972" x2="139.4" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="972" x2="156.2" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="972" x2="173.1" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="189.9" cy="983" r="4" fill="#7955df"/>
+<line x1="206.8" y1="972" x2="206.8" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/c7059a9738849f0a5991d3083ffa2ff865c6b0f5"><title>chore: 프론트엔드 회원가입 필드 일부 수정(stacks-&gt;skills)</title><text x="219.5" y="987" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">c7059a9</text></a>
+<text x="301.5" y="987" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: 프론트엔드 회원가입 필드 일부 수정(stacks-&gt;skills)</text>
+<line x1="38.2" y1="995" x2="38.2" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="995" x2="55.1" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="995" x2="71.9" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="995" x2="88.8" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="995" x2="105.6" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="122.5" cy="1006" r="4" fill="#7955df"/>
+<line x1="139.4" y1="995" x2="139.4" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="995" x2="156.2" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="995" x2="173.1" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="995" x2="189.9" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="995" x2="206.8" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/2ba3179d52af24d00634ac06774f76dee441453c"><title>fix: 최신 develop 반영 및 프로젝트 API 충돌 해결</title><text x="236.3" y="1010" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">2ba3179</text></a>
+<text x="318.3" y="1010" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 최신 develop 반영 및 프로젝트 API 충돌 해결</text>
+<line x1="38.2" y1="1018" x2="38.2" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1018" x2="55.1" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1018" x2="71.9" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1018" x2="88.8" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1018" x2="105.6" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1018" x2="122.5" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1018" x2="135.1" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1018" x2="152.0" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1018" x2="168.8" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1018" x2="185.7" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1018" x2="202.6" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1018" x2="219.4" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1041" x2="38.2" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1041" x2="55.1" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1041" x2="71.9" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1064" x2="84.5" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1041" x2="88.8" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1064" x2="101.4" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1041" x2="105.6" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1064" x2="118.3" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1041" x2="122.5" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.1" y1="1041" x2="126.7" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1041" x2="143.6" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.8" y1="1041" x2="160.4" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1041" x2="177.3" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1041" x2="194.2" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="1041" x2="211.0" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1064" x2="38.2" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1064" x2="55.1" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1064" x2="59.3" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1064" x2="71.9" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1064" x2="88.8" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1064" x2="105.6" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1064" x2="122.5" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1064" x2="139.4" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1064" x2="156.2" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1064" x2="173.1" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1064" x2="189.9" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1064" x2="206.8" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1087" x2="38.2" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1087" x2="55.1" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1087" x2="71.9" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1087" x2="88.8" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1087" x2="105.6" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1087" x2="122.5" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1087" x2="139.4" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1087" x2="156.2" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1087" x2="173.1" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1087" x2="189.9" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="1098" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/aa3da77a419f76cdc3dbb788fd62d9968be13d48"><title>feat: AI 추천 페이지 채팅형 UI 개편</title><text x="219.5" y="1102" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">aa3da77</text></a>
+<text x="301.5" y="1102" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: AI 추천 페이지 채팅형 UI 개편</text>
+<line x1="38.2" y1="1110" x2="38.2" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1110" x2="55.1" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1110" x2="71.9" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1110" x2="88.8" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1110" x2="105.6" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1110" x2="122.5" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1110" x2="139.4" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1110" x2="156.2" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1110" x2="173.1" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1110" x2="189.9" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="206.8" cy="1121" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/60b54b0c266a8394e0fd6e9d5ff1a6378d2d1d20"><title>wip: 추천 프론트 연동 및 검증 현황 기록</title><text x="219.5" y="1125" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">60b54b0</text></a>
+<text x="301.5" y="1125" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">wip: 추천 프론트 연동 및 검증 현황 기록</text>
+<line x1="38.2" y1="1133" x2="38.2" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1133" x2="55.1" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1133" x2="71.9" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1133" x2="88.8" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1133" x2="105.6" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1156" x2="118.3" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1133" x2="122.5" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1156" x2="135.1" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1133" x2="139.4" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1156" x2="152.0" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1133" x2="156.2" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1156" x2="168.8" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1133" x2="173.1" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1156" x2="185.7" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1133" x2="189.9" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1133" x2="194.2" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1156" x2="38.2" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1156" x2="55.1" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1156" x2="71.9" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1156" x2="88.8" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1156" x2="93.0" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1156" x2="105.6" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1156" x2="122.5" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1156" x2="139.4" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1156" x2="156.2" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1156" x2="173.1" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1156" x2="189.9" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1179" x2="38.2" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1179" x2="55.1" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1179" x2="71.9" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="88.8" cy="1190" r="4" fill="#7955df"/>
+<line x1="105.6" y1="1179" x2="105.6" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1179" x2="122.5" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1179" x2="139.4" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1179" x2="156.2" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1179" x2="173.1" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1179" x2="189.9" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/a9b8255c175de5da150e242735f011baab7401fc"><title>chore: WSL 개발 실행 도구와 AI 데모 데이터·API 문서 정리</title><text x="202.6" y="1194" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">a9b8255</text></a>
+<text x="284.6" y="1194" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: WSL 개발 실행 도구와 AI 데모 데이터·API 문서 정리</text>
+<line x1="38.2" y1="1202" x2="38.2" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1213" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1202" x2="71.9" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1202" x2="88.8" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1202" x2="105.6" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1202" x2="122.5" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1202" x2="139.4" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1202" x2="156.2" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1202" x2="173.1" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1202" x2="189.9" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/058397ea2ac64011c04fdd06b0a181d9d5c066d5"><title>Merge pull request #76 from likelion-backendschool-9th/fix/project-authenticated-user</title><text x="219.5" y="1217" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">058397e</text></a>
+<text x="301.5" y="1217" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #76 from likelion-backendschool-9th/fix/project-authenticated-user</text>
+<line x1="38.2" y1="1225" x2="38.2" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1225" x2="55.1" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1225" x2="67.7" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1225" x2="84.5" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1225" x2="101.4" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1225" x2="118.3" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1225" x2="135.1" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1225" x2="152.0" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1225" x2="168.8" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1225" x2="185.7" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1225" x2="202.6" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1248" x2="38.2" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1248" x2="55.1" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1259" r="4" fill="#7955df"/>
+<line x1="84.6" y1="1248" x2="93.0" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1248" x2="109.8" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1248" x2="126.7" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.2" y1="1248" x2="143.6" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1248" x2="160.4" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.9" y1="1248" x2="177.3" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1248" x2="194.1" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1248" x2="211.0" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/dac4a2c93e93c232a070a1a40b86cb35bef230e4"><title>Merge branch &#x27;develop&#x27; into fix/project-authenticated-user</title><text x="236.3" y="1263" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">dac4a2c</text></a>
+<text x="318.3" y="1263" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into fix/project-authenticated-user</text>
+<line x1="38.2" y1="1271" x2="38.2" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1271" x2="55.1" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1271" x2="71.9" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1271" x2="84.5" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1271" x2="101.4" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1271" x2="118.3" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1271" x2="135.1" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1271" x2="152.0" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1271" x2="168.8" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1271" x2="185.7" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1271" x2="202.6" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1271" x2="219.4" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1294" x2="38.2" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1294" x2="55.1" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1294" x2="71.9" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1294" x2="76.1" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1294" x2="93.0" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1294" x2="109.9" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.1" y1="1294" x2="126.7" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1294" x2="143.6" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.8" y1="1294" x2="160.4" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1294" x2="177.3" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1294" x2="194.2" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="1294" x2="211.0" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1317" x2="38.2" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1317" x2="55.1" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1317" x2="59.3" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1317" x2="71.9" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1317" x2="88.8" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1317" x2="105.6" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1317" x2="122.5" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1317" x2="139.4" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1317" x2="156.2" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1317" x2="173.1" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1317" x2="189.9" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1317" x2="206.8" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1340" x2="38.2" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1351" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1340" x2="71.9" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1340" x2="88.8" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1340" x2="105.6" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1340" x2="122.5" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1340" x2="139.4" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1340" x2="156.2" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1340" x2="173.1" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1340" x2="189.9" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1340" x2="206.8" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/9b3c1e9e2cf08a229d8ce755f519711d1e2ce44c"><title>Merge pull request #74 from likelion-backendschool-9th/feat/47-project-lifecycle</title><text x="236.3" y="1355" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">9b3c1e9</text></a>
+<text x="318.3" y="1355" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #74 from likelion-backendschool-9th/feat/47-project-lifecycle</text>
+<line x1="38.2" y1="1363" x2="38.2" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1363" x2="55.1" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1363" x2="67.7" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1363" x2="84.5" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1363" x2="101.4" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1363" x2="118.3" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1363" x2="135.1" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1363" x2="152.0" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1363" x2="168.8" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1363" x2="185.7" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1363" x2="202.6" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1363" x2="219.4" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1386" x2="38.2" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1386" x2="55.1" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1397" r="4" fill="#7955df"/>
+<line x1="84.6" y1="1386" x2="93.0" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1386" x2="109.8" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1386" x2="126.7" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.2" y1="1386" x2="143.6" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1386" x2="160.4" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.9" y1="1386" x2="177.3" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1386" x2="194.1" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1386" x2="211.0" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.5" y1="1386" x2="227.9" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/8bf390c1f53d82a7876a34c82e8ceead59d7a8d1"><title>Merge branch &#x27;develop&#x27; into feat/47-project-lifecycle</title><text x="253.2" y="1401" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">8bf390c</text></a>
+<text x="335.2" y="1401" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into feat/47-project-lifecycle</text>
+<line x1="38.2" y1="1409" x2="38.2" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1409" x2="55.1" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1409" x2="71.9" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1409" x2="84.5" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1409" x2="101.4" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1409" x2="118.3" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1409" x2="135.1" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1409" x2="152.0" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1409" x2="168.8" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1409" x2="185.7" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1409" x2="202.6" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1409" x2="219.4" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1409" x2="236.3" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1432" x2="38.2" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1432" x2="55.1" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1432" x2="71.9" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1432" x2="76.1" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1432" x2="93.0" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1432" x2="109.9" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.1" y1="1432" x2="126.7" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1432" x2="143.6" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.8" y1="1432" x2="160.4" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1432" x2="177.3" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1432" x2="194.2" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="1432" x2="211.0" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1432" x2="227.9" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1455" x2="38.2" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1455" x2="55.1" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1455" x2="59.3" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1455" x2="71.9" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1455" x2="88.8" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1455" x2="105.6" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1455" x2="122.5" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1455" x2="139.4" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1455" x2="156.2" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1455" x2="173.1" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1455" x2="189.9" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1455" x2="206.8" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1455" x2="223.7" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1478" x2="38.2" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1489" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1478" x2="71.9" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1478" x2="88.8" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1478" x2="105.6" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1478" x2="122.5" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1478" x2="139.4" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1478" x2="156.2" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1478" x2="173.1" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1478" x2="189.9" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1478" x2="206.8" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1478" x2="223.7" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/89793fec6584113438b61ef95c2d0c0ca91aeadb"><title>Merge pull request #73 from likelion-backendschool-9th/test/46-project-db-verification</title><text x="253.2" y="1493" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">89793fe</text></a>
+<text x="335.2" y="1493" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #73 from likelion-backendschool-9th/test/46-project-db-verification</text>
+<line x1="38.2" y1="1501" x2="38.2" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1501" x2="55.1" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1501" x2="67.7" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1501" x2="84.5" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1501" x2="101.4" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1501" x2="118.3" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1501" x2="135.1" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1501" x2="152.0" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1501" x2="168.8" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1501" x2="185.7" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1501" x2="202.6" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1501" x2="219.4" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1501" x2="236.3" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1524" x2="38.2" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1524" x2="55.1" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1535" r="4" fill="#7955df"/>
+<line x1="84.6" y1="1524" x2="93.0" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1524" x2="109.8" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1524" x2="126.7" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.2" y1="1524" x2="143.6" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1524" x2="160.4" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.9" y1="1524" x2="177.3" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1524" x2="194.1" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1524" x2="211.0" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.5" y1="1524" x2="227.9" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1524" x2="244.7" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/890323b22a35b1882bc83bc4f0e8256aece55569"><title>Merge branch &#x27;develop&#x27; into test/46-project-db-verification</title><text x="270.0" y="1539" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">890323b</text></a>
+<text x="352.0" y="1539" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into test/46-project-db-verification</text>
+<line x1="38.2" y1="1547" x2="38.2" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1547" x2="55.1" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1547" x2="71.9" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1547" x2="84.5" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1547" x2="101.4" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1547" x2="118.3" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1547" x2="135.1" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1547" x2="152.0" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1547" x2="168.8" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1547" x2="185.7" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1547" x2="202.6" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1547" x2="219.4" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1547" x2="236.3" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="1547" x2="253.1" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1570" x2="38.2" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1570" x2="55.1" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1570" x2="71.9" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1570" x2="76.1" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1570" x2="93.0" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1570" x2="109.9" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.1" y1="1570" x2="126.7" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1570" x2="143.6" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.8" y1="1570" x2="160.4" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1570" x2="177.3" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1570" x2="194.2" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="1570" x2="211.0" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1570" x2="227.9" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="1570" x2="244.8" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1593" x2="38.2" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1593" x2="55.1" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1593" x2="59.3" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1593" x2="71.9" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1593" x2="88.8" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1593" x2="105.6" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1593" x2="122.5" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1593" x2="139.4" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1593" x2="156.2" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1593" x2="173.1" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1593" x2="189.9" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1593" x2="206.8" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1593" x2="223.7" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="1593" x2="240.5" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1616" x2="38.2" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1616" x2="55.1" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1616" x2="71.9" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1616" x2="88.8" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1616" x2="105.6" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1616" x2="122.5" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1616" x2="139.4" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="156.2" cy="1627" r="4" fill="#7955df"/>
+<line x1="173.1" y1="1616" x2="173.1" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1616" x2="189.9" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1616" x2="206.8" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1616" x2="223.7" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="1616" x2="240.5" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/c4b0bd852316eb97f0a5fbc5171daaecd62e8793"><title>Merge branch &#x27;develop&#x27; into feat/84-portfolio-query</title><text x="270.0" y="1631" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">c4b0bd8</text></a>
+<text x="352.0" y="1631" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into feat/84-portfolio-query</text>
+<line x1="38.2" y1="1639" x2="38.2" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1639" x2="55.1" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1639" x2="71.9" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1639" x2="88.8" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1639" x2="105.6" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1639" x2="122.5" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1639" x2="139.4" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1639" x2="156.2" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1639" x2="168.8" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1639" x2="185.7" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1639" x2="202.6" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1639" x2="219.4" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1639" x2="236.3" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="1639" x2="253.1" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1662" x2="38.2" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1662" x2="55.1" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1662" x2="71.9" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1685" x2="84.5" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1662" x2="88.8" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1685" x2="101.4" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1662" x2="105.6" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1685" x2="118.3" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1662" x2="122.5" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1685" x2="135.1" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1662" x2="139.4" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1685" x2="152.0" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1662" x2="156.2" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.8" y1="1662" x2="160.4" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1662" x2="177.3" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1662" x2="194.2" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.4" y1="1662" x2="211.0" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1662" x2="227.9" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.1" y1="1662" x2="244.8" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1685" x2="38.2" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1685" x2="55.1" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1685" x2="59.3" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1685" x2="71.9" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1685" x2="88.8" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1685" x2="105.6" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1685" x2="122.5" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1685" x2="139.4" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1685" x2="156.2" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1685" x2="173.1" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1685" x2="189.9" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1685" x2="206.8" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1685" x2="223.7" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="1685" x2="240.5" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1708" x2="38.2" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1719" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1708" x2="71.9" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1708" x2="88.8" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1708" x2="105.6" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.5" y1="1708" x2="122.5" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="139.4" y1="1708" x2="139.4" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="156.2" y1="1708" x2="156.2" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="173.1" y1="1708" x2="173.1" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="189.9" y1="1708" x2="189.9" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="206.8" y1="1708" x2="206.8" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="223.7" y1="1708" x2="223.7" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="240.5" y1="1708" x2="240.5" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/0a356746e714cfd64593dd8835bc72a10b9e301a"><title>Merge pull request #77 from likelion-backendschool-9th/feat/member-auth</title><text x="270.0" y="1723" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">0a35674</text></a>
+<text x="352.0" y="1723" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #77 from likelion-backendschool-9th/feat/member-auth</text>
+<line x1="38.2" y1="1731" x2="38.2" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1731" x2="55.1" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1731" x2="67.7" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1731" x2="84.5" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1731" x2="101.4" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1731" x2="118.3" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1731" x2="135.1" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1731" x2="152.0" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1731" x2="168.8" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1731" x2="185.7" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1731" x2="202.6" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1731" x2="219.4" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1731" x2="236.3" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="1731" x2="253.1" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1754" x2="38.2" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1765" r="4" fill="#7955df"/>
+<line x1="67.7" y1="1754" x2="76.1" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.6" y1="1754" x2="93.0" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1754" x2="109.8" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1754" x2="126.7" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.2" y1="1754" x2="143.6" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1754" x2="160.4" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.9" y1="1754" x2="177.3" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1754" x2="194.1" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1754" x2="211.0" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.5" y1="1754" x2="227.9" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1754" x2="244.7" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.2" y1="1754" x2="261.6" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/64c66b3edc6a8fbc3b619e9d82afe3f91d9c7fbf"><title>Merge pull request #72 from likelion-backendschool-9th/test/45-project-db-verification</title><text x="286.9" y="1769" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">64c66b3</text></a>
+<text x="368.9" y="1769" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #72 from likelion-backendschool-9th/test/45-project-db-verification</text>
+<line x1="38.2" y1="1777" x2="38.2" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1777" x2="55.1" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1777" x2="67.7" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1777" x2="84.5" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1777" x2="101.4" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1777" x2="118.3" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1777" x2="135.1" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1777" x2="152.0" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1777" x2="168.8" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1777" x2="185.7" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1777" x2="202.6" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1777" x2="219.4" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1777" x2="236.3" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="1777" x2="253.1" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="261.6" y1="1777" x2="270.0" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1800" x2="38.2" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1800" x2="55.1" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1811" r="4" fill="#7955df"/>
+<line x1="84.6" y1="1800" x2="93.0" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1800" x2="109.8" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="1800" x2="126.7" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="135.2" y1="1800" x2="143.6" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="152.0" y1="1800" x2="160.4" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="168.9" y1="1800" x2="177.3" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="185.7" y1="1800" x2="194.1" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="202.6" y1="1800" x2="211.0" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="219.5" y1="1800" x2="227.9" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.3" y1="1800" x2="244.7" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="253.2" y1="1800" x2="261.6" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="270.0" y1="1800" x2="278.4" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/be51af5c4e24c33ddae226af038b8bee068a5269"><title>Merge branch &#x27;develop&#x27; into test/45-project-db-verification</title><text x="303.8" y="1815" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">be51af5</text></a>
+<text x="385.8" y="1815" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into test/45-project-db-verification</text>
+<line x1="38.2" y1="1823" x2="38.2" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1823" x2="55.1" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1823" x2="71.9" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1823" x2="84.5" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1823" x2="101.4" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="1823" x2="118.3" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="126.7" y1="1823" x2="135.1" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" y1="1823" x2="152.0" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="160.4" y1="1823" x2="168.8" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="177.3" y1="1823" x2="185.7" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="194.2" y1="1823" x2="202.6" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="211.0" y1="1823" x2="219.4" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="227.9" y1="1823" x2="236.3" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.8" y1="1823" x2="253.1" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="261.6" y1="1823" x2="270.0" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="278.5" y1="1823" x2="286.9" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

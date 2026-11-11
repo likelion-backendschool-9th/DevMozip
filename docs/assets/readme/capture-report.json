@@ -1,0 +1,64 @@
+{
+  "baseUrl": "https://devmozip.newlecture.com",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "capturedOn": "2026-11-11",
+  "screens": [
+    {
+      "name": "home",
+      "path": "/",
+      "status": 200,
+      "title": "홈",
+      "headings": [
+        "아이디어에 딱 맞는 동료,대화하며 찾아보세요."
+      ]
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "status": 200,
+      "title": "프로젝트 모집 · DevMozip",
+      "headings": [
+        "당신의 다음 프로젝트를 만나보세요."
+      ]
+    },
+    {
+      "name": "project-detail",
+      "path": "/projects/40",
+      "status": 200,
+      "title": "프로젝트 상세 · DevMozip",
+      "headings": [
+        "데브넷"
+      ]
+    },
+    {
+      "name": "explore",
+      "path": "/explore",
+      "status": 200,
+      "title": "개발자 탐색 · DevMozip",
+      "headings": [
+        "좋은 연결의 시작, 개발자 탐색"
+      ]
+    },
+    {
+      "name": "feed",
+      "path": "/feeds",
+      "status": 200,
+      "title": "SNS 피드 · DevMozip",
+      "headings": [
+        "개발자의 오늘을 나누는 공간"
+      ]
+    },
+    {
+      "name": "profile",
+      "path": "/users/zian",
+      "status": 200,
+      "title": "개발자 프로필 · DevMozip",
+      "headings": [
+        "김선아"
+      ]
+    }
+  ]
+}
