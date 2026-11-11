@@ -10,7 +10,9 @@ export function portfolioWriteGuard(request: Request, body = true) {
         try {
             const external = new URL(`${target.protocol}//${host}`);
             if (external.host !== host || external.username || external.password || external.pathname !== '/' || external.search || external.hash) throw new Error('host');
-            target.host = external.host;
+            // host 대입은 포트 없는 값이면 내부 포트(:3000)를 남긴다. HTTPS 기본 포트 주소가 맞도록 hostname과 port를 함께 바꾼다.
+            target.hostname = external.hostname;
+            target.port = external.port;
         } catch { return portfolioError(403, '같은 사이트에서 요청해 주세요.'); }
     }
     if (request.headers.get('origin') !== target.origin) return portfolioError(403, '같은 사이트에서 요청해 주세요.');
