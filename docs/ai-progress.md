@@ -2378,3 +2378,20 @@ fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress
 검증: 원격 전체354개 SHA와11개 이미지의 SVG 커밋을 대조해 중복·누락0 확인. 전체 PNG 존재·폭1440 및 SVG XML/Python/Node 문법, README 로컬 경로·HTML 태그·목업 문구 부재·git diff --check 통과. 처음/마지막 그래프 육안 확인으로 최신 커밋부터 Initial commit까지 표시 확인. GitHub Markdown API에서 표·details·11개 이미지 참조 렌더링 확인(실제 PR 페이지의 이미지 로딩 확인은 아님). npm run build 성공(TypeScript 포함). 문서/이미지 생성기 변경으로 앱 기능·백엔드 테스트 미실행. 커밋·푸시 없음.
 
 README PR 준비: 최신 원격 확인으로 전체 Git 그래프를 357개 커밋/11장, main 4f1b2ed·develop 8463c18 기준으로 다시 생성했다.
+## 2026-11-11 배포본 포트폴리오 쓰기 출처 검사 수정
+
+사용자 요청으로 배포본의 포트폴리오 이미지 업로드 403("같은 사이트에서 요청해 주세요.")과 프로필 포트폴리오 탭 이미지 표시 실패를 조사했다.
+
+- 원인(업로드 403): portfolioWriteGuard가 `target.host = external.host`로 브라우저 Host를 넣었다. 포트 없는 Host(HTTPS 기본 포트)를 대입하면 URL의 기존 포트가 남아, 운영 Next 내부 URL(`https://0.0.0.0:3000`, HOSTNAME·PORT와 X-Forwarded-Proto로 만들어짐)의 :3000이 비교값에 붙었다. 로컬은 Host에 포트가 있어 드러나지 않았다. 같은 가드를 쓰는 포트폴리오 등록·수정·삭제·공개 범위 변경도 같은 조건에서 403이다. 운영에 로그인 없이 보낸 업로드 요청은 정상 Origin에서 403, :3000을 붙인 Origin에서 401(가드 통과)이었다. 프로필 가드는 100c7bb에서 같은 문제를 고쳤고, 피드·팔로우·프로젝트·메신저·구독 가드는 Origin의 host를 Host 헤더와 직접 비교해 해당하지 않는다.
+- 수정: lib/portfolios/portfolioWriteProxy.ts에서 hostname과 port를 함께 바꾼다(profileProxy와 같은 방식). 다른 도메인·포트·프로토콜·누락/손상 Origin, 위조 X-Forwarded-Host 차단은 그대로다.
+- 테스트: app/api/files/route.test.ts, app/api/portfolios/portfolioWrites.test.ts에 배포 HTTPS 조건(내부 URL :3000, 포트 없는 Host) 허용과 내부 포트가 붙은 Origin·http·다른 도메인 거절을 추가했다.
+- 원인(프로필 탭 이미지): 프론트 코드 문제가 아니다. 운영의 공개 포트폴리오 대표 이미지 중 이전 형식(UUID) 주소가 비로그인 요청에 404였다. 공개 대표 이미지는 비로그인 열람 대상이라 파일이 public/files에 없는 것으로 본다. 운영 nginx의 /internal-files/는 적용돼 있었다(직접 요청 시 팀 nginx 404). 위 403 때문에 운영에서는 업로드가 성공할 수 없었으므로, 이 주소의 파일은 다른 환경에서 올렸을 수 있다. 서버 확인은 하지 않았다.
+
+변경 파일: frontend/lib/portfolios/portfolioWriteProxy.ts, frontend/app/api/files/route.test.ts, frontend/app/api/portfolios/portfolioWrites.test.ts, docs/portfolio-crud-api.md, docs/ai-progress.md
+
+검증(git archive 복사본):
+- 수정 전 코드에 새 테스트만 넣어 실행: 두 파일 23개 중 새 테스트 2개 실패(403, 기대 201).
+- 수정 후 npm test -- --maxWorkers=2: 172개 파일 / 1,822개 통과.
+- npm run build 성공, 변경 파일 ESLint 통과, git diff --check 통과. 백엔드 변경이 없어 backend 테스트는 실행하지 않았다.
+
+미완료: 커밋·푸시·배포하지 않았고 운영에서 수정본 업로드를 확인하지 않았다. 이전 형식 파일 표시는 코드가 아니라 운영 파일 문제다. 서버에서 public/files와 이전 색 backend 컨테이너의 /app/uploads/portfolio-files에 파일이 있는지 확인하고, 있으면 docs/portfolio-files-api.md "기존 파일 이관" 순서로 옮긴다. 어디에도 없으면 올린 환경의 파일을 복사하거나 수정 배포 뒤 다시 올려야 한다.
