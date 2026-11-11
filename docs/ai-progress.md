@@ -2347,6 +2347,37 @@ fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress
 
 미완료: 커밋·푸시하지 않아 develop의 CI/CD는 아직 실패 상태이며, 반영 뒤 CI 통과는 확인하지 않았다.
 
+## 2026-11-11 배포 서비스 소개 README 재작성
+
+사용자 제공 배포 주소 https://devmozip.newlecture.com 을 상단 서비스 링크로 배치하고 로고·기술 배지·HTML 기능 카드·협업 흐름·주요 경로·기술 구성·Mermaid 요청 흐름·폴더 구조·실행/테스트·문서 링크로 README를 재작성했다. 기존 프로토타입 전용 설명, API 없음·지원 미연결·패널티 미반영 등 오래된 설명과 공개 데모 계정/비밀번호를 제거했다. AI·결제의 외부 설정/테스트 채널 범위와 개인 Compose 준비 조건은 구분했다. 실행 코드·설정·배포 변경 없음.
+
+검증: README의 로컬 링크·이미지23개 존재 확인, HTML 태그 균형·git diff --check 통과. 최초 HTML 검사 스크립트가 self-closing img 태그를 잘못 처리해 오류가 났으며 검사기 보정 후 정상 확인했다. npm run build 성공(TypeScript 포함). 문서만 변경해 새 기능 테스트·백엔드 테스트는 실행하지 않았다. 웹 도구로 배포 URL 접근은 실패해 실제 사이트 렌더링과 GitHub README 시각 렌더링은 미검증이다. 커밋·푸시 없음.
+
+## 2026-11-11 README Tools·Git Graph·팀원 소개 추가
+
+사용자 제공 이미지의 김선아·최유리·윤주상·임재현 담당 내용을 4열 HTML 팀원 소개 표로 반영했다. 기술 구성에 Tools(Figma·Notion·Herdr)를 추가하고, 기능 브랜치→develop 통합→main 배포 운영 예시를 Mermaid gitGraph로 표현했다. 실제 커밋 이력 그래프와 구분해 예시임을 명시했다. 사용자 미제공 프로필 링크·직책은 임의로 추가하지 않았다.
+
+검증: README HTML 태그 균형·로컬 링크 존재·팀원4명/Tools 표기·git diff --check 확인. npm run build 성공(TypeScript 포함). 문서만 변경해 기능/백엔드 테스트는 실행하지 않았다. GitHub의 Mermaid·HTML 실제 시각 렌더링은 미검증. 커밋·푸시 없음.
+
+## 2026-11-11 README 실제 Git 이력·팀원 아바타·배포 캡처
+
+사용자 정정에 따라 브랜치 운영 예시를 제거하고 origin/main 58e756b·origin/develop a9e9bb0의 실제 최근25개 커밋·병합 연결을 이미지로 추가했다. git log 출력의 연결을 그대로 선·노드로 렌더링하며 25개 전체 SHA를 실제 이력과 대조했다. Python SVG 생성기·Playwright PNG 렌더러를 scripts에 추가해 갱신 가능하게 했다. 한글 글꼴을 포함한 브라우저 렌더링으로 PNG를 생성했다.
+
+팀원 김선아 @LuvZian·최유리 @ureeStar·윤주상 @JoostLean의 링크와 공개 아바타를 추가했다. 사용자 제공 @hdown1241은404였고 실제 저장소 기여자는 @hdown1241-commits로 확인되어, 사용자 추가 확인 후 임재현 계정은 @hdown1241-commits로 반영했다. 사진 원본은 docs/assets/readme에 보관한다.
+
+배포 https://devmozip.newlecture.com 의 공개 페이지에서 Playwright1440×1000으로 메인·프로젝트 목록·상세·개발자 탐색·프로필·SNS6개 화면을 직접 캡처하고 육안 확인했다. docs/assets/readme/capture-report.json에 경로·HTTP상태·제목·뷰포트를 기록했다. 이전 README의 /feed·/matching은 배포에서404라 소개 이미지에서 제외하고 실제 메뉴의 /feeds·/ai/matching 경로로 문서도 정정했다. 로그인·권한 우회·회원 데이터 변경은 하지 않았다. 상세 열람은 기존 조회수 정책에 따라 집계될 수 있다.
+
+검증: 모든 캡처 HTTP200·PNG1440×1000, 실제 커밋 SHA25개 일치, README 로컬 링크/HTML 태그·SVG XML·Python/Node 문법·git diff --check 확인. npm run build 성공(TypeScript 포함). 최초 아바타 검사에서 PIL 부재로 실패하여 표준 HTTP MIME 검사로 원본을 저장했다. 최초 SVG 미리보기는 시간 초과·한글 글꼴 누락을 확인했고 HTML/저장소 글꼴 PNG 렌더링으로 보정 후 정상 확인했다. 앱·백엔드 코드 변경 없어 기능 테스트·백엔드 테스트는 실행하지 않았다. GitHub README 전체 실제 렌더링은 미검증. 커밋·푸시 없음.
+
+## 2026-11-11 README 구성 정리·원격 전체 Git 이력 확대
+
+사용자 요청으로 README를 서비스 소개·기능 표·화면·기술·팀원·실행·협업·관련 문서로 간결하게 재구성했다. 상세 실행·시스템 구성과 긴 그래프는 펼쳐보기로 묶고 본문의 Mock 안내·폴더 표기를 제거했다. 실제 배포 화면의 목업 문구가 있는 메인 캡처는 소개 이미지에서 제외하고 프로젝트 탐색을 대표 화면으로 배치했다. 원본 캡처 파일·증거는 유지한다.
+
+기존25개 제한을 제거하고 origin 전체 원격 브랜치에서 도달 가능한354개 커밋을 git log --graph --date-order 순서로 누락 없이11개 PNG/SVG로 분할했다. scripts/render-readme-git-graph.py·.mjs를 갱신하고 docs/assets/readme/git-history/manifest.json에 전체 SHA·원격 참조·분할 정보를 보관했다. 기존 단일 그래프 이미지는 새 분할 이미지로 교체했다. README는 GitHub 전체 그래프 링크와 갱신 명령도 제공한다.
+
+검증: 원격 전체354개 SHA와11개 이미지의 SVG 커밋을 대조해 중복·누락0 확인. 전체 PNG 존재·폭1440 및 SVG XML/Python/Node 문법, README 로컬 경로·HTML 태그·목업 문구 부재·git diff --check 통과. 처음/마지막 그래프 육안 확인으로 최신 커밋부터 Initial commit까지 표시 확인. GitHub Markdown API에서 표·details·11개 이미지 참조 렌더링 확인(실제 PR 페이지의 이미지 로딩 확인은 아님). npm run build 성공(TypeScript 포함). 문서/이미지 생성기 변경으로 앱 기능·백엔드 테스트 미실행. 커밋·푸시 없음.
+
+README PR 준비: 최신 원격 확인으로 전체 Git 그래프를 357개 커밋/11장, main 4f1b2ed·develop 8463c18 기준으로 다시 생성했다.
 ## 2026-11-11 배포본 포트폴리오 쓰기 출처 검사 수정
 
 사용자 요청으로 배포본의 포트폴리오 이미지 업로드 403("같은 사이트에서 요청해 주세요.")과 프로필 포트폴리오 탭 이미지 표시 실패를 조사했다.
@@ -2364,3 +2395,5 @@ fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress
 - npm run build 성공, 변경 파일 ESLint 통과, git diff --check 통과. 백엔드 변경이 없어 backend 테스트는 실행하지 않았다.
 
 미완료: 커밋·푸시·배포하지 않았고 운영에서 수정본 업로드를 확인하지 않았다. 이전 형식 파일 표시는 코드가 아니라 운영 파일 문제다. 서버에서 public/files와 이전 색 backend 컨테이너의 /app/uploads/portfolio-files에 파일이 있는지 확인하고, 있으면 docs/portfolio-files-api.md "기존 파일 이관" 순서로 옮긴다. 어디에도 없으면 올린 환경의 파일을 복사하거나 수정 배포 뒤 다시 올려야 한다.
+
+README PR #155 최종 갱신 검증: develop 8463c18을 병합했고 충돌은 작업 기록의 추가 위치 한 곳이었다. 양쪽 기록을 모두 보존했다. 통합 후 npm run build 성공(TypeScript 포함), 함께 반영된 포트폴리오 출처 검사2개 파일/23개 테스트 통과. 전체 그래프357개 SHA/11장 중복·누락0, README 자산 경로와 본문 목업 문구 제거·git diff --check를 재확인했다. 앱 코드 신규 수정·백엔드 테스트 재실행 없음. 미추적 계획서·이슈 감사 문서는 제외했다.

@@ -1,0 +1,369 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1895" viewBox="0 0 1440 1895" role="img" aria-labelledby="title desc">
+<title id="title">DevMozip actual Git history — 1/11</title>
+<desc id="desc">Actual origin remote history, newest first. Lines continue between pages.</desc>
+<rect width="1440" height="100%" rx="16" fill="#faf9fd"/>
+<rect width="7" height="100%" rx="3" fill="#00afc1"/>
+<text x="34" y="42" font-family="Pretendard,sans-serif" font-size="22" font-weight="700" fill="#292235">DevMozip · Git history 01 / 11</text>
+<text x="34" y="73" font-family="Pretendard,sans-serif" font-size="14" fill="#71657f">All origin branches · 357 commits · newest → oldest</text>
+<text x="34" y="98" font-family="Pretendard,sans-serif" font-size="13" fill="#71657f">main 4f1b2ed · develop 8463c18 · graph lines 1–75</text>
+<circle cx="38.2" cy="132" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/4f1b2ed7d05a6400349efc66ab1f9d8d4dc3b956"><title>Merge pull request #157 from likelion-backendschool-9th/develop</title><text x="67.7" y="136" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">4f1b2ed</text></a>
+<text x="149.7" y="136" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #157 from likelion-backendschool-9th/develop</text>
+<line x1="38.2" y1="144" x2="38.2" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="42.4" y1="144" x2="50.8" y2="167" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="167" x2="38.2" y2="190" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="178" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/8463c180ab99307b1e543348f37f075c89dc180a"><title>Merge pull request #156 from likelion-backendschool-9th/hotfix/portfolio-image-crack</title><text x="84.6" y="182" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">8463c18</text></a>
+<text x="166.6" y="182" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #156 from likelion-backendschool-9th/hotfix/portfolio-image-crack</text>
+<line x1="38.2" y1="190" x2="38.2" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="190" x2="55.1" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="190" x2="67.7" y2="213" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="213" x2="38.2" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="213" x2="55.1" y2="236" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="224" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/84ad33675a2f778bfe0f6716fc796c47c929578e"><title>hotfix: 포트폴리오 페이지 이미지 깨짐 수정</title><text x="84.6" y="228" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">84ad336</text></a>
+<text x="166.6" y="228" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">hotfix: 포트폴리오 페이지 이미지 깨짐 수정</text>
+<line x1="38.2" y1="236" x2="38.2" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="236" x2="55.1" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="236" x2="59.3" y2="259" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="259" x2="38.2" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="259" x2="55.1" y2="282" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="270" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/bbbf0c3a369fb6e6ba114ac5061492acb6d362de"><title>docs: 배포 서비스 소개 및 README 구성 개선</title><text x="84.6" y="274" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">bbbf0c3</text></a>
+<text x="166.6" y="274" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">docs: 배포 서비스 소개 및 README 구성 개선</text>
+<line x1="38.2" y1="282" x2="38.2" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="282" x2="55.1" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="282" x2="59.3" y2="305" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="38.2" cy="316" r="4" fill="#7955df"/>
+<line x1="55.1" y1="305" x2="55.1" y2="328" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/58e756bc4920f3fc24464a5ae90c79bc1c9080da"><title>Merge pull request #154 from likelion-backendschool-9th/develop</title><text x="67.7" y="320" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">58e756b</text></a>
+<text x="149.7" y="320" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #154 from likelion-backendschool-9th/develop</text>
+<line x1="38.2" y1="328" x2="38.2" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="42.4" y1="328" x2="50.8" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="328" x2="55.1" y2="351" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="351" x2="38.2" y2="374" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="362" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/a9e9bb0407ccf1cdb84ccfe1178a8ab61ec2bab6"><title>Merge pull request #153 from likelion-backendschool-9th/fix/152-ci-test-failed</title><text x="84.6" y="366" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">a9e9bb0</text></a>
+<text x="166.6" y="366" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #153 from likelion-backendschool-9th/fix/152-ci-test-failed</text>
+<line x1="38.2" y1="374" x2="38.2" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="374" x2="55.1" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="374" x2="67.7" y2="397" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="397" x2="38.2" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="397" x2="55.1" y2="420" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="408" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/7fc07604d385513d120e1beeb431480c900a7dec"><title>fix: CI/CD 백엔드 테스트 실패 유발 파일 11개 수정</title><text x="84.6" y="412" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">7fc0760</text></a>
+<text x="166.6" y="412" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: CI/CD 백엔드 테스트 실패 유발 파일 11개 수정</text>
+<line x1="38.2" y1="420" x2="38.2" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="420" x2="55.1" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="420" x2="59.3" y2="443" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="443" x2="38.2" y2="466" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="454" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/f8ccaa8bcd3ec36a0436d505547b1cbf6dfb3204"><title>Merge pull request #151 from likelion-backendschool-9th/fix/149-file-serving</title><text x="84.6" y="458" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">f8ccaa8</text></a>
+<text x="166.6" y="458" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #151 from likelion-backendschool-9th/fix/149-file-serving</text>
+<line x1="38.2" y1="466" x2="38.2" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="466" x2="55.1" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="466" x2="67.7" y2="489" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="489" x2="38.2" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="489" x2="55.1" y2="512" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="500" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/be0b491fd05f802dd08b0149ef934bcf662ee0f0"><title>Merge remote-tracking branch &#x27;origin/develop&#x27; into fix/149-file-serving</title><text x="101.4" y="504" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">be0b491</text></a>
+<text x="183.4" y="504" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge remote-tracking branch &#x27;origin/develop&#x27; into fix/149-file-serving</text>
+<line x1="38.2" y1="512" x2="38.2" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="512" x2="55.1" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="512" x2="71.9" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="512" x2="84.5" y2="535" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="535" x2="38.2" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="535" x2="55.1" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="535" x2="71.9" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="535" x2="76.1" y2="558" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="558" x2="38.2" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="558" x2="55.1" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="558" x2="59.3" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="558" x2="71.9" y2="581" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="581" x2="38.2" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="581" x2="55.1" y2="604" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="592" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/fc6812bf9405b483fc68ca09abedab8e156825b2"><title>fix: 파일 서빙 경로 수정(nginx)</title><text x="84.6" y="596" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">fc6812b</text></a>
+<text x="166.6" y="596" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 파일 서빙 경로 수정(nginx)</text>
+<line x1="38.2" y1="604" x2="38.2" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="615" r="4" fill="#7955df"/>
+<line x1="71.9" y1="604" x2="71.9" y2="627" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/e3c7b119c9efc5c38d8d7e8fddea95633943906d"><title>Merge pull request #150 from likelion-backendschool-9th/chore/tasks</title><text x="101.4" y="619" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">e3c7b11</text></a>
+<text x="183.4" y="619" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #150 from likelion-backendschool-9th/chore/tasks</text>
+<line x1="38.2" y1="627" x2="38.2" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="627" x2="55.1" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="627" x2="67.7" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="627" x2="84.5" y2="650" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="650" x2="38.2" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="661" r="4" fill="#7955df"/>
+<line x1="71.9" y1="650" x2="71.9" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="650" x2="88.8" y2="673" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/89884c830b532de89238a53a59ad84851ba2b28d"><title>chore: 메인 페이지 ai 입력창 위치 및 크기 조정</title><text x="101.4" y="665" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">89884c8</text></a>
+<text x="183.4" y="665" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: 메인 페이지 ai 입력창 위치 및 크기 조정</text>
+<line x1="38.2" y1="673" x2="38.2" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="673" x2="55.1" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="673" x2="71.9" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="673" x2="76.1" y2="696" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="696" x2="38.2" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="696" x2="55.1" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="696" x2="59.3" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="696" x2="71.9" y2="719" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="719" x2="38.2" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="719" x2="55.1" y2="742" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="730" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/ff655845381863936b7e6e8b3ef8b10d72d3a4c2"><title>chore: 무료 사용자 포트폴리오 열람 불가 멘트 수정</title><text x="84.6" y="734" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">ff65584</text></a>
+<text x="166.6" y="734" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">chore: 무료 사용자 포트폴리오 열람 불가 멘트 수정</text>
+<line x1="38.2" y1="742" x2="38.2" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="742" x2="55.1" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="742" x2="59.3" y2="765" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="765" x2="38.2" y2="788" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="776" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/35c1e5874943e020fc02adf2907a4b305f8b1492"><title>Merge pull request #147 from likelion-backendschool-9th/feat/main-feeds</title><text x="84.6" y="780" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">35c1e58</text></a>
+<text x="166.6" y="780" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #147 from likelion-backendschool-9th/feat/main-feeds</text>
+<line x1="38.2" y1="788" x2="38.2" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="788" x2="55.1" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="788" x2="67.7" y2="811" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="811" x2="38.2" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="822" r="4" fill="#7955df"/>
+<line x1="67.7" y1="811" x2="76.1" y2="834" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/88ccf8255ae1cffa0f6f83028d040c09564f3abf"><title>Merge pull request #146 from likelion-backendschool-9th/fix/portfolio-visibility-editor</title><text x="101.4" y="826" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">88ccf82</text></a>
+<text x="183.4" y="826" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #146 from likelion-backendschool-9th/fix/portfolio-visibility-editor</text>
+<line x1="38.2" y1="834" x2="38.2" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="834" x2="55.1" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="834" x2="67.7" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="834" x2="84.5" y2="857" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="857" x2="38.2" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="857" x2="55.1" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="857" x2="71.9" y2="880" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="88.8" cy="868" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/5975fcf2b2c38324c1e12699930860a5244537e2"><title>feat: 메인 페이지 피드 api 연결, 카드 스타일 수정</title><text x="101.4" y="872" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">5975fcf</text></a>
+<text x="183.4" y="872" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 메인 페이지 피드 api 연결, 카드 스타일 수정</text>
+<line x1="38.2" y1="880" x2="38.2" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="891" r="4" fill="#7955df"/>
+<line x1="71.9" y1="880" x2="71.9" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="880" x2="88.8" y2="903" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/55801fd53bb26ce25b2cb38db7d62db0790f527a"><title>Merge pull request #145 from likelion-backendschool-9th/feat/138-admin</title><text x="118.3" y="895" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">55801fd</text></a>
+<text x="200.3" y="895" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #145 from likelion-backendschool-9th/feat/138-admin</text>
+<line x1="38.2" y1="903" x2="38.2" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="903" x2="55.1" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="903" x2="67.7" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="903" x2="84.5" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="903" x2="101.4" y2="926" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="926" x2="38.2" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="926" x2="55.1" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="937" r="4" fill="#7955df"/>
+<line x1="84.6" y1="926" x2="93.0" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="926" x2="109.8" y2="949" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/2d403cf683bfa8e0a769c3c3a0fba64102cb4f36"><title>Merge branch &#x27;develop&#x27; into feat/138-admin</title><text x="135.2" y="941" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">2d403cf</text></a>
+<text x="217.2" y="941" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge branch &#x27;develop&#x27; into feat/138-admin</text>
+<line x1="38.2" y1="949" x2="38.2" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="949" x2="55.1" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="949" x2="71.9" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="949" x2="84.5" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="949" x2="101.4" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="109.9" y1="949" x2="118.3" y2="972" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="972" x2="38.2" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="972" x2="55.1" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="972" x2="71.9" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="972" x2="76.1" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="972" x2="93.0" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="118.3" y1="972" x2="109.9" y2="995" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="995" x2="38.2" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="995" x2="55.1" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="995" x2="59.3" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="995" x2="71.9" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="995" x2="88.8" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="995" x2="105.6" y2="1018" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1018" x2="38.2" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1018" x2="55.1" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1018" x2="71.9" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="88.8" cy="1029" r="4" fill="#7955df"/>
+<line x1="105.6" y1="1018" x2="105.6" y2="1041" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/42e808273f19556bbbff280bc1f45adc67417de3"><title>fix: 포트폴리오 공개 범위 편집 및 관리 UI 개선</title><text x="118.3" y="1033" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">42e8082</text></a>
+<text x="200.3" y="1033" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 포트폴리오 공개 범위 편집 및 관리 UI 개선</text>
+<line x1="38.2" y1="1041" x2="38.2" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1041" x2="55.1" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1041" x2="71.9" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1041" x2="76.1" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1041" x2="93.0" y2="1064" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1064" x2="38.2" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1064" x2="55.1" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1064" x2="59.3" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1064" x2="71.9" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1064" x2="88.8" y2="1087" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1087" x2="38.2" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1087" x2="55.1" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1098" r="4" fill="#7955df"/>
+<line x1="88.8" y1="1087" x2="88.8" y2="1110" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/678fc231b5ac7c8c1b59831b4a0e232c087c58c3"><title>feat: 관리자 기능 백엔드 API 구현 및 프론트엔드 연동</title><text x="101.4" y="1102" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">678fc23</text></a>
+<text x="183.4" y="1102" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 관리자 기능 백엔드 API 구현 및 프론트엔드 연동</text>
+<line x1="38.2" y1="1110" x2="38.2" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1121" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1110" x2="71.9" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1110" x2="88.8" y2="1133" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/665d1ffe0a3dbfdd11796c188da19b6ad71aedd5"><title>Merge pull request #144 from likelion-backendschool-9th/fix/project-kicked-member-status</title><text x="118.3" y="1125" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">665d1ff</text></a>
+<text x="200.3" y="1125" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #144 from likelion-backendschool-9th/fix/project-kicked-member-status</text>
+<line x1="38.2" y1="1133" x2="38.2" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1133" x2="55.1" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1133" x2="67.7" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1133" x2="84.5" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1133" x2="101.4" y2="1156" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1156" x2="38.2" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1156" x2="55.1" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1167" r="4" fill="#7955df"/>
+<line x1="88.8" y1="1156" x2="88.8" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1156" x2="105.6" y2="1179" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/6580dd3903591619996d0c6bf79743f372e15643"><title>fix: 프로젝트 강퇴 팀원 상태 및 배지 표시 개선</title><text x="118.3" y="1171" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">6580dd3</text></a>
+<text x="200.3" y="1171" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 프로젝트 강퇴 팀원 상태 및 배지 표시 개선</text>
+<line x1="38.2" y1="1179" x2="38.2" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1179" x2="55.1" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1179" x2="59.3" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1179" x2="76.1" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1179" x2="93.0" y2="1202" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1202" x2="38.2" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1213" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1202" x2="71.9" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1202" x2="88.8" y2="1225" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/804825f59600d2cce695765a3fc1e714f457cea5"><title>Merge pull request #143 from likelion-backendschool-9th/fix/chat-kick-vote-timeline</title><text x="118.3" y="1217" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">804825f</text></a>
+<text x="200.3" y="1217" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #143 from likelion-backendschool-9th/fix/chat-kick-vote-timeline</text>
+<line x1="38.2" y1="1225" x2="38.2" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1225" x2="55.1" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1225" x2="67.7" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1225" x2="84.5" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1225" x2="101.4" y2="1248" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1248" x2="38.2" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1248" x2="55.1" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1259" r="4" fill="#7955df"/>
+<line x1="88.8" y1="1248" x2="88.8" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="105.6" y1="1248" x2="105.6" y2="1271" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/77df20982a654267f790ae86a7680a2e7be0e1b5"><title>fix: 강퇴 투표를 채팅 대화 시간순으로 배치</title><text x="118.3" y="1263" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">77df209</text></a>
+<text x="200.3" y="1263" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 강퇴 투표를 채팅 대화 시간순으로 배치</text>
+<line x1="38.2" y1="1271" x2="38.2" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1271" x2="55.1" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1271" x2="59.3" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1271" x2="76.1" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1271" x2="93.0" y2="1294" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1294" x2="38.2" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1305" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1294" x2="71.9" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1294" x2="88.8" y2="1317" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/e07a9adb1c2f1fd953f8e060dfafcaca6cf108c4"><title>Merge pull request #142 from likelion-backendschool-9th/feat/project-team-profile-links</title><text x="118.3" y="1309" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">e07a9ad</text></a>
+<text x="200.3" y="1309" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #142 from likelion-backendschool-9th/feat/project-team-profile-links</text>
+<line x1="38.2" y1="1317" x2="38.2" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1317" x2="55.1" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1317" x2="67.7" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1317" x2="84.5" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1317" x2="101.4" y2="1340" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1340" x2="38.2" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1340" x2="55.1" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1340" x2="71.9" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1363" x2="84.5" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1340" x2="88.8" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1340" x2="93.0" y2="1363" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1363" x2="38.2" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1363" x2="55.1" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1363" x2="59.3" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1363" x2="71.9" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1363" x2="88.8" y2="1386" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1386" x2="38.2" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1386" x2="55.1" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1397" r="4" fill="#7955df"/>
+<line x1="88.8" y1="1386" x2="88.8" y2="1409" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/a1d8dbb1c0d3b6ee8a846d1fff3eb9ab86518303"><title>feat: 프로젝트 팀원 조회 및 프로필 이동 추가</title><text x="101.4" y="1401" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">a1d8dbb</text></a>
+<text x="183.4" y="1401" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 프로젝트 팀원 조회 및 프로필 이동 추가</text>
+<line x1="38.2" y1="1409" x2="38.2" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1409" x2="55.1" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1409" x2="59.3" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1409" x2="76.1" y2="1432" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1432" x2="38.2" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1443" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1432" x2="71.9" y2="1455" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/fb82eb7a45607d342f9d710f391f79081000aebb"><title>Merge pull request #141 from likelion-backendschool-9th/fix/mock-default-off</title><text x="101.4" y="1447" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">fb82eb7</text></a>
+<text x="183.4" y="1447" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #141 from likelion-backendschool-9th/fix/mock-default-off</text>
+<line x1="38.2" y1="1455" x2="38.2" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1455" x2="55.1" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1455" x2="67.7" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1455" x2="84.5" y2="1478" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1478" x2="38.2" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1478" x2="55.1" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="71.9" cy="1489" r="4" fill="#7955df"/>
+<line x1="88.8" y1="1478" x2="88.8" y2="1501" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/c2748cd5509b8f202537b7e6bdd7361c443478d1"><title>fix: Mock 기본값 OFF 및 전환 안내 UI 숨김</title><text x="101.4" y="1493" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">c2748cd</text></a>
+<text x="183.4" y="1493" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: Mock 기본값 OFF 및 전환 안내 UI 숨김</text>
+<line x1="38.2" y1="1501" x2="38.2" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1501" x2="55.1" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1501" x2="59.3" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1501" x2="76.1" y2="1524" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1524" x2="38.2" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1535" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1524" x2="71.9" y2="1547" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/37564aebc9753c7eb7f40c63a612c165a1ffeac1"><title>Merge pull request #140 from likelion-backendschool-9th/feat/48-cancellation-penalty</title><text x="101.4" y="1539" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">37564ae</text></a>
+<text x="183.4" y="1539" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #140 from likelion-backendschool-9th/feat/48-cancellation-penalty</text>
+<line x1="38.2" y1="1547" x2="38.2" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1547" x2="55.1" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1547" x2="67.7" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1547" x2="84.5" y2="1570" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1570" x2="38.2" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1570" x2="55.1" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1570" x2="71.9" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.5" y1="1570" x2="76.1" y2="1593" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1593" x2="38.2" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1593" x2="55.1" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1593" x2="59.3" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1593" x2="71.9" y2="1616" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1616" x2="38.2" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1627" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1616" x2="71.9" y2="1639" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/beb685afdd8a25a973a2278244b42ea1509a62da"><title>Merge pull request #139 from likelion-backendschool-9th/fix/18-signup-tag-save</title><text x="101.4" y="1631" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">beb685a</text></a>
+<text x="183.4" y="1631" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #139 from likelion-backendschool-9th/fix/18-signup-tag-save</text>
+<line x1="38.2" y1="1639" x2="38.2" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1639" x2="55.1" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1639" x2="67.7" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1639" x2="84.5" y2="1662" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1662" x2="38.2" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1673" r="4" fill="#7955df"/>
+<line x1="67.7" y1="1662" x2="76.1" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="84.6" y1="1662" x2="93.0" y2="1685" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/df1efa8925c178277d6422be73742525b0ded13f"><title>Merge pull request #135 from likelion-backendschool-9th/feat/auth-delete-user</title><text x="118.3" y="1677" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">df1efa8</text></a>
+<text x="200.3" y="1677" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #135 from likelion-backendschool-9th/feat/auth-delete-user</text>
+<line x1="38.2" y1="1685" x2="38.2" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1685" x2="55.1" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1685" x2="67.7" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1685" x2="84.5" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1685" x2="101.4" y2="1708" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1708" x2="38.2" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1708" x2="55.1" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1708" x2="71.9" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1708" x2="88.8" y2="1731" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="105.6" cy="1719" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/67f65a668e09f3c04f5fa1f4f0bbc497c602c8e8"><title>feat: 승인 후 늦은 참여 취소 시 신뢰 온도 감점</title><text x="118.3" y="1723" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">67f65a6</text></a>
+<text x="200.3" y="1723" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">feat: 승인 후 늦은 참여 취소 시 신뢰 온도 감점</text>
+<line x1="38.2" y1="1731" x2="38.2" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1731" x2="55.1" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1731" x2="71.9" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1754" x2="84.5" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1731" x2="88.8" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="101.4" y1="1731" x2="93.0" y2="1754" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1754" x2="38.2" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1754" x2="55.1" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="67.7" y1="1754" x2="59.3" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1754" x2="71.9" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1754" x2="88.8" y2="1777" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="38.2" y1="1777" x2="38.2" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1777" x2="55.1" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.9" y1="1777" x2="71.9" y2="1800" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="88.8" cy="1788" r="4" fill="#7955df"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/7352dfee3d4d13a88f58c6fab7363acfe7d53287"><title>fix: 회원가입 시 tag 값 저장</title><text x="101.4" y="1792" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">7352dfe</text></a>
+<text x="183.4" y="1792" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">fix: 회원가입 시 tag 값 저장</text>
+<line x1="38.2" y1="1800" x2="38.2" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="55.1" cy="1811" r="4" fill="#7955df"/>
+<line x1="71.9" y1="1800" x2="71.9" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="88.8" y1="1800" x2="88.8" y2="1823" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/commit/6ea483bb95f8e3b3e965b39e2a66571832f00eb0"><title>Merge pull request #136 from likelion-backendschool-9th/feat/likes-project-tabs</title><text x="118.3" y="1815" font-family="Pretendard,sans-serif" font-size="14" fill="#00899b">6ea483b</text></a>
+<text x="200.3" y="1815" font-family="Pretendard,sans-serif" font-size="14" fill="#342d40">Merge pull request #136 from likelion-backendschool-9th/feat/likes-project-tabs</text>
+<line x1="38.2" y1="1823" x2="38.2" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="55.1" y1="1823" x2="55.1" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="59.3" y1="1823" x2="67.7" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="76.1" y1="1823" x2="84.5" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.0" y1="1823" x2="101.4" y2="1846" stroke="#a58adf" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

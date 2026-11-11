@@ -1,126 +1,311 @@
+<div align="center">
+
+<img src="frontend/public/devmozip-logo.svg" width="220" alt="DevMozip 로고" />
+
 # DevMozip · 데브모집
 
-**Next.js 16.4.3 + TypeScript + App Router** 기반의 기획 발표용 프론트엔드 프로토타입입니다. 기존 로그인·온보딩·프로필·프로젝트·SNS·채팅·리뷰·대화형 개발자 추천을 Mock 데이터와 브라우저 상태로 시연합니다. 로그인은 백엔드 JWT+BFF 인증을 사용합니다. [팀 인증·브랜치 안내](docs/team-auth-deployment.md)와 [배포 준비](docs/setup-after-ai.md)를 참고하세요.
+### 함께 만들 사람을 찾고, 협업의 경험을 쌓다.
 
-운영 주소: https://devmozip.newlecture.com · [자동 배포·운영 안내](docs/deployment-operations.md)
+**AI 기반 개발자 매칭 및 사이드 프로젝트 협업 플랫폼**
 
-## Mock 데이터 켜기·끄기
+프로젝트 모집부터 팀 구성, 채팅, 포트폴리오와 협업 리뷰까지.<br />
+나와 맞는 동료를 찾고, 함께 만든 경험을 다음 기회로 이어갑니다.
 
-Mock 전환 버튼은 숨겨져 있으며 기본값은 OFF입니다. 예전 ON 설정은 적용하지 않습니다. 기존 시연 데이터·로직은 유지하며 표시 설정 변경으로 인증이나 저장 콘텐츠를 지우지 않습니다. [동작 범위](docs/mock-visibility.md)를 참고하세요.
+<br />
 
-## 실행
+<a href="https://devmozip.newlecture.com"><img src="https://img.shields.io/badge/서비스_바로가기-00AFC1?style=for-the-badge&amp;logo=googlechrome&amp;logoColor=white" alt="DevMozip 서비스 바로가기" /></a>
+<a href="https://github.com/likelion-backendschool-9th/DevMozip/issues"><img src="https://img.shields.io/badge/Issues-7955DF?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="GitHub Issues" /></a>
 
-검증 환경은 Node.js 24.22.1입니다. Next.js 요구사항은 Node.js 20.9 이상이며 Node.js 22.12 이상 사용을 권장합니다.
+[서비스 소개](#서비스-소개) · [주요 기능](#주요-기능) · [서비스 화면](#서비스-화면) · [기술 스택](#기술-스택) · [팀원 소개](#팀원-소개) · [시작하기](#시작하기) · [Git History](#git-history)
+
+</div>
+
+---
+
+## 서비스 소개
+
+사이드 프로젝트는 개발자가 경험을 쌓고 포트폴리오를 만드는 중요한 기회입니다. 하지만 **어떤 사람과 함께해야 할지, 나와 잘 맞는 동료인지** 판단하기는 쉽지 않습니다.
+
+DevMozip은 기술과 관심사, 포트폴리오와 협업 이력을 연결해 팀 선택의 근거를 제공합니다. 프로젝트를 함께 완성한 경험이 리뷰와 신뢰로 남고, 다음 협업으로 이어지는 공간을 만듭니다.
+
+> 동료 발견 → 프로젝트 지원 → 팀 구성 → 협업 → 포트폴리오·리뷰
+
+## 주요 기능
+
+| 기능 | 설명 |
+| --- | --- |
+| AI 개발자 추천 | 프로젝트 요구사항을 대화로 정리하고 개발자·유사 프로젝트와 추천 근거 확인 |
+| 개발자 탐색 | 직군·경력·기술 스택·관심 분야·협업 가능 여부로 검색 |
+| 프로젝트 모집·관리 | 모집 공고 작성, 지원·승인·거절, 팀원·기간·상태·종료 관리 |
+| 프로필·포트폴리오 | 소개·포스팅·활동·리뷰와 자유로운 블록 편집, 공개 범위 설정 |
+| SNS·팔로우 | 게시글·이미지·댓글·좋아요·북마크·퍼가기와 팔로우 |
+| 실시간 메신저 | 1:1·프로젝트 채팅, 읽음·입력 중 표시, 참여자 연동과 강퇴 투표 |
+| 협업 리뷰 | 프로젝트 종료 후 팀원 평가, 리뷰 키워드와 신뢰 온도 확인 |
+| 프리미엄·관리자 | 구독별 권한, 결제·해지·내역, 회원·콘텐츠·신고 관리 |
+
+<details>
+<summary><strong>프로젝트 협업 흐름</strong></summary>
+
+1. 주최자가 모집 직군·인원·기술과 일정을 등록합니다.
+2. 지원자는 공개 포트폴리오를 최대 3개 제출합니다.
+3. 승인된 팀원은 프로젝트와 단체 채팅에 연결됩니다.
+4. 팀원들이 채팅으로 소통하고 프로젝트 상태와 일정을 관리합니다.
+5. 프로젝트 종료 후 30일 안에 팀원 리뷰를 제출합니다.
+
+제출 포트폴리오는 당시 내용을 별도로 보관합니다. 원본이 수정·삭제되어도 제출 이력은 유지됩니다.
+
+</details>
+
+## 서비스 화면
+
+배포 사이트에서 캡처한 **1440px PC 화면**입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.
+
+### 프로젝트 탐색
+
+<a href="docs/assets/readme/projects.png"><img src="docs/assets/readme/projects.png" width="1440" alt="DevMozip 프로젝트 검색과 모집 공고 목록" /></a>
+
+<table>
+<tr><th width="50%">프로젝트 상세</th><th width="50%">개발자 탐색</th></tr>
+<tr>
+<td><a href="docs/assets/readme/project-detail.png"><img src="docs/assets/readme/project-detail.png" width="720" alt="프로젝트 상세 및 참여 팀원" /></a></td>
+<td><a href="docs/assets/readme/explore.png"><img src="docs/assets/readme/explore.png" width="720" alt="개발자 검색과 상세 필터" /></a></td>
+</tr>
+<tr><th>개발자 프로필</th><th>SNS 피드</th></tr>
+<tr>
+<td><a href="docs/assets/readme/profile.png"><img src="docs/assets/readme/profile.png" width="720" alt="개발자 프로필과 포트폴리오·활동·리뷰 탭" /></a></td>
+<td><a href="docs/assets/readme/feed.png"><img src="docs/assets/readme/feed.png" width="720" alt="개발자 SNS 피드" /></a></td>
+</tr>
+</table>
+
+## 기술 스택
+
+| 구분 | 기술 |
+| --- | --- |
+| Frontend | Next.js 16 · React 19 · TypeScript · CSS Modules |
+| Backend | Java 21 · Spring Boot 4.1.2 · Spring Security · Spring Data JPA · Gradle |
+| Database | PostgreSQL 17 · JSONB |
+| Authentication | JWT · Next.js BFF · Kakao OAuth |
+| Realtime | WebSocket · Redis Pub/Sub |
+| AI | Gemini · 요구사항 분석·추천·포트폴리오 분석 |
+| Payment | PortOne V2 · 토스페이먼츠·카카오페이 테스트 채널 |
+| Infrastructure | Docker Compose · Nginx · GitHub Actions · GHCR · Blue-Green 배포 |
+| Test | Vitest · JUnit · Testcontainers |
+| Tools | Figma · Notion · Herdr |
+
+<details>
+<summary><strong>시스템 구성</strong></summary>
+
+```mermaid
+flowchart LR
+    Browser[브라우저] --> Nginx[Nginx · HTTPS]
+    Nginx --> Next[Next.js · 화면 / BFF]
+    Next --> Spring[Spring Boot · API]
+    Nginx -->|WebSocket| Spring
+    Spring --> DB[(PostgreSQL)]
+    Spring <--> Redis[(Redis)]
+```
+
+</details>
+
+## 팀원 소개
+
+<table>
+<thead>
+<tr>
+<th width="25%"><a href="https://github.com/LuvZian"><img src="docs/assets/readme/LuvZian.png" width="120" height="120" alt="김선아 GitHub 프로필 이미지" /><br />김선아</a><br /><a href="https://github.com/LuvZian">@LuvZian</a></th>
+<th width="25%"><a href="https://github.com/ureeStar"><img src="docs/assets/readme/ureeStar.png" width="120" height="120" alt="최유리 GitHub 프로필 이미지" /><br />최유리</a><br /><a href="https://github.com/ureeStar">@ureeStar</a></th>
+<th width="25%"><a href="https://github.com/JoostLean"><img src="docs/assets/readme/JoostLean.png" width="120" height="120" alt="윤주상 GitHub 프로필 이미지" /><br />윤주상</a><br /><a href="https://github.com/JoostLean">@JoostLean</a></th>
+<th width="25%"><a href="https://github.com/hdown1241-commits"><img src="docs/assets/readme/hdown1241-commits.png" width="120" height="120" alt="임재현 GitHub 프로필 이미지" /><br />임재현</a><br /><a href="https://github.com/hdown1241-commits">@hdown1241-commits</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top">
+<ul>
+<li>메인 페이지</li>
+<li>활동 · 리뷰 · 신뢰 온도</li>
+<li>프로젝트 모집 · 관리</li>
+<li>북마크</li>
+<li>디자인 및 프론트엔드 아키텍처 개발</li>
+</ul>
+</td>
+<td valign="top">
+<ul>
+<li>AI 매칭</li>
+<li>추천 엔진 구현</li>
+<li>자연어 조건 알고리즘 추출</li>
+<li>프리미엄 포트폴리오 상세 분석</li>
+<li>개인정보 설정</li>
+</ul>
+</td>
+<td valign="top">
+<ul>
+<li>인증 · 회원가입</li>
+<li>개발자 탐색</li>
+<li>SNS 피드 · 팔로우</li>
+<li>메신저 · 알림</li>
+<li>관리자 관리 기능</li>
+<li>프리미엄 · 결제</li>
+</ul>
+</td>
+<td valign="top">
+<ul>
+<li>프로필 소개</li>
+<li>사용자 기본 정보 조회</li>
+<li>포트폴리오</li>
+<li>좋아요한 글 목록 관리</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+
+## 시작하기
+
+**실행 환경:** Node.js 24 LTS · JDK 21 · PostgreSQL 17 · Redis · Docker
 
 ```bash
+git clone https://github.com/likelion-backendschool-9th/DevMozip.git
+cd DevMozip
+git switch develop
+
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+```
+
+예제 파일을 참고해 연결 정보를 설정합니다. 프론트의 `BACKEND_URL`은 실행 중인 백엔드 주소를 가리켜야 합니다. DB·Redis 및 외부 서비스 설정은 [개발 환경](docs/postgresql-development.md)과 [인증 안내](docs/team-auth-deployment.md)를 참고하세요.
+
+<details>
+<summary><strong>프론트엔드·백엔드 실행</strong></summary>
+
+각각 별도 터미널에서 실행합니다. Gradle은 루트 `.env`를 자동으로 읽지 않으므로 백엔드 환경 변수 또는 개인 Spring 설정을 먼저 준비합니다.
+
+```bash
+# 프론트엔드 · http://localhost:3000
 cd frontend
 npm ci
 npm run dev
 ```
 
-[개발 서버](http://localhost:3000)를 엽니다. 기본 포트는 3000입니다. LAN/Windows 포트 전달은 [기존 안내](docs/lan-access.md)를 참고하세요. 실제 다른 PC 접속은 이번 마이그레이션에서 재검증하지 않았습니다.
-
-프로덕션 실행:
-
 ```bash
-cd frontend
-npm run build
-npm run start
+# 백엔드 · http://localhost:8080
+cd backend
+./gradlew bootRun
 ```
 
-[프로덕션 서버](http://localhost:3000). Next.js 서버가 페이지/정적 파일/RSC 내비게이션을 제공합니다. 업무 데이터는 Mock이며 운영 로그인은 백엔드·Redis가 필요합니다. Vite의 정적 `dist` 실행 방식은 제거했습니다. 개발/프로덕션을 함께 실행할 때는 `--port`로 포트를 분리하세요. 운영 Secure 쿠키는 HTTPS 환경에서 확인합니다.
+AI·OAuth·결제는 해당 서비스의 자격 증명과 설정이 필요합니다. 개인 환경 파일과 비밀번호·토큰·API 키는 커밋하지 않습니다. Docker·운영 배포는 [배포 안내](docs/deployment-operations.md)를 따릅니다.
+
+</details>
+
+<details>
+<summary><strong>빌드·테스트</strong></summary>
 
 ```bash
+# frontend 디렉터리
+npm run build
 npm run typecheck
 npm test
+
+# backend 디렉터리
+./gradlew test
+./gradlew build
 ```
 
-로그인은 백엔드 인증(JWT+BFF)을 사용하므로 개발 서버에서도 백엔드가 실행 중이어야 합니다. 서버 전용 BACKEND_URL은 `frontend/.env.example`을 참고하세요. Axios 인스턴스는 후속 API 교체를 위한 준비 코드이며 현재 UI에서 호출하지 않습니다. 로고·Pretendard 글꼴은 `public`에서 제공하고 외부 글꼴 CDN을 사용하지 않습니다.
+DB 통합 테스트는 Docker와 Testcontainers를 사용합니다.
 
-## 구조
+</details>
 
-```text
-frontend/
-  app/
-    layout.tsx, globals.css, ClientProviders.tsx, error.tsx, not-found.tsx
-    page.tsx, _components/
-    login/, signup/, forgot-password/, onboarding/
-    users/[userId]/page.tsx, _components/
-    profile/me/{likes,bookmarks}/
-    settings/account/
-    projects/page.tsx, new/, [projectId]/
-      manage/, reviews/write/
-    my-projects/, my-projects/[projectId]/manage/
-    matching/, feed/, posts/, following/
-    messages/, chats/[projectId]/, notifications/, premium/, admin/
-  components/       여러 경로에서 재사용하는 UI와 인접 CSS Module
-  lib/              상태 Context·도메인 검증·저장·URL 도우미
-  mocks/            데모 원본·선택지·임시 정책
-  types/            도메인 타입
-  public/           로고·글꼴
-  tests/            화면·파일 경로 검사와 Next 내비게이션 테스트 fixture
-  next.config.ts, next-env.d.ts, tsconfig.json, vitest.config.ts
-backend/             Spring Boot 인증·권한·헬스체크 (업무 API 없음)
-scripts/             실제 Chromium 검증과 기존 LAN 보조 스크립트
-docs/                정책·Mock 구조·API 후보·시연·검증 기록
+## 협업 방식
+
+- **브랜치:** `type/이슈번호-작업명` · 이슈가 없으면 `type/작업명`
+- **커밋·PR:** `type: 한국어 작업 내용`
+- **통합:** 작업 브랜치 → `develop` PR → 검증 → `main` 배포
+- **배포:** GitHub Actions · GHCR · Blue-Green 전환
+
+## Git History
+
+GitHub 원격 브랜치 전체에서 가져온 **실제 357개 커밋**입니다. 최신 변경부터 최초 커밋까지 병합 연결을 유지해 **11장**으로 나눴습니다.
+
+[GitHub 전체 그래프 ↗](https://github.com/likelion-backendschool-9th/DevMozip/network) · [develop 커밋 ↗](https://github.com/likelion-backendschool-9th/DevMozip/commits/develop)
+
+<details>
+<summary><strong>전체 커밋 그래프 펼쳐 보기 · 357 commits / 11 images</strong></summary>
+
+### 01 / 11
+
+<a href="docs/assets/readme/git-history/part-01.png"><img src="docs/assets/readme/git-history/part-01.png" width="1440" alt="DevMozip 전체 Git 이력 1/11" /></a>
+
+### 02 / 11
+
+<a href="docs/assets/readme/git-history/part-02.png"><img src="docs/assets/readme/git-history/part-02.png" width="1440" alt="DevMozip 전체 Git 이력 2/11" /></a>
+
+### 03 / 11
+
+<a href="docs/assets/readme/git-history/part-03.png"><img src="docs/assets/readme/git-history/part-03.png" width="1440" alt="DevMozip 전체 Git 이력 3/11" /></a>
+
+### 04 / 11
+
+<a href="docs/assets/readme/git-history/part-04.png"><img src="docs/assets/readme/git-history/part-04.png" width="1440" alt="DevMozip 전체 Git 이력 4/11" /></a>
+
+### 05 / 11
+
+<a href="docs/assets/readme/git-history/part-05.png"><img src="docs/assets/readme/git-history/part-05.png" width="1440" alt="DevMozip 전체 Git 이력 5/11" /></a>
+
+### 06 / 11
+
+<a href="docs/assets/readme/git-history/part-06.png"><img src="docs/assets/readme/git-history/part-06.png" width="1440" alt="DevMozip 전체 Git 이력 6/11" /></a>
+
+### 07 / 11
+
+<a href="docs/assets/readme/git-history/part-07.png"><img src="docs/assets/readme/git-history/part-07.png" width="1440" alt="DevMozip 전체 Git 이력 7/11" /></a>
+
+### 08 / 11
+
+<a href="docs/assets/readme/git-history/part-08.png"><img src="docs/assets/readme/git-history/part-08.png" width="1440" alt="DevMozip 전체 Git 이력 8/11" /></a>
+
+### 09 / 11
+
+<a href="docs/assets/readme/git-history/part-09.png"><img src="docs/assets/readme/git-history/part-09.png" width="1440" alt="DevMozip 전체 Git 이력 9/11" /></a>
+
+### 10 / 11
+
+<a href="docs/assets/readme/git-history/part-10.png"><img src="docs/assets/readme/git-history/part-10.png" width="1440" alt="DevMozip 전체 Git 이력 10/11" /></a>
+
+### 11 / 11
+
+<a href="docs/assets/readme/git-history/part-11.png"><img src="docs/assets/readme/git-history/part-11.png" width="1440" alt="DevMozip 전체 Git 이력 11/11" /></a>
+
+</details>
+
+<details>
+<summary>그래프 기준·갱신 방법</summary>
+
+캡처 기준: `main 4f1b2ed` · `develop 8463c18`. 로컬 작업 브랜치를 제외한 `origin` 전체 원격 브랜치를 대상으로 중복 없이 집계했습니다. [전체 커밋·분할 정보](docs/assets/readme/git-history/manifest.json)에서 확인할 수 있습니다.
+
+```bash
+git fetch origin
+python3 scripts/render-readme-git-graph.py
+node scripts/render-readme-git-graph.mjs
 ```
 
-`src/pages`, `src/features`, `src/services`, `src/styles`, `src/app/providers`, `src/app/router`와 Vite 진입점은 제거했습니다. 라우팅은 `app/**/page.tsx`가 담당합니다. `mocks/routes.ts`는 화면명/메뉴 메타데이터이며 실행 라우터 설정이 아닙니다.
+이미지 생성에는 Playwright·Chromium이 필요합니다. 이력 갱신 시 커밋 수와 README 이미지 목록도 함께 맞춥니다.
 
-## 브라우저 상태와 렌더링
+</details>
 
-루트 레이아웃과 page/metadata는 Server Component이고, 폼·버튼 동작·Context는 Client Component입니다. 서버와 첫 클라이언트 렌더에는 같은 로딩 상태를 표시한 뒤 Provider를 마운트하여 localStorage/sessionStorage를 복원합니다. 저장 데이터가 있는 화면을 서버 HTML과 다르게 즉시 렌더하거나 초기값으로 덮어쓰지 않습니다. Mock 기능은 JavaScript 실행 후 표시되며 이번에 본문 전체 SSR/SEO를 구현한 것은 아닙니다.
+## 관련 문서
 
-기존 저장 키/버전은 유지합니다. 같은 브라우저에서만 상태가 공유되며 기기 간 동기화는 없습니다. 저장소 손상/차단/용량 오류를 처리하고, 저장할 수 없을 때는 현재 세션의 변경을 유지하며 안내합니다. [Mock 데이터 구조](docs/mock-data.md)를 확인하세요.
+- [서비스 기획](docs/project-brief.md) · [페이지 목록](docs/frontend-pages.md)
+- [프로젝트 설계](docs/project-backend-blueprint.md) · [프로젝트 API](docs/project-api-integration.md)
+- [포트폴리오 API](docs/portfolio-crud-api.md) · [공개 범위](docs/portfolio-visibility-api.md)
+- [AI 추천](docs/ai-matching.md) · [메신저](docs/messenger-api.md) · [구독·결제](docs/premium-payment-api.md)
+- [관리자](docs/admin-api.md) · [개발 환경](docs/postgresql-development.md) · [배포·운영](docs/deployment-operations.md)
 
-## 데모 계정
+---
 
-| 계정 | 이메일 | 기본 역할 |
-|---|---|---|
-| 김하늘 | member@devmozip.demo | 일반 회원 |
-| 이서준 | premium@devmozip.demo | 프리미엄 / Pocket 주최자 |
-| 데브모집 관리자 | admin@devmozip.demo | 관리자 |
+<div align="center">
 
-위 계정은 서버 DB에 등록되어 있고, 로컬(local 프로필)도 PostgreSQL을 사용하며 초기 데이터 SQL을 자동 실행하지 않습니다. 공통 데모 비밀번호는 `Devmozip123!`입니다. 다른 계정으로 바꾸려면 헤더의 로그아웃 후 다시 로그인합니다. 구독 데모 상태는 로그아웃/새로고침 후 유지합니다. 시연 상태를 처음으로 되돌리려면 브라우저 사이트 데이터(localStorage·쿠키)를 삭제합니다. 회원가입은 서버 계정을 만들고 바로 로그인합니다. 프로필 표시는 아직 Mock이라 새 계정도 첫 번째 데모 프로필로 보입니다.
+**좋은 동료와 시작한 프로젝트가, 다음 기회가 되도록.**
 
-## 기능
+[DevMozip 시작하기 →](https://devmozip.newlecture.com)
 
-- 서버 계정 로그인/로그아웃·회원가입·4단계 온보딩·프로필/헤더 반영
-- 본인 Aside·좋아요 날짜·글/프로젝트 북마크·계정 공개/비공개·Mock 연동/설정
-- 프로필 상단 + 소개/포트폴리오/내 글/활동/받은 리뷰 5개 탭
-- 프로젝트 검색/모집/지원/취소·주최자 승인/팀원/기간/상태/종료 관리
-- 종료 알림·기간 연장·요청 링크 기반 팀원 리뷰·3일 재알림·버블/신뢰 온도
-- SNS 글/댓글/이미지/기술 태그·좋아요·신고·퍼가기·공유·팔로우
-- 1:1/프로젝트 메시지·알림 읽음·강퇴 투표/과반수/접근 제한
-- 대화형 개발자/유사 프로젝트 추천·복수 분야/직군별 인원·기록 복원/삭제
-- 무료 월 15회/프리미엄 월 100회, 결과 생성만 차감·한국 시각 월 변경
-- 프리미엄 구독·정기결제(포트원 테스트 채널: 토스페이먼츠·카카오페이), 해지, 결제 내역, 프리미엄 전용 공고 생성, 관리자 Mock 운영
-- 1920/1440/1280/1024/768/390px 대응, 작은 화면 개인 메뉴/AI 기록 접기
-
-추천·커뮤니티 운영은 Mock 데모입니다. 회원 인증과 Mock OFF의 프로젝트 #44~#47은 실제 DB/API를 사용합니다. 메신저(1:1·프로젝트 단톡방·사용자 신고)도 Mock 토글을 끄면 서버 DB와 WebSocket 실시간 전달을 사용합니다([메신저 API](docs/messenger-api.md)). 로컬에서 실시간 연결을 보려면 `frontend/.env.example`의 `NEXT_PUBLIC_MESSENGER_WS_PORT`를 설정합니다. 실제 Gemini는 이번 프로젝트 통합 범위에 포함하지 않습니다. 카카오 로그인·가입·연동은 실제 카카오 API를 사용합니다. 프리미엄 결제는 포트원 V2 API(테스트 채널)를 사용하며 실제 청구는 라이브 계약 후 가능합니다([프리미엄 구독·결제 API](docs/premium-payment-api.md)). 원문 비밀번호는 계정 설정에 저장하지 않습니다. 지원 취소 패널티 수치는 안내용이며 실제 차감하지 않습니다.
-
-## 검증과 문서
-
-최종 결과는 **타입/빌드 성공, 단위 테스트 363개 통과, 실제 Next.js 브라우저·HTTP 검사 398개 통과**입니다. 기존 기능·6개 해상도·동적 경로·저장소 복원·hydration을 확인했습니다. 이전 단계 보고서는 당시 Vite 구조/검증의 기록으로 유지하며 현재 기준은 [Next.js 마이그레이션 보고서](docs/changes-nextjs-migration.md)입니다.
-
-- [분석·계획](docs/nextjs-migration-plan.md)
-- [페이지 목록](docs/frontend-pages.md) · [라우팅](docs/routing.md)
-- [현재 아키텍처](docs/architecture.md) · [Mock 구조](docs/mock-data.md)
-- [미확정 정책](docs/decisions-pending.md) · [향후 API 후보](docs/api-plan.md)
-- [발표 시나리오](docs/demo-scenarios.md)
-
-기본 공고 날짜는 2026년 Mock입니다. Pocket 마감은 2026-11-02 한국 시각 끝이므로 이후 시연은 기간 연장이나 새 공고를 사용하세요. 프로젝트 날짜 시뮬레이션은 AI 월별 사용량의 실제 브라우저 시각과 별개입니다.
-
-현재 요청한 Next.js 마이그레이션만 진행했습니다. 커밋/푸시는 별도 명시 요청이 있을 때만 수행합니다.
-
-포트폴리오 자유 편집: `/portfolios/new`에서 작성하고 `/portfolios/[portfolioId]/edit`에서 수정합니다. 섹션 드래그, Markdown/HTML, 초안 복원 및 검증 결과는 [작성기 문서](docs/portfolio-composer.md)를 참고하세요.
-
-## 프로젝트 실제 API 모드
-
-Mock 켜기는 기존 시연, 끄기는 #44–#47 프로젝트 DB/API를 사용합니다. 실제 로그인·프리미엄 권한을 적용하며 지원 기능(#48)은 미연결입니다. 경로와 실행 설정은 [프로젝트 API 연결](docs/project-api-integration.md)을 참고하세요.
-
-### Docker와 개인 설정 파일
-
-이 PR은 `.yml`·`.yaml` 파일의 변경을 포함하지 않습니다. 저장소에서 이미 추적 중인 YAML은 develop과 동일하게 유지하며, 개인 `.env`와 `application-local.yml`은 커밋하지 않습니다.
-
-현재 로컬 Docker는 별도로 보관한 Compose 설정으로 팀 PostgreSQL을 사용합니다. `validate`/초기 SQL 비활성화 및 `DEVMOZIP_SOURCE_DIR` 경로 지정은 해당 로컬 설정에만 적용되며 이 PR에는 포함하지 않습니다. 기존 저장소 Compose 파일을 쓰는 환경에서는 DB 주소·초기화 정책을 따로 확인해야 합니다. 현재 호스트의 buildx 누락은 `DOCKER_BUILDKIT=0`으로 빌드해 검증했습니다.
+</div>
