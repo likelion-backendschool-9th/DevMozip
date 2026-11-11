@@ -2346,3 +2346,9 @@ fix/149-file-serving에 최신 develop e3c7b11을 병합했다. docs/ai-progress
 - git diff --check 통과.
 
 미완료: 커밋·푸시하지 않아 develop의 CI/CD는 아직 실패 상태이며, 반영 뒤 CI 통과는 확인하지 않았다.
+
+## 2026-11-11 배포 서비스 소개 README 재작성
+
+사용자 제공 배포 주소 https://devmozip.newlecture.com 을 상단 서비스 링크로 배치하고 로고·기술 배지·HTML 기능 카드·협업 흐름·주요 경로·기술 구성·Mermaid 요청 흐름·폴더 구조·실행/테스트·문서 링크로 README를 재작성했다. 기존 프로토타입 전용 설명, API 없음·지원 미연결·패널티 미반영 등 오래된 설명과 공개 데모 계정/비밀번호를 제거했다. AI·결제의 외부 설정/테스트 채널 범위와 개인 Compose 준비 조건은 구분했다. 실행 코드·설정·배포 변경 없음.
+
+검증: README의 로컬 링크·이미지23개 존재 확인, HTML 태그 균형·git diff --check 통과. 최초 HTML 검사 스크립트가 self-closing img 태그를 잘못 처리해 오류가 났으며 검사기 보정 후 정상 확인했다. npm run build 성공(TypeScript 포함). 문서만 변경해 새 기능 테스트·백엔드 테스트는 실행하지 않았다. 웹 도구로 배포 URL 접근은 실패해 실제 사이트 렌더링과 GitHub README 시각 렌더링은 미검증이다. 커밋·푸시 없음.
