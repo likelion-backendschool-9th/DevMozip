@@ -17,6 +17,18 @@ describe('파일 업로드·읽기 BFF', () => {
         const [, init] = vi.mocked(backendFetch).mock.calls[0]; expect((init?.body as FormData).has('userId')).toBe(false);
         expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
+    it('배포 HTTPS(기본 포트, 내부 URL :3000)에서 브라우저 Origin을 허용하고 내부 포트가 남은 Origin은 거절한다', async () => {
+        vi.mocked(backendFetch).mockResolvedValue(Response.json(meta, { status: 201 }));
+        const deployed = (origin: string) => {
+            const data = new FormData(); data.set('file', new File(['png'], 'a.png', { type: 'image/png' }));
+            return new Request('https://0.0.0.0:3000/api/files', { method: 'POST', headers: { Origin: origin, Host: 'devmozip.newlecture.com' }, body: data });
+        };
+        expect((await POST(deployed('https://devmozip.newlecture.com'))).status).toBe(201);
+        vi.mocked(backendFetch).mockClear();
+        for (const origin of ['https://devmozip.newlecture.com:3000', 'http://devmozip.newlecture.com', 'https://evil.test'])
+            expect((await POST(deployed(origin))).status).toBe(403);
+        expect(backendFetch).not.toHaveBeenCalled();
+    });
     it('다른 출처와 JSON 요청은 서버로 보내지 않는다', async () => {
         expect((await POST(upload('http://evil.test'))).status).toBe(403);
         expect((await POST(new Request('http://localhost/api/files', { method: 'POST', headers: { Origin: 'http://localhost', 'Content-Type': 'application/json' }, body: '{}' }))).status).toBe(415);
