@@ -63,10 +63,10 @@ class ProjectReportIntegrationTest {
 	}
 	@Test void savesOnlyProjectTargetAndPreservesOtherKindsOfReports() throws Exception {
 		String host=login(101),user=login(202);long id=create(host);
-		jdbc.update("INSERT INTO reports(reporter_id,reported_user_id,reason,status,created_at,updated_at) VALUES (202,101,'기타','RECEIVED',localtimestamp,localtimestamp)");
-		jdbc.update("INSERT INTO reports(reporter_id,post_id,reason,status,created_at,updated_at) VALUES (202,501,'기타','RECEIVED',localtimestamp,localtimestamp)");
+		jdbc.update("INSERT INTO reports(reporter_id,reported_user_id,reason,status,created_at,updated_at) VALUES (202,101,'기타','AWATING',localtimestamp,localtimestamp)");
+		jdbc.update("INSERT INTO reports(reporter_id,post_id,reason,status,created_at,updated_at) VALUES (202,501,'기타','AWATING',localtimestamp,localtimestamp)");
 		mvc.perform(report(id,user,Map.of("reason","허위 모집 정보","detail","설명과 모집 내용이 다릅니다.","reporterId",101,"reportedUserId",101)))
-			.andExpect(status().isCreated()).andExpect(jsonPath("$.projectId").value(id)).andExpect(jsonPath("$.status").value("RECEIVED")).andExpect(jsonPath("$.id").isNumber());
+			.andExpect(status().isCreated()).andExpect(jsonPath("$.projectId").value(id)).andExpect(jsonPath("$.status").value("AWATING")).andExpect(jsonPath("$.id").isNumber());
 		var saved=jdbc.queryForMap("SELECT * FROM reports WHERE project_id=?",id);
 		assertEquals(202L,saved.get("reporter_id"));assertNull(saved.get("reported_user_id"));assertNull(saved.get("post_id"));assertNull(saved.get("comment_id"));assertNull(saved.get("handled_by"));assertNull(saved.get("handled_at"));assertNull(saved.get("resolution"));
 		assertEquals("허위 모집 정보\n\n설명과 모집 내용이 다릅니다.",saved.get("reason"));assertNotNull(saved.get("created_at"));assertNotNull(saved.get("updated_at"));

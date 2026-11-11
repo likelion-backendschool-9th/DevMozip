@@ -1,10 +1,12 @@
 export interface PortfolioFile { id: string; url: string; name: string; contentType: string; size: number }
 export const IMAGE_MAX = 256 * 1024;
 export const PDF_MAX = 10 * 1024 * 1024;
+// 서버 파일 id: portfolio_{회원 id}_{yyyyMMddHHmmss}. 이관한 이전 파일은 UUID를 그대로 쓴다 (docs/portfolio-files-api.md).
+export const PORTFOLIO_FILE_ID = /^(?:portfolio_[1-9][0-9]{0,18}_[0-9]{14}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 export function parsePortfolioFile(value: unknown): PortfolioFile {
     if (!value || typeof value !== 'object') throw new Error('파일 응답 형식을 확인할 수 없어요.');
     const v = value as Record<string, unknown>;
-    if (typeof v.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v.id)
+    if (typeof v.id !== 'string' || !PORTFOLIO_FILE_ID.test(v.id)
         || v.url !== `/api/files/${v.id}` || typeof v.name !== 'string' || !v.name || v.name.length > 255
         || !['image/png', 'image/jpeg', 'image/webp', 'application/pdf'].includes(v.contentType as string)
         || typeof v.size !== 'number' || !Number.isSafeInteger(v.size) || v.size <= 0

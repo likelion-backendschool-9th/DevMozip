@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -16,18 +17,23 @@ import org.springframework.web.server.ResponseStatusException;
 import com.devmozip.backend.dto.auth.SignupOptionsResponse;
 import com.devmozip.backend.dto.auth.SignupRequest;
 import com.devmozip.backend.dto.auth.SignupResponse;
+import com.devmozip.backend.dto.member.AccountLockRequest;
+import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.MeResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.dto.member.SocialAccountsResponse;
 import com.devmozip.backend.entity.Member;
 import com.devmozip.backend.entity.Member.CollaborationStatus;
 import com.devmozip.backend.entity.Member.MemberRole;
 import com.devmozip.backend.entity.Member.MemberStatus;
+import com.devmozip.backend.entity.Sanction;
 import com.devmozip.backend.entity.enums.Interest;
 import com.devmozip.backend.entity.enums.JobCategory;
 import com.devmozip.backend.entity.enums.Skill;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.repository.SanctionRepository;
 import com.devmozip.backend.security.jwt.RefreshTokenStore;
 
 @Service
@@ -37,6 +43,8 @@ public class MemberService {
     private static final BigDecimal INITIAL_TRUST_SCORE = new BigDecimal("36.50");
     // BCrypt는 72바이트까지만 처리한다. 글자 수가 64자 이내여도 한글이 많으면 넘을 수 있다.
     private static final int BCRYPT_MAX_BYTES = 72;
+    // 프로필 수정의 태그 규칙(ProfileUpdateRequest)과 같다. 영문·숫자·밑줄·하이픈 2~30자이며 me는 쓸 수 없다.
+    private static final Pattern TAG_PATTERN = Pattern.compile("(?![mM][eE]$)[a-zA-Z0-9_-]{2,30}");
     private static final String DUPLICATE_EMAIL_MESSAGE = "이미 가입된 이메일입니다.";
     private static final String DUPLICATE_EMAIL_FOR_KAKAO_MESSAGE =
             "이미 가입된 이메일입니다. 기존 계정으로 로그인한 뒤 개인정보 설정에서 카카오를 연동해 주세요.";
@@ -48,13 +56,30 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenStore refreshTokenStore;
     private final PasswordResetService passwordResetService;
+    private final SanctionRepository sanctionRepository;
 
     public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-                         RefreshTokenStore refreshTokenStore, PasswordResetService passwordResetService) {
+                         RefreshTokenStore refreshTokenStore, PasswordResetService passwordResetService,
+                         SanctionRepository sanctionRepository) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenStore = refreshTokenStore;
         this.passwordResetService = passwordResetService;
+        this.sanctionRepository = sanctionRepository;
+    }
+
+    /**
+     * 로그인 확인 응답 (GET /api/v1/users/me). username·role은 토큰 값 그대로 두고,
+     * DB의 계정 상태와 경고 회원의 최근 제재 사유를 더한다 (docs/admin-plan.md D8). 회원을 찾지 못하면 두 값은 null이다.
+     */
+    @Transactional(readOnly = true)
+    public MeResponse me(String email, String role) {
+        Member member = memberRepository.findByEmail(email).orElse(null);
+        MemberStatus status = member == null ? null : member.getStatus();
+        String warningReason = status == MemberStatus.WARNED
+                ? sanctionRepository.findFirstByUser_IdAndRevokedAtIsNullOrderByIdDesc(member.getId()).map(Sanction::getReason).orElse(null)
+                : null;
+        return new MeResponse(email, role, status == null ? null : status.name(), warningReason);
     }
 
     /** 회원을 저장한다. 직군·기술 스택·관심 분야는 화면에서 고른 값을 users 칼럼에 그대로 담는다. */
@@ -125,6 +150,23 @@ public class MemberService {
         String contactHours = request.contactHours() != null ? request.contactHours().trim() : null;
         member.updateAvailability(request.collaborationStatus(), contactHours);
         return new AvailabilityResponse(member.getCollaborationStatus(), member.getContactHours());
+    }
+
+    /** 로그인한 회원의 비공개 계정 여부 (WBS 17.7 계정 잠금 조회) */
+    @Transactional(readOnly = true)
+    public AccountLockResponse getAccountLock(String email) {
+        return new AccountLockResponse(findMember(email).isPrivate());
+    }
+
+    /**
+     * 로그인한 회원의 비공개 계정 여부를 바꾼다 (WBS 17.7). 원하는 최종 값을 받으므로 같은 요청을 반복해도 결과가 같다.
+     * Member는 @DynamicUpdate라 is_private만 갱신해 같은 회원의 다른 칼럼 변경을 덮어쓰지 않는다.
+     */
+    @Transactional
+    public AccountLockResponse updateAccountLock(String email, AccountLockRequest request) {
+        Member member = findMember(email);
+        member.changePrivacy(request.isPrivate());
+        return new AccountLockResponse(member.isPrivate());
     }
 
     /** 카카오 연동 상태와 비밀번호 설정 여부 */
@@ -285,6 +327,7 @@ public class MemberService {
         return Member.builder()
                 .email(email)
                 .nickname(request.nickname().trim())
+                .tag(tagFromEmail(email))
                 .role(MemberRole.USER)
                 .status(MemberStatus.ACTIVE)
                 .trustScore(INITIAL_TRUST_SCORE)
@@ -293,6 +336,19 @@ public class MemberService {
                 .jobCategories(List.of(request.job().trim()))
                 .skills(distinct(request.skills()))
                 .interests(distinct(request.interests()));
+    }
+
+    /**
+     * 가입 이메일의 @ 앞부분을 사용자 태그로 쓴다. 이메일은 소문자로 정리된 값을 받는다.
+     * 태그 규칙에 맞지 않거나 다른 회원이 이미 쓰는 값이면 가입을 막지 않고 비워 둔다. 이때는 프로필 수정에서 직접 정한다.
+     */
+    private String tagFromEmail(String email) {
+        int at = email.lastIndexOf('@');
+        String tag = at < 0 ? "" : email.substring(0, at);
+        if (!TAG_PATTERN.matcher(tag).matches() || memberRepository.existsByTagIgnoreCase(tag)) {
+            return null;
+        }
+        return tag;
     }
 
     private Member saveMember(Member member, String conflictMessage) {

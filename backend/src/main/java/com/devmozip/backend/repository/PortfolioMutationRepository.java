@@ -32,7 +32,7 @@ public class PortfolioMutationRepository {
     public void update(long id,long userId,Stored value,LocalDateTime now) {
         jdbc.update("""
                 UPDATE portfolios SET title=:title,thumbnail_url=:thumbnail,topic=:topic,summary=:summary,description=:description,
-                  role=:role,tech_stack=CAST(:stack AS jsonb),attachments=CAST(:attachments AS jsonb),updated_at=:now
+                  role=:role,tech_stack=CAST(:stack AS jsonb),attachments=CAST(:attachments AS jsonb),visibility=:visibility,updated_at=:now
                 WHERE id=:id AND user_id=:userId
                 """,params(value,now).addValue("id",id).addValue("userId",userId));
     }

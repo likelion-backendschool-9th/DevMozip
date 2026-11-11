@@ -1,0 +1,12 @@
+{
+  "mode": "real local BFF and development database; no auth or data mutation",
+  "viewport": 1440,
+  "total": 3,
+  "closedCards": 0,
+  "projectIds": [
+    40,
+    41,
+    7
+  ],
+  "pageErrors": []
+}

@@ -1,0 +1,10 @@
+.panel { border: 1px solid var(--border); border-radius: 14px; padding: clamp(1.125rem, 2vw, 1.75rem); background: white; margin-bottom: 24px; }
+.panel h2 { margin: 0 0 16px; font-size: 20px; }
+.panel p { color: var(--muted); line-height: 1.7; }
+.authentication { margin: 20px 0; }
+.password { display: grid; gap: 8px; max-width: 420px; margin: 20px 0; }
+.confirmation { display: flex; align-items: flex-start; gap: 10px; margin: 24px 0; line-height: 1.6; }
+.confirmation input { margin-top: 6px; }
+.panel .error { color: #b42318; }
+.danger { background: #b42318; border-color: #b42318; color: white; }
+.danger:disabled { opacity: .5; }

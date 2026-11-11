@@ -60,6 +60,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 캐시된 Spring 테스트 컨텍스트가 기본 힙(512MB)을 넘어 뒤쪽 테스트가 OutOfMemoryError로 실패했다(피드 추가 뒤, docs/feed-plan.md).
+	maxHeapSize = '1g'
 	// test 프로필 없이 실행하는 통합 테스트도 Redis 구독을 시도하지 않게 한다. Redis를 시험하는 테스트는 실행 인자로 켠다.
 	systemProperty 'messenger.realtime.redis.enabled', 'false'
 }

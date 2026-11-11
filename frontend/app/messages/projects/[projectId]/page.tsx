@@ -2,7 +2,7 @@
 import { MessengerLayout, messengerStyles as styles } from '@/app/messages/_components/MessengerLayout';
 import memberStyles from './page.module.css';
 import { ConversationSidebar } from '@/app/messages/_components/ConversationSidebar';
-import { Siren } from 'lucide-react';
+import { Siren, UserRoundMinus } from 'lucide-react';
 import { UserReportDialog } from '@/app/messages/_components/UserReportDialog';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
@@ -90,9 +90,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                         messages={room?.messages || []}
                         members={members}
                         disabled={!access.canWrite}
-                        historyContent={
-                            <KickVotePanel projectId={projectId} members={members} canWrite={access.canWrite} />
-                        }
+                        historyItems={projects.kickVotes.filter(v=>v.projectId===projectId).map(v=>({id:v.id,createdAt:v.createdAt,content:<KickVotePanel projectId={projectId} members={members} canWrite={access.canWrite} voteId={v.id}/>}))}
                         historyVersion={projects.kickVotes.filter(v => v.projectId === projectId).length}
                         onSend={body => act({ type: 'send-group', projectId, body })}
                     />
@@ -106,7 +104,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                             const p = profiles.profiles[id];
                             return (
                                 <div className={memberStyles.memberRow} key={id}>
-                                    <Link href={`/users/${id}`}>
+                                    <Link className={memberStyles.memberIdentity} href={`/users/${id}`}>
                                         <ProfileAvatar
                                             name={p?.nickname || '사용자'}
                                             color={p?.color || 'lavender'}
@@ -117,9 +115,12 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                                             <small>{id === project?.hostId ? '주최자' : '팀원'}</small>
                                         </span>
                                     </Link>
-                                    {id !== user?.id && (
+                                    <div className={memberStyles.memberActions}>
+                                    {id !== user?.id && id !== project?.hostId && (
                                         <button
-                                            className={[memberStyles.scope, 'kick-request-button'].join(' ')}
+                                            type="button"
+                                            title="강퇴 투표 요청"
+                                            className={memberStyles.kickIcon}
                                             disabled={
                                                 !access.canWrite ||
                                                 projects.kickVotes.some(
@@ -132,7 +133,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                                             }}
                                             aria-label={`${p?.nickname || id} 강퇴 투표 요청`}
                                         >
-                                            강퇴 투표 요청
+                                            <UserRoundMinus size={17} aria-hidden="true" />
                                         </button>
                                     )}
                                     {id !== user?.id && (
@@ -149,6 +150,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
                                             <Siren size={16} aria-hidden="true" />
                                         </button>
                                     )}
+                                    </div>
                                     {project?.status === '프로젝트 종료' && id !== user?.id && (
                                         <Link
                                             className={[memberStyles.scope, 'chat-review-link'].join(' ')}
@@ -168,6 +170,7 @@ function MockProjectChat({ projectId }: { projectId: string }) {
             )}
             {reportTarget && (
                 <UserReportDialog
+                    projectId={projectId}
                     key={`${user?.id}:${reportTarget}`}
                     targetId={reportTarget}
                     onClose={() => setReportTarget(null)}

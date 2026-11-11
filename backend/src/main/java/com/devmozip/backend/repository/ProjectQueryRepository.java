@@ -3,6 +3,7 @@ package com.devmozip.backend.repository;
 import java.text.Normalizer;
 import com.devmozip.backend.service.ProjectRoleValues;
 import java.time.LocalDate;
+import com.devmozip.backend.entity.enums.ProjectStatus;
 import java.util.*;
 import com.devmozip.backend.dto.project.MyProjectsTab;
 import com.devmozip.backend.dto.project.ProjectSearchRequest;
@@ -21,7 +22,8 @@ public class ProjectQueryRepository {
 	public Result search(ProjectSearchRequest request, LocalDate today, Long userId, MyProjectsTab tab) {
 		StringBuilder where = new StringBuilder(" WHERE p.deleted_at IS NULL");
 		MapSqlParameterSource params = new MapSqlParameterSource("today", today);
-		if (userId == null) where.append(" AND p.is_public = true");
+		// 관리자가 숨긴 공고(is_restricted)는 공개 목록에서 뺀다 (docs/admin-plan.md 5.5). 내 프로젝트 탭은 팀원이라 그대로 보인다.
+		if (userId == null) where.append(" AND p.is_public = true AND p.is_restricted = false");
 		else {
 			params.addValue("userId", userId);
 			String joined="EXISTS (SELECT 1 FROM project_members mine WHERE mine.project_id=p.id AND mine.user_id=:userId AND mine.status='ACTIVE')";
@@ -40,7 +42,11 @@ public class ProjectQueryRepository {
 			params.addValue("jobRole", ProjectRoleValues.key(request.jobRole()));
 			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements(p.recruitment_slots) s(value) WHERE lower(s.value->>'roleCode')=:jobRole)");
 		}
-		if (request.status() != null) { params.addValue("status", request.status().name()); where.append(" AND p.status=:status"); }
+		if (request.status() != null) {
+			params.addValue("status", request.status().name());
+			where.append(" AND p.status=:status");
+			if (request.status() == ProjectStatus.RECRUITING) where.append(" AND p.recruitment_end>=:today");
+		}
 		if (request.interests() != null && !request.interests().isEmpty()) {
 			params.addValue("interests", request.interests().stream().map(this::normalize).toList());
 			where.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(p.interests) i(value) WHERE lower(i.value) IN (:interests))");
@@ -67,9 +73,17 @@ public class ProjectQueryRepository {
 		return new Result(jdbc.query(sql, params, (rs, row) -> new Row(rs.getLong("id"), rs.getLong("member_count"), rs.getString("my_role"))), total == null ? 0 : total);
 	}
 	public com.devmozip.backend.dto.project.ProjectDetailResponse.Host host(long userId) {
-		var result=jdbc.query("SELECT id,tag,nickname FROM users WHERE id=:userId AND status='ACTIVE'",new MapSqlParameterSource("userId",userId),
+		var result=jdbc.query("SELECT id,tag,nickname FROM users WHERE id=:userId AND (status='ACTIVE' OR (status IS NULL AND email IS NULL))",new MapSqlParameterSource("userId",userId),
 			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.Host(rs.getLong("id"),rs.getString("tag"),rs.getString("nickname")));
 		return result.isEmpty()?null:result.getFirst();
 	}
+	/** 현재 팀원에게만 강퇴 이력을 추가하고, 나머지 조회자에게는 현재 명단만 제공한다. */
+	public List<com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember> team(long projectId,boolean includeKicked) {
+		return jdbc.query("SELECT m.user_id, CASE WHEN u.status='ACTIVE' THEN u.tag ELSE NULL END AS tag, u.nickname, m.role, m.job_role, m.status "
+			+ "FROM project_members m LEFT JOIN users u ON u.id=m.user_id WHERE m.project_id=:id AND (m.status='ACTIVE' OR (:includeKicked AND m.status='KICKED')) "
+			+ "ORDER BY CASE WHEN m.role='HOST' THEN 0 ELSE 1 END, m.joined_at, m.id",new MapSqlParameterSource("id",projectId).addValue("includeKicked",includeKicked),
+			(rs,row)->new com.devmozip.backend.dto.project.ProjectDetailResponse.TeamMember(rs.getLong("user_id"),rs.getString("tag"),rs.getString("nickname"),rs.getString("role"),rs.getString("job_role"),rs.getString("status")));
+	}
+
 	private String normalize(String value) { return Normalizer.normalize(value, Normalizer.Form.NFKC).strip().toLowerCase(Locale.ROOT); }
 }

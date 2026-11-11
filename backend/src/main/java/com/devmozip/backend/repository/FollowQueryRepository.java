@@ -3,13 +3,14 @@ package com.devmozip.backend.repository;
 import java.sql.Types;
 import java.util.List;
 import java.util.Locale;
+import com.devmozip.backend.service.AccountVisibilityPolicy;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 /**
  * 팔로워·팔로잉 목록 검색. 직군·기술 스택(JSONB) 검색에 PostgreSQL 함수를 쓰므로 H2(local 프로필)에서는 목록 검색이 동작하지 않는다.
- * 목록과 수에는 회원 상태·태그 조건을 두지 않는다.
+ * 목록과 수에는 회원 상태·태그 조건을 두지 않는다. 비공개 계정은 요청자 본인일 때만 남긴다(WBS 17.7, AccountVisibilityPolicy).
  */
 @Repository
 public class FollowQueryRepository {
@@ -44,9 +45,12 @@ public class FollowQueryRepository {
 	 * @param query 앞뒤 공백을 지운 검색어. 없으면 null
 	 */
 	public Result find(long targetId, Direction direction, Long requesterId, String query, boolean availableOnly, int page, int size) {
-		var params = new MapSqlParameterSource("targetId", targetId);
+		var params = new MapSqlParameterSource("targetId", targetId)
+			.addValue(AccountVisibilityPolicy.VIEWER_PARAM, requesterId, Types.BIGINT);
 		String from = " FROM follows f JOIN users u ON u.id = f." + direction.listedColumn;
 		StringBuilder where = new StringBuilder(" WHERE f.").append(direction.targetColumn).append(" = :targetId");
+		// 응답에서 거르지 않고 조건에서 빼야 페이지 크기·hasNext·전체 수가 맞는다.
+		where.append(" AND ").append(AccountVisibilityPolicy.visibleAccountCondition("u", requesterId));
 		if (availableOnly) where.append(" AND u.collaboration_status = 'AVAILABLE'");
 		if (query != null) {
 			params.addValue("query", "%" + escapeLike(query.toLowerCase(Locale.ROOT)) + "%");

@@ -1,30 +1,28 @@
-@layer devmozip-global{:where(.scope):global(.muted){color:var(--muted);font-size:14px}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-panel){margin-top:28px;background:white;border:1px solid var(--border);border-radius:14px;padding:25px}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-panel>header){display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-card>header){display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-panel>header>h2){font-size:21px;margin:0}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-card){border:1px solid #e6dff1;border-radius:12px;padding:22px;margin-top:20px;background:#fdfbff}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-card h3){font-size:17px;margin:0}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-card header p){font-size:15px;color:var(--muted);margin:7px 0 0}}
-@layer devmozip-chat-kick{:where(.scope):global(.vote-state){font-size:14px;background:#eee8fa;color:#77539f;border-radius:20px;padding:6px 12px}}
-@layer devmozip-chat-kick{:where(.scope):global(.vote-state.passed){background:#fceced;color:#b65869}}
-@layer devmozip-chat-kick{:where(.scope):global(.vote-state.rejected){background:#eaf6f2;color:#3d8d78}}
-@layer devmozip-chat-kick{:where(.scope):global(.vote-state.cancelled){background:#f0f0f4;color:#858397}}
-@layer devmozip-chat-kick{:where(.scope):global(.vote-state.expired){background:#f0f0f4;color:#858397}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-counts){display:flex;flex-wrap:wrap;gap:20px;margin:21px 0 8px}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-counts>span){font-size:15px;color:var(--muted)}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-vote-counts b){color:var(--text);font-size:18px;margin-left:5px}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-majority){font-size:14px;color:var(--purple)}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-ballots){display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}}
-@layer devmozip-chat-kick{:where(.scope):global(.kick-ballots>p){font-size:15px;color:var(--muted);flex:1;min-width:200px}}
-@layer devmozip-chat-kick{@media(max-width:800px){:where(.scope):global(.kick-vote-panel){padding:20px}}}
-@layer devmozip-chat-kick{@media(max-width:800px){:where(.scope):global(.kick-vote-card){padding:18px}}}
-@layer devmozip-chat-kick{@media(max-width:800px){:where(.scope):global(.kick-vote-counts){gap:12px}}}
-@layer devmozip-chat-kick{@media(max-width:800px){:where(.scope):global(.kick-vote-counts>span){font-size:14px}}}
-@layer devmozip-responsive{:where(.scope):global(.kick-ballots){flex-wrap:wrap;min-width:0}}
-@layer devmozip-responsive{:where(.scope):global(.kick-ballots>p){min-width:0;flex-basis:12rem}}
-
-/* Keep project voting inside the scrollable conversation, above the composer. */
-.scope:global(.kick-vote-panel){margin:16px 0 0;padding:clamp(14px,2vw,22px);min-width:0;overflow-wrap:anywhere}
-.scope:global(.kick-vote-panel)>header>h2{font-size:17px}
-.scope :global(.kick-vote-card){padding:clamp(12px,2vw,18px);margin-top:14px;min-width:0}
+.scope:global(.kick-vote-panel){margin:18px 0 0;padding:0;min-width:0;overflow-wrap:anywhere}
+.scope:global(.kick-vote-panel)>header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.scope:global(.kick-vote-panel)>header>h2{font-size:17px;margin:0;font-weight:650;color:var(--text)}
+.policy{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.8}
+.policy summary{cursor:pointer;width:fit-content;color:#8a7b9f}
+.policy p{margin:6px 0 0}
+.scope:global(.kick-vote-card){padding:22px;margin-top:14px;min-width:0;border:1px solid #ece6f5;border-radius:18px;background:linear-gradient(135deg,#fff 15%,#faf7ff);box-shadow:0 4px 18px #75569b08}
+.scope:global(.kick-vote-card)>header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.scope:global(.kick-vote-card) h3{font-size:17px;font-weight:650;margin:0;color:var(--text)}
+.scope:global(.kick-vote-card) header p{font-size:14px;line-height:1.6;color:var(--muted);margin:6px 0 0}
+.scope:global(.vote-state){display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-size:12px;font-weight:600;background:#efe8fc;color:#7855b7;border-radius:30px;padding:7px 11px;white-space:nowrap}
+.scope:global(.vote-state)::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.scope:global(.vote-state.passed){background:#edf7f1;color:#3a8464}
+.scope:global(.vote-state.rejected),.scope:global(.vote-state.cancelled),.scope:global(.vote-state.expired){background:#f0eff4;color:#80798a}
+.scope:global(.kick-vote-counts){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0 14px}
+.scope:global(.kick-vote-counts)>span{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:4px;padding:11px 6px;background:#ffffffc9;border:1px solid #f0ebf7;border-radius:11px;color:var(--muted);font-size:13px}
+.scope:global(.kick-vote-counts) b{color:var(--text);font-size:18px;font-weight:650;margin-left:3px}
+.progress{display:block;width:100%;height:5px;border:0;border-radius:20px;overflow:hidden;background:#eae4f3;accent-color:#9773df}
+.progress::-webkit-progress-bar{background:#eae4f3;border-radius:20px}
+.progress::-webkit-progress-value{background:linear-gradient(90deg,#b49be9,#8a63d1);border-radius:20px}
+.progress::-moz-progress-bar{background:#9773df;border-radius:20px}
+.voteMeta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-top:11px;font-size:13px;line-height:1.6;color:#9273b7}
+.expiry{color:#93899e;font-variant-numeric:tabular-nums}
+.scope:global(.kick-majority){font-size:13px;color:#9273b7;line-height:1.6}
+.scope:global(.kick-ballots){display:flex;align-items:center;gap:9px;margin-top:18px;padding-top:15px;border-top:1px solid #eee8f6}
+.scope:global(.kick-ballots)>p{flex:1;min-width:0;font-size:14px;color:var(--muted);margin:0;line-height:1.6}
+.scope:global(.kick-ballots)>button{min-width:66px;border-radius:11px}
+.scope:global(.kick-vote-panel) :global(.auth-hint){font-size:13px;line-height:1.8;color:var(--muted)}

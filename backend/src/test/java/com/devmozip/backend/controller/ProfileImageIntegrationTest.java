@@ -2,6 +2,7 @@ package com.devmozip.backend.controller;
 
 import com.devmozip.backend.security.jwt.JwtProvider;
 import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.service.AccountWithdrawalTasks;
 import com.devmozip.backend.storage.ProfileImageTestFiles;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,6 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -42,6 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "INSERT INTO users (id, job_categories, email, nickname, tag, status, role, trust_score) VALUES (3,'[\"백엔드 개발자\"]' FORMAT JSON,'suspended@image.test','정지회원','image-suspended','SUSPENDED','USER',36.50)"
 })
 class ProfileImageIntegrationTest {
+    // Redis 없이 실행한다. DB에 없는 회원의 토큰은 accountId 클레임이 없어 JwtProvider가 탈퇴 토큰 목록(Redis)을 확인하므로 대신한다
+    @MockitoBean AccountWithdrawalTasks withdrawalTasks;
     @TempDir static Path directory;
     @Autowired MockMvc mvc;
     @Autowired JwtProvider jwt;
@@ -63,8 +67,8 @@ class ProfileImageIntegrationTest {
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("management.health.redis.enabled", () -> "false");
         registry.add("server.address", () -> "127.0.0.1");
-        registry.add("profile.images.directory", () -> directory.resolve("images").toString());
-        registry.add("profile.images.public-base-url", () -> "http://localhost");
+        // 게시글 이미지와 같은 IMAGE_STORAGE 폴더를 쓴다. nginx 없이 실행할 때는 PublicImageController가 /images/로 제공한다
+        registry.add("IMAGE_STORAGE", () -> directory.resolve("images").toString());
     }
 
     @BeforeEach void cleanFiles() throws Exception {
@@ -74,6 +78,7 @@ class ProfileImageIntegrationTest {
 
     @Test void savesOnlyOwnersProfileImageAndServesActualBytes() throws Exception {
         String url = upload("profile");
+        assertTrue(url.matches("/images/profile_1_[0-9]{14}\\.png"), url);
         assertTrue(Files.exists(file(url)));
         var owner = members.findById(1L).orElseThrow();
         assertEquals(url, owner.getProfileImage());
@@ -100,6 +105,7 @@ class ProfileImageIntegrationTest {
 
     @Test void profileAndBannerAreStoredIndependently() throws Exception {
         String profile = upload("profile"), banner = upload("banner");
+        assertTrue(banner.matches("/images/banner_1_[0-9]{14}\\.png"), banner);
         var owner = members.findById(1L).orElseThrow();
         assertEquals(profile, owner.getProfileImage()); assertEquals(banner, owner.getBannerImage());
         mvc.perform(delete("/api/v1/users/me/images/banner").header("Authorization", token("owner@image.test")))
@@ -181,12 +187,15 @@ class ProfileImageIntegrationTest {
         } finally { Files.delete(root()); Files.createDirectory(root()); }
     }
 
-    @Test void inactiveOrUnreferencedFilesAreNotPublic() throws Exception {
+    @Test void imagesAreServedLikeNginxWithoutStatusCheckAndOldPathIsGone() throws Exception {
         String url = upload("profile");
+        // nginx와 같이 권한 확인 없이 제공한다. 정지 회원의 이미지도 주소를 알면 보인다 (docs/profile-local-images.md)
         jdbc.update("UPDATE users SET status = 'SUSPENDED' WHERE id = 1");
-        mvc.perform(get(path(url))).andExpect(status().isNotFound());
-        jdbc.update("UPDATE users SET status = 'ACTIVE', profile_image = NULL WHERE id = 1");
-        mvc.perform(get(path(url))).andExpect(status().isNotFound());
+        mvc.perform(get(path(url))).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("max-age=86400")));
+        String name = file(url).getFileName().toString();
+        mvc.perform(get("/api/v1/profile-images/" + name)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/profile-images/" + name).header("Authorization", token("other@image.test"))).andExpect(status().isNotFound());
     }
 
     @Test void actualHttpMultipartUploadAndImageDownloadWork() throws Exception {

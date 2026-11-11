@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Report extends BaseEntity {
-	public enum Status { RECEIVED, REVIEWING, RESOLVED, REJECTED }
+	// 초기 상태는 AWATING이다 (docs/feed-plan.md 1절, 2026-11-08). 이미 만든 DB의 CHECK 제약은 docs/sql/feed-schema-update.sql로 바꾼다.
+	public enum Status { AWATING, REVIEWING, RESOLVED, REJECTED }
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -46,11 +47,28 @@ public class Report extends BaseEntity {
 		report.projectId = projectId;
 		return report;
 	}
+	public static Report ofProjectMember(Member reporter,Member target,long projectId,String reason,LocalDateTime now){
+		Report report=new Report(reporter,target,reason,now);report.projectId=projectId;return report;
+	}
+	public void handle(Status status,String resolution,long adminId,LocalDateTime now){
+		this.status=status;this.resolution=resolution;this.handledBy=adminId;this.handledAt=now;touch(now);
+	}
+	// 게시글·댓글 신고는 대상 ID만 채우고 reported_user_id는 비운다 (docs/feed-plan.md 4절).
+	public static Report ofPost(Member reporter, long postId, String reason, LocalDateTime now) {
+		Report report = new Report(reporter, null, reason, now);
+		report.postId = postId;
+		return report;
+	}
+	public static Report ofComment(Member reporter, long commentId, String reason, LocalDateTime now) {
+		Report report = new Report(reporter, null, reason, now);
+		report.commentId = commentId;
+		return report;
+	}
 	private Report(Member reporter, Member reportedUser, String reason, LocalDateTime now) {
 		super(now);
 		this.reporter = reporter;
 		this.reportedUser = reportedUser;
 		this.reason = reason;
-		this.status = Status.RECEIVED;
+		this.status = Status.AWATING;
 	}
 }

@@ -19,7 +19,15 @@ describe('포트폴리오 서버 파일 업로드', () => {
         await expect(uploadPortfolioFile(new File([new Uint8Array(size)], name, { type }), kind)).rejects.toThrow();
         expect(fetch).not.toHaveBeenCalled();
     });
-    it.each([{ ...value(), url: 'https://evil.test/file' }, { ...value(), id: '../bad' }, { ...value(), size: -1 }, { ...value(), contentType: 'text/html' }])('응답 경로·형식 조작을 거절한다', raw => {
+    it('회원 id·업로드 시각 id와 이관한 UUID id를 모두 받는다', () => {
+        const current = 'portfolio_5_20261111093000';
+        expect(parsePortfolioFile({ ...value(), id: current, url: `/api/files/${current}` }).url).toBe(`/api/files/${current}`);
+        expect(parsePortfolioFile(value()).id).toBe(id);
+    });
+    it.each([{ ...value(), url: 'https://evil.test/file' }, { ...value(), id: '../bad' }, { ...value(), size: -1 }, { ...value(), contentType: 'text/html' },
+        { ...value(), id: 'portfolio_0_20261111093000', url: '/api/files/portfolio_0_20261111093000' },
+        { ...value(), id: 'feed_5_20261111093000', url: '/api/files/feed_5_20261111093000' },
+        { ...value(), id: 'portfolio_5_20261111093000', url: `/api/files/${id}` }])('응답 경로·형식 조작을 거절한다', raw => {
         expect(() => parsePortfolioFile(raw)).toThrow();
     });
     it('실패를 성공으로 바꾸지 않고 재제출은 사용자에게 맡긴다', async () => {

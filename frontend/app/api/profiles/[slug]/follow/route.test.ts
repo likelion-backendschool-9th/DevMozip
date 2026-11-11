@@ -73,6 +73,26 @@ describe('팔로우 BFF', () => {
         vi.mocked(backendFetch).mockResolvedValue(Response.json({ followed: false, activityNotificationEnabled: true, followerCount: 1 }));
         expect((await DELETE(request('DELETE'), context())).status).toBe(502);
     });
+    it('비공개 계정의 403은 계약 문구만 그대로 넘기고 정지 회원 403과 구분한다', async () => {
+        const privateAccount = () => Response.json({ status: 403, message: '비공개 계정입니다.' }, { status: 403 });
+        const calls = [
+            () => GET(request('GET'), context()),
+            () => POST(request('POST'), context()),
+            () => DELETE(request('DELETE'), context()),
+            () => followers(request('GET', {}, 'http://localhost', '/api/profiles/dev-one/followers'), context()),
+            () => following(request('GET', {}, 'http://localhost', '/api/profiles/dev-one/following?q=java'), context()),
+        ];
+        for (const call of calls) {
+            vi.mocked(backendFetch).mockResolvedValueOnce(privateAccount());
+            const response = await call();
+            expect(response.status).toBe(403);
+            expect((await response.json()).message).toBe('비공개 계정입니다.');
+        }
+        vi.mocked(backendFetch).mockResolvedValueOnce(Response.json({ message: '이 계정 상태에서는 이용할 수 없습니다.' }, { status: 403 }));
+        const suspended = await POST(request('POST'), context());
+        expect(suspended.status).toBe(403);
+        expect((await suspended.json()).message).toBe('이 계정으로는 팔로우 기능을 이용할 수 없어요.');
+    });
 });
 
 describe('팔로워·팔로잉 목록 BFF', () => {

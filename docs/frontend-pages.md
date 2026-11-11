@@ -11,11 +11,11 @@
 | `/onboarding` | 가입 후 4단계 기본/개발자/협업/미리보기 | 로그인 신규 계정, 기존/데모는 완료 안내 |
 | `/profile/me/likes` | 내가 좋아요한 글·날짜·취소 | 로그인, 본인 전용 Aside |
 | `/profile/me/bookmarks` | 게시글/프로젝트 북마크·해제 | 로그인, 본인 전용 Aside |
-| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지 |
+| `/settings/privacy` | 비밀번호 변경·카카오 연동/해제·비밀번호 없는 카카오 회원의 첫 비밀번호 설정·결제·공개/비공개 전환 | 본인 계정, 비공개여도 모든 본인 기능 유지. 공개/비공개 전환은 Mock 토글 OFF이면 서버 값(`/api/v1/users/me/account-lock`), ON이면 Mock 저장값을 쓴다 ([privacy-settings-api.md](privacy-settings-api.md)) |
 | `/login` | 서버 로그인·카카오 로그인·계정 전환 | 공개 |
 | `/signup` | 입력 검증·DB 중복 확인·서버 가입 후 자동 로그인·카카오 가입(`?kakao=signup`이면 비밀번호 입력 없음) | 공개, localhost/HTTPS 권장 |
 | `/forgot-password` | 재설정 메일 요청·메일 링크로 새 비밀번호 저장 | 공개 |
-| `/search` | 개발자/프로젝트 검색·필터·팔로우 | 공개, 고급 온도 조건/정렬은 프리미엄·관리자 |
+| `/explore` | 개발자 검색·필터·팔로우 | 공개, 고급 온도 조건/정렬은 프리미엄·관리자 |
 | `/portfolios/new` | 전용 작성·섹션 자유 편집·초안·미리보기 | 로그인 |
 | `/portfolios/:portfolioId/edit` | 전용 수정·HTML/Markdown·드래그 정렬 | 작성자 |
 | `/portfolios/:portfolioId` | 대표 이미지·상세 내용·작성자 프로필·본인 전용 AI 피드백 | 본인 또는 프리미엄·관리자, 비공개 계정 접근 제한 적용 |
@@ -33,12 +33,12 @@
 | `/following` | 팔로워/팔로잉 검색·협업 필터·알림 설정 | 공개 목록, 변경은 로그인 |
 | `/messages` | 1:1 목록·대화·읽음·사용자 신고. 실제 경로는 `/messages/chats`, `/messages/chats/:id`다. Mock 토글 OFF는 서버 API와 실시간 신호·입력 중 표시를 쓴다 | 로그인 |
 | `/chats/:projectId` | 멤버·대화·강퇴 투표·종료 시 보관/삭제. 실제 경로는 `/messages/projects/:projectId`다. Mock 토글 OFF는 서버 프로젝트 채팅(멤버·읽음 n/m·초대·퇴장 문구·입력 중 표시)을 쓰고 강퇴 투표와 기한 시뮬레이터를 숨긴다 | 채팅 제외 대상이 아닌 주최자/팀원. 토글 OFF는 승인된 팀원(모집 시작일부터) |
-| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음 | 로그인, 현재 계정 알림만 |
+| `/notifications` | SNS·팔로우·프로젝트·팔로잉 소식·읽음/안 읽음. 헤더 종 버튼은 같은 목록을 공통 알림 모달로 연다(주소 유지, "전체 보기"로 이 페이지). Mock 토글 OFF는 서버 알림([알림 API](notification-api.md): 프로젝트 지원·상태·기간·종료, 협업 리뷰 요청·재알림, 리뷰 작성 대기·완료·만료 표시)을 쓴다 | 로그인, 현재 계정 알림만 |
 | `/subscription` | 프리미엄 상품 안내(월 ₩9,900)·요금제 비교 | 공개 |
 | `/subscription/checkout` | 결제 수단 선택(토스페이먼츠 카드·카카오페이)·결제 전 고지와 동의·포트원 결제창 | 로그인, 결제는 무료(USER) 회원만 |
 | `/subscription/manage` | 구독 상태·다음 결제일·결제 수단·해지(기간 끝까지 유지) | 로그인 |
 | `/subscription/history` | 결제 내역(첫 결제·매월 결제·실패), 다음 페이지 표시 | 로그인 |
-| `/admin` | 통계·회원/신고/콘텐츠/키워드·온도/AI/구독 | 관리자 |
+| `/admin` | 통계·회원/공고/신고/콘텐츠/키워드·온도/AI/구독. Mock 토글 OFF는 서버 관리자 API([admin-api.md](admin-api.md)), ON은 기존 Mock. `/admin/projects`(공고 관리)는 서버 화면만 있고, `/admin/trust-scores`는 Mock만 있다 | 관리자 |
 
 ## URL 조건
 
@@ -99,3 +99,15 @@ URL과 기능/권한은 유지하고 실행 라우터를 App Router 파일 구�
 - `/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]`: 제출 당시 내용의 읽기 전용 상세. 기존 포트폴리오 상세 디자인을 재사용한다. 본인 지원자 또는 프리미엄/관리자 주최자만 조회한다.
 - BFF `/api/projects/[projectId]/applications/[applicationId]/portfolios/[snapshotId]` → GET `/api/v1/projects/{projectId}/applications/{applicationId}/portfolios/{snapshotId}`.
 - 실제 지원 내역의 제목 링크는 원본 /portfolios/{id}가 아닌 제출본으로 연결한다. 원본 수정·삭제 후에도 유지한다. Mock 시연 데이터 구조를 실제 DB로 임의 이관하지 않는다.
+
+프로필 활동 탭: 실제 API 프로필에서 `/api/projects/activity/{slug}`로 주최·참여 이력을 조회한다. 본인은 `me`, 타인은 프로필 태그를 사용한다. 기존 활동 카드 디자인·프로젝트 제목 링크·본인 관리 버튼을 유지하며 비공개는 현재 팀원에게만 표시한다. 상세: [프로필 프로젝트 활동](project-profile-activity.md).
+
+내 프로젝트/상세 복귀: 목록과 프로필 활동에서 상세에 `returnTo`를 전달한다. 내 프로젝트의 탭·검색 조건과 프로필 활동 탭을 유지해 돌아간다. 내 프로젝트 카드와 모집 카드를 재사용하며 활동 Mock/API도 같은 카드 컴포넌트를 사용한다. [변경·검증](project-navigation-layout.md).
+
+## 2026-11-10 개발자 탐색 전용 전환
+
+사용자 요청으로 /explore의 개발자/프로젝트 선택을 제거했다. 이전 type=projects URL도 개발자 조건으로 해석하고, 검색·필터 변경 시 type=developers로 보내며 role/field/status 등 프로젝트 전용 조건은 제거한다. 개발자 직군·경력·협업 가능·관심 분야·기술 스택·전체/팔로잉·고급 검색은 유지한다. 프로젝트 검색은 /projects에서 제공한다. 기존 프로젝트 검색 유틸과 모집 API는 제거하지 않았다.
+
+### 좋아요 목록 분리 (2026-11-10)
+
+`/profile/me/likes`는 포스트(기본)·프로젝트 탭을 제공한다. `?tab=projects`로 프로젝트 탭에 직접 진입할 수 있다. 프로젝트는 기존 좋아요 조회 API·공통 상태를 재사용하며 카드에서 상세 이동·좋아요 취소가 가능하다. 탭 전환 시 포스트 페이지 조건을 초기화한다.

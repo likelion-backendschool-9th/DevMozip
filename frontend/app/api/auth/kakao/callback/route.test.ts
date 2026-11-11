@@ -3,7 +3,7 @@ const doubles = vi.hoisted(() => ({ fetch: vi.fn(), set: vi.fn(), get: vi.fn() }
 vi.mock('@/lib/auth/backend', () => ({ backendFetch: doubles.fetch }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ set: doubles.set, get: doubles.get }) }));
 import { GET } from './route';
-import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, REFRESH_COOKIE } from '@/lib/auth/cookies';
+import { ACCESS_COOKIE, KAKAO_FLOW_COOKIE, KAKAO_SIGNUP_COOKIE, REFRESH_COOKIE, WITHDRAWAL_KAKAO_COOKIE } from '@/lib/auth/cookies';
 import { isProtectedPath } from '@/lib/auth/paths';
 import type { KakaoIntent } from '@/types/auth';
 
@@ -15,6 +15,13 @@ const locationOf = (response: Response) => { expect(response.status).toBe(302); 
 const wrote = (name: string) => doubles.set.mock.calls.filter(([cookie, value]) => cookie === name && value !== '');
 
 beforeEach(() => { vi.clearAllMocks(); doubles.get.mockReset(); doubles.fetch.mockReset(); });
+
+it('탈퇴 재인증 콜백은 탈퇴를 실행하지 않고 코드를 현재 세션의 HttpOnly 쿠키에 보관한다', async () => {
+    doubles.get.mockImplementation((name: string) => name === KAKAO_FLOW_COOKIE ? { value: flowCookie('withdraw') } : name === ACCESS_COOKIE ? { value: access } : undefined);
+    expect(locationOf(await callback())).toBe('/settings/privacy?withdrawal=kakao-ready');
+    expect(doubles.fetch).not.toHaveBeenCalled();
+    expect(doubles.set).toHaveBeenCalledWith(WITHDRAWAL_KAKAO_COOKIE, JSON.stringify({ code: 'code', session: access }), expect.objectContaining({ httpOnly: true, maxAge: 180 }));
+});
 
 describe('카카오 콜백: state 대조', () => {
     it('인증을 시작한 쿠키가 없으면 백엔드를 호출하지 않는다', async () => {
@@ -73,6 +80,17 @@ describe('카카오 콜백: 로그인·가입', () => {
         expect(doubles.fetch).toHaveBeenCalledWith('/api/v1/auth/kakao/callback?code=code&intent=login', expect.objectContaining({ signal: expect.any(AbortSignal) }));
         expect(doubles.set).toHaveBeenCalledWith(ACCESS_COOKIE, access, expect.objectContaining({ httpOnly: true, sameSite: 'lax' }));
         expect(doubles.set).toHaveBeenCalledWith(REFRESH_COOKIE, 'refresh', expect.objectContaining({ httpOnly: true, maxAge: 1209600 }));
+    });
+    it.each([
+        ['/users/demo-user', '/profile/me'],
+        ['/users/demo-premium/?tab=portfolio#list', '/profile/me?tab=portfolio#list'],
+        ['/users/demo-admin', '/profile/me'],
+        ['/users/another-member', '/users/another-member'],
+        ['/login', '/'],
+    ])('로그인 후 복귀 주소 %s는 %s로 이동한다', async (next, expected) => {
+        startedAs('login', next);
+        doubles.fetch.mockResolvedValue(Response.json({ status: 'LOGIN', accessToken: access, refreshToken: 'refresh' }));
+        expect(locationOf(await callback())).toBe(expected);
     });
     it('저장된 next가 외부 주소면 메인으로 이동한다', async () => {
         startedAs('login', '//outside.test');

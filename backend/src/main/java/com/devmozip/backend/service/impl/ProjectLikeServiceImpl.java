@@ -28,7 +28,7 @@ public class ProjectLikeServiceImpl implements ProjectLikeService {
 		long userId=currentUser.getCurrentUserId();validate(projectId);
 		// 공고 수정/삭제 및 동시 저장과 같은 프로젝트 잠금을 사용한다.
 		var project=projects.findLiveForUpdate(projectId).orElseThrow(this::notFound);
-		if(!project.isPublic()&&!members.existsByProjectIdAndUserIdAndStatus(projectId,userId,ProjectMember.Status.ACTIVE))throw notFound();
+		if(!project.isPubliclyVisible()&&!members.existsByProjectIdAndUserIdAndStatus(projectId,userId,ProjectMember.Status.ACTIVE))throw notFound();
 		if(!likes.existsByUserIdAndProjectId(userId,projectId))likes.saveAndFlush(new Like(userId,project,LocalDateTime.now(clock)));
 		return new ProjectLikeResponse(projectId,true);
 	}

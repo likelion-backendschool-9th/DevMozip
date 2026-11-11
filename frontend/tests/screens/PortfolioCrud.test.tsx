@@ -20,10 +20,20 @@ describe('포트폴리오 작성·수정·삭제 화면', () => {
     it('기존 작성기 배치·미리보기·섹션을 유지하고 서버 업로드를 제공한다', () => {
         syncServerSession({ identity: { username: 'real@test.local', role: 'USER' } });
         const html = renderToStaticMarkup(<ApiPortfolioComposer />);
-        for (const label of ['포트폴리오 작성', '전체 미리보기', '프로젝트명', '한 줄 소개', '시작 월', '종료 월', '담당 역할', '팀 구성', '공개 범위', '대표 이미지 URL', '자유롭게 구성하는 본문']) expect(html).toContain(label);
+        for (const label of ['포트폴리오 작성', '전체 미리보기', '프로젝트명', '한 줄 소개', '시작 월', '종료 월', '담당 역할', '팀 구성', '공개 범위', '대표 이미지 URL', '자유롭게 구성하는 본문', '임시저장', '현재 기기와 브라우저에서만 유지']) expect(html).toContain(label);
         expect(html).toContain('href="/profile/me?tab=portfolio"');
         expect(html).not.toMatch(/<input[^>]*aria-label="대표 이미지"[^>]*disabled/);
         expect(html).toContain("PDF 첨부");
+    });
+    it('복원된 초안을 안내하고 작성 중 내용에도 수동 임시저장을 제공한다', () => {
+        const draft = input(); draft.title = ''; draft.start = '';
+        const html = renderToStaticMarkup(<PortfolioEditorForm userId="real@test.local" api={{
+            initial: draft, draftKey: 'draft', visibility: 'PRIVATE', canChangeVisibility: true, restoredDraft: true,
+            save: async () => '/portfolios/11', saveDraft: () => true, backHref: '/profile/me?tab=portfolio',
+        }} />);
+        expect(html).toContain('이전에 임시저장한 내용을 불러왔어요');
+        expect(html).toMatch(/<button[^>]*>임시저장<\/button>/);
+        expect(html).toContain('포트폴리오 등록과는 별개입니다.');
     });
     it('실제 수정 대상은 조회 완료 전 Mock 내용을 표시하지 않는다', () => {
         syncServerSession({ identity: { username: 'real@test.local', role: 'USER' } });
@@ -49,4 +59,19 @@ describe('포트폴리오 작성·수정·삭제 화면', () => {
         }} />);
         expect(html).toContain('초안 작성 후 서버 내용이 변경'); expect(html).toContain('초안 버리고 최신 내용 불러오기'); expect(html).toContain('value="프로젝트"');
     });
+});
+
+it('본인 목록에서만 눈 아이콘으로 공개 범위를 안내하고 타인 목록에는 비공개 항목을 숨긴다',()=>{
+ const value=portfolioPageFixture();value.items[0].visibility='PRIVATE';
+ const props={result:{status:'ready' as const,value},onRetry:()=>{},onPage:()=>{}};
+ const mine=renderToStaticMarkup(<PortfolioListResult {...props} own/>);
+ expect(mine).toContain('role="img" aria-label="비공개"');expect(mine).toContain('lucide-eye-off');expect(mine).not.toMatch(/<a[^>]*class="[^"]*visibilityStatus/);
+ const other=renderToStaticMarkup(<PortfolioListResult {...props}/>);
+ expect(other).not.toContain('/portfolios/11');expect(other).not.toContain('공개 범위 수정');
+ value.items[0].visibility='PUBLIC';expect(renderToStaticMarkup(<PortfolioListResult {...props} own/>)).toContain('lucide-eye');
+});
+it('상세에는 공개 범위 선택기를 표시하지 않는다',()=>{
+ const value=portfolioDetailFixture();value.canEdit=true;
+ const html=renderToStaticMarkup(<PortfolioDetailResult result={{status:'ready',value}} onRetry={()=>{}} onChanged={()=>{}}/>);
+ expect(html).not.toContain('공개 범위 저장');expect(html).not.toContain('<select');
 });

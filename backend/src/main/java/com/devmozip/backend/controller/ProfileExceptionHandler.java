@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = {ProfileController.class, ProfileUpdateController.class, ProfileImageController.class, ProfileImageFileController.class, ProfileIntroductionController.class, ProfileOptionsController.class, ProfileLinksController.class})
+@RestControllerAdvice(assignableTypes = {ProfileController.class, ProfileUpdateController.class, ProfileImageController.class, ProfileIntroductionController.class, ProfileOptionsController.class, ProfileLinksController.class})
 public class ProfileExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ProblemDetail handle(ResponseStatusException exception) {

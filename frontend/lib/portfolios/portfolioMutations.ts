@@ -3,7 +3,6 @@ import type { PortfolioInput } from '@/types/profile';
 import { apiPortfolioErrors, portfolioDocument } from './portfolioDocument';
 import { parsePortfolioDetail, PortfolioRequestError, validPortfolioId } from './portfolioApi';
 export function portfolioWriteBody(input: PortfolioInput, visibility: 'PUBLIC' | 'PRIVATE', existing?: PortfolioDetail) {
-    if (existing && visibility !== existing.portfolio.visibility) throw new Error('공개 범위 변경은 별도 기능입니다.');
     const errors = apiPortfolioErrors(input); if (errors.length) throw new Error(errors.join('\n'));
     return { title: input.title, thumbnailUrl: input.coverImage || null, topic: input.fields?.[0] || null, summary: input.summary,
         description: null, role: input.role, techStack: input.stacks, visibility, document: portfolioDocument(input),

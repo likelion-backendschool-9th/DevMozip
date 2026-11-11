@@ -19,4 +19,6 @@ public class ReviewKeyword extends BaseEntity {
 	private boolean active;
 
 	public ReviewKeyword(String name,LocalDateTime now){super(now);this.name=name;this.active=true;}
+	// 관리자 키워드 관리(WBS 14.9). 행을 지우지 않고 새 리뷰의 선택지에서만 빼거나 다시 넣는다. 기존 리뷰 연결은 그대로다.
+	public void changeActive(boolean active,LocalDateTime now){if(this.active!=active){this.active=active;touch(now);}}
 }

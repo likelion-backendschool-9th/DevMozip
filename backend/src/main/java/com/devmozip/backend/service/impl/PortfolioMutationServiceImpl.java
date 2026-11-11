@@ -36,7 +36,7 @@ public class PortfolioMutationServiceImpl implements PortfolioMutationService {
             var old=owned(id,member);
             if(!Objects.equals(input.expectedUpdatedAt(),old.updatedAt()))throw new ResponseStatusException(HttpStatus.CONFLICT,"다른 곳에서 변경되었습니다. 최신 내용을 다시 불러와 주세요.");
             var value=stored(input,member.getId());
-            if(!old.visibility().equals(value.visibility()))throw new ResponseStatusException(HttpStatus.CONFLICT,"공개 범위 변경 API는 별도 기능입니다. 현재 공개 범위를 유지해 주세요.");
+            if(!old.visibility().equals(value.visibility())&&repository.referenced(id)&&!repository.submittedCopiesReady(id))throw new ResponseStatusException(HttpStatus.CONFLICT,"제출본이 보관되지 않은 포트폴리오는 공개 범위를 변경할 수 없습니다.");
             var time=now();if(old.updatedAt()!=null&&!time.isAfter(old.updatedAt()))time=old.updatedAt().plusNanos(1000);
             repository.update(id,member.getId(),value,time);return queries.detail(email,id);
         }catch(DataAccessException e){throw unavailable();}

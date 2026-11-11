@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -41,6 +42,11 @@ public class Project extends BaseEntity {
 	private String imageUrl;
 	@Column(name = "is_public", nullable = false)
 	private boolean isPublic;
+	// 관리자 숨김 (WBS 14.5, docs/admin-plan.md D2). 주최자의 공개 여부(is_public)와 따로 두어 주최자가 풀 수 없다.
+	// 이미 있는 공고 행이 숨기지 않은 상태로 채워지도록 DB 기본값을 함께 둔다.
+	@ColumnDefault("false")
+	@Column(name = "is_restricted", nullable = false)
+	private boolean isRestricted;
 	@Enumerated(EnumType.STRING) @Column(nullable = false, length = 30)
 	private ProjectStatus status;
 	@Column(name = "view_count", nullable = false, columnDefinition = "bigint default 0")
@@ -116,6 +122,15 @@ public class Project extends BaseEntity {
 		deletedAt = now;
 		touch(now);
 	}
+
+	/** 관리자 숨김·복원 (WBS 14.5). 원하는 최종 값을 받는다. 공고 내용 수정이 아니므로 수정 시각은 바꾸지 않는다. */
+	public void restrictByAdmin(boolean restricted) { this.isRestricted = restricted; }
+
+	/**
+	 * 팀원이 아닌 사람에게 보이는 공고인지. 주최자가 공개했고 관리자가 숨기지 않았어야 한다.
+	 * 비공개 공고와 같이 관리자가 숨긴 공고도 현재 팀원은 계속 본다.
+	 */
+	public boolean isPubliclyVisible() { return isPublic && !isRestricted; }
 	public void recordView() { viewCount++; }
 
 	public int getTotalCapacity() {

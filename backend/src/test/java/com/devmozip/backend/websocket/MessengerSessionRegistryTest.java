@@ -172,6 +172,18 @@ class MessengerSessionRegistryTest {
 		verify(session).close(MessengerSessionRegistry.SUSPENDED);
 	}
 
+	@Test void withdrawnAccountReceivesNothingAndIsClosed() throws Exception {
+		registry.stop();
+		var accounts = mock(com.devmozip.backend.repository.MemberRepository.class);
+		when(accounts.findByEmail(EMAIL)).thenReturn(java.util.Optional.empty());
+		registry = new MessengerSessionRegistry(properties, suspended, clock, accounts);
+		registry.start();
+		WebSocketSession session = connected(1);
+		registry.send(1, "{\"type\":\"signal\"}");
+		verify(session, never()).sendMessage(any());
+		verify(session).close(MessengerSessionRegistry.TOKEN_EXPIRED);
+	}
+
 	@Test void frameFromSuspendedMemberIsNotProcessed() throws Exception {
 		WebSocketSession session = connected(1);
 		assertFalse(registry.closeIfNotAllowed(session));

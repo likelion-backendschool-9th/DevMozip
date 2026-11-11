@@ -1,13 +1,13 @@
 'use client';
 import styles from './AppLayout.module.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ActiveLink as NavLink } from '@/components/navigation/ActiveLink';
 import { useNavigation as useNavigate, useCurrentLocation as useLocation } from '@/lib/navigation';
 import { Bell, MessageSquare, ArrowUpRight, LogOut } from 'lucide-react';
 import { navigation } from '@/mocks/routes';
 import { routeTitle } from '@/lib/shared/routeService';
-import { useAuth } from '@/lib/state/authStore';
+import { useAuth, useServerWarning } from '@/lib/state/authStore';
 import { usePrototype } from '@/lib/state/prototypeStore';
 import { useMessaging } from '@/lib/state/messagingStore';
 import { useDirectChats } from '@/lib/state/directChatStore';
@@ -17,8 +17,10 @@ import { useHome } from '@/lib/state/homeStore';
 import { OwnProfileProvider } from '@/app/(user)/_components/OwnProfileProvider';
 import { HeaderProfileLink } from './HeaderProfileLink';
 import { Toast } from './Toast';
-import { MockVisibilityToggle } from './MockVisibility';
 import { useMockVisibility } from '@/lib/state/mockVisibilityStore';
+import { useNotifications } from '@/lib/state/notificationStore';
+import { NotificationModal } from '@/components/notifications/NotificationModal';
+import { NotificationSync } from './NotificationSync';
 
 const logo = '/devmozip-logo.svg';
 
@@ -28,7 +30,12 @@ export function AppLayout({ children }: { children?: React.ReactNode }) {
 
 function AppShell({ children }: { children?: React.ReactNode }) {
     const { enabled: mockEnabled } = useMockVisibility();
-    const { unreadCount, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unreadCount: mockUnreadNotices, unreadMessages: mockUnreadMessages } = useMessaging();
+    const { unreadCount: serverUnreadNotices } = useNotifications();
+    // 알림 배지: 토글 OFF는 서버 안 읽음 수(12.1), ON은 지금처럼 Mock 수를 센다.
+    const unreadCount = mockEnabled ? mockUnreadNotices : serverUnreadNotices;
+    // 공통 알림 모달(D1 B)은 주소를 바꾸지 않고 보던 화면 위에 연다.
+    const [noticesOpen, setNoticesOpen] = useState(false);
     const { unread: serverDirectUnread } = useDirectChats();
     const { unread: serverProjectUnread } = useProjectChats();
     // 토글 OFF는 1:1(11.7)과 프로젝트 채팅(7.21)을 합산한다(D12). ON은 지금처럼 Mock 1:1만 센다.
@@ -38,6 +45,11 @@ function AppShell({ children }: { children?: React.ReactNode }) {
     const { reset: resetHome } = useHome();
     const { state: projectState } = useProjects();
     const { user, logout, administration, needsOnboarding } = useAuth();
+    // 경고 안내: 토글 ON은 Mock 제재 기록, OFF는 서버가 확인한 경고 사유를 쓴다 (docs/admin-plan.md D8).
+    const serverWarning = useServerWarning();
+    const warning = mockEnabled
+        ? (user && administration.members[user.id]?.status === 'warned' ? administration.members[user.id].reason : null)
+        : (user ? serverWarning : null);
     const navigate = useNavigate();
     const location = useLocation();
     const main = useRef<HTMLElement>(null);
@@ -70,14 +82,15 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                             </>
                         ) : (
                             <>
-                                <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="알림" href="/notifications">
+                                <button type="button" className={[styles.scope, "icon-button"].join(" ")} aria-label="알림" aria-haspopup="dialog"
+                                    aria-expanded={noticesOpen} onClick={() => setNoticesOpen(true)}>
                                     <Bell size={20} />
                                     {unreadCount > 0 && (
                                         <span className={[styles.scope, "header-count"].join(" ")} aria-label={`안 읽은 알림 ${unreadCount}개`}>
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>
                                     )}
-                                </Link>
+                                </button>
                                 <Link className={[styles.scope, "icon-button"].join(" ")} aria-label="쪽지" href="/messages/chats">
                                     <MessageSquare size={20} />
                                     {unreadMessages > 0 && (
@@ -93,6 +106,7 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                                     aria-label="로그아웃"
                                     title="로그아웃"
                                     onClick={() => {
+                                        setNoticesOpen(false);
                                         logout();
                                         resetHome();
                                         navigate('/');
@@ -107,19 +121,9 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                 </div>
             </header>
 
-            <div className={[styles.scope, "utility-bar"].join(" ")}>
-                <div className={[styles.scope, "utility-inner"].join(" ")}>
-                    <span>
-                        <span className={[styles.scope, "status-dot"].join(" ")} />
-                        {mockEnabled ? <>Mock ON <b>· 데모 콘텐츠 표시 중</b></> : <>Mock OFF <b>· 샘플 데이터 없이 보기</b></>}
-                    </span>
-                    <MockVisibilityToggle />
-                </div>
-            </div>
-
-            {user && administration.members[user.id]?.status === 'warned' && (
+            {warning !== null && (
                 <div className={[styles.scope, "member-warning"].join(" ")} role="status">
-                    운영 안내 · {administration.members[user.id].reason}
+                    운영 안내 · {warning || '운영 정책에 따라 경고를 받은 계정입니다.'}
                 </div>
             )}
             {projectState.simulationDate && (
@@ -141,13 +145,15 @@ function AppShell({ children }: { children?: React.ReactNode }) {
                     <img className={[styles.scope, "brand-logo"].join(" ")} src={logo} alt="DevMozip" width="96" height="64" />
                 </Link>
                 <p>개발자의 다음 가능성을 연결합니다.</p>
-                <span>© 2026 DevMozip · {mockEnabled ? 'Mock 기반 프로토타입' : '샘플 데이터 없이 보기'}</span>
+                <span>© 2026 DevMozip</span>
                 <Link href="/subscription">
                     프리미엄 안내
                     <ArrowUpRight size={14} />
                 </Link>
             </footer>
 
+            {user && noticesOpen && <NotificationModal onClose={() => setNoticesOpen(false)} />}
+            <NotificationSync />
             <Toast />
         </>
     );

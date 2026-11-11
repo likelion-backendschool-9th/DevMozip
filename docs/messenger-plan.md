@@ -48,7 +48,7 @@ WBS 대분류 11.0 메신저(11.1~11.9)와 프로젝트 단톡방(7.18~7.23)을 
 |---|---|---|
 | 백엔드 | 1:1 메시지 API([MessageController](../backend/src/main/java/com/devmozip/backend/controller/MessageController.java))와 사용자 신고 API([UserReportController](../backend/src/main/java/com/devmozip/backend/controller/UserReportController.java))가 있다(2~4단계). `/ws/messages` WebSocket 서버가 메시지·읽음·입력 중 신호를 Redis Pub/Sub으로 전달한다(8·9·11단계). 프로젝트 채팅 API([ProjectChatController](../backend/src/main/java/com/devmozip/backend/controller/ProjectChatController.java))가 있다(12단계). REST 경로는 [SecurityConfig](../backend/src/main/java/com/devmozip/backend/config/SecurityConfig.java)의 `anyRequest().authenticated()`에 해당한다. | 완료했다. REST 경로의 보안 설정은 바꾸지 않았고 WebSocket 경로만 추가했다(3.4). |
 | [1:1 화면](../frontend/app/messages/chats/page.tsx) | Mock 토글 OFF는 서버 API와 WebSocket 신호를 쓰고 입력 중 표시를 보여 준다. ON은 localStorage `devmozip:messaging:v1`을 쓴다(D5, 6·10·11단계). | 완료했다. |
-| [프로젝트 채팅 화면](<../frontend/app/messages/projects/[projectId]/page.tsx>) | Mock 토글 OFF는 서버 API와 실시간 신호를 쓰고 강퇴 투표와 날짜 시뮬레이터를 숨긴다. ON은 같은 저장소의 Mock이다(D5, D9, 14단계). | 완료했다. |
+| [프로젝트 채팅 화면](<../frontend/app/messages/projects/[projectId]/page.tsx>) | Mock 토글 OFF는 서버 API·실시간 신호·#49 강퇴 투표를 사용한다. 날짜 시뮬레이터는 Mock 전용이다. ON은 같은 저장소의 Mock이다(D5, D9, 14단계). | 완료했다. |
 | [ProjectMember](../backend/src/main/java/com/devmozip/backend/entity/ProjectMember.java) | 주최자 행만 만들어진다. 승인 팀원은 #48(PR #85)에서 추가된다. | 수정하지 않고 메신저 쪽 [ProjectChatAccessRepository](../backend/src/main/java/com/devmozip/backend/repository/ProjectChatAccessRepository.java)로 읽기만 한다(3.5, 12단계). |
 | [messagingService](../frontend/lib/messaging/messagingService.ts), [messagingStore](../frontend/lib/state/messagingStore.ts) | 1:1, 프로젝트 방, 알림 읽음, 신고를 한 상태로 관리한다. | Mock 경로로 그대로 둔다. 알림은 토글과 무관하게 지금처럼 동작한다. |
 | [ChatWindow](../frontend/app/messages/_components/ChatWindow.tsx), [ConversationSidebar](../frontend/app/messages/_components/ConversationSidebar.tsx), [UserReportDialog](../frontend/app/messages/_components/UserReportDialog.tsx) | 프로젝트 채팅과 공유한다. 서버 대화용 prop(`history`, `typing` 등)을 추가했고, 넘기지 않으면 Mock과 같이 동작한다(6·7·11단계). | 프로젝트 채팅을 서버에 연결할 때 같은 prop을 쓴다(14단계). |
@@ -598,7 +598,7 @@ location = /ws/messages {
 - [x] `ConversationSidebar`의 프로젝트 탭을 토글 OFF에서 `GET /messages/chats?type=project`로 바꿨다. 탭이 보이는 동안만 조회하고 프로젝트명으로 검색한다.
 - [x] `AppLayout`의 배지를 토글 OFF에서 1:1과 프로젝트의 합계로 바꾸고(D12), 안내 문구를 "안 읽은 메시지"로 바꿨다. 프로젝트 방의 신호로도 배지를 갱신한다. ON은 1:1만 세고 문구도 그대로 둔다. 동기화는 기존 `DirectChatSync`가 두 저장소를 함께 시작한다.
 - [x] 멤버 목록, 읽음 `n/m` 표시, 입력 중인 사람(여러 명), 사용자 신고를 서버 데이터로 연결했다. 읽음 수와 작성자 구분을 위해 조회 응답에 `members[].id`, `me`, `sender.memberId`를 더했다(5번). 초대·퇴장 문구는 `joinedAt`, `leftAt`으로 만들고, 방이 생길 때 함께 들어온 팀원은 문구를 붙이지 않는다.
-- [x] 강퇴 투표 패널과 날짜 시뮬레이터는 Mock 전용이므로 토글 OFF에서 표시하지 않는다. #49 구현 후 연결한다.
+- [x] 강퇴 투표 패널은 #49에서 토글 OFF에 연결했다. 날짜 시뮬레이터는 Mock 전용으로 유지한다.
 - [x] 종료된 프로젝트의 읽기 전용 표시를 연결하고, 삭제된 방은 입장 거부 화면으로 보여 준다. 삭제 선택 화면은 연결하지 않는다(3.5).
 - [x] 테스트: 토글 OFF의 입장 거부·멤버·메시지·삭제된 방·배지 합산, 토글 ON의 1:1 배지와 기존 프로젝트 채팅 테스트 유지. 저장소·화면 변환·BFF 테스트도 더했다.
 
@@ -709,7 +709,7 @@ location = /ws/messages {
 - 프로젝트 화면의 서버 연결(PR #81)이 끝나기 전에는 토글 OFF의 프로젝트 화면 ID가 서버 ID와 달라, 프로젝트 화면의 채팅 링크로 들어가지 못한다. 서버 프로젝트 채팅은 사이드바에서 들어간다.
 - 프로젝트 채팅의 초대·퇴장 문구는 승인 시각이 아니라 다음 접근 시각을 기준으로 표시된다(3.5). 초대 사실도 다음 접근 전까지 실시간으로 알리지 않는다. 이 문구는 메시지가 아니라서 안 읽은 수에 들어가지 않는다.
 - `local`(H2) 프로필에서는 `projects`의 `jsonb` 컬럼 때문에 `projects` 테이블이 만들어지지 않는다. 메신저 이전부터 있던 동작이다. 채팅 테이블은 만들어지지만 `chat_rooms.project_id`의 외래 키는 빠지고, 프로젝트 채팅(12·14단계)은 PostgreSQL로만 확인할 수 있다. `local` 프로필에서 `GET /messages/chats?type=project`와 프로젝트 채팅 API는 500으로 응답하고, 프로젝트 방의 입력 중 신호는 무시된다. 그래서 `local` 프로필의 토글 OFF 화면은 프로젝트 탭에 불러오지 못했다는 안내를 보이고, 헤더 배지는 1:1만 센다.
-- 강퇴 투표(#49) 구현 전에는 토글 OFF에서 강퇴 기능이 없다.
+- 강퇴 투표(#49)는 [프로젝트 강퇴 계약](project-member-removal.md)에 따라 토글 OFF에서도 연결한다.
 - 가입 시 `tag` 자동 생성(D4) 전에는 `tag`가 없는 회원이 대화를 시작하면 상대가 프로필로 이동하거나 신고할 수 없다. 그래서 그 작업을 먼저 배포한다.
 - Mock 프로젝트의 주최자는 서버 회원이 아니고 [프로젝트 상세 응답](../backend/src/main/java/com/devmozip/backend/dto/project/ProjectDetailResponse.java)에 주최자 정보도 없다. 그래서 토글 OFF에서 프로젝트 상세의 주최자 연락은 특정 상대와의 대화를 열지 못하고 목록으로만 이동한다. 프로젝트 API 연결 때 `tag`를 받아 다시 연결한다.
 - 프로젝트 관리 화면에 삭제 호출이 연결되기 전에는 종료 창의 삭제 선택이 서버 채팅방에 반영되지 않는다. API만 동작한다.
@@ -1050,3 +1050,11 @@ location = /ws/messages {
   - 운영과 같은 조합(jar, PostgreSQL, Redis, `next start`)에서 Chromium으로 1:1 실시간 11개와 프로젝트 채팅 9개가 통과했다. 말풍선은 1,172ms에 나타났고 점 세 개의 애니메이션이 동작했다. 높이는 한 줄 메시지와 같은 55px이었다. 맨 아래를 따라가고, 위로 올린 동안은 움직이지 않았다. 입력을 멈추면 5.0초 뒤 사라졌고, 메시지가 오면 그 자리에 들어왔다. 움직임 줄이기에서는 멈췄다. 프로젝트 채팅은 기존 문구 그대로였다.
   - 시험 준비를 한 번 고쳤다. 메시지를 연달아 보내는 시험이 앞 전송이 끝나기 전에 다음 글을 넣어, 앞 전송의 성공 처리가 입력창을 비웠다.
 - 시험하지 않은 항목: Chromium 외의 브라우저, 실제 화면 읽기 프로그램
+
+## #49 연결 변경 (2026-11-10)
+
+채팅 멤버 응답에 projectMemberId를 추가하고 project.members.changed 신호로 멤버·목록·투표를 재조회한다. 가결 시 프로젝트 KICKED 이력과 채팅 퇴장을 같은 트랜잭션에서 처리한다. 주최자는 강퇴 대상에서 제외한다. 자세한 계약과 전역 알림함 연결의 미완료 범위는 [강퇴 투표](project-member-removal.md)를 참조한다. 기존 단계의 ‘Mock 전용’ 설명은 당시 구현 이력이다.
+
+## 2026-11-11 강퇴 투표를 대화 시간순으로 표시
+
+프로젝트 채팅의 강퇴 투표 카드는 생성 시각에 해당하는 메시지 사이에 표시한다. 이후 메시지는 카드 아래에 쌓이며 투표 수·종료 상태 갱신으로 위치를 바꾸지 않는다. 실제 API와 Mock 채팅에 함께 적용했다. 서버 투표의 한국 LocalDateTime과 채팅 offset 시각을 같은 기준으로 비교한다. 새 투표가 마지막 항목으로 추가되면 하단 열람 중에만 따라가고, 이전 대화를 읽는 중에는 강제로 이동하지 않는다. 백엔드·DB 계약 변경 없음.

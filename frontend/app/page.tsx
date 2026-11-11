@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { FeedPreview } from './_components/FeedPreview';
 import { MatchingStart } from './_components/MatchingStart';
-import { MockDataNote } from './_components/MockVisibility';
 import { ProjectPreview } from './_components/ProjectPreview';
 
 export const metadata: Metadata = { title: '홈' };
@@ -14,10 +13,6 @@ export const metadata: Metadata = { title: '홈' };
 export default function HomePage() {
     return (
         <div className={[styles.scope, 'container home-page'].join(' ')}>
-            <div className={[styles.scope, 'home-demo-note'].join(' ')}>
-                <span className={[styles.scope, 'status-dot'].join(' ')} />
-                <MockDataNote />
-            </div>
             <MatchingStart />
             <ProjectPreview />
             <div className={[styles.scope, 'premium-banner'].join(' ')}>

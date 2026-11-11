@@ -11,11 +11,11 @@ function state(profile: typeof apiProfileFixture | null, loading = false) {
 afterEach(() => vi.clearAllMocks());
 describe('헤더의 실제 회원 프로필', () => {
     it('내 프로필의 닉네임과 원형 썸네일을 사용한다', () => {
-        state({ ...apiProfileFixture, nickname: '실제회원', profileImage: 'http://localhost:8080/api/v1/profile-images/avatar.png' });
+        state({ ...apiProfileFixture, nickname: '실제회원', profileImage: '/images/profile_1_20261111093000.png' });
         const html = render();
         expect(html).toContain('title="실제회원님의 프로필"');
         expect(html).toContain('alt="실제회원 프로필 이미지"');
-        expect(html).toContain('src="http://localhost:8080/api/v1/profile-images/avatar.png"');
+        expect(html).toContain('src="/images/profile_1_20261111093000.png"');
         expect(html).toContain('href="/profile/me"');
         expect(html).not.toContain('김하늘');
     });

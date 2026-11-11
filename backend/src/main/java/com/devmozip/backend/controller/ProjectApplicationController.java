@@ -16,5 +16,5 @@ public class ProjectApplicationController {
 	@GetMapping("/applications") public List<ProjectApplicationResponse> list(@PathVariable long projectId,@RequestParam(required=false) Status status){return service.list(projectId,status);}
 	@PatchMapping("/applications/{applicationId}") public ProjectApplicationResponse update(@PathVariable long projectId,@PathVariable long applicationId,@Valid @RequestBody UpdateProjectApplicationRequest request){return service.update(projectId,applicationId,request);}
 	@GetMapping("/application-options") public ProjectApplicationOptions options(@PathVariable long projectId){return service.options(projectId);}
-	@GetMapping("/members") public List<ProjectMemberResponse> members(@PathVariable long projectId,@RequestParam(required=false) String jobRole){return service.members(projectId,jobRole);}
+	@GetMapping("/members") public List<ProjectMemberResponse> members(@PathVariable long projectId,@RequestParam(required=false) String jobRole,@RequestParam(defaultValue="false") boolean includeInactive){return service.members(projectId,jobRole,includeInactive);}
 }

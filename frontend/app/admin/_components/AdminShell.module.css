@@ -27,6 +27,14 @@
 @layer devmozip-administration{:where(.scope):global(.admin-log){padding:16px;background:#f8f8fb;margin:12px 0;border-radius:10px;font-size:15px}}
 @layer devmozip-administration{:where(.scope):global(.admin-log code){margin-left:15px;color:#9165a8}}
 @layer devmozip-administration{:where(.scope):global(.governance-denied){text-align:center;padding:100px 0}}
+@layer devmozip-administration{:where(.scope):global(.admin-filters){display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px}}
+@layer devmozip-administration{:where(.scope):global(.admin-filters label){display:grid;gap:6px;font-size:14px;color:#555;min-width:9rem}}
+@layer devmozip-administration{:where(.scope):global(.admin-filters .admin-filter-wide){flex:1 1 16rem}}
+@layer devmozip-administration{:where(.scope):global(.admin-pager){display:flex;gap:12px;align-items:center;justify-content:center;margin-top:20px;color:#555}}
+@layer devmozip-administration{:where(.scope):global(.admin-tabs){display:flex;gap:8px;margin-bottom:20px}}
+@layer devmozip-administration{:where(.scope):global(.admin-tabs button[aria-pressed="true"]){background:#f1eafa;color:#7652b0;border-color:#d9c8f3}}
+@layer devmozip-administration{:where(.scope):global(.admin-alert){display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 16px;border-radius:10px;background:#fff4f4;color:#a33b3b;margin:12px 0}}
+@layer devmozip-administration{:where(.scope):global(.admin-summary){display:flex;flex-wrap:wrap;gap:10px;margin:0 0 16px}}
 @layer devmozip-administration{:where(.scope):global(.governance-denied>svg){color:#8360bf}}
 @layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-workspace){grid-template-columns:1fr}}}
 @layer devmozip-administration{@media(max-width:800px){:where(.scope):global(.admin-navigation){flex-direction:row;overflow-x:auto}}}

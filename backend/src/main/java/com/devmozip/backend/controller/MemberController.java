@@ -1,9 +1,6 @@
 package com.devmozip.backend.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devmozip.backend.dto.member.AccountLockRequest;
+import com.devmozip.backend.dto.member.AccountLockResponse;
 import com.devmozip.backend.dto.member.AvailabilityRequest;
 import com.devmozip.backend.dto.member.AvailabilityResponse;
+import com.devmozip.backend.dto.member.MeResponse;
 import com.devmozip.backend.dto.member.PasswordSetRequest;
 import com.devmozip.backend.service.MemberService;
 
@@ -45,15 +45,29 @@ public class MemberController {
         memberService.setPassword(authentication.getName(), request);
     }
 
-    // 로그인 확인 - 프론트엔드 BFF가 쿠키의 액세스 토큰 주인과 역할을 확인한다
+    // 내 계정 잠금(비공개 계정) 여부 조회 - WBS 17.7. 토큰의 주인만 대상이다
+    @GetMapping("/me/account-lock")
+    public AccountLockResponse getAccountLock(Authentication authentication) {
+        return memberService.getAccountLock(authentication.getName());
+    }
+
+    // 내 계정 잠금(비공개 계정) 변경 - WBS 17.7. 원하는 최종 값을 받는다
+    @PatchMapping("/me/account-lock")
+    public AccountLockResponse updateAccountLock(Authentication authentication,
+                                                 @Valid @RequestBody AccountLockRequest request) {
+        return memberService.updateAccountLock(authentication.getName(), request);
+    }
+
+    // 로그인 확인 - 프론트엔드 BFF가 쿠키의 액세스 토큰 주인과 역할을 확인한다.
+    // 경고 회원의 상단 안내를 위해 계정 상태와 경고 사유도 함께 준다 (docs/admin-plan.md D8).
     @GetMapping("/me")
-    public ResponseEntity<Map<String, String>> getMe(Authentication authentication) {
+    public MeResponse getMe(Authentication authentication) {
         // JwtAuthenticationFilter는 토큰의 역할 하나에 "ROLE_" 접두어를 붙여 넣는다.
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(authority -> authority.replaceFirst("^ROLE_", ""))
                 .findFirst()
                 .orElse("USER");
-        return ResponseEntity.ok(Map.of("username", authentication.getName(), "role", role));
+        return memberService.me(authentication.getName(), role);
     }
 }

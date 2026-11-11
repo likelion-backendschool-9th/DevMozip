@@ -3,6 +3,7 @@ package com.devmozip.backend.entity;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -152,6 +153,12 @@ public class Member {
     @Column(name = "introduction_format", length = 10)
     private String introductionFormat;
 
+    // 비공개 계정 여부 (WBS 17.7 계정 잠금). 로그인 제한이 아니며 계정 상태(status)와 별개다.
+    // 이미 있는 회원 행이 공개 계정으로 채워지도록 DB 기본값을 함께 둔다. 가입할 때는 값을 넣지 않아 공개 계정이 된다.
+    @ColumnDefault("false")
+    @Column(name = "is_private", nullable = false)
+    private boolean isPrivate;
+
     public void updateExternalLinks(String externalLinks) { this.externalLinks = externalLinks; }
 
     public void updateProfileOptions(List<String> skills, List<String> interests) {
@@ -180,6 +187,12 @@ public class Member {
     public void linkKakao(String kakaoId) { this.kakaoId = kakaoId; }
     public void unlinkKakao() { this.kakaoId = null; }
     public void changePasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    // 비공개 계정 설정. 원하는 최종 값을 받으므로 같은 값을 다시 넣어도 결과가 같다.
+    public void changePrivacy(boolean isPrivate) { this.isPrivate = isPrivate; }
+
+    // 관리자 제재(WBS 14.3)로 계정 상태를 바꾼다. 이력은 sanctions에 따로 남긴다.
+    public void changeStatus(MemberStatus status) { this.status = status; }
 
     // 결제 수단 (docs/premium-payment-plan.md 4절). 빌링키는 암호화된 값으로만 들어온다. null이면 등록된 결제 수단이 없다.
     public void changePaymentMethods(String paymentMethods) { this.paymentMethods = paymentMethods; }

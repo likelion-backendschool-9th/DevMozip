@@ -48,7 +48,8 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 	public ProjectDetailResponse detail(long id, boolean signedIn) {
 		if (id<=0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "프로젝트 ID를 확인해 주세요.");
 		Project project = projects.findLiveForUpdate(id).orElseThrow(this::notFound);
-		if (!project.isPublic() && (!signedIn || !members.existsByProjectIdAndUserIdAndStatus(id, currentUser.getCurrentUserId(), ProjectMember.Status.ACTIVE))) throw notFound();
+		// 비공개 공고와 관리자가 숨긴 공고는 현재 팀원만 본다.
+		if (!project.isPubliclyVisible() && (!signedIn || !members.existsByProjectIdAndUserIdAndStatus(id, currentUser.getCurrentUserId(), ProjectMember.Status.ACTIVE))) throw notFound();
 		project.recordView();
 		return response(project, signedIn);
 	}
@@ -72,7 +73,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 			if(actor.isPresent())membership=new ProjectDetailResponse.Membership(actor.get().getRole().name(),actor.get().getEndRequestedAt()!=null,
 				members.countByProjectIdAndStatusAndEndRequestedAtIsNotNull(project.getId(),ProjectMember.Status.ACTIVE),count/2+1);
 		}
-		return new ProjectDetailResponse(ProjectResponse.from(project),count,closed,membership,queries.host(project.getHostMemberId()));
+		return new ProjectDetailResponse(ProjectResponse.from(project),count,closed,membership,queries.host(project.getHostMemberId()),queries.team(project.getId(),membership!=null));
 	}
 	private ResponseStatusException notFound() { return new ResponseStatusException(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."); }
 }

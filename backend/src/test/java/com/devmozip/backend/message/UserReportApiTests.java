@@ -35,7 +35,7 @@ abstract class UserReportApiTests extends MessengerApiTestSupport {
 		assertEquals(1, reportCount(reporter));
 	}
 
-	@Test void storesOnlyUserReportColumnsAsReceived() throws Exception {
+	@Test void storesOnlyUserReportColumnsAsAwating() throws Exception {
 		Member reporter = member("reporter");
 		Member target = member("target");
 		postAs(reporter, reports(target), Map.of("reason", "사칭")).andExpect(status().isCreated());
@@ -43,7 +43,7 @@ abstract class UserReportApiTests extends MessengerApiTestSupport {
 		Map<String, Object> row = jdbc.queryForMap("SELECT * FROM reports WHERE reporter_id = ?", reporter.getId());
 		assertEquals(target.getId(), ((Number) column(row, "reported_user_id")).longValue());
 		assertEquals("사칭", column(row, "reason"));
-		assertEquals("RECEIVED", column(row, "status"));
+		assertEquals("AWATING", column(row, "status"));
 		for (String empty : new String[]{"project_id", "post_id", "comment_id", "handled_by", "resolution", "handled_at"}) {
 			assertNull(column(row, empty), empty);
 		}

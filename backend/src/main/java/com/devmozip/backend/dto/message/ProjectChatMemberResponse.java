@@ -7,11 +7,12 @@ import com.devmozip.backend.entity.ChatMember;
 import com.devmozip.backend.entity.Member;
 
 /**
- * 프로젝트 채팅의 참여자. 나간 회원도 포함한다. id는 이 방의 참여 행 ID이고 me는 요청한 회원인지다.
+ * 프로젝트 채팅의 참여자. 나간 회원도 포함한다. id는 chat_members.id, projectMemberId는 project_members.id, me는 요청한 회원인지다.
  * joinedAt과 leftAt은 승인·취소 시각이 아니라 채팅에 처음 반영된 시각이다.
  */
 public record ProjectChatMemberResponse(
 	long id,
+	Long projectMemberId,
 	boolean me,
 	String tag,
 	String nickname,
@@ -21,10 +22,11 @@ public record ProjectChatMemberResponse(
 	OffsetDateTime joinedAt,
 	OffsetDateTime leftAt
 ) {
-	public static ProjectChatMemberResponse from(ChatMember chatMember, boolean me, String role, Long lastReadMessageId) {
+	public static ProjectChatMemberResponse from(ChatMember chatMember, boolean me, String role, Long lastReadMessageId, Long projectMemberId) {
 		Member member = chatMember.getMember();
 		return new ProjectChatMemberResponse(
 			chatMember.getId(),
+			projectMemberId,
 			me,
 			member.getTag(),
 			member.getNickname(),

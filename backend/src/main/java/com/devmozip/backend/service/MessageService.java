@@ -222,7 +222,7 @@ public class MessageService {
 	}
 
 	private static boolean canSendTo(ChatMember peer) {
-		return peer.getMember().getStatus() != MemberStatus.SUSPENDED;
+		return peer.getMember().getStatus() == MemberStatus.ACTIVE || peer.getMember().getStatus() == MemberStatus.WARNED;
 	}
 
 	private static long roomIdOf(Message message) {

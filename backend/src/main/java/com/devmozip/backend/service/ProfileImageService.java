@@ -33,7 +33,7 @@ public class ProfileImageService {
     public ImageResponse upload(String authenticatedEmail, Kind kind, MultipartFile file) {
         var member = findOwner(authenticatedEmail);
         String previous = current(member, kind);
-        var saved = storage.save(file);
+        var saved = storage.save(kind == Kind.PROFILE ? "profile" : "banner", member.getId(), file);
         // DB 실패면 새 파일 정리, DB 성공 이후에만 이전 파일 정리.
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override public void afterCompletion(int status) {
@@ -56,15 +56,6 @@ public class ProfileImageService {
             }
         });
         return response(member);
-    }
-
-    @Transactional(readOnly = true)
-    public byte[] readPublicImage(String filename) {
-        String url = storage.url(filename);
-        if (!members.existsPublicImage(url, Member.MemberStatus.ACTIVE)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다.");
-        }
-        return storage.read(filename);
     }
 
     private Member findOwner(String email) {

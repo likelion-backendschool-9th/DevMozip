@@ -14,6 +14,11 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
+import com.devmozip.backend.entity.Member;
+import com.devmozip.backend.repository.MemberRepository;
+import com.devmozip.backend.service.AccountWithdrawalTasks;
 
 @Component
 public class JwtProvider {
@@ -29,9 +34,18 @@ public class JwtProvider {
 
     private final JwtProperties jwtProperties;
     private SecretKey secretKey;
+    private final ObjectProvider<MemberRepository> members;
+    private final ObjectProvider<AccountWithdrawalTasks> withdrawals;
 
     public JwtProvider(JwtProperties jwtProperties) {
+        this(jwtProperties, null, null);
+    }
+
+    @Autowired
+    public JwtProvider(JwtProperties jwtProperties, ObjectProvider<MemberRepository> members, ObjectProvider<AccountWithdrawalTasks> withdrawals) {
         this.jwtProperties = jwtProperties;
+        this.members = members;
+        this.withdrawals = withdrawals;
     }
 
     @PostConstruct
@@ -53,6 +67,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(username)                  // 토큰 주인 (사용자 아이디)
+                .claim("accountId", accountId(username)) // 같은 이메일 재가입 시 이전 계정의 토큰을 구분한다
                 .claim("role", role)                // 사용자 권한 정보 추가
                 .claim(TOKEN_TYPE, ACCESS)          // 액세스 토큰임을 표시
                 .issuedAt(new java.util.Date(now))  // 토큰 발급 시각
@@ -68,6 +83,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(username)
+                .claim("accountId", accountId(username))
                 .id(UUID.randomUUID().toString())   // 같은 초에 다시 로그인해도 토큰이 겹치지 않게 한다
                 .claim(TOKEN_TYPE, REFRESH)         // 리프레시 토큰임을 표시
                 .issuedAt(new java.util.Date(now))
@@ -111,12 +127,30 @@ public class JwtProvider {
 
     // 액세스 토큰 검증: 서명·만료가 유효하고 type이 access인지 (리프레시 토큰은 false)
     public boolean validateAccessToken(String token) {
-        return validateToken(token, ACCESS);
+        if (!validateToken(token, ACCESS)) return false;
+        return matchesAccount(token);
+    }
+
+    private Long accountId(String username) {
+        MemberRepository repository = members == null ? null : members.getIfAvailable();
+        return repository == null ? null : repository.findByEmail(username).map(Member::getId).orElse(null);
+    }
+
+    private boolean matchesAccount(String token) {
+        Claims claims = parseClaims(token);
+        Long accountId = claims.get("accountId", Long.class);
+        MemberRepository repository = members == null ? null : members.getIfAvailable();
+        if (accountId != null && repository != null) {
+            return repository.findByEmail(claims.getSubject())
+                    .filter(member -> accountId.equals(member.getId())).isPresent();
+        }
+        AccountWithdrawalTasks tasks = withdrawals == null ? null : withdrawals.getIfAvailable();
+        return tasks == null || !tasks.legacyRevoked(claims.getSubject());
     }
 
     // 리프레시 토큰 검증: 서명·만료가 유효하고 type이 refresh인지 (액세스 토큰은 false)
     public boolean validateRefreshToken(String token) {
-        return validateToken(token, REFRESH);
+        return validateToken(token, REFRESH) && matchesAccount(token);
     }
 
     // 카카오 가입 토큰 검증: 서명·만료가 유효하고 type이 kakao_signup인지

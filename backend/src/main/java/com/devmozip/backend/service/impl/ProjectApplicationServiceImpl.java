@@ -1,6 +1,7 @@
 package com.devmozip.backend.service.impl;
 
 import java.time.*;
+import java.math.BigDecimal;
 import java.util.*;
 import com.devmozip.backend.dto.project.*;
 import com.devmozip.backend.entity.*;
@@ -20,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional(readOnly=true)
 public class ProjectApplicationServiceImpl implements ProjectApplicationService {
+	private static final BigDecimal CANCELLATION_PENALTY = new BigDecimal("0.5");
 	private final ProjectRepository projects;
 	private final ProjectMemberRepository members;
 	private final ProjectApplicationRepository applications;
@@ -39,7 +41,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse apply(long id,CreateProjectApplicationRequest request){
-		long user=currentUser.getCurrentUserId();var project=locked(id);
+		long user=currentUser.getCurrentUserId();requireActiveApplicant(user);var project=locked(id);
 		if(request==null||!validator.validate(request).isEmpty())throw bad("지원 직군·포트폴리오 1~3개·지원 멘트 10~1500자를 확인해 주세요.");
 		if(new HashSet<>(request.portfolioIds()).size()!=request.portfolioIds().size())throw bad("포트폴리오를 중복 제출할 수 없습니다.");
 		String unavailable=unavailable(project,user);
@@ -61,7 +63,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	@Override public ProjectApplicationOptions options(long id){
 		var project=live(id);long user=currentUser.getCurrentUserId();
 		var own=applications.findByProjectIdAndApplicantMemberId(id,user);
-		if(!project.isPublic()&&own.isEmpty()&&!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw missing();
+		if(!project.isPubliclyVisible()&&own.isEmpty()&&!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw missing();
 		boolean available=portfolios.available();String reason=unavailable(project,user);
 		var roles=project.getRecruitmentSlots().stream().map(s->new ProjectApplicationOptions.Role(s.roleCode(),s.capacity(),filled(id,s.roleCode()),s.minimumYears())).toList();
 		if(reason==null&&roles.stream().noneMatch(s->s.filled()<s.capacity()))reason="모집 정원이 찼습니다.";
@@ -72,7 +74,11 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	}
 	@Override @Transactional
 	public ProjectApplicationResponse update(long id,long applicationId,UpdateProjectApplicationRequest request){
-		long user=currentUser.getCurrentUserId();var project=locked(id);
+		long user=currentUser.getCurrentUserId();
+		if(request!=null&&request.status()==ProjectApplication.Status.APPROVED){
+			requireActiveApplicant(applications.findApplicantId(applicationId,id).orElseThrow(this::missing));
+		}
+		var project=locked(id);
 		if(request==null||!validator.validate(request).isEmpty()||request.status()==ProjectApplication.Status.PENDING)throw bad("승인·거절·취소 명령을 확인해 주세요.");
 		if(request.status()!=ProjectApplication.Status.CANCELLED)requireHost(project,user);
 		var application=applications.findByIdAndProjectId(applicationId,id).orElseThrow(this::missing);
@@ -104,17 +110,20 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 					if(member.getRole()!=ProjectMember.Role.PARTICIPANT)throw conflict("주최자는 지원 취소로 탈퇴할 수 없습니다.");
 					member.leave(now);members.flush();recalculateEnd(project,user,now);
 				}
-				application.cancel(now);type=ProjectApplicationChanged.Type.CANCELLED;
+				application.cancel(now);
+				if(penalty&&applications.deductCancellationPenalty(user,CANCELLATION_PENALTY)!=1)throw conflict("신뢰 점수를 반영할 회원을 찾을 수 없습니다.");
+				type=ProjectApplicationChanged.Type.CANCELLED;
 			}
 			default -> throw bad("지원 상태를 확인해 주세요.");
 		}
 		applications.flush();projects.flush();emit(application,type,penalty,now);return response(application);
 	}
-	@Override public List<ProjectMemberResponse> members(long id,String jobRole){
+	@Override public List<ProjectMemberResponse> members(long id,String jobRole,boolean includeInactive){
 		var project=live(id);long user=currentUser.getCurrentUserId();
 		if(!members.existsByProjectIdAndUserIdAndStatus(id,user,ProjectMember.Status.ACTIVE))throw forbidden("현재 팀원만 팀원 목록을 조회할 수 있습니다.");
+		if(includeInactive&&project.getHostMemberId()!=user)throw forbidden("주최자만 참여 이력을 조회할 수 있습니다.");
 		String key=jobRole==null||jobRole.isBlank()?null:ProjectRoleValues.key(jobRole);
-		return members.findByProjectId(id).stream().filter(m->m.getStatus()==ProjectMember.Status.ACTIVE)
+		return members.findByProjectId(id).stream().filter(m->includeInactive||m.getStatus()==ProjectMember.Status.ACTIVE)
 			.filter(m->key==null||m.getJobRole()!=null&&ProjectRoleValues.key(m.getJobRole()).equals(key)).map(m->{
 				var profile=users.findById(m.getUserId());return new ProjectMemberResponse(m.getId(),m.getUserId(),profile.map(Member::getNickname).orElse(null),profile.map(Member::getTag).orElse(null),m.getRole().name(),m.getJobRole(),m.getStatus().name(),m.getJoinedAt());
 			}).toList();
@@ -122,7 +131,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private ProjectApplicationResponse response(ProjectApplication a){
 		var user=users.findById(a.getApplicantMemberId());
 		var copies=snapshots.summaries(a.getId());
-		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),copies.isEmpty()?links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList():copies.stream().map(ProjectApplicationPortfolioResponse::sourcePortfolioId).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7),copies);
+		return new ProjectApplicationResponse(a.getId(),a.getProject().getId(),a.getApplicantMemberId(),user.map(Member::getNickname).orElse(null),user.map(Member::getTag).orElse(null),a.getJobRole(),a.getIntroduction(),a.getStatus(),a.getRejectionReason(),copies.isEmpty()?links.findByApplicationIdOrderByIdAsc(a.getId()).stream().map(ProjectApplicationPortfolio::getPortfolioId).filter(Objects::nonNull).toList():copies.stream().map(ProjectApplicationPortfolioResponse::sourcePortfolioId).toList(),a.getAppliedAt(),a.getProcessedAt(),a.getCancelledAt(),late(a),a.getProject().getRecruitmentEnd().minusDays(7),copies,members.findByProjectIdAndUserId(a.getProject().getId(),a.getApplicantMemberId()).map(m->m.getStatus().name()).orElse(null));
 	}
 	private boolean late(ProjectApplication a){return a.getStatus()==ProjectApplication.Status.APPROVED&&LocalDate.now(clock).isAfter(a.getProject().getRecruitmentEnd().minusDays(7));}
 	private String unavailable(Project p,long user){
@@ -130,6 +139,7 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 		if(applications.existsByProjectIdAndApplicantMemberId(p.getId(),user))return "이미 지원 기록이 있습니다. 취소·거절 후 재지원은 허용하지 않습니다.";
 		if(members.existsByProjectIdAndUserId(p.getId(),user))return "이미 참여 기록이 있는 프로젝트입니다.";
 		if(!p.isPublic())return "비공개 프로젝트에는 지원할 수 없습니다.";
+		if(p.isRestricted())return "관리자가 숨긴 공고에는 지원할 수 없습니다.";
 		var today=LocalDate.now(clock);
 		if(p.getStatus()!=ProjectStatus.RECRUITING||today.isBefore(p.getRecruitmentStart())||today.isAfter(p.getRecruitmentEnd()))return "현재 지원을 받지 않는 프로젝트입니다.";
 		return null;
@@ -144,6 +154,10 @@ public class ProjectApplicationServiceImpl implements ProjectApplicationService 
 	private void emit(ProjectApplication a,ProjectApplicationChanged.Type type,boolean penalty,LocalDateTime now){events.publishEvent(new ProjectApplicationChanged(type,a.getProject().getId(),a.getId(),a.getApplicantMemberId(),a.getProject().getHostMemberId(),a.getJobRole(),penalty,"project-application:"+a.getId()+":"+type,now));}
 	private void requireHost(Project p,long user){if(p.getHostMemberId()!=user||!members.existsByProjectIdAndUserIdAndStatus(p.getId(),user,ProjectMember.Status.ACTIVE))throw forbidden("현재 주최자만 지원자를 관리할 수 있습니다.");}
 	private void requirePending(ProjectApplication a){if(a.getStatus()!=ProjectApplication.Status.PENDING)throw conflict("대기 중인 지원만 승인·거절할 수 있습니다.");}
+	private void requireActiveApplicant(long userId){
+		var member=users.findActiveForAccountUpdateById(userId).orElseThrow(()->conflict("탈퇴한 회원의 지원은 처리할 수 없습니다."));
+		if(member.getStatus()!=Member.MemberStatus.ACTIVE&&member.getStatus()!=Member.MemberStatus.WARNED)throw conflict("현재 지원할 수 없는 회원입니다.");
+	}
 	private Project live(long id){if(id<=0)throw bad("프로젝트 ID를 확인해 주세요.");return projects.findByIdAndDeletedAtIsNull(id).orElseThrow(this::missing);}
 	private Project locked(long id){if(id<=0)throw bad("프로젝트 ID를 확인해 주세요.");return projects.findLiveForUpdate(id).orElseThrow(this::missing);}
 	private ResponseStatusException bad(String text){return new ResponseStatusException(HttpStatus.BAD_REQUEST,text);}
