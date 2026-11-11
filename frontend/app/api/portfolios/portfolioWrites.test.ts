@@ -34,6 +34,18 @@ describe('포트폴리오 쓰기 BFF', () => {
         expect((await POST(make('http://evil.test', 'localhost:3000@evil.test'))).status).toBe(403);
         expect(backendFetch).not.toHaveBeenCalled();
     });
+    it('배포 HTTPS(기본 포트, 내부 URL :3000)에서 브라우저 Origin을 허용하고 내부 포트가 남은 Origin은 거절한다', async () => {
+        const d = portfolioDetailFixture(); d.canEdit = true;
+        vi.mocked(backendFetch).mockResolvedValue(Response.json(d, { status: 201 }));
+        const make = (origin: string) => new Request('https://0.0.0.0:3000/api/portfolios', {
+            method: 'POST', headers: { Host: 'devmozip.newlecture.com', Origin: origin, 'Content-Type': 'application/json' }, body: '{}',
+        });
+        expect((await POST(make('https://devmozip.newlecture.com'))).status).toBe(201);
+        vi.mocked(backendFetch).mockClear();
+        for (const origin of ['https://devmozip.newlecture.com:3000', 'http://devmozip.newlecture.com', 'https://evil.test'])
+            expect((await POST(make(origin))).status).toBe(403);
+        expect(backendFetch).not.toHaveBeenCalled();
+    });
     it('JSON 아닌 요청·배열·깨진 JSON을 거절한다', async () => {
         expect((await POST(new Request('http://localhost/api/portfolios', { method: 'POST', headers: { Origin: 'http://localhost' }, body: '{}' }))).status).toBe(415);
         expect((await POST(request('POST', []))).status).toBe(400);
